@@ -37,6 +37,7 @@ import TaskDetailsSidebar from './TaskDetailsSidebar';
 import { fetchListTaskNew } from '../../stores/tasks/fetchListTaskNewSlice';
 import { fetchLogtaskList } from '../../stores/tasks/fetchLogtaskListSlice';
 import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
+import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 
 const TasksListView = ({ onCreateTask }) => {
   const { t } = useTranslation();
@@ -47,6 +48,7 @@ const TasksListView = ({ onCreateTask }) => {
   const [selectedLogtask, setSelectedLogtask] = useState(null);
   const [logtasks, setLogtasks] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
@@ -151,11 +153,11 @@ const TasksListView = ({ onCreateTask }) => {
   }, [logtasks]);
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 80px)', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 40px)', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden', mt: 0.5, mb: 0.5 }}>
       
       {/* Sidebar Izquierda - Tareas (Mini Sidebar) */}
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           width: isCollapsed ? '70px' : '280px',
           borderRight: '1px solid #e0e0e0',
           bgcolor: 'white',
@@ -166,7 +168,7 @@ const TasksListView = ({ onCreateTask }) => {
           flexShrink: 0
         }}
       >
-        <Box sx={{ p: '24px 0 15px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+        <Box sx={{ p: '12px 0 8px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
           {!isCollapsed && (
             <Box sx={{ position: 'absolute', left: 20, display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Typography sx={{ fontWeight: 800, color: '#b0bec5', fontSize: '0.75rem', letterSpacing: 1.5 }}>
@@ -186,7 +188,7 @@ const TasksListView = ({ onCreateTask }) => {
         
         <List sx={{ p: 0, flex: 1, overflowY: 'auto' }}>
           {taskListLoading ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={24} /></Box>
+            <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
           ) : (
             tasks.map((task) => {
               const isSelected = selectedTask?.id === task.id;
@@ -196,27 +198,27 @@ const TasksListView = ({ onCreateTask }) => {
                     selected={isSelected}
                     onClick={() => handleSelectTask(task)}
                     sx={{
-                      py: 1.8,
+                      py: 0.8,
                       px: 0,
                       justifyContent: 'center',
                       borderLeft: isSelected ? '4px solid #1a90ff' : '4px solid transparent',
                       bgcolor: isSelected ? '#f5f9ff !important' : 'transparent',
                       '&:hover': { bgcolor: '#f8fbfc' },
-                      minHeight: '65px'
+                      minHeight: '45px'
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 50, justifyContent: 'center' }}>
+                    <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 40, justifyContent: 'center' }}>
                       {getTaskIcon(task.task_type, isSelected)}
                     </ListItemIcon>
                     {!isCollapsed && (
                       <ListItemText
                         primary={
-                          <Typography sx={{ fontWeight: 700, color: isSelected ? '#1a90ff' : '#263238', fontSize: '0.9rem', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <Typography sx={{ fontWeight: 700, color: isSelected ? '#1a90ff' : '#263238', fontSize: '0.8rem', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {task.task_title}
                           </Typography>
                         }
                         secondary={
-                          <Typography sx={{ textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 800, color: isSelected ? '#1a90ff80' : '#b0bec5', mt: 0.3 }}>
+                          <Typography sx={{ textTransform: 'uppercase', fontSize: '0.55rem', fontWeight: 800, color: isSelected ? '#1a90ff80' : '#b0bec5', mt: 0.2 }}>
                             {task.task_type || 'CÍCLICA'}
                           </Typography>
                         }
@@ -233,13 +235,13 @@ const TasksListView = ({ onCreateTask }) => {
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         {/* Barra de Filtros Contextual */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          px: 4, 
-          py: 2, 
-          bgcolor: 'white', 
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2,
+          py: 1,
+          bgcolor: 'white',
           borderBottom: '1px solid #edf2f4',
           flexShrink: 0
         }}>
@@ -353,15 +355,15 @@ const TasksListView = ({ onCreateTask }) => {
         </Box>
 
         {/* Contenido Scrollable: Dashboard + Tabla */}
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 4 }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
           {/* Card de Cabecera (Dashboard) */}
           {selectedTask && (
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                mb: 4,
-                borderRadius: 4,
+                p: 1.5,
+                mb: 1,
+                borderRadius: 3,
                 border: '1px solid #edf2f4',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -370,61 +372,53 @@ const TasksListView = ({ onCreateTask }) => {
               }}
             >
               <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#263238', fontSize: '1.1rem' }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#263238', fontSize: '1.0rem' }}>
                   {selectedTask.task_title}
                 </Typography>
               </Box>
 
               <Box display="flex" alignItems="center" gap={3}>
-                <Box sx={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <CircularProgress
-                    variant="determinate"
-                    value={stats.averageProgress}
-                    size={65}
-                    thickness={5}
-                    sx={{ color: stats.averageProgress === 100 ? '#00f57a' : '#1a90ff' }}
-                  />
-                  <Box sx={{ top: 0, left: 0, bottom: 0, right: 0, position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.8rem', color: '#263238' }}>
-                      {stats.averageProgress}%
-                    </Typography>
-                  </Box>
+                <TaskDoubleRingChart 
+                  percentage={stats.averageProgress}
+                  stats={stats}
+                  size={80}
+                  strokeWidth={8}
+                />
 
-                  {/* Estados de los ciclos en formato vertical */}
-                  <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start', width: '100%' }}>
-                    {[
-                      { label: 'Completado', color: '#00f57a', count: stats.completed },
-                      { label: 'En Progreso', color: '#1a90ff', count: stats.inProgress },
-                      { label: 'Vencido', color: '#fb3d61', count: stats.expired },
-                      { label: 'Abierto', color: '#fbc02d', count: stats.open }
-                    ].map((item) => (
-                      <Box key={item.label} display="flex" alignItems="center" gap={0.5}>
-                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: item.color }} />
-                        <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.65rem' }}>
-                          {item.label}: <b>{item.count}</b>
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
+                {/* Estados de los ciclos en formato vertical */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3, alignItems: 'flex-start' }}>
+                  {[
+                    { label: 'Completado', color: '#00f57a', count: stats.completed },
+                    { label: 'En Progreso', color: '#1a90ff', count: stats.inProgress },
+                    { label: 'Vencido', color: '#fb3d61', count: stats.expired },
+                    { label: 'Abierto', color: '#fbc02d', count: stats.open }
+                  ].map((item) => (
+                    <Box key={item.label} display="flex" alignItems="center" gap={0.5}>
+                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: item.color }} />
+                      <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.6rem' }}>
+                        {item.label}: <b>{item.count}</b>
+                      </Typography>
+                    </Box>
+                  ))}
                 </Box>
               </Box>
             </Paper>
           )}
 
           {/* Tabla de Ciclos */}
-          <Paper elevation={0} sx={{ border: '1px solid #edf2f4', borderRadius: 4, overflow: 'hidden', bgcolor: 'white' }}>
-            <Box sx={{ display: 'flex', p: '14px 16px', bgcolor: 'white', borderBottom: '1px solid #edf2f4' }}>
-              <Box flex="0 0 110px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', letterSpacing: '0.8px' }}>INICIO</Typography></Box>
-              <Box flex="0 0 110px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', letterSpacing: '0.8px' }}>CIERRE PROG.</Typography></Box>
-              <Box flex="0 0 110px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', letterSpacing: '0.8px' }}>CIERRE REAL</Typography></Box>
-              <Box flex="0 0 130px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', letterSpacing: '0.8px' }}>OPORTUNIDAD</Typography></Box>
-              <Box flex="1 1 auto" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', letterSpacing: '0.8px' }}>ACCIONES</Typography></Box>
-              <Box flex="0 0 200px" textAlign="right" pr={2}><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', letterSpacing: '0.8px' }}>PROGRESO</Typography></Box>
+          <Paper elevation={0} sx={{ border: '1px solid #edf2f4', borderRadius: 3, overflow: 'hidden', bgcolor: 'white', mt: 0.5 }}>
+            <Box sx={{ display: 'flex', p: '8px 12px', bgcolor: 'white', borderBottom: '1px solid #edf2f4' }}>
+              <Box flex="0 0 100px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>INICIO</Typography></Box>
+              <Box flex="0 0 100px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE PROG.</Typography></Box>
+              <Box flex="0 0 100px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE REAL</Typography></Box>
+              <Box flex="0 0 110px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>OPORTUNIDAD</Typography></Box>
+              <Box flex="1 1 auto" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>ACCIONES</Typography></Box>
+              <Box flex="0 0 140px" textAlign="right" pr={1}><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>PROGRESO</Typography></Box>
             </Box>
 
             <Box>
               {logtaskListLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress size={30} /></Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress size={25} /></Box>
               ) : (
                 (() => {
                   const filtered = logtasks.filter(lt => {
@@ -434,12 +428,17 @@ const TasksListView = ({ onCreateTask }) => {
 
                   if (filtered.length === 0 && logtasks.length > 0) {
                     return (
-                      <Box sx={{ p: 4, textAlign: 'center' }}>
-                        <Typography sx={{ color: '#90a4ae', fontWeight: 600 }}>
+                      <Box sx={{ p: 2, textAlign: 'center' }}>
+                        <Typography sx={{ color: '#90a4ae', fontWeight: 600, fontSize: '0.8rem' }}>
                           No hay ciclos con este estado para esta tarea.
                         </Typography>
                       </Box>
                     );
+                  }
+
+                  // Limpiar la selección si el ciclo seleccionado no está en la vista filtrada
+                  if (selectedLogtask && !filtered.some(l => l.id === selectedLogtask.id)) {
+                    setSelectedLogtask(null);
                   }
 
                   return filtered.map((logtask, index) => (
@@ -467,11 +466,37 @@ const TasksListView = ({ onCreateTask }) => {
       </Box>
 
       {/* Sidebar Derecha - Detalles */}
-      <Box sx={{ width: '380px', flexShrink: 0, bgcolor: 'white', borderLeft: '1px solid #e0e0e0', overflowY: 'auto' }}>
-        <TaskDetailsSidebar 
-          selectedTask={selectedLogtask || selectedTask} 
-          statuses={listTaskStatus} 
-        />
+      <Box sx={{
+        width: isRightSidebarCollapsed ? '40px' : '320px',
+        flexShrink: 0,
+        bgcolor: 'white',
+        borderLeft: '1px solid #e0e0e0',
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative'
+      }}>
+        {isRightSidebarCollapsed ? (
+          <IconButton
+            size="small"
+            onClick={() => setIsRightSidebarCollapsed(false)}
+            sx={{
+              color: '#b0bec5',
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              zIndex: 10
+            }}
+          >
+            <ChevronLeftIcon />
+          </IconButton>
+        ) : (
+          <TaskDetailsSidebar
+            selectedTask={selectedLogtask || selectedTask}
+            statuses={listTaskStatus}
+            onCollapse={() => setIsRightSidebarCollapsed(true)}
+          />
+        )}
       </Box>
     </Box>
   );

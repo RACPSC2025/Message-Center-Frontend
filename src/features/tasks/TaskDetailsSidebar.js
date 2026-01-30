@@ -23,7 +23,7 @@ const StyledProgressBar = styled(LinearProgress)(({ theme }) => ({
   },
 }));
 
-const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
+const TaskDetailsSidebar = ({ selectedTask, statuses, onCollapse }) => {
   const { t } = useTranslation();
 
   if (!selectedTask) {
@@ -54,7 +54,9 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
             {statusInfo.label.toUpperCase()}
           </Typography>
         </Box>
-        <IconButton size="small"><KeyboardArrowRight /></IconButton>
+        <IconButton size="small" onClick={onCollapse}>
+          <KeyboardArrowRight />
+        </IconButton>
       </Box>
 
       <Box sx={{ p: 3, flex: 1, overflowY: 'auto' }}>

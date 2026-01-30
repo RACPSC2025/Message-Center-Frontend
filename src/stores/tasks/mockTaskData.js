@@ -1,5 +1,5 @@
-// Mock data service for Tasks module based on sofactia_task_endpoints.json
-import mockData from '../../data/sofactia_task_endpoints.json';
+// Mock data service for Tasks module based on data_test.json
+import mockData from '../../data/data_test.json';
 
 // Simulates a delay for realistic async behavior
 const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));

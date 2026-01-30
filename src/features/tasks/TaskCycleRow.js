@@ -39,7 +39,7 @@ const TaskCycleRow = ({ task, statuses, onSelect, isSelected, index }) => {
       'expired': '#fb3d61',
       'vencido': '#fb3d61',
       'in_progress': '#1a90ff',
-      'open': '#1a90ff',
+      'open': '#fbc02d',
       'planning': '#fbc02d'
     };
     
