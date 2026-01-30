@@ -467,7 +467,7 @@ const TasksListView = ({ onCreateTask }) => {
 
       {/* Sidebar Derecha - Detalles */}
       <Box sx={{
-        width: isRightSidebarCollapsed ? '40px' : '320px',
+        width: isRightSidebarCollapsed ? '40px' : '280px',
         flexShrink: 0,
         bgcolor: 'white',
         borderLeft: '1px solid #e0e0e0',
@@ -491,11 +491,18 @@ const TasksListView = ({ onCreateTask }) => {
             <ChevronLeftIcon />
           </IconButton>
         ) : (
-          <TaskDetailsSidebar
-            selectedTask={selectedLogtask || selectedTask}
-            statuses={listTaskStatus}
-            onCollapse={() => setIsRightSidebarCollapsed(true)}
-          />
+          <>
+            <TaskDetailsSidebar
+              selectedTask={selectedLogtask || selectedTask}
+              statuses={listTaskStatus}
+              onCollapse={() => setIsRightSidebarCollapsed(true)}
+            />
+            <Box sx={{ p: 2, textAlign: 'center', borderTop: '1px solid #f0f0f0', bgcolor: 'white', position: 'sticky', bottom: 0 }}>
+              <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.7rem' }}>
+                Powered by AMATIA Sofactia
+              </Typography>
+            </Box>
+          </>
         )}
       </Box>
     </Box>
