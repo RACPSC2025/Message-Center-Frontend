@@ -39,7 +39,8 @@ import ReactFlagsSelect from "react-flags-select";
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
-import SpeedDialComponent from '../../components/SpeedDialComponent';
+// SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
+// import SpeedDialComponent from '../../components/SpeedDialComponent';
 import { STATUS } from '../../config/constants';
 import { useLanguage } from '../../providers/languageProvider';
 import { fetchEventsList } from '../../stores/events/fetchEventsListSlice';
@@ -99,6 +100,7 @@ export default function Component() {
   const [selectedDate, setSelectedDate] = useState(getCurrentDate());
   const [events, setEvents] = useState([]);
   const [openCreateTask, setOpenCreateTask] = useState(false);
+  const [selectedTaskType, setSelectedTaskType] = useState(null);
   
   // selectedView have "report" as default value
   const [selectedView, setSelectedView] = useState('list'); // ['calendar', 'list', 'table', 'report', 'insights', 'settings'
@@ -378,11 +380,14 @@ export default function Component() {
     setDrawerOpen(true);
   };
 
+  // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
+  /*
   const speedDialActions = [
-    { icon: <DownloadDone />, name: 'Añadir Tarea Permanente' },
-    { icon: <Loop />, name: 'Añadir Tarea Cíclica' },
-    { icon: <AssignmentReturned />, name: 'Añadir Tarea Única' }
+    { icon: <DownloadDone />, name: 'Añadir Tarea Permanente', type: 'permanente' },
+    { icon: <Loop />, name: 'Añadir Tarea Cíclica', type: 'ciclica' },
+    { icon: <AssignmentReturned />, name: 'Añadir Tarea Única', type: 'unica' }
   ];
+  */
 
   const [countrySelected, setCountrySelected] = useState("CO");
 
@@ -630,7 +635,14 @@ export default function Component() {
               }}
             >
               {selectedView === 'list' ? (
-                <TasksListView />
+                <TasksListView
+                  onCreateTask={(taskType) => {
+                    // Guardamos el tipo de tarea seleccionado
+                    setSelectedTaskType(taskType);
+                    // Abrimos el formulario de creación
+                    setOpenCreateTask(true);
+                  }}
+                />
               ) : selectedView === 'table' ? (
                 <TaskTableList />
               ) : (
@@ -645,19 +657,30 @@ export default function Component() {
             </Box>
           </Box>
 
+          {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
+          {/*
           <SpeedDialComponent
             openSpeedDial={openSpeedDial}
             handleCloseSpeedDial={() => setOpenSpeedDial(false)}
             handleOpenSpeedDial={() => setOpenSpeedDial(true)}
             speedDialActions={speedDialActions}
-            handleClick={() => setOpenCreateTask(true)}
-          />
+            handleClick={() => {
+              // Por defecto, si no se especifica un tipo, abrir con tipo genérico
+              setOpenCreateTask(true);
+            }}
+            handleActionClick={(action) => {
+              // Capturar el tipo de tarea seleccionada desde la acción
+              setSelectedTaskType(action.type);
+            }}
+           />
+          */}
         </BaseFeaturePageLayout>
       )}
 
       {/* Create Task Drawer */}
       <CreateTask
         openCreateTask={openCreateTask}
+        selectedTaskType={selectedTaskType}
         handleCloseCreateTask={() => setOpenCreateTask(false)}
       />
 

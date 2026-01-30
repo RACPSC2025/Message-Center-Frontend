@@ -12,13 +12,23 @@ import {
   IconButton,
   Tooltip,
   Button,
+  Menu,
+  MenuItem,
+  ListItem,
+  ListItemAvatar,
+  Avatar,
+ ListItemIcon as MuiListItemIcon,
 } from '@mui/material';
-import { 
-  Sync as SyncIcon, 
+import {
+  Sync as SyncIcon,
   RadioButtonChecked as UniqueIcon,
   CheckCircleOutline as PermanentIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  DownloadDone,
+  Loop,
+  AssignmentReturned,
+  MoreVert,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,7 +38,7 @@ import { fetchListTaskNew } from '../../stores/tasks/fetchListTaskNewSlice';
 import { fetchLogtaskList } from '../../stores/tasks/fetchLogtaskListSlice';
 import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 
-const TasksListView = () => {
+const TasksListView = ({ onCreateTask }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   
@@ -38,6 +48,8 @@ const TasksListView = () => {
   const [logtasks, setLogtasks] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
 
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
@@ -92,6 +104,24 @@ const TasksListView = () => {
       case 'CÍCLICA':
       default: return <SyncIcon sx={iconStyle} />;
     }
+  };
+
+  // Funciones para manejar el menú desplegable
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Manejar la selección de tipo de tarea
+  const handleCreateTask = (taskType) => {
+    // Llama a la función pasada como prop para manejar la creación de tareas
+    if (onCreateTask) {
+      onCreateTask(taskType);
+    }
+    handleMenuClose();
   };
 
   // Cálculos para el Dashboard
@@ -254,33 +284,84 @@ const TasksListView = () => {
             </Box>
           </Box>
 
-          <Button 
-            variant="contained" 
-            sx={{ 
-              bgcolor: '#00cc76', 
-              '&:hover': { bgcolor: '#00b368' }, 
-              borderRadius: '8px', 
-              textTransform: 'none', 
+          <Button
+            variant="contained"
+            sx={{
+              bgcolor: '#00F57A',
+              '&:hover': { bgcolor: '#00cc76' },
+              borderRadius: '8px',
+              textTransform: 'none',
               fontWeight: 800,
               fontSize: '0.85rem',
               px: 3,
-              boxShadow: 'none'
+              boxShadow: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
             }}
+            onClick={handleMenuOpen}
+            endIcon={<MoreVert />}
+            aria-controls={openMenu ? 'task-creation-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={openMenu ? 'true' : undefined}
           >
             Crear tarea
           </Button>
+
+          <Menu
+            id="task-creation-menu"
+            anchorEl={anchorEl}
+            open={openMenu}
+            onClose={handleMenuClose}
+            onClick={handleMenuClose}
+            PaperProps={{
+              elevation: 0,
+              sx: {
+                overflow: 'visible',
+                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                mt: 1.5,
+                '& .MuiAvatar-root': {
+                  width: 32,
+                  height: 32,
+                  ml: -0.5,
+                  mr: 1,
+                },
+              },
+            }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem onClick={() => handleCreateTask('permanente')}>
+              <MuiListItemIcon>
+                <DownloadDone fontSize="small" />
+              </MuiListItemIcon>
+              <Typography>Añadir Tarea Permanente</Typography>
+            </MenuItem>
+            <MenuItem onClick={() => handleCreateTask('ciclica')}>
+              <MuiListItemIcon>
+                <Loop fontSize="small" />
+              </MuiListItemIcon>
+              <Typography>Añadir Tarea Cíclica</Typography>
+            </MenuItem>
+            <MenuItem onClick={() => handleCreateTask('unica')}>
+              <MuiListItemIcon>
+                <AssignmentReturned fontSize="small" />
+              </MuiListItemIcon>
+              <Typography>Añadir Tarea Única</Typography>
+            </MenuItem>
+          </Menu>
         </Box>
 
         {/* Contenido Scrollable: Dashboard + Tabla */}
         <Box sx={{ flex: 1, overflowY: 'auto', p: 4 }}>
           {/* Card de Cabecera (Dashboard) */}
           {selectedTask && (
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 3, 
-                mb: 4, 
-                borderRadius: 4, 
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                mb: 4,
+                borderRadius: 4,
                 border: '1px solid #edf2f4',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -289,57 +370,42 @@ const TasksListView = () => {
               }}
             >
               <Box sx={{ flex: 1 }}>
-                <Box display="flex" alignItems="center" gap={1.5} mb={0.5}>
-                  <Chip 
-                    label={stats.averageProgress === 100 ? "COMPLETADO" : "EN PROGRESO"} 
-                    size="small" 
-                    sx={{ 
-                      bgcolor: stats.averageProgress === 100 ? '#e8f5e9' : '#e3f2fd', 
-                      color: stats.averageProgress === 100 ? '#4caf50' : '#1a90ff', 
-                      fontWeight: 900, 
-                      fontSize: '0.6rem', 
-                      borderRadius: 1 
-                    }} 
-                  />
-                  <Typography variant="h5" sx={{ fontWeight: 900, color: '#263238', fontSize: '1.4rem' }}>
-                    {selectedTask.task_title}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" sx={{ color: '#78909c', fontSize: '0.9rem' }}>
-                  Resumen de ejecución para esta tarea. Visualice el estado general de todos sus ciclos y el progreso promedio.
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#263238', fontSize: '1.1rem' }}>
+                  {selectedTask.task_title}
                 </Typography>
               </Box>
 
-              <Box display="flex" alignItems="center" gap={5}>
-                <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                  <CircularProgress 
-                    variant="determinate" 
-                    value={stats.averageProgress} 
-                    size={65} 
-                    thickness={5} 
-                    sx={{ color: stats.averageProgress === 100 ? '#00f57a' : '#1a90ff' }} 
+              <Box display="flex" alignItems="center" gap={3}>
+                <Box sx={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <CircularProgress
+                    variant="determinate"
+                    value={stats.averageProgress}
+                    size={65}
+                    thickness={5}
+                    sx={{ color: stats.averageProgress === 100 ? '#00f57a' : '#1a90ff' }}
                   />
                   <Box sx={{ top: 0, left: 0, bottom: 0, right: 0, position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Typography variant="caption" sx={{ fontWeight: 900, fontSize: '0.8rem', color: '#263238' }}>
                       {stats.averageProgress}%
                     </Typography>
                   </Box>
-                </Box>
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px' }}>
-                  {[
-                    { label: 'Completado', color: '#00f57a', count: stats.completed },
-                    { label: 'En Progreso', color: '#1a90ff', count: stats.inProgress },
-                    { label: 'Vencido', color: '#fb3d61', count: stats.expired },
-                    { label: 'Abierto', color: '#fbc02d', count: stats.open }
-                  ].map((item) => (
-                    <Box key={item.label} display="flex" alignItems="center" gap={1}>
-                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
-                      <Typography sx={{ color: '#78909c', fontWeight: 700, fontSize: '0.75rem' }}>
-                        {item.label}: <b>{item.count}</b>
-                      </Typography>
-                    </Box>
-                  ))}
+                  {/* Estados de los ciclos en formato vertical */}
+                  <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start', width: '100%' }}>
+                    {[
+                      { label: 'Completado', color: '#00f57a', count: stats.completed },
+                      { label: 'En Progreso', color: '#1a90ff', count: stats.inProgress },
+                      { label: 'Vencido', color: '#fb3d61', count: stats.expired },
+                      { label: 'Abierto', color: '#fbc02d', count: stats.open }
+                    ].map((item) => (
+                      <Box key={item.label} display="flex" alignItems="center" gap={0.5}>
+                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: item.color }} />
+                        <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.65rem' }}>
+                          {item.label}: <b>{item.count}</b>
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
               </Box>
             </Paper>
