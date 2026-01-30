@@ -48,6 +48,10 @@ const TasksListView = ({ onCreateTask }) => {
   const [selectedLogtask, setSelectedLogtask] = useState(null);
   const [logtasks, setLogtasks] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 10;
+  const [currentCyclePage, setCurrentCyclePage] = useState(1);
+  const cyclesPerPage = 10;
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -153,7 +157,7 @@ const TasksListView = ({ onCreateTask }) => {
   }, [logtasks]);
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 40px)', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden', mt: 0.5, mb: 0.5 }}>
+    <Box sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
       
       {/* Sidebar Izquierda - Tareas (Mini Sidebar) */}
       <Box
@@ -190,46 +194,77 @@ const TasksListView = ({ onCreateTask }) => {
           {taskListLoading ? (
             <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
           ) : (
-            tasks.map((task) => {
-              const isSelected = selectedTask?.id === task.id;
-              return (
-                <Tooltip key={task.id} title={isCollapsed ? task.task_title : ""} placement="right">
-                  <ListItemButton
-                    selected={isSelected}
-                    onClick={() => handleSelectTask(task)}
-                    sx={{
-                      py: 0.8,
-                      px: 0,
-                      justifyContent: 'center',
-                      borderLeft: isSelected ? '4px solid #1a90ff' : '4px solid transparent',
-                      bgcolor: isSelected ? '#f5f9ff !important' : 'transparent',
-                      '&:hover': { bgcolor: '#f8fbfc' },
-                      minHeight: '45px'
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 40, justifyContent: 'center' }}>
-                      {getTaskIcon(task.task_type, isSelected)}
-                    </ListItemIcon>
-                    {!isCollapsed && (
-                      <ListItemText
-                        primary={
-                          <Typography sx={{ fontWeight: 700, color: isSelected ? '#1a90ff' : '#263238', fontSize: '0.8rem', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {task.task_title}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography sx={{ textTransform: 'uppercase', fontSize: '0.55rem', fontWeight: 800, color: isSelected ? '#1a90ff80' : '#b0bec5', mt: 0.2 }}>
-                            {task.task_type || 'CÍCLICA'}
-                          </Typography>
-                        }
-                      />
-                    )}
-                  </ListItemButton>
-                </Tooltip>
-              );
-            })
+            (() => {
+              const startIndex = (currentPage - 1) * tasksPerPage;
+              const endIndex = startIndex + tasksPerPage;
+              const paginatedTasks = tasks.slice(startIndex, endIndex);
+              
+              return paginatedTasks.map((task) => {
+                const isSelected = selectedTask?.id === task.id;
+                return (
+                  <Tooltip key={task.id} title={isCollapsed ? task.task_title : ""} placement="right">
+                    <ListItemButton
+                      selected={isSelected}
+                      onClick={() => handleSelectTask(task)}
+                      sx={{
+                        py: 0.5,
+                        px: 0,
+                        justifyContent: 'center',
+                        borderLeft: isSelected ? '4px solid #1a90ff' : '4px solid transparent',
+                        bgcolor: isSelected ? '#f5f9ff !important' : 'transparent',
+                        '&:hover': { bgcolor: '#f8fbfc' },
+                        minHeight: '36px'
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 40, justifyContent: 'center' }}>
+                        {getTaskIcon(task.task_type, isSelected)}
+                      </ListItemIcon>
+                      {!isCollapsed && (
+                        <ListItemText
+                          primary={
+                            <Typography sx={{ fontWeight: 700, color: isSelected ? '#1a90ff' : '#263238', fontSize: '0.75rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {task.task_title}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography sx={{ textTransform: 'uppercase', fontSize: '0.5rem', fontWeight: 800, color: isSelected ? '#1a90ff80' : '#b0bec5', mt: 0.1 }}>
+                              {task.task_type || 'CÍCLICA'}
+                            </Typography>
+                          }
+                        />
+                      )}
+                    </ListItemButton>
+                  </Tooltip>
+                );
+              });
+            })()
           )}
         </List>
+        
+        {/* Paginación */}
+        {!isCollapsed && tasks.length > tasksPerPage && (
+          <Box sx={{ p: 1, borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5 }}>
+            <IconButton 
+              size="small" 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              sx={{ width: 24, height: 24 }}
+            >
+              <ChevronLeftIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+            <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#455a64', minWidth: 60, textAlign: 'center' }}>
+              {currentPage} / {Math.ceil(tasks.length / tasksPerPage)}
+            </Typography>
+            <IconButton 
+              size="small" 
+              onClick={() => setCurrentPage(Math.min(Math.ceil(tasks.length / tasksPerPage), currentPage + 1))}
+              disabled={currentPage === Math.ceil(tasks.length / tasksPerPage)}
+              sx={{ width: 24, height: 24 }}
+            >
+              <ChevronRightIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
+        )}
       </Box>
 
       {/* Panel Central con Filtro Superior */}
@@ -441,7 +476,12 @@ const TasksListView = ({ onCreateTask }) => {
                     setSelectedLogtask(null);
                   }
 
-                  return filtered.map((logtask, index) => (
+                  // Pagination logic
+                  const startIndex = (currentCyclePage - 1) * cyclesPerPage;
+                  const endIndex = startIndex + cyclesPerPage;
+                  const paginatedCycles = filtered.slice(startIndex, endIndex);
+
+                  return paginatedCycles.map((logtask, index) => (
                     <TaskCycleRow
                       key={logtask.id}
                       index={index}
@@ -461,6 +501,41 @@ const TasksListView = ({ onCreateTask }) => {
                 })()
               )}
             </Box>
+            
+            {/* Paginación de Ciclos */}
+            {!logtaskListLoading && (() => {
+              const filtered = logtasks.filter(lt => {
+                if (!selectedStatus || selectedStatus === -1 || selectedStatus === 0) return true;
+                return String(lt.logtask_status) === String(selectedStatus);
+              });
+              
+              const totalPages = Math.max(1, Math.ceil(filtered.length / cyclesPerPage));
+              const isOnlyOnePage = filtered.length <= cyclesPerPage;
+              
+              return (
+                <Box sx={{ p: 1, borderTop: '1px solid #edf2f4', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, bgcolor: 'white' }}>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => setCurrentCyclePage(Math.max(1, currentCyclePage - 1))}
+                    disabled={currentCyclePage === 1 || isOnlyOnePage}
+                    sx={{ width: 24, height: 24 }}
+                  >
+                    <ChevronLeftIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#455a64', minWidth: 60, textAlign: 'center' }}>
+                    {currentCyclePage} / {totalPages}
+                  </Typography>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => setCurrentCyclePage(Math.min(totalPages, currentCyclePage + 1))}
+                    disabled={currentCyclePage === totalPages || isOnlyOnePage}
+                    sx={{ width: 24, height: 24 }}
+                  >
+                    <ChevronRightIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Box>
+              );
+            })()}
           </Paper>
         </Box>
       </Box>
@@ -491,18 +566,11 @@ const TasksListView = ({ onCreateTask }) => {
             <ChevronLeftIcon />
           </IconButton>
         ) : (
-          <>
-            <TaskDetailsSidebar
-              selectedTask={selectedLogtask || selectedTask}
-              statuses={listTaskStatus}
-              onCollapse={() => setIsRightSidebarCollapsed(true)}
-            />
-            <Box sx={{ p: 2, textAlign: 'center', borderTop: '1px solid #f0f0f0', bgcolor: 'white', position: 'sticky', bottom: 0 }}>
-              <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.7rem' }}>
-                Powered by AMATIA Sofactia
-              </Typography>
-            </Box>
-          </>
+          <TaskDetailsSidebar
+            selectedTask={selectedLogtask || selectedTask}
+            statuses={listTaskStatus}
+            onCollapse={() => setIsRightSidebarCollapsed(true)}
+          />
         )}
       </Box>
     </Box>

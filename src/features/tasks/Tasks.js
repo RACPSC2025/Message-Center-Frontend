@@ -623,8 +623,8 @@ export default function Component() {
           </div>
         </Box>
       ) : (
-        <BaseFeaturePageLayout showFooter={false}>
-          <Box className="px-0 py-0 w-full min-h-full flex-grow h-[calc(100vh-12rem)]">
+        <BaseFeaturePageLayout showFooter={true}>
+          <Box className="px-0 py-0 w-full min-h-full flex-grow">
             <Box
               ref={calendarContainerRef}
               sx={{
