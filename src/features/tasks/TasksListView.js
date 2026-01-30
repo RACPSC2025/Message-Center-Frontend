@@ -29,6 +29,7 @@ import {
   Loop,
   AssignmentReturned,
   MoreVert,
+  DeleteOutline,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -309,14 +310,16 @@ const TasksListView = ({ onCreateTask }) => {
                   </Tooltip>
                 );
               })}
-              {selectedStatus !== -1 && selectedStatus !== 0 && (
-                <Button 
-                  size="small" 
-                  onClick={() => dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: -1 } }))}
-                  sx={{ fontSize: '0.65rem', color: '#90a4ae', fontWeight: 800, minWidth: 'auto', p: 0, ml: 1 }}
-                >
-                  (LIMPIAR)
-                </Button>
+              {selectedStatus && selectedStatus !== -1 && selectedStatus !== 0 && (
+                <Tooltip title={t('Limpiar filtro')}>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: -1 } }))}
+                    sx={{ color: '#90a4ae', ml: 1, p: 0.5 }}
+                  >
+                    <DeleteOutline sx={{ fontSize: '1.2rem' }} />
+                  </IconButton>
+                </Tooltip>
               )}
             </Box>
           </Box>
