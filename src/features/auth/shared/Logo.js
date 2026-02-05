@@ -1,17 +1,12 @@
 import React from 'react';
+import amatiaLogo from '../../../assets/images/amatia_logo.png';
 
 export const Logo = ({ variant = 'dark', size = 'md', withAppSuffix = true }) => {
-  // Colors based on variant
-  const iconColor = variant === 'light' ? '#2dd4bf' : '#0d9488'; // teal-400 : teal-600
-  const textColor = variant === 'light' ? 'text-white' : 'text-slate-600';
-  const appTextColor = variant === 'light' ? 'text-slate-300' : 'text-slate-400';
-  const dividerColor = variant === 'light' ? 'bg-teal-400' : 'bg-teal-500';
-
-  // Sizing mappings
+  // Sizing mappings (updated for image)
   const sizePx = {
-    sm: 24,
-    md: 42,
-    lg: 64
+    sm: 32,
+    md: 48,
+    lg: 80
   };
 
   const fontSize = {
@@ -26,33 +21,21 @@ export const Logo = ({ variant = 'dark', size = 'md', withAppSuffix = true }) =>
     lg: { width: '4px', height: '48px' }
   };
 
+  const textColor = variant === 'light' ? 'text-white' : 'text-slate-600';
+  const appTextColor = variant === 'light' ? 'text-slate-300' : 'text-slate-400';
+  const dividerColor = variant === 'light' ? 'bg-teal-400' : 'bg-teal-500';
+
   return (
     <div className="flex items-center gap-3 select-none">
-      {/* Icon - Custom SVG matching the Amatia pentagon shutter */}
-      <svg 
-        width={sizePx[size]} 
-        height={sizePx[size]} 
-        viewBox="0 0 100 100" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-        className="flex-shrink-0"
-      >
-        {/* Outer Pentagon with Curved Corners */}
-        <path 
-          d="M50 5 L93 36 L77 88 L23 88 L7 36 Z" 
-          stroke={iconColor} 
-          strokeWidth="5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-        
-        {/* Inner Shutter Spirals - Abstracted from image */}
-        <path d="M50 5 Q65 45 93 36" stroke={iconColor} strokeWidth="4" strokeLinecap="round" />
-        <path d="M93 36 Q60 60 77 88" stroke={iconColor} strokeWidth="4" strokeLinecap="round" />
-        <path d="M77 88 Q35 70 23 88" stroke={iconColor} strokeWidth="4" strokeLinecap="round" />
-        <path d="M23 88 Q30 40 7 36" stroke={iconColor} strokeWidth="4" strokeLinecap="round" />
-        <path d="M7 36 Q45 35 50 5" stroke={iconColor} strokeWidth="4" strokeLinecap="round" />
-      </svg>
+      {/* Icon - Image amatia_logo.png */}
+      <img
+        src={amatiaLogo}
+        alt="Amatia Logo"
+        width={sizePx[size]}
+        height={sizePx[size]}
+        className="object-contain"
+        style={{ width: sizePx[size], height: sizePx[size] }}
+      />
       
       {/* Text Group */}
       <div className={`flex items-center leading-none ${textColor} tracking-tight`}>

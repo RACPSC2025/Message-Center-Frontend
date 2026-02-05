@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Google reCAPTCHA Site Key (usar key de prueba para desarrollo)
-const RECAPTCHA_SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+// Google reCAPTCHA Site Key
+const RECAPTCHA_SITE_KEY = '6LewFFMsAAAAAIms9CtM7kkW0NJkY_JOpvj9IxSw';
 
 export const useRecaptcha = (step, onVerify, onExpire) => {
   const containerRef = useRef(null);
