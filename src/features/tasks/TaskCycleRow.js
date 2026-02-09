@@ -101,21 +101,21 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         }}
       >
         {/* ✅ FECHA DE INICIO */}
-        <Box flex="0 0 100px" textAlign="left">
+        <Box flex="0 0 150px" textAlign="center">
           <Typography sx={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
             {startDate}
           </Typography>
         </Box>
 
         {/* ✅ FECHA DE CIERRE PROGRAMADO */}
-        <Box flex="0 0 100px" textAlign="left">
+        <Box flex="0 0 140px" textAlign="center">
           <Typography sx={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
             {endDate}
           </Typography>
         </Box>
 
         {/* ✅ FECHA DE CIERRE REAL */}
-        <Box flex="0 0 100px" textAlign="left">
+        <Box flex="0 0 100px" textAlign="center">
           <Typography sx={{
             fontSize: '0.8rem',
             color: realClosingDate === '-' ? '#90a4ae' : '#263238',
@@ -146,7 +146,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         </Box>
 
         {/* ✅ ACCIONES */}
-        <Box flex="0 0 120px" textAlign="center">
+        <Box flex="1 1 80px" textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
             {/* ✅ BOTÓN DE ADJUNTAR ARCHIVO */}
             <Tooltip title="Adjuntar archivo">
@@ -154,7 +154,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                 size="small"
                 onClick={handleAttachFileClick}
                 sx={{
-                  color: '#1a90ff',
+                  color: '#838383',
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
@@ -167,7 +167,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               <IconButton
                 size="small"
                 sx={{
-                  color: '#1a90ff',
+                  color: '#838383',
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
@@ -181,7 +181,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                 size="small"
                 onClick={handleDeleteClick}
                 sx={{
-                  color: '#fb3d61',
+                  color: '#838383',
                   '&:hover': { bgcolor: '#ffebee' }
                 }}
               >
@@ -192,7 +192,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         </Box>
 
         {/* ✅ PROGRESO */}
-        <Box flex="0 0 120px" textAlign="center">
+        {/* <Box flex="0 0 120px" textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
             <Box sx={{ flex: 1, maxWidth: '60px' }}>
               <LinearProgress
@@ -218,7 +218,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               {progress}%
             </Typography>
           </Box>
-        </Box>
+        </Box> */}
       </Box>
 
       {/* ✅ DIALOG DE SUBIDA DE ARCHIVOS */}

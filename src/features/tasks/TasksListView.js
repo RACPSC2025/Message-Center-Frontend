@@ -499,12 +499,11 @@ const TasksListView = ({ onCreateTask }) => {
           {/* Tabla de Ciclos */}
           <Paper elevation={0} sx={{ border: '1px solid #edf2f4', borderRadius: 3, overflow: 'hidden', bgcolor: 'white', mt: 0.5 }}>
             <Box sx={{ display: 'flex', p: '8px 12px', bgcolor: 'white', borderBottom: '1px solid #edf2f4' }}>
-              <Box flex="0 0 100px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>INICIO</Typography></Box>
-              <Box flex="0 0 100px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE PROG.</Typography></Box>
-              <Box flex="0 0 100px"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE REAL</Typography></Box>
+              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>INICIO</Typography></Box>
+              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE PROG.</Typography></Box>
+              <Box flex="0 0 100px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE REAL</Typography></Box>
               <Box flex="0 0 80px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>OPORT.</Typography></Box>
-              <Box flex="0 0 120px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>ACCIONES</Typography></Box>
-              <Box flex="0 0 120px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>PROGRESO</Typography></Box>
+              <Box flex="1 1 80px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>ACCIONES</Typography></Box>
             </Box>
 
             <Box>
