@@ -146,7 +146,7 @@ const TasksListView = ({ onCreateTask }) => {
       'PERMANENTE': '#ff9800',
       'CÍCLICA': '#90a4ae'
     };
-    const iconColor = isSelected ? '#1a90ff' : (typeColors[type?.toUpperCase()] || '#90a4ae');
+    const iconColor = isSelected ? '#a4a4a4' : (typeColors[type?.toUpperCase()] || '#90a4ae');
     const iconStyle = { fontSize: 24, color: iconColor, transition: 'color 0.2s ease' };
 
     switch (type?.toUpperCase()) {
@@ -263,7 +263,7 @@ const TasksListView = ({ onCreateTask }) => {
                         py: 0.5,
                         px: 0,
                         justifyContent: 'center',
-                        borderLeft: isSelected ? '4px solid #1a90ff' : '4px solid transparent',
+                        borderLeft: isSelected ? '4px solid #a4a4a4' : '4px solid transparent',
                         bgcolor: isSelected ? '#f5f9ff !important' : 'transparent',
                         '&:hover': { bgcolor: '#f8fbfc' },
                         minHeight: '36px'
@@ -275,12 +275,12 @@ const TasksListView = ({ onCreateTask }) => {
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Typography sx={{ fontWeight: 700, color: isSelected ? '#1a90ff' : '#263238', fontSize: '0.75rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <Typography sx={{ fontWeight: 700, color: isSelected ? '#5b5b5b' : '#263238', fontSize: '0.75rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {task.task_title}
                             </Typography>
                           }
                           secondary={
-                            <Typography sx={{ textTransform: 'uppercase', fontSize: '0.5rem', fontWeight: 800, color: isSelected ? '#1a90ff80' : '#b0bec5', mt: 0.1 }}>
+                            <Typography sx={{ textTransform: 'uppercase', fontSize: '0.5rem', fontWeight: 800, color: isSelected ? '#5b5b5b' : '#b0bec5', mt: 0.1 }}>
                               {task.task_type || 'CÍCLICA'}
                             </Typography>
                           }
