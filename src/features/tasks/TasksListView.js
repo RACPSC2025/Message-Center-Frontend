@@ -65,6 +65,7 @@ const TasksListView = ({ onCreateTask }) => {
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
+  const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
 
   /* 🎭 Data Mock - Bloque preservado (Migración: 05/02/2026)
   useEffect(() => {
@@ -119,6 +120,28 @@ const TasksListView = ({ onCreateTask }) => {
       console.error("❌ Error al cargar tareas:", error);
     });
   }, [dispatch]);
+
+  // Filtrar tareas localmente por keywords
+  const filteredTasks = useMemo(() => {
+    if (!keywordsFilter || keywordsFilter.trim() === '') {
+      return tasks;
+    }
+
+    const searchTerm = keywordsFilter.toLowerCase().trim();
+    
+    return tasks.filter(task => {
+      const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
+      const descMatch = task.task_description?.toLowerCase().includes(searchTerm);
+      const tagsMatch = Array.isArray(task.tags) && task.tags.some(tag => 
+        typeof tag === 'string' && tag.toLowerCase().includes(searchTerm)
+      );
+      const responsiblesMatch = Array.isArray(task.responsibles) && task.responsibles.some(resp => 
+        resp.name && typeof resp.name === 'string' && resp.name.toLowerCase().includes(searchTerm)
+      );
+      
+      return titleMatch || descMatch || tagsMatch || responsiblesMatch;
+    });
+  }, [tasks, keywordsFilter]);
 
   const handleSelectTask = (task) => {
     setSelectedTask(task);
@@ -232,7 +255,7 @@ const TasksListView = ({ onCreateTask }) => {
                 TAREAS
               </Typography>
               <Box sx={{ bgcolor: '#eceff1', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#455a64' }}>{tasks.length}</Typography>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#455a64' }}>{filteredTasks.length}</Typography>
               </Box>
             </Box>
           )}
@@ -250,7 +273,7 @@ const TasksListView = ({ onCreateTask }) => {
             (() => {
               const startIndex = (currentPage - 1) * tasksPerPage;
               const endIndex = startIndex + tasksPerPage;
-              const paginatedTasks = tasks.slice(startIndex, endIndex);
+              const paginatedTasks = filteredTasks.slice(startIndex, endIndex);
 
               return paginatedTasks.map((task) => {
                 const isSelected = selectedTask?.id === task.id;
@@ -306,12 +329,12 @@ const TasksListView = ({ onCreateTask }) => {
               <ChevronLeftIcon sx={{ fontSize: 16 }} />
             </IconButton>
             <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#455a64', minWidth: 60, textAlign: 'center' }}>
-              {currentPage} / {Math.ceil(tasks.length / tasksPerPage)}
+              {currentPage} / {Math.ceil(filteredTasks.length / tasksPerPage)}
             </Typography>
             <IconButton
               size="small"
-              onClick={() => setCurrentPage(Math.min(Math.ceil(tasks.length / tasksPerPage), currentPage + 1))}
-              disabled={currentPage === Math.ceil(tasks.length / tasksPerPage)}
+              onClick={() => setCurrentPage(Math.min(Math.ceil(filteredTasks.length / tasksPerPage), currentPage + 1))}
+              disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
               sx={{ width: 24, height: 24 }}
             >
               <ChevronRightIcon sx={{ fontSize: 16 }} />
@@ -322,6 +345,14 @@ const TasksListView = ({ onCreateTask }) => {
 
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        {/* Contador de resultados filtrados */}
+        {keywordsFilter && (
+          <Box sx={{ px: 2, py: 1, bgcolor: '#f8fbfc', borderBottom: '1px solid #e0e6ed' }}>
+            <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.75rem' }}>
+              {filteredTasks.length} de {tasks.length} tareas encontradas
+            </Typography>
+          </Box>
+        )}
         {/* Barra de Filtros Contextual */}
         <Box sx={{
           display: 'flex',
