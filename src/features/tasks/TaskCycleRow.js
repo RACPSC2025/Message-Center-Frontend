@@ -5,6 +5,7 @@ import { FaComment } from 'react-icons/fa';
 import FileUploadDialog from '../../components/FileUploadDialog';
 
 const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
+  console.log("mostrando desdede TASKCYCLE", task)
   
   // ✅ ESTADO PARA DIALOG DE ARCHIVOS
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -158,7 +159,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
-                <AttachFileIcon fontSize="small" />
+                <AttachFileIcon fontSize="small" /> 
               </IconButton>
             </Tooltip>
 
@@ -167,11 +168,13 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               <IconButton
                 size="small"
                 sx={{
+                  display: 'flex',
+                  gap: 0.5,
                   color: '#838383',
-                  '&:hover': { bgcolor: '#e3f2fd' }
+                  '&:hover': { bgcolor: '#e3f2fd' },
                 }}
               >
-                <FaComment style={{ fontSize: '1rem' }} />
+                <FaComment style={{ fontSize: '1rem' }} /> { task.comments.length > 0 ? task.comments.length : "" }
               </IconButton>
             </Tooltip>
 

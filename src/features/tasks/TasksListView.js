@@ -121,7 +121,7 @@ const TasksListView = ({ onCreateTask }) => {
     });
   }, [dispatch]);
 
-  // Filtrar tareas localmente por keywords
+  // Filtrar tareas por keywords
   const filteredTasks = useMemo(() => {
     if (!keywordsFilter || keywordsFilter.trim() === '') {
       return tasks;
