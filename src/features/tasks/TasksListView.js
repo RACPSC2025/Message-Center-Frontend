@@ -411,7 +411,7 @@ const TasksListView = ({ onCreateTask }) => {
             </Box>
           </Box>
 
-          <Button
+          {/* <Button
             variant="contained"
             sx={{
               bgcolor: '#D9FDD3',  // Color estándar
@@ -434,7 +434,7 @@ const TasksListView = ({ onCreateTask }) => {
             aria-expanded={openMenu ? 'true' : undefined}
           >
             Crear tarea
-          </Button>
+          </Button> */}
 
           <Menu
             id="task-creation-menu"
