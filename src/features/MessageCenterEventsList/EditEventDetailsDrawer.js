@@ -1,4 +1,4 @@
-import { AccessTime, InsertDriveFile, MoreVert, TaskAlt } from '@mui/icons-material';
+import { AccessTime, ChatBubbleOutline, InsertDriveFile, MoreVert, TaskAlt } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import {
@@ -68,6 +68,46 @@ function CustomTabPanel(props) {
     >
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
+  );
+}
+
+// TODO: Preguntar, este componente fue creado de manera provisional
+function EmptyState({ title, subtitle }) {
+  return (
+    <Box
+      sx={{
+        border: '1px dashed #e0e0e0',
+        borderRadius: 2,
+        p: 6,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        gap: 1.25,
+        color: '#607d8b'
+      }}
+    >
+      <Box
+        sx={{
+          width: 56,
+          height: 56,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: '#eafcfc'
+        }}
+      >
+        <ChatBubbleOutline sx={{ fontSize: 30, color: '#71e9ec' }} />
+      </Box>
+      <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: '#263238', mt: 0.5 }}>
+        {title}
+      </Typography>
+      <Typography sx={{ fontWeight: 500, fontSize: '0.9rem', maxWidth: 420 }}>
+        {subtitle}
+      </Typography>
+    </Box>
   );
 }
 
@@ -866,7 +906,8 @@ function EditEventDetailsDrawer({
                   + {t('add_comment')}
                 </Button> */}
               </Box>
-              {isLoading === 'loaded' ? (
+              {/* // TODO: Aquí antes era === loaded: cambiar cuando se realice la API */}
+              {isLoading !== 'loaded' ? (
                 logtaskExecutedComments.length > 0 ? (
                   logtaskExecutedComments.map((comment, index) => {
                     console.log('Adjuntos del comentario:', comment.attachment); // <-- test
@@ -932,7 +973,10 @@ function EditEventDetailsDrawer({
                 ) : isLoading === 'loading' ? (
                   <div>{t('loading')}</div>
                 ) : (
-                  <div>{t('no_comments_found')}</div>
+                  <EmptyState
+                    title="Aún no hay comentarios"
+                    subtitle="Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo."
+                  />
                 )
               ) : (
                 <div>{t('loading')}</div>
@@ -950,7 +994,9 @@ function EditEventDetailsDrawer({
                   + {t('add_comment')}
                 </Button> */}
               </Box>
-              {isLoading === 'loaded' ? (
+
+                {/* TODO: Aquí antes era === loaded: cambiar cuando se realice la API*/}            
+                {isLoading !== 'loaded' ? (
                 logtaskRevisorComments.length > 0 ? (
                   logtaskRevisorComments.map((comment, index) => {
                     return (
@@ -1002,7 +1048,10 @@ function EditEventDetailsDrawer({
                 ) : isLoading === 'loading' ? (
                   <div>{t('loading')}</div>
                 ) : (
-                  <div>{t('no_comments_found')}</div>
+                  <EmptyState
+                    title="Aún no hay comentarios"
+                    subtitle="Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo."
+                  />
                 )
               ) : (
                 <div>{t('loading')}</div>
