@@ -19,6 +19,7 @@ import {
   Avatar,
  ListItemIcon as MuiListItemIcon,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import {
   Sync as SyncIcon,
   RadioButtonChecked as UniqueIcon,
@@ -44,6 +45,7 @@ import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 const TasksListView = ({ onCreateTask }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const theme = useTheme();
 
   // States
   const [selectedTask, setSelectedTask] = useState(null);
@@ -58,6 +60,13 @@ const TasksListView = ({ onCreateTask }) => {
   const [tasks, setTasks] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
+
+  const TASK_STATUS_COLORS = useMemo(() => ({
+    '1': theme.palette.success.main, // Completado
+    '2': theme.palette.info.main, // En progreso
+    '3': theme.palette.warning.main, // Abierto
+    '4': theme.palette.error.main // Vencido
+  }), [theme]);
 
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
@@ -157,6 +166,50 @@ const TasksListView = ({ onCreateTask }) => {
     }
   };
 
+  const getTaskPriorityStatus = (task) => {
+    if (!task) return null;
+
+    const normalizeStatus = (value) => {
+      const status = String(value || '').trim().toLowerCase();
+      if (!status) return null;
+
+      if (status === '4' || status === 'vencido' || status === 'expired' || status === 'delayed') return '4';
+      if (status === '3' || status === 'abierto' || status === 'open' || status === 'pending') return '3';
+      if (
+        status === '2'
+        || status === 'en progreso'
+        || status === 'in progress'
+        || status === 'in_progress'
+        || status === 'under_progress'
+      ) return '2';
+      if (status === '1' || status === 'completado' || status === 'completed' || status === 'closed') return '1';
+
+      return null;
+    };
+
+    const logtaskStatuses = Array.isArray(task.logtask_list)
+      ? task.logtask_list
+        .map((item) => normalizeStatus(item?.logtask_status || item?.task_status || item?.status))
+        .filter(Boolean)
+      : [];
+
+    const statuses = logtaskStatuses.length > 0
+      ? logtaskStatuses
+      : [normalizeStatus(task.task_status || task.status)].filter(Boolean);
+
+    if (statuses.includes('4')) return '4'; // Vencido
+    if (statuses.includes('3')) return '3'; // Abierto
+    if (statuses.includes('2')) return '2'; // En progreso
+    if (statuses.includes('1')) return '1'; // Completado
+    return null; // Sin color
+  };
+
+  const getTaskListItemColor = (task) => {
+    const priorityStatus = getTaskPriorityStatus(task);
+    if (!priorityStatus || !TASK_STATUS_COLORS[priorityStatus]) return 'transparent';
+    return TASK_STATUS_COLORS[priorityStatus];
+  };
+
   // Funciones para manejar el menú desplegable
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -254,6 +307,14 @@ const TasksListView = ({ onCreateTask }) => {
 
               return paginatedTasks.map((task) => {
                 const isSelected = selectedTask?.id === task.id;
+                const itemStatusColor = getTaskListItemColor(task);
+                const hasStatusColor = itemStatusColor !== 'transparent';
+                const selectedBgColor = hasStatusColor
+                  ? alpha(itemStatusColor, 0.12)
+                  : alpha(theme.palette.primary.main, 0.08);
+                const hoverBgColor = hasStatusColor
+                  ? alpha(itemStatusColor, isSelected ? 0.18 : 0.08)
+                  : alpha(theme.palette.primary.main, isSelected ? 0.12 : 0.04);
                 return (
                   <Tooltip key={task.id} title={isCollapsed ? task.task_title : ""} placement="right">
                     <ListItemButton
@@ -263,9 +324,9 @@ const TasksListView = ({ onCreateTask }) => {
                         py: 0.5,
                         px: 0,
                         justifyContent: 'center',
-                        borderLeft: isSelected ? '4px solid #a4a4a4' : '4px solid transparent',
-                        bgcolor: isSelected ? '#f5f9ff !important' : 'transparent',
-                        '&:hover': { bgcolor: '#f8fbfc' },
+                        borderLeft: `4px solid ${itemStatusColor}`,
+                        bgcolor: isSelected ? `${selectedBgColor} !important` : 'transparent',
+                        '&:hover': { bgcolor: hoverBgColor },
                         minHeight: '36px'
                       }}
                     >
