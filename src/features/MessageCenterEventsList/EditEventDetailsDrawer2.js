@@ -1,4 +1,4 @@
-import { AccessTime, ChatBubbleOutline, InsertDriveFile, MoreVert, TaskAlt } from '@mui/icons-material';
+import { AccessTime, InsertDriveFile, MoreVert, TaskAlt } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import {
@@ -68,46 +68,6 @@ function CustomTabPanel(props) {
     >
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
-  );
-}
-
-// TODO: Preguntar, este componente fue creado de manera provisional
-function EmptyState({ title, subtitle }) {
-  return (
-    <Box
-      sx={{
-        border: '1px dashed #e0e0e0',
-        borderRadius: 2,
-        p: 6,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        gap: 1.25,
-        color: '#607d8b'
-      }}
-    >
-      <Box
-        sx={{
-          width: 56,
-          height: 56,
-          borderRadius: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#eafcfc'
-        }}
-      >
-        <ChatBubbleOutline sx={{ fontSize: 30, color: '#71e9ec' }} />
-      </Box>
-      <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: '#263238', mt: 0.5 }}>
-        {title}
-      </Typography>
-      <Typography sx={{ fontWeight: 500, fontSize: '0.9rem', maxWidth: 420 }}>
-        {subtitle}
-      </Typography>
-    </Box>
   );
 }
 
@@ -492,19 +452,17 @@ function EditEventDetailsDrawer({
     // fetchLogtaskComments(logTaskDetails.id);
   }, []);
 
-  // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments/{id}
-
   useEffect(() => {
-    console.log('LOG TASK DETAILS MMMMM???', logTaskDetails);
     if (logTaskDetails.length === 0) return;
-    fetchLogtaskComments(logTaskDetails.id);
+    console.log('logTaskDetails', logTaskDetails);
     setIsLoading('loading');
     setLogtaskExecutedComments([]);
     setLogtaskRevisorComments([]);
+    fetchLogtaskComments(logTaskDetails.id);
   }, [logTaskDetails]);
 
   const handleTabChange = (event, newValue) => {
-    const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
+    const validTabs = ['legalMatrix', 'events', 'actions'];
     if (validTabs.includes(newValue)) {
       setTabValue(newValue);
     }
@@ -676,95 +634,6 @@ function EditEventDetailsDrawer({
     }
   };
 
-  // crear nuevo comentario handleSubmitCommentFromTab
-  const handleSubmitCommentFromTab = async () => {
-    if (!!!addCommentForm?.comment?.trim() || !(addCommentForm?.type > 0)) {
-      setErrorCommentForm(true);
-      return;
-    }
-
-    setErrorCommentForm(false);
-
-    const comment_type = addCommentForm.type === 1 ? 'executed' : 'revisor';
-
-    try {
-      const formData = new FormData();
-      
-      // Datos del comentario
-      formData.append('comment', addCommentForm.comment);
-      formData.append('sharepoint_link', addCommentForm.sharepoint_link || '');
-      formData.append('logtask_id', logTaskDetails.id);
-      formData.append('comment_type', comment_type);
-      formData.append('user_id', userData.id_administradores);
-      formData.append('user_name', userData.fullname);
-      
-      // ========== Datos para dashboard_message ==========
-      formData.append('module_string', 'tasks');
-      formData.append('module_table', 'logtask_comments');
-      formData.append('date_message', new Date().toISOString().split('T')[0]);
-      formData.append('created', new Date().toISOString().slice(0, 19).replace('T', ' '));
-      
-      if (logTaskDetails?.end_date) {
-        formData.append('due_date', logTaskDetails.end_date);
-      }
-      
-      // Mensajes en español
-      formData.append('employee_message_es', `Nuevo comentario colocado para la tarea #${logTaskDetails.task_id || ''}`);
-      formData.append('subject_message_es', `${userData.fullname || 'Usuario'} ha puesto comentario para ${logTaskDetails.task_title || 'la tarea'} # ${logTaskDetails.task_id || ''}`);
-      formData.append('text_message_es', addCommentForm.comment.substring(0, 255));
-      formData.append('long_text_message_es', ` ${addCommentForm.comment}`);
-      
-      // Mensajes en inglés
-      formData.append('employee_message_en', `New comment placed for task #${logTaskDetails.task_id || ''}`);
-      formData.append('subject_message_en', `${userData.fullname || 'User'} has put comment for ${logTaskDetails.task_title || 'the task'} # ${logTaskDetails.task_id || ''}`);
-      formData.append('text_message_en', addCommentForm.comment.substring(0, 255));
-      formData.append('long_text_message_en', ` ${addCommentForm.comment}`);
-      
-      // 🔹 Solo enviar user_ids (los nombres se obtienen en el backend)
-      formData.append('user_ids', '1'); // Tus IDs hardcodeados
-      
-      // 🔹 Solo enviar who_sent_id (nombre y email se obtienen en el backend)
-      formData.append('who_sent_id', userData.id_administradores);
-      
-      // Estado y otros campos
-      formData.append('status', 'pending');
-      formData.append('created_by', userData.id_administradores);
-      
-      const response = await axiosInstance.post(
-        'tasklist_api/add_logtask_comments_amatia_express', 
-        formData
-      );
-      
-      if (response.data.status) {
-        showSuccessMsg(t('comment_created_successfully'));
-        setAddCommentForm({});
-        setLogtaskExecutedComments([]);
-        setLogtaskRevisorComments([]);
-        fetchLogtaskComments(logTaskDetails.id);
-        setTabValue(addCommentForm.type === 1 ? 'comentarios' : 'seguimientos');
-        
-        if (onCommentAdded) {
-          onCommentAdded();
-        }
-
-        // 🔹 Disparar evento global para actualizar contador de mensajes no leídos
-        //window.dispatchEvent(new CustomEvent('dashboard-message-created'));
-        
-      } else {
-        showErrorMsg(t('could_not_create_comment'));
-      }
-    } catch (error) {
-      console.error('Error posting comment: ', error);
-      showErrorMsg(t('could_not_create_comment'));
-    }
-  };
-
-  const handleCancelCommentFromTab = () => {
-    setAddCommentForm({});
-    setErrorCommentForm(false);
-    setTabValue('comentarios');
-  };
-
   const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -868,7 +737,7 @@ function EditEventDetailsDrawer({
                   <Box display="flex" gap={1} alignItems="center">
                     <AccessTime />
                     <Typography variant="p">
-                      {logTaskDetails.start_date} -1 {logTaskDetails.finish_date}
+                      {logTaskDetails.start_date} - {logTaskDetails.finish_date}
                     </Typography>
                   </Box>
                 </Tooltip>
@@ -890,9 +759,9 @@ function EditEventDetailsDrawer({
                 textColor="inherit"
                 variant="fullWidth"
               >
-                <Tab label={t('comments_executor')} value="comentarios" />
-                <Tab label={t('followup_reviewer')} value="seguimientos" />
-                <Tab label={t('crear comentarios')} value="crear_comentario" />
+                <Tab label={t('comments executor')} value="comentarios" />
+                <Tab label={t('followup reviewer')} value="seguimientos" />
+                <Tab label={t('create comment')} value="seguimientos" />
               </Tabs>
             </Box>
             <CustomTabPanel value={tabValue} index="comentarios">
@@ -906,8 +775,7 @@ function EditEventDetailsDrawer({
                   + {t('add_comment')}
                 </Button> */}
               </Box>
-              {/* // TODO: Aquí antes era === loaded: cambiar cuando se realice la API */}
-              {isLoading !== 'loaded' ? (
+              {isLoading === 'loaded' ? (
                 logtaskExecutedComments.length > 0 ? (
                   logtaskExecutedComments.map((comment, index) => {
                     console.log('Adjuntos del comentario:', comment.attachment); // <-- test
@@ -973,16 +841,12 @@ function EditEventDetailsDrawer({
                 ) : isLoading === 'loading' ? (
                   <div>{t('loading')}</div>
                 ) : (
-                  <EmptyState
-                    title="Aún no hay comentarios"
-                    subtitle="Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo."
-                  />
+                  <div>{t('no_comments_found')}</div>
                 )
               ) : (
                 <div>{t('loading')}</div>
               )}
             </CustomTabPanel>
-
             <CustomTabPanel value={tabValue} index="seguimientos">
               <Box sx={{ marginBottom: '30px' }}>
                 {/* <Button
@@ -994,9 +858,7 @@ function EditEventDetailsDrawer({
                   + {t('add_comment')}
                 </Button> */}
               </Box>
-
-                {/* TODO: Aquí antes era === loaded: cambiar cuando se realice la API*/}            
-                {isLoading !== 'loaded' ? (
+              {isLoading === 'loaded' ? (
                 logtaskRevisorComments.length > 0 ? (
                   logtaskRevisorComments.map((comment, index) => {
                     return (
@@ -1048,59 +910,12 @@ function EditEventDetailsDrawer({
                 ) : isLoading === 'loading' ? (
                   <div>{t('loading')}</div>
                 ) : (
-                  <EmptyState
-                    title="Aún no hay comentarios"
-                    subtitle="Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo."
-                  />
+                  <div>{t('no_comments_found')}</div>
                 )
               ) : (
                 <div>{t('loading')}</div>
               )}
             </CustomTabPanel>
-
-            {/* Nuevo Tab de Crear Comentario */}
-            <CustomTabPanel value={tabValue} index="crear_comentario">
-              <Box>
-                <Typography variant="h6" sx={{ marginBottom: '20px' }}>
-                  {t('add_comment')}
-                </Typography>
-                {errorCommentForm && (
-                  <Alert severity="error" sx={{ marginBottom: '20px' }}>
-                    {t('comment_field_mandatory')}
-                  </Alert>
-                )}
-                <FormBuilder
-                  inputFields={addCommentFormData}
-                  showActionButton={false}
-                  controlled={true}
-                  initialValues={{
-                    ...addCommentForm,
-                    progress: Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)))
-                  }}
-                  onChange={(id, value) => {
-                    setAddCommentForm((prevState) => ({ ...prevState, [id]: value }));
-                  }}
-                />
-                <Box display="flex" gap={2} sx={{ marginTop: '30px' }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    onClick={handleSubmitCommentFromTab}
-                  >
-                    {t('add_comment')}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={handleCancelCommentFromTab}
-                  >
-                    {t('Cancel')}
-                  </Button>
-                </Box>
-              </Box>
-            </CustomTabPanel>
-            
             <Menu open={menuEditOpen} anchorEl={anchorEl} onClose={handleMenuEditCommentClose}>
               <MenuItem onClick={handleOpenEditCommentModal}>{t('edit_comment')}</MenuItem>
               <MenuItem onClick={handleOpenDeleteCommentDialog}>{t('delete_comment')}</MenuItem>
@@ -1272,11 +1087,11 @@ function EditEventDetailsDrawer({
           <Typography variant="h6" sx={{ marginBottom: '40px' }}>
             {t('are_you_sure_to_add_this_comment')}
           </Typography>
-          { console.log("MOSTRANDO DETALLESSS DE MODAL",logTaskDetails) }
+          {/*
           <Typography>
             <strong>{t('title')}:</strong> {logTaskDetails.title}
           </Typography>
-         
+          */}
           <Typography>
             <strong>{t('comment')}:</strong> {addCommentForm.comment}
           </Typography>

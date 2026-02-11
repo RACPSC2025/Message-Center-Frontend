@@ -5,6 +5,7 @@ import { FaComment } from 'react-icons/fa';
 import FileUploadDialog from '../../components/FileUploadDialog';
 
 const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
+  console.log("mostrando desdede TASKCYCLE", task)
   
   // ✅ ESTADO PARA DIALOG DE ARCHIVOS
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -101,21 +102,21 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         }}
       >
         {/* ✅ FECHA DE INICIO */}
-        <Box flex="0 0 150px" textAlign="center">
+        <Box flex="0 0 190px" textAlign="center">
           <Typography sx={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
             {startDate}
           </Typography>
         </Box>
 
         {/* ✅ FECHA DE CIERRE PROGRAMADO */}
-        <Box flex="0 0 140px" textAlign="center">
+        <Box flex="0 0 200px" textAlign="center">
           <Typography sx={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
             {endDate}
           </Typography>
         </Box>
 
         {/* ✅ FECHA DE CIERRE REAL */}
-        <Box flex="0 0 100px" textAlign="center">
+        <Box flex="0 0 200px" textAlign="center">
           <Typography sx={{
             fontSize: '0.8rem',
             color: realClosingDate === '-' ? '#90a4ae' : '#263238',
@@ -127,7 +128,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         </Box>
 
         {/* ✅ DÍAS DE OPORTUNIDAD */}
-        <Box flex="0 0 80px" textAlign="center">
+        <Box flex="0 0 150px" textAlign="center">
           <Chip
             label={`${opportunityDays > 0 ? '+' : ''}${opportunityDays}`}
             size="small"
@@ -146,7 +147,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         </Box>
 
         {/* ✅ ACCIONES */}
-        <Box flex="1 1 80px" textAlign="center">
+        <Box flex="1 1 150px" textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
             {/* ✅ BOTÓN DE ADJUNTAR ARCHIVO */}
             <Tooltip title="Adjuntar archivo">
@@ -158,7 +159,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
-                <AttachFileIcon fontSize="small" />
+                <AttachFileIcon fontSize="small" /> 
               </IconButton>
             </Tooltip>
 
@@ -167,11 +168,13 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               <IconButton
                 size="small"
                 sx={{
+                  display: 'flex',
+                  gap: 0.5,
                   color: '#838383',
-                  '&:hover': { bgcolor: '#e3f2fd' }
+                  '&:hover': { bgcolor: '#e3f2fd' },
                 }}
               >
-                <FaComment style={{ fontSize: '1rem' }} />
+                <FaComment style={{ fontSize: '1rem' }} /> { task.comments.length > 0 ? task.comments.length : "" }
               </IconButton>
             </Tooltip>
 
