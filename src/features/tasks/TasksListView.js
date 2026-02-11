@@ -497,9 +497,29 @@ const TasksListView = ({ onCreateTask }) => {
                 bgcolor: 'white'
               }}
             >
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#263238', fontSize: '1.0rem' }}>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: '#263238',
+                    fontSize: '1.0rem',
+                    lineHeight: 1.2
+                  }}
+                >
                   {selectedTask.task_title}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 0.25,
+                    fontWeight: 500,
+                    color: '#607d8b',
+                    fontSize: '0.85rem',
+                    lineHeight: 1.25
+                  }}
+                >
+                  Colocar Descripción aquí cuando se tenga disponible el campo desde la API
                 </Typography>
               </Box>
 
