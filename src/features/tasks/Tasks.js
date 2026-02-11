@@ -40,7 +40,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
-// import SpeedDialComponent from '../../components/SpeedDialComponent';
+import SpeedDialComponent from '../../components/SpeedDialComponent';
 import { STATUS } from '../../config/constants';
 import { useLanguage } from '../../providers/languageProvider';
 import { fetchEventsList } from '../../stores/events/fetchEventsListSlice';
@@ -381,13 +381,13 @@ export default function Component() {
   };
 
   // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
-  /*
+  
   const speedDialActions = [
     { icon: <DownloadDone />, name: 'Añadir Tarea Permanente', type: 'permanente' },
     { icon: <Loop />, name: 'Añadir Tarea Cíclica', type: 'ciclica' },
     { icon: <AssignmentReturned />, name: 'Añadir Tarea Única', type: 'unica' }
   ];
-  */
+ 
 
   const [countrySelected, setCountrySelected] = useState("CO");
 
@@ -658,7 +658,7 @@ export default function Component() {
           </Box>
 
           {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
-          {/*
+          
           <SpeedDialComponent
             openSpeedDial={openSpeedDial}
             handleCloseSpeedDial={() => setOpenSpeedDial(false)}
@@ -673,7 +673,7 @@ export default function Component() {
               setSelectedTaskType(action.type);
             }}
            />
-          */}
+         
         </BaseFeaturePageLayout>
       )}
 
