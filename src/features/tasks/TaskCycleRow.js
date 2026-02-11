@@ -159,7 +159,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
-                <AttachFileIcon fontSize="small" /> 
+                <AttachFileIcon fontSize="small" /> 0
               </IconButton>
             </Tooltip>
 
@@ -174,7 +174,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                   '&:hover': { bgcolor: '#e3f2fd' },
                 }}
               >
-                <FaComment style={{ fontSize: '1rem' }} /> { task.comments.length > 0 ? task.comments.length : "" }
+                <FaComment style={{ fontSize: '1rem' }} /> { task.comments.length }
               </IconButton>
             </Tooltip>
 
