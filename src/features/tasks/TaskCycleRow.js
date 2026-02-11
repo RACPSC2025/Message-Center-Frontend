@@ -5,7 +5,7 @@ import { FaComment } from 'react-icons/fa';
 import FileUploadDialog from '../../components/FileUploadDialog';
 
 const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
-  
+
   // ✅ ESTADO PARA DIALOG DE ARCHIVOS
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
@@ -16,11 +16,11 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
   const realClosingDate = task.real_closing_date ? new Date(task.real_closing_date).toLocaleDateString() : '-';
   const opportunityDays = task.opportunity_days || 0;
   const progress = parseFloat(task.progress) || 0;
-  
+
   // ✅ OBTENER COLOR Y LABEL DE ESTADO
   const statusColor = task.status_color || '#90a4ae';
   const statusLabel = task.status_label || 'Desconocido';
-  
+
   // ✅ DETERMINAR COLOR DE OPORTUNIDAD
   const getOpportunityColor = (days) => {
     if (days > 5) return '#00f57a'; // Verde - Muy bueno
@@ -63,19 +63,19 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
   // ✅ OBTENER EL COLOR DEL ESTADO DEL CICLO - Usar directamente el estado del ciclo
   const getStatusColor = (statusValue, statusList) => {
     if (!statusList || !Array.isArray(statusList)) return '#90a4ae';
-    
+
     // Manejar posibles valores nulos o indefinidos
     if (statusValue === null || statusValue === undefined) return '#90a4ae';
-    
+
     // Asegurar que el valor del estado sea un string para la comparación
     const statusStr = String(statusValue);
-    
+
     // Buscar el estado con comparación flexible (convertir ambos a string)
     const status = statusList.find(s => {
       const sValue = s.value !== null && s.value !== undefined ? String(s.value) : '';
       return sValue === statusStr;
     });
-    
+
     // Si encontramos el estado, devolver su color, de lo contrario gris por defecto
     return status ? status.color_code : '#90a4ae';
   };

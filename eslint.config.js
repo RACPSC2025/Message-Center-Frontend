@@ -1,5 +1,5 @@
 module.exports = {
-  root: true,
+
   parserOptions: { ecmaVersion: 8, sourceType: 'module' },
   ignorePatterns: ['node_modules/*'],
   extends: [

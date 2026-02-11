@@ -1,0 +1,17 @@
+{
+    "id": "1",
+    "task_title": "Reunión comité de emergencias",
+    "task_description": "Reunión o formación del comité de emergencias",
+    "task_end_date": "2023-03-03",
+    "progress": "0.00",
+    "task_status": "Vencido",
+    "responsibles": {
+        "152": "GET*** PQR*****",
+        "158": "ALE*** ROD*****"
+    },
+    "reviewers": {
+        "1693": "TER*** CMO*****",
+        "136": "PMO*** ALD*****"
+    },
+    "created_by": "TER**** RAN*****"
+}

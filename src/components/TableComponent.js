@@ -66,6 +66,8 @@ export default function TableComponent({
   autoHeight = false,
   paginationLegendElement = null,
   onCellValueChanged = () => {},
+  onRowClicked = () => {},
+  highlightedRowId = null,
 }) {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -138,6 +140,17 @@ export default function TableComponent({
     loadingOverlayComponentParams: {},
     defaultColGroupDef: { headerClass: 'group-ag-header' },
     getRowClass: () => 'default-ag-header',
+    // Apply inline style for highlighted row when `highlightedRowId` matches
+    getRowStyle: (params) => {
+      try {
+        if (highlightedRowId !== null && params?.data && String(params.data.id) === String(highlightedRowId)) {
+          return { outline: '2px solid #1a90ff', boxShadow: 'inset 0 0 0 1px rgba(26,144,255,0.12)', background: '#f5f9ff' };
+        }
+      } catch (e) {
+        // ignore
+      }
+      return null;
+    },
     defaultColDef: {
       ...(isValidArray(pinnedColumn) && { minWidth: 80 }),
       //flex: 1,
@@ -176,7 +189,8 @@ export default function TableComponent({
     paginationPageSizeSelector: pageOption,
     headerHeight: pinnedColumn.length > 0 ? 40 : 50,
     rowHeight: 50,
-    ...(selectionColumn ? { rowSelection: singleSelection ? 'singleRow' : 'multiRow' } : {})
+    ...(selectionColumn ? { rowSelection: singleSelection ? 'singleRow' : 'multiRow' } : {}),
+    onRowClicked: onRowClicked
   };
 
   useEffect(() => {

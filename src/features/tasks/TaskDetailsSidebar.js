@@ -91,13 +91,13 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
       if (mappedDetails.responsibles && typeof mappedDetails.responsibles === 'object' && !Array.isArray(mappedDetails.responsibles)) {
         mappedDetails.responsibles = Object.entries(mappedDetails.responsibles).map(([id, name]) => ({ id, name }));
       }
-      
+
       if (mappedDetails.reviewers && typeof mappedDetails.reviewers === 'object' && !Array.isArray(mappedDetails.reviewers)) {
         mappedDetails.reviewers = Object.entries(mappedDetails.reviewers).map(([id, name]) => ({ id, name }));
       }
 
       setTaskDetails(mappedDetails);
-      
+
       // Inicializar mensajes de chat con los comentarios existentes
       const initialMessages = mappedDetails.comments.map(comment => ({
         id: comment.id || Date.now() + Math.random(),
@@ -106,7 +106,7 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
         timestamp: comment.timestamp || comment.date || new Date().toISOString(),
         type: 'existing' // Para distinguir de los nuevos mensajes
       }));
-      
+
       setChatMessages(initialMessages);
     } else {
       setTaskDetails(null);
@@ -161,7 +161,7 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
   const handleSendComment = () => {
     if (commentText.trim()) {
       console.log('💬 Enviando comentario:', commentText);
-      
+
       // Crear nuevo mensaje
       const newMessage = {
         id: Date.now() + Math.random(),
@@ -170,13 +170,13 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
         timestamp: new Date().toISOString(),
         type: 'new'
       };
-      
+
       // Agregar el nuevo mensaje a la lista
       setChatMessages(prev => [...prev, newMessage]);
-      
+
       // Limpiar el campo de texto
       setCommentText('');
-      
+
       // Aquí iría la lógica para enviar el comentario a la base de datos
       // dispatch(sendComment({ taskId: taskDetails.id, comment: commentText }))
     }
@@ -203,21 +203,21 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
   return (
     <>
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        
+
         {/* DISEÑO ORIGINAL - SIN CAMBIOS */}
         <Box sx={{ p: 3, borderBottom: '1px solid #edf2f4' }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ flex: 1, mr: 2 }}>
-              <Typography variant="h6" sx={{ 
-                fontWeight: 800, 
-                color: '#263238', 
+              <Typography variant="h6" sx={{
+                fontWeight: 800,
+                color: '#263238',
                 fontSize: '1.1rem',
                 lineHeight: 1.3,
                 mb: 1
               }}>
                 {taskDetails.title}
               </Typography>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Chip
                   label={getStatusLabel(taskDetails.status)}
@@ -230,9 +230,9 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                     fontSize: '0.7rem'
                   }}
                 />
-                
-                <Typography sx={{ 
-                  fontSize: '0.75rem', 
+
+                <Typography sx={{
+                  fontSize: '0.75rem',
                   color: '#90a4ae',
                   textTransform: 'uppercase',
                   fontWeight: 700
@@ -321,23 +321,23 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#263238', mb: 0.25 }}>
               Chat
             </Typography>
-            
-            <Box sx={{ 
-              maxHeight: '100px', 
-              overflowY: 'auto', 
-              bgcolor: '#f0f2f5', 
-              p: 0.5, 
+
+            <Box sx={{
+              maxHeight: '100px',
+              overflowY: 'auto',
+              bgcolor: '#f0f2f5',
+              p: 0.5,
               borderRadius: '6px',
               border: '1px solid #e0e0e0'
             }}>
               {chatMessages.length > 0 ? (
                 chatMessages.map((msg) => (
-                  <Box 
-                    key={msg.id} 
-                    sx={{ 
-                      mb: 0.25, 
-                      display: 'flex', 
-                      justifyContent: msg.sender === 'Supervisor' ? 'flex-end' : 'flex-start' 
+                  <Box
+                    key={msg.id}
+                    sx={{
+                      mb: 0.25,
+                      display: 'flex',
+                      justifyContent: msg.sender === 'Supervisor' ? 'flex-end' : 'flex-start'
                     }}
                   >
                     <Box
@@ -346,15 +346,15 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                         p: '4px 8px',
                         ...(msg.sender === 'Supervisor'
                           ? {
-                              bgcolor: '#D9FDD3',
-                              borderRadius: '14px 4px 14px 14px',
-                              ml: 'auto'
-                            }
+                            bgcolor: '#D9FDD3',
+                            borderRadius: '14px 4px 14px 14px',
+                            ml: 'auto'
+                          }
                           : {
-                              bgcolor: '#ffffff',
-                              borderRadius: '4px 14px 14px 14px',
-                              mr: 'auto'
-                            }),
+                            bgcolor: '#ffffff',
+                            borderRadius: '4px 14px 14px 14px',
+                            mr: 'auto'
+                          }),
                         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                         animation: 'fadeIn 0.2s ease',
                         '@keyframes fadeIn': {
@@ -366,10 +366,10 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                       <Typography sx={{ fontSize: '0.7rem', color: '#111b21', wordBreak: 'break-word' }}>
                         {msg.text}
                       </Typography>
-                      <Typography sx={{ 
-                        fontSize: '0.5rem', 
-                        color: '#667781', 
-                        textAlign: 'right', 
+                      <Typography sx={{
+                        fontSize: '0.5rem',
+                        color: '#667781',
+                        textAlign: 'right',
                         mt: 0.25,
                         fontWeight: 500
                       }}>
@@ -387,13 +387,12 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
           </Box>
         </Box>
 
-        {/* ✅ ÁREA DE COMENTARIOS MEJORADA */}
         <Box sx={{ p: 1, borderTop: '1px solid #edf2f4', bgcolor: '#fafbfc' }}>
           {/* ✅ INPUT DE MENSAJE CON ESTILO WHATSAPP */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 0.5, 
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
             bgcolor: 'white',
             borderRadius: '20px',
             pl: 1,
@@ -437,10 +436,10 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                       <IconButton
                         size="small"
                         onClick={handleAttachFileClick}
-                        sx={{ 
+                        sx={{
                           color: '#1a90ff',
                           borderRadius: 1,
-                          '&:hover': { 
+                          '&:hover': {
                             bgcolor: '#e3f2fd',
                             color: '#1976d2'
                           }
@@ -453,7 +452,7 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                 )
               }}
             />
-            
+
             <Button
               variant="contained"
               size="small"
@@ -465,7 +464,7 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                 height: '32px',
                 borderRadius: '50%',
                 bgcolor: '#00a884',
-                '&:hover': { 
+                '&:hover': {
                   bgcolor: '#00997a',  // Efecto de hover más sutil
                   opacity: 0.9
                 },
