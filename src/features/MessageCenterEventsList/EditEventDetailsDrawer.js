@@ -452,17 +452,19 @@ function EditEventDetailsDrawer({
     // fetchLogtaskComments(logTaskDetails.id);
   }, []);
 
+  // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments/{id}
+
   useEffect(() => {
+    console.log('LOG TASK DETAILS MMMMM???', logTaskDetails);
     if (logTaskDetails.length === 0) return;
-    console.log('logTaskDetails', logTaskDetails);
+    fetchLogtaskComments(logTaskDetails.id);
     setIsLoading('loading');
     setLogtaskExecutedComments([]);
     setLogtaskRevisorComments([]);
-    fetchLogtaskComments(logTaskDetails.id);
   }, [logTaskDetails]);
 
   const handleTabChange = (event, newValue) => {
-    const validTabs = ['legalMatrix', 'events', 'actions'];
+    const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
     if (validTabs.includes(newValue)) {
       setTabValue(newValue);
     }
