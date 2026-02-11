@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 
-export const TaskDoubleRingChart = ({ 
-  percentage, 
+export const TaskDoubleRingChart = ({
+  percentage,
   stats,
   chartData,
-  size = 80, 
+  size = 80,
   strokeWidth = 8,
   innerStrokeWidth = 6,
   gap = 2
 }) => {
   const [displayPercentage, setDisplayPercentage] = useState(0);
-  
+
   // Outer Ring Dimensions (Status Segments)
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -33,10 +33,10 @@ export const TaskDoubleRingChart = ({
     const step = (timestamp) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      
+
       const easeOutQuart = (x) => 1 - Math.pow(1 - x, 4);
       const current = startValue + (endValue - startValue) * easeOutQuart(progress);
-      
+
       setDisplayPercentage(Math.round(current));
       if (progress < 1) window.requestAnimationFrame(step);
     };
@@ -86,7 +86,7 @@ export const TaskDoubleRingChart = ({
     } else {
       segmentPercentage = 0;
     }
-    
+
     const len = hasData ? (segmentPercentage / 100) * circumference : 0;
     const offset = -currentOffset;
     currentOffset += len;
@@ -121,7 +121,7 @@ export const TaskDoubleRingChart = ({
         />
         {percentage > 0 && (
           <circle
-            stroke={percentage === 100 ? '#00796b' : '#9c27b0'}  // Púrpura vibrante o verde azulado oscuro
+            stroke={percentage === 100 ? '#00f57a' : '#9c27b0'}  // Púrpura corporativo en lugar de negro/gris
             fill="transparent"
             r={innerRadius}
             cx={center}
@@ -142,27 +142,27 @@ export const TaskDoubleRingChart = ({
           cy={center}
           strokeWidth={strokeWidth}
         />
-        
+
         {hasData && renderedSegments.map((segment, index) => {
-            const shouldRender = segment.percentage !== undefined ? segment.percentage > 0 : segment.value > 0;
-            return shouldRender && (
-              <circle
-                key={index}
-                stroke={segment.color}
-                fill="transparent"
-                r={radius}
-                cx={center}
-                cy={center}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={segment.strokeDasharray}
-                strokeDashoffset={segment.strokeDashoffset}
-                style={transitionStyle}
-              />
-            );
+          const shouldRender = segment.percentage !== undefined ? segment.percentage > 0 : segment.value > 0;
+          return shouldRender && (
+            <circle
+              key={index}
+              stroke={segment.color}
+              fill="transparent"
+              r={radius}
+              cx={center}
+              cy={center}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={segment.strokeDasharray}
+              strokeDashoffset={segment.strokeDashoffset}
+              style={transitionStyle}
+            />
+          );
         })}
       </svg>
-      
+
       {/* Center Text */}
       <Box sx={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <Typography variant="caption" sx={{ fontWeight: 900, fontSize: size > 80 ? '1rem' : '0.75rem', color: '#263238' }}>

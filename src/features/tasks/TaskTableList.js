@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import TableComponent from '../../components/TableComponent';
 import TheFullPageLoader from '../../components/TheFullPageLoader';
 import { fetchListTaskNew, fetchGetCountries } from '../../stores/tasks/fetchListTaskNewSlice';
+import { fetchListTasksSpecial } from '../../stores/tasks/fetchListTasksSlice';
 import { showErrorMsg, stringAvatar } from '../../utils/others';
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +30,7 @@ const useListOptionsGlobal = (fieldName) =>
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
 
-export default function TaskTableList() {
+export default function TaskTableList({ selectedTaskForTable = null, onRowClicked = null, highlightedRowId = null }) {
   const dispatch = useDispatch();
   const [tasks, setTasks] = useState([]);
   const [numberOfPages, setNumberOfPages] = useState(0);
@@ -86,6 +87,22 @@ export default function TaskTableList() {
         showErrorMsg(data?.payload);
       }
     });
+  };
+
+  // Llamada adicional NO invasiva para probar el endpoint legacy `/amatia/tasklist_api/list_tasks`.
+  // Solo se muestra el resultado en consola; no se muta el estado ni la UI existente.
+  const handleLogLegacyListTasks = () => {
+    const formData = new FormData();
+    formData.append('page', 1);
+    dispatch(fetchListTasksSpecial(formData))
+      .then((res) => {
+        // Mostrar en consola la respuesta del endpoint legacy para inspección.
+        // Log con emoji seguido del payload solicitado (solo consola).
+        console.log('✅ /amatia/tasklist_api/list_tasks response:', res?.payload);
+      })
+      .catch((err) => {
+        console.warn('❌ Legacy /amatia/tasklist_api/list_tasks request failed:', err);
+      });
   };
 
   const handlefetchGetCountries = () => {
@@ -238,6 +255,17 @@ export default function TaskTableList() {
     );
 
     return matchedStatus ? matchedStatus.color_code : '#cccccc'; // color por defecto si no hay coincidencia
+  };
+
+  // Mapeo de colores compatible con TaskDoubleRingChart (legacy mapping)
+  const getStatusColorFromChart = (status) => {
+    const s = String(status);
+    // 1: completed, 2: inProgress, 4: expired, 3: open
+    if (s === '1') return '#00f57a';
+    if (s === '2') return '#1a90ff';
+    if (s === '4') return '#fb3d61';
+    if (s === '3') return '#fbc02d';
+    return '#cccccc';
   };
 
   const CircleCellRenderer = (params, month) => {
@@ -528,6 +556,103 @@ export default function TaskTableList() {
     }
   ]);
 
+  // Estilo centrado para celdas (usado en esta tabla)
+  const centerCellStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    padding: 0
+  };
+
+  // Si se está mostrando los ciclos (logtasks) desde una tarea seleccionada,
+  // usar columnas simplificadas apropiadas para logtasks.
+  useEffect(() => {
+    const isShowingLogtasks = !!selectedTaskForTable;
+    if (isShowingLogtasks) {
+      const renderResponsiblesCell = (params) => {
+        const responsibles = params.value || (selectedTaskForTable && selectedTaskForTable.responsibles) || {};
+        const usernames = Object.values(responsibles || {});
+        return (
+          <AvatarGroup
+            max={3}
+            sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
+          >
+            {usernames.map((username, index) => {
+              const avatarProps = stringAvatar(username, { width: 28, height: 28, fontSize: '0.75rem', bgcolor: 'primary.main' });
+              return (
+                <Tooltip title={username} key={index}>
+                  <Avatar {...avatarProps} />
+                </Tooltip>
+              );
+            })}
+          </AvatarGroup>
+        );
+      };
+
+      const renderReviewersCell = (params) => {
+        const reviewers = params.value || (selectedTaskForTable && selectedTaskForTable.reviewers) || {};
+        const usernames = Object.values(reviewers || {});
+        return (
+          <AvatarGroup
+            max={3}
+            sx={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}
+          >
+            {usernames.map((username, index) => {
+              const avatarProps = stringAvatar(username, { width: 28, height: 28, fontSize: '0.75rem', bgcolor: 'primary.main' });
+              return (
+                <Tooltip title={username} key={index}>
+                  <Avatar {...avatarProps} />
+                </Tooltip>
+              );
+            })}
+          </AvatarGroup>
+        );
+      };
+      const logtaskColumns = [
+        { field: 'id', headerName: 'ID', width: 90, cellRenderer: (params) => {
+            const color = getStatusColorFromChart(params.data?.logtask_status || params.data?.task_status);
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ width: 6, height: 28, borderRadius: '2px', bgcolor: color }} />
+                <Typography variant="body2">{params.value}</Typography>
+              </Box>
+            );
+          }, cellStyle: centerCellStyle
+        },
+        { field: 'logtask_title', headerName: t('Title'), width: 200, cellRenderer: (params) => {
+            const value = params.value || params.data?.logtask_title || '';
+            const text = value && String(value).trim() !== '' ? value : 'Sin título asignado — agregue una descripción o revise los detalles';
+            return <Typography variant="body2" sx={{ textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{text}</Typography>;
+          }, cellStyle: { display: 'flex', alignItems: 'center', paddingLeft: '8px' } },
+        // Responsables (from parent task if missing in logtask)
+        { field: 'responsibles', headerName: t('Responsables'), width: 140, cellRenderer: renderResponsiblesCell, cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: '8px' } },
+        // Revisores (from parent task if missing in logtask)
+        { field: 'reviewers', headerName: t('Revisores'), width: 140, cellRenderer: renderReviewersCell, cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: '8px' } },
+        { field: 'start_date', headerName: t('Start'), width: 120, filter: 'agDateColumnFilter', filterParams: dateFilterParams },
+        { field: 'end_date', headerName: t('End'), width: 120, filter: 'agDateColumnFilter', filterParams: dateFilterParams },
+        { field: 'percentage', headerName: t('Progress'), width: 110, cellStyle: centerCellStyle },
+        { field: 'logtask_status', headerName: t('Status'), width: 110, cellRenderer: (params) => {
+            const color = getStatusColorFromChart(params.value);
+            // find human label if available
+            const matched = listTaskStatus && Array.isArray(listTaskStatus)
+              ? listTaskStatus.find(s => String(s.value_number) === String(params.value))
+              : null;
+            const label = matched ? t(matched.label) : params.value;
+            return <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: color }} />{label}</Box>;
+          }
+        , cellStyle: centerCellStyle }
+      ];
+      setTableColumns(logtaskColumns);
+    } else {
+      // Restaurar columnas por defecto (las definidas inicialmente)
+      // Simplemente forzamos recarga de las columnas iniciales reiniciando el estado
+      // para evitar duplicar la definición aquí, recargamos la página en modo normal
+      // (mantener el array original ya inicializado)
+      // No hacemos nada aquí para conservar las columnas iniciales.
+    }
+  }, [selectedTaskForTable]);
+
   const tableRows = [];
 
   const status = [
@@ -613,11 +738,23 @@ export default function TaskTableList() {
   */
 
   useEffect(() => {
+    // Si se pasa una tarea seleccionada desde el padre, mostrar sus ciclos (logtask_list)
+    if (selectedTaskForTable) {
+      const logtasks = Array.isArray(selectedTaskForTable.logtask_list)
+        ? selectedTaskForTable.logtask_list
+        : [];
+      setTasks(logtasks);
+      setLoadTasks(false);
+      return;
+    }
+
     if (loadTasks) {
       setLoadTasks(false);
       handleFetchListTaskNew();
+      // Llamada no invasiva al endpoint legacy para mostrar resultado en consola
+      handleLogLegacyListTasks();
     }
-  }, [loadTasks]);
+  }, [loadTasks, selectedTaskForTable]);
   
   useEffect(() => {
     if (tasks.length > 0) {
@@ -642,6 +779,34 @@ export default function TaskTableList() {
     }    
   }, [actionKeyWords, tasksFilters, tasks, currentStatus, actionStartDate, actionEndDate, actionNameDateField, actionCategory]); // Se ejecuta cuando cambian las variables de los filtros
   
+  const handleRowClick = (event) => {
+    // event.data contiene la fila seleccionada
+    if (onRowClicked && typeof onRowClicked === 'function') {
+      onRowClicked(event);
+    }
+  };
+
+  // Construir columnas efectivas aplicando estilos por defecto y placeholders
+  const effectiveColumns = tableColumns.map((col) => {
+    const base = { ...col };
+    // default centered style
+    base.cellStyle = { ...(centerCellStyle || {}), ...(col.cellStyle || {}) };
+    // ID column must be left-aligned because it includes a colored bar
+    if (col.field === 'id') {
+      base.cellStyle = { ...(col.cellStyle || {}), display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: '8px', textAlign: 'left' };
+    }
+    // Titles: add placeholder and left-align for readability
+    if (col.field === 'task_title' || col.field === 'logtask_title') {
+      base.cellRenderer = (params) => {
+        const value = params.value || params.data?.task_title || params.data?.logtask_title || '';
+        const text = value && String(value).trim() !== '' ? value : 'Sin título asignado — añade una descripción o revisa los detalles';
+        return <Typography variant="body2" sx={{ textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{text}</Typography>;
+      };
+      base.cellStyle = { ...base.cellStyle, justifyContent: 'flex-start', paddingLeft: '8px' };
+    }
+    return base;
+  });
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {taskListLoading ? (
@@ -657,7 +822,7 @@ export default function TaskTableList() {
           <TheFullPageLoader loaderText="" background="transparent" />
         </Box>
       ) : (
-        <TableComponent rowData={tasksFilters} columnDefs={tableColumns} paginationLegendElement={paginationLegendElement} />
+        <TableComponent rowData={tasksFilters} columnDefs={effectiveColumns} paginationLegendElement={paginationLegendElement} onRowClicked={handleRowClick} highlightedRowId={highlightedRowId} />
       )}
     </Box>
   );

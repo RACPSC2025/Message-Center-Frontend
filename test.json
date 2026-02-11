@@ -1,0 +1,55 @@
+    {
+
+    "status": 1,
+    "messages": "Success",
+    "data": [
+        {
+            "id": "230",
+            "task_title": "sst prueba nivel ",
+            "task_start_date": "2024-03-20",
+            "task_end_date": "2024-03-31",
+            "task_type": null,
+            "progress": "0.00",
+            "task_status": "4",
+            "comment_count": "0",
+            "created_by": "Admin Amatia",
+            "tags": [],
+            "responsibles": {
+                "159": "Admin Amatia"
+            },
+            "reviewers": {
+                "2000181": "advanced prueba"
+            },
+            "logtask_list": [
+                {
+                    "id": "254",
+                    "task_id": "230",
+                    "logtask_title": null,
+                    "sequence_code": null,
+                    "start_date": "2025-05-05",
+                    "end_date": "2025-05-13",
+                    "real_closing_date": "2025-05-05 00:00:00",
+                    "complete": "0",
+                    "percentage": "30.00",
+                    "created_at": "2024-03-13 08:20:57",
+                    "borrado": "0",
+                    "start_alert": null,
+                    "end_alert": null,
+                    "total_days": null,
+                    "closing_opportunity_days": null,
+                    "cost": null,
+                    "created": "0000-00-00 00:00:00",
+                    "created_by": "0",
+                    "modified": "0000-00-00 00:00:00",
+                    "modified_by": "0",
+                    "deleted": "0000-00-00 00:00:00",
+                    "deleted_by": "0",
+                    "logtask_status": "4",
+                    "logtask_status_date": "2024-04-01 00:10:41",
+                    "comments": []
+                }
+            ],
+            "num_documents": 0
+        }
+    ]}
+    

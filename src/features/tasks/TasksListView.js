@@ -12,12 +12,10 @@ import {
   IconButton,
   Tooltip,
   Button,
-  Menu,
-  MenuItem,
   ListItem,
   ListItemAvatar,
   Avatar,
- ListItemIcon as MuiListItemIcon,
+  ListItemIcon as MuiListItemIcon,
 } from '@mui/material';
 import {
   Sync as SyncIcon,
@@ -25,21 +23,23 @@ import {
   CheckCircleOutline as PermanentIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  DeleteOutline,
+  Add,
   DownloadDone,
   Loop,
   AssignmentReturned,
-  MoreVert,
-  DeleteOutline,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import TaskCycleRow from './TaskCycleRow';
+import TaskTableList from './TaskTableList';
 import TaskDetailsSidebar from './TaskDetailsSidebar';
 import { fetchListTaskNew } from '../../stores/tasks/fetchListTaskNewSlice';
 import { fetchLogtaskList } from '../../stores/tasks/fetchLogtaskListSlice';
 import { deleteLogtask } from '../../stores/tasks/deleteLogtaskSlice'; // Importar la acción de eliminación
 import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
+import SpeedDialComponent from '../../components/SpeedDialComponent';
 
 const TasksListView = ({ onCreateTask }) => {
   const { t } = useTranslation();
@@ -56,15 +56,13 @@ const TasksListView = ({ onCreateTask }) => {
   const cyclesPerPage = 10;
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false);
   const [tasks, setTasks] = useState([]);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
+  const [openSpeedDial, setOpenSpeedDial] = useState(false);
 
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
   const logtaskListLoading = useSelector((state) => state?.fetchLogtaskList?.loading ?? false);
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
-  const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
 
   /* 🎭 Data Mock - Bloque preservado (Migración: 05/02/2026)
   useEffect(() => {
@@ -146,7 +144,7 @@ const TasksListView = ({ onCreateTask }) => {
       'PERMANENTE': '#ff9800',
       'CÍCLICA': '#90a4ae'
     };
-    const iconColor = isSelected ? '#a4a4a4' : (typeColors[type?.toUpperCase()] || '#90a4ae');
+    const iconColor = isSelected ? '#1a90ff' : (typeColors[type?.toUpperCase()] || '#90a4ae');
     const iconStyle = { fontSize: 24, color: iconColor, transition: 'color 0.2s ease' };
 
     switch (type?.toUpperCase()) {
@@ -157,23 +155,7 @@ const TasksListView = ({ onCreateTask }) => {
     }
   };
 
-  // Funciones para manejar el menú desplegable
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  // Manejar la selección de tipo de tarea
-  const handleCreateTask = (taskType) => {
-    // Llama a la función pasada como prop para manejar la creación de tareas
-    if (onCreateTask) {
-      onCreateTask(taskType);
-    }
-    handleMenuClose();
-  };
+  // Create-task menu and status filter handlers removed.
 
   // Cálculos para el Dashboard
   const stats = useMemo(() => {
@@ -263,7 +245,7 @@ const TasksListView = ({ onCreateTask }) => {
                         py: 0.5,
                         px: 0,
                         justifyContent: 'center',
-                        borderLeft: isSelected ? '4px solid #a4a4a4' : '4px solid transparent',
+                        borderLeft: isSelected ? '4px solid #1a90ff' : '4px solid transparent',
                         bgcolor: isSelected ? '#f5f9ff !important' : 'transparent',
                         '&:hover': { bgcolor: '#f8fbfc' },
                         minHeight: '36px'
@@ -275,12 +257,12 @@ const TasksListView = ({ onCreateTask }) => {
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Typography sx={{ fontWeight: 700, color: isSelected ? '#5b5b5b' : '#263238', fontSize: '0.75rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <Typography sx={{ fontWeight: 700, color: isSelected ? '#1a90ff' : '#263238', fontSize: '0.75rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {task.task_title}
                             </Typography>
                           }
                           secondary={
-                            <Typography sx={{ textTransform: 'uppercase', fontSize: '0.5rem', fontWeight: 800, color: isSelected ? '#5b5b5b' : '#b0bec5', mt: 0.1 }}>
+                            <Typography sx={{ textTransform: 'uppercase', fontSize: '0.5rem', fontWeight: 800, color: isSelected ? '#1a90ff80' : '#b0bec5', mt: 0.1 }}>
                               {task.task_type || 'CÍCLICA'}
                             </Typography>
                           }
@@ -320,130 +302,29 @@ const TasksListView = ({ onCreateTask }) => {
         )}
       </Box>
 
+      {/* Floating SpeedDial */}
+      <SpeedDialComponent
+        openSpeedDial={openSpeedDial}
+        handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+        handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+        // Actions: multiple task types similar to other modules
+        speedDialActions={[
+          { id: 'permanente', name: 'Añadir Tarea Permanente', icon: <DownloadDone /> },
+          { id: 'ciclica', name: 'Añadir Tarea Cíclica', icon: <Loop /> },
+          { id: 'unica', name: 'Añadir Tarea Única', icon: <AssignmentReturned /> }
+        ]}
+        // Close the speed dial then execute the selected action
+        handleClick={() => setOpenSpeedDial(false)}
+        handleActionClick={(action) => {
+          if (!action) return;
+          const id = action.id;
+          if (onCreateTask) onCreateTask(id);
+        }}
+      />
+
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        {/* Barra de Filtros Contextual */}
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1,
-          bgcolor: 'white',
-          borderBottom: '1px solid #edf2f4',
-          flexShrink: 0
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.75rem', letterSpacing: 1.5 }}>
-              FILTRAR ESTADO
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-              {listTaskStatus.map((status) => {
-                const isActive = selectedStatus === status.value;
-                return (
-                  <Tooltip key={status.value} title={t(status.label)}>
-                    <Box
-                      onClick={() => {
-                        const newValue = isActive ? -1 : status.value;
-                        dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: newValue } }));
-                      }}
-                      sx={{
-                        width: isActive ? 16 : 12,
-                        height: isActive ? 16 : 12,
-                        borderRadius: '50%',
-                        bgcolor: status.color_code,
-                        cursor: 'pointer',
-                        border: isActive ? '2px solid #fff' : 'none',
-                        outline: isActive ? `2px solid ${status.color_code}` : 'none',
-                        transition: 'all 0.2s ease',
-                        '&:hover': { transform: 'scale(1.3)' }
-                      }}
-                    />
-                  </Tooltip>
-                );
-              })}
-              {selectedStatus && selectedStatus !== -1 && selectedStatus !== 0 && (
-                <Tooltip title={t('Limpiar filtro')}>
-                  <IconButton
-                    size="small"
-                    onClick={() => dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: -1 } }))}
-                    sx={{ color: '#90a4ae', ml: 1, p: 0.5 }}
-                  >
-                    <DeleteOutline sx={{ fontSize: '1.2rem' }} />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
-          </Box>
-
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: '#D9FDD3',  // Color estándar
-              color: '#00a884',
-              '&:hover': { bgcolor: '#c8eac5' },  // Efecto de hover más sutil
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              px: 3,
-              boxShadow: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-            onClick={handleMenuOpen}
-            endIcon={<MoreVert />}
-            aria-controls={openMenu ? 'task-creation-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={openMenu ? 'true' : undefined}
-          >
-            Crear tarea
-          </Button>
-
-          <Menu
-            id="task-creation-menu"
-            anchorEl={anchorEl}
-            open={openMenu}
-            onClose={handleMenuClose}
-            onClick={handleMenuClose}
-            PaperProps={{
-              elevation: 0,
-              sx: {
-                overflow: 'visible',
-                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                mt: 1.5,
-                '& .MuiAvatar-root': {
-                  width: 32,
-                  height: 32,
-                  ml: -0.5,
-                  mr: 1,
-                },
-              },
-            }}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-          >
-            <MenuItem onClick={() => handleCreateTask('permanente')}>
-              <MuiListItemIcon>
-                <DownloadDone fontSize="small" />
-              </MuiListItemIcon>
-              <Typography>Añadir Tarea Permanente</Typography>
-            </MenuItem>
-            <MenuItem onClick={() => handleCreateTask('ciclica')}>
-              <MuiListItemIcon>
-                <Loop fontSize="small" />
-              </MuiListItemIcon>
-              <Typography>Añadir Tarea Cíclica</Typography>
-            </MenuItem>
-            <MenuItem onClick={() => handleCreateTask('unica')}>
-              <MuiListItemIcon>
-                <AssignmentReturned fontSize="small" />
-              </MuiListItemIcon>
-              <Typography>Añadir Tarea Única</Typography>
-            </MenuItem>
-          </Menu>
-        </Box>
+        {/* Cabecera simplificada: filtros de estado y creación de tarea eliminados */}
 
         {/* Contenido Scrollable: Dashboard + Tabla */}
         <Box sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
@@ -496,108 +377,38 @@ const TasksListView = ({ onCreateTask }) => {
             </Paper>
           )}
 
-          {/* Tabla de Ciclos */}
-          <Paper elevation={0} sx={{ border: '1px solid #edf2f4', borderRadius: 3, overflow: 'hidden', bgcolor: 'white', mt: 0.5 }}>
-            <Box sx={{ display: 'flex', p: '8px 12px', bgcolor: 'white', borderBottom: '1px solid #edf2f4' }}>
-              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>INICIO</Typography></Box>
-              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE PROG.</Typography></Box>
-              <Box flex="0 0 100px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE REAL</Typography></Box>
-              <Box flex="0 0 80px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>OPORT.</Typography></Box>
-              <Box flex="1 1 80px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>ACCIONES</Typography></Box>
-            </Box>
-
-            <Box>
-              {logtaskListLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress size={25} /></Box>
-              ) : (
-                (() => {
-                  const filtered = logtasks.filter(lt => {
-                    if (!selectedStatus || selectedStatus === -1 || selectedStatus === 0) return true;
-                    return String(lt.logtask_status) === String(selectedStatus);
-                  });
-
-                  if (filtered.length === 0 && logtasks.length > 0) {
-                    return (
-                      <Box sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography sx={{ color: '#90a4ae', fontWeight: 600, fontSize: '0.8rem' }}>
-                          No hay ciclos con este estado para esta tarea.
-                        </Typography>
-                      </Box>
-                    );
+          {/* Centro: Tabla reutilizada (TaskTableList) mostrando ciclos según tarea seleccionada */}
+          <Box sx={{ mt: 0.5 }}>
+            <TaskTableList
+              selectedTaskForTable={selectedTask}
+              highlightedRowId={selectedLogtask?.id || selectedTask?.id}
+              onRowClicked={(event) => {
+                // cuando se hace click en una fila de la tabla central, seleccionar la tarea correspondiente
+                const rowData = event.data;
+                if (rowData) {
+                  // rowData puede ser un task o un logtask; si es logtask, intentar mapear al padre (task)
+                  // Preferimos seleccionar la tarea completa cuando la fila representa la tarea
+                  // Si la fila es un logtask, usamos el logtask como seleccionado en el sidebar derecho
+                  if (rowData.task_id) {
+                    // Es un logtask -> seleccionar logtask
+                    setSelectedLogtask(rowData);
+                    // También asegurarnos de que la lista de logtasks contiene este ciclo
+                    if (!logtasks.some(l => l.id === rowData.id)) {
+                      setLogtasks(prev => [rowData, ...prev]);
+                    }
+                  } else {
+                    // Es una tarea -> seleccionar tarea
+                    handleSelectTask(rowData);
                   }
-
-                  // Limpiar la selección si el ciclo seleccionado no está en la vista filtrada
-                  if (selectedLogtask && !filtered.some(l => l.id === selectedLogtask.id)) {
-                    setSelectedLogtask(null);
-                  }
-
-                  // Pagination logic
-                  const startIndex = (currentCyclePage - 1) * cyclesPerPage;
-                  const endIndex = startIndex + cyclesPerPage;
-                  const paginatedCycles = filtered.slice(startIndex, endIndex);
-
-                  return paginatedCycles.map((logtask, index) => (
-                    <TaskCycleRow
-                      key={logtask.id}
-                      index={index}
-                      task={{
-                        ...logtask,
-                        task_status: logtask.logtask_status,
-                        logtask_status: logtask.logtask_status, // Asegurar que el estado del logtask esté disponible
-                        status: logtask.logtask_status, // Asegurar que el estado esté disponible como 'status'
-                        start_date: logtask.start_date,
-                        end_date: logtask.end_date || logtask.finish_date,
-                        progress: logtask.percentage || logtask.progress || 0,
-                        opportunity_days: logtask.opportunity_days || 0
-                      }}
-                      statuses={listTaskStatus}
-                      onSelect={() => setSelectedLogtask(logtask)}
-                      isSelected={selectedLogtask?.id === logtask.id}
-                    />
-                  ));
-                })()
-              )}
-            </Box>
-
-            {/* Paginación de Ciclos */}
-            {!logtaskListLoading && (() => {
-              const filtered = logtasks.filter(lt => {
-                if (!selectedStatus || selectedStatus === -1 || selectedStatus === 0) return true;
-                return String(lt.logtask_status) === String(selectedStatus);
-              });
-
-              const totalPages = Math.max(1, Math.ceil(filtered.length / cyclesPerPage));
-              const isOnlyOnePage = filtered.length <= cyclesPerPage;
-
-              return (
-                <Box sx={{ p: 1, borderTop: '1px solid #edf2f4', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5, bgcolor: 'white' }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => setCurrentCyclePage(Math.max(1, currentCyclePage - 1))}
-                    disabled={currentCyclePage === 1 || isOnlyOnePage}
-                    sx={{ width: 24, height: 24 }}
-                  >
-                    <ChevronLeftIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#455a64', minWidth: 60, textAlign: 'center' }}>
-                    {currentCyclePage} / {totalPages}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => setCurrentCyclePage(Math.min(totalPages, currentCyclePage + 1))}
-                    disabled={currentCyclePage === totalPages || isOnlyOnePage}
-                    sx={{ width: 24, height: 24 }}
-                  >
-                    <ChevronRightIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Box>
-              );
-            })()}
-          </Paper>
+                }
+              }}
+            />
+          </Box>
         </Box>
       </Box>
 
-      {/* Sidebar Derecha - Detalles */}
+      {/* Sidebar Derecha - Detalles (comentado para hacer espacio) */}
+      { /*
       <Box sx={{
         width: isRightSidebarCollapsed ? '40px' : '240px',  // Reducido de 280px a 240px
         flexShrink: 0,
@@ -630,6 +441,7 @@ const TasksListView = ({ onCreateTask }) => {
           />
         )}
       </Box>
+      */ }
     </Box>
   );
 };

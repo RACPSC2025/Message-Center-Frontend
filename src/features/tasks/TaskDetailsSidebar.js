@@ -91,13 +91,13 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
       if (mappedDetails.responsibles && typeof mappedDetails.responsibles === 'object' && !Array.isArray(mappedDetails.responsibles)) {
         mappedDetails.responsibles = Object.entries(mappedDetails.responsibles).map(([id, name]) => ({ id, name }));
       }
-      
+
       if (mappedDetails.reviewers && typeof mappedDetails.reviewers === 'object' && !Array.isArray(mappedDetails.reviewers)) {
         mappedDetails.reviewers = Object.entries(mappedDetails.reviewers).map(([id, name]) => ({ id, name }));
       }
 
       setTaskDetails(mappedDetails);
-      
+
       // Inicializar mensajes de chat con los comentarios existentes
       const initialMessages = mappedDetails.comments.map(comment => ({
         id: comment.id || Date.now() + Math.random(),
@@ -106,7 +106,7 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
         timestamp: comment.timestamp || comment.date || new Date().toISOString(),
         type: 'existing' // Para distinguir de los nuevos mensajes
       }));
-      
+
       setChatMessages(initialMessages);
     } else {
       setTaskDetails(null);
@@ -161,7 +161,7 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
   const handleSendComment = () => {
     if (commentText.trim()) {
       console.log('💬 Enviando comentario:', commentText);
-      
+
       // Crear nuevo mensaje
       const newMessage = {
         id: Date.now() + Math.random(),
@@ -170,13 +170,13 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
         timestamp: new Date().toISOString(),
         type: 'new'
       };
-      
+
       // Agregar el nuevo mensaje a la lista
       setChatMessages(prev => [...prev, newMessage]);
-      
+
       // Limpiar el campo de texto
       setCommentText('');
-      
+
       // Aquí iría la lógica para enviar el comentario a la base de datos
       // dispatch(sendComment({ taskId: taskDetails.id, comment: commentText }))
     }
@@ -203,21 +203,21 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
   return (
     <>
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        
+
         {/* DISEÑO ORIGINAL - SIN CAMBIOS */}
-        <Box sx={{ py: 1.5, px: 3, borderBottom: '1px solid #edf2f4' }}>
+        <Box sx={{ p: 3, borderBottom: '1px solid #edf2f4' }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ flex: 1, mr: 2 }}>
-              <Typography variant="h6" sx={{ 
-                fontWeight: 800, 
-                color: '#263238', 
+              <Typography variant="h6" sx={{
+                fontWeight: 800,
+                color: '#263238',
                 fontSize: '1.1rem',
                 lineHeight: 1.3,
                 mb: 1
               }}>
                 {taskDetails.title}
               </Typography>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Chip
                   label={getStatusLabel(taskDetails.status)}
@@ -230,9 +230,9 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                     fontSize: '0.7rem'
                   }}
                 />
-                
-                <Typography sx={{ 
-                  fontSize: '0.75rem', 
+
+                <Typography sx={{
+                  fontSize: '0.75rem',
                   color: '#90a4ae',
                   textTransform: 'uppercase',
                   fontWeight: 700
@@ -263,7 +263,10 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
               )}
             </Box>
 
-                      </Box>
+            <IconButton size="small" sx={{ color: '#90a4ae' }}>
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Box>
 
           {/* PROGRESO - DISEÑO ORIGINAL */}
           <Box sx={{ mb: 1 }}>
@@ -290,21 +293,21 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
             />
           </Box>
 
-          {/* ✅ SUPERVISOR Y EJECUTOR - Diseño mejorado */}
-          <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: '#455a64' }}>
+          {/* ✅ SUPERVISOR Y EJECUTOR - Versión minimalista */}
+          <Box sx={{ mb: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#263238' }}>
                 Supervisor:
               </Typography>
-              <Typography variant="body2" sx={{ color: '#607d8b' }}>
+              <Typography sx={{ fontSize: '0.7rem', color: '#90a4ae' }}>
                 {taskDetails.supervisor || 'No disponible'}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: '#455a64' }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#263238' }}>
                 Ejecutor:
               </Typography>
-              <Typography variant="body2" sx={{ color: '#607d8b' }}>
+              <Typography sx={{ fontSize: '0.7rem', color: '#90a4ae' }}>
                 {taskDetails.executor || 'No disponible'}
               </Typography>
             </Box>
@@ -312,49 +315,47 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
         </Box>
 
         {/* CONTENIDO SCROLLABLE - DISEÑO ORIGINAL */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', p: 0.5 }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
           {/* ✅ SECCIÓN DE CHAT - Estilo WhatsApp */}
-          <Box sx={{ mb: 0.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#263238', mb: 1 }}>
+          <Box sx={{ mb: 0.5 }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#263238', mb: 0.25 }}>
               Chat
             </Typography>
-            
-            <Box sx={{ 
-              flex: 1,
-              minHeight: 100,
-              maxHeight: 'none',
-              overflowY: 'auto', 
-              bgcolor: '#fcfcfc', // Fondo ligeramente más claro
-              p: 1, 
-              borderRadius: '8px', // Bordes más suaves
-              border: '1px solid #e8e8e8' // Borde más sutil
+
+            <Box sx={{
+              maxHeight: '100px',
+              overflowY: 'auto',
+              bgcolor: '#f0f2f5',
+              p: 0.5,
+              borderRadius: '6px',
+              border: '1px solid #e0e0e0'
             }}>
               {chatMessages.length > 0 ? (
                 chatMessages.map((msg) => (
-                  <Box 
-                    key={msg.id} 
-                    sx={{ 
-                      mb: 0.75, // Más espacio entre mensajes
-                      display: 'flex', 
-                      justifyContent: msg.sender === 'Supervisor' ? 'flex-end' : 'flex-start' 
+                  <Box
+                    key={msg.id}
+                    sx={{
+                      mb: 0.25,
+                      display: 'flex',
+                      justifyContent: msg.sender === 'Supervisor' ? 'flex-end' : 'flex-start'
                     }}
                   >
                     <Box
                       sx={{
-                        maxWidth: '80%', // Mensajes un poco más anchos
-                        p: '6px 10px', // Más padding
+                        maxWidth: '85%',
+                        p: '4px 8px',
                         ...(msg.sender === 'Supervisor'
                           ? {
-                              bgcolor: '#e0f7fa', // Un azul muy claro para mensajes propios (similar a WhatsApp)
-                              borderRadius: '16px 4px 16px 16px', // Bordes más suaves
-                              ml: 'auto'
-                            }
+                            bgcolor: '#D9FDD3',
+                            borderRadius: '14px 4px 14px 14px',
+                            ml: 'auto'
+                          }
                           : {
-                              bgcolor: '#ffffff',
-                              borderRadius: '4px 16px 16px 16px', // Bordes más suaves
-                              mr: 'auto'
-                            }),
-                        boxShadow: '0 1px 1px rgba(0,0,0,0.03)', // Sombra más sutil
+                            bgcolor: '#ffffff',
+                            borderRadius: '4px 14px 14px 14px',
+                            mr: 'auto'
+                          }),
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                         animation: 'fadeIn 0.2s ease',
                         '@keyframes fadeIn': {
                           '0%': { opacity: 0, transform: 'translateY(3px)' },
@@ -362,15 +363,15 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                         }
                       }}
                     >
-                      <Typography variant="body2" sx={{ color: '#1a237e', wordBreak: 'break-word' }}>
+                      <Typography sx={{ fontSize: '0.7rem', color: '#111b21', wordBreak: 'break-word' }}>
                         {msg.text}
                       </Typography>
-                      <Typography sx={{ 
-                        fontSize: '0.6rem', // Tamaño ligeramente mayor para timestamp
-                        color: '#78909c', 
-                        textAlign: 'right', 
-                        mt: 0.5,
-                        fontWeight: 400 // Menos bold
+                      <Typography sx={{
+                        fontSize: '0.5rem',
+                        color: '#667781',
+                        textAlign: 'right',
+                        mt: 0.25,
+                        fontWeight: 500
                       }}>
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </Typography>
@@ -386,47 +387,48 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
           </Box>
         </Box>
 
-        {/* ✅ ÁREA DE COMENTARIOS MEJORADA */}
-                  <Box sx={{ p: 1, borderTop: '1px solid #e0e0e0', bgcolor: '#f7f7f7' }}>          {/* ✅ INPUT DE MENSAJE CON ESTILO WHATSAPP */}
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 0.75, // Espacio ligeramente mayor
-                        bgcolor: 'white',
-                        borderRadius: '24px', // Más redondeado
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)', // Sombra más pronunciada para el input
-                        pl: 1.5, // Más padding
-                        pr: 0.5,
-                        py: 0.5
-                      }}>            <TextField
+        <Box sx={{ p: 1, borderTop: '1px solid #edf2f4', bgcolor: '#fafbfc' }}>
+          {/* ✅ INPUT DE MENSAJE CON ESTILO WHATSAPP */}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            bgcolor: 'white',
+            borderRadius: '20px',
+            pl: 1,
+            pr: 0.5,
+            py: 0.5
+          }}>
+            <TextField
               fullWidth
               multiline
               minRows={1}
               maxRows={3}
-              placeholder="Escribe un mensaje..." // Texto más descriptivo
+              placeholder="Chat..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyPress={handleCommentKeyPress}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  fontSize: '0.8rem', // Fuente ligeramente mayor
-                                  bgcolor: 'transparent', // Sin fondo interno
-                                  borderRadius: '20px', // Redondeado
-                                  p: 0, // Sin padding interno
-                                  '& fieldset': {
-                                    borderColor: 'transparent',
-                                    borderWidth: '0px'
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: 'transparent',
-                                    borderWidth: '0px'
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: 'transparent',
-                                    borderWidth: '0px'
-                                  }
-                                }
-                              }}              InputProps={{
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '0.75rem',
+                  bgcolor: '#f0f2f5',
+                  borderRadius: '18px',
+                  pl: 0.8,
+                  '& fieldset': {
+                    borderColor: 'transparent',
+                    borderWidth: '0px'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'transparent',
+                    borderWidth: '0px'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'transparent',
+                    borderWidth: '0px'
+                  }
+                }
+              }}
+              InputProps={{
                 disableUnderline: true,
                 endAdornment: (
                   <InputAdornment position="end">
@@ -434,11 +436,12 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                       <IconButton
                         size="small"
                         onClick={handleAttachFileClick}
-                        sx={{ 
-                          color: '#90a4ae', // Color más neutro para el icono
-                          '&:hover': { 
-                            bgcolor: 'rgba(0,0,0,0.05)',
-                            color: '#607d8b'
+                        sx={{
+                          color: '#1a90ff',
+                          borderRadius: 1,
+                          '&:hover': {
+                            bgcolor: '#e3f2fd',
+                            color: '#1976d2'
                           }
                         }}
                       >
@@ -449,32 +452,32 @@ const TaskDetailsSidebar = ({ selectedTask, statuses }) => {
                 )
               }}
             />
-            
+
             <Button
               variant="contained"
               size="small"
               onClick={handleSendComment}
               disabled={!commentText.trim()}
               sx={{
-                minWidth: '36px', // Botón ligeramente más grande
-                width: '36px',
-                height: '36px',
+                minWidth: '32px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
-                bgcolor: '#1a90ff', // Azul para enviar, más consistente
-                '&:hover': { 
-                  bgcolor: '#1976d2', 
-                  opacity: 1
+                bgcolor: '#00a884',
+                '&:hover': {
+                  bgcolor: '#00997a',  // Efecto de hover más sutil
+                  opacity: 0.9
                 },
                 textTransform: 'none',
                 fontWeight: 700,
-                boxShadow: '0 2px 5px rgba(26, 144, 255, 0.3)', // Sombra azul más moderna
+                boxShadow: '0 2px 4px rgba(0, 168, 132, 0.2)',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center'
               }}
             >
-              <SendIcon sx={{ fontSize: '1.1rem' }} />
+              <SendIcon sx={{ fontSize: '1rem', ml: 0.2 }} />
             </Button>
           </Box>
         </Box>

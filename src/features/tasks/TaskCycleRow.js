@@ -5,7 +5,7 @@ import { FaComment } from 'react-icons/fa';
 import FileUploadDialog from '../../components/FileUploadDialog';
 
 const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
-  
+
   // ✅ ESTADO PARA DIALOG DE ARCHIVOS
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
@@ -16,11 +16,11 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
   const realClosingDate = task.real_closing_date ? new Date(task.real_closing_date).toLocaleDateString() : '-';
   const opportunityDays = task.opportunity_days || 0;
   const progress = parseFloat(task.progress) || 0;
-  
+
   // ✅ OBTENER COLOR Y LABEL DE ESTADO
   const statusColor = task.status_color || '#90a4ae';
   const statusLabel = task.status_label || 'Desconocido';
-  
+
   // ✅ DETERMINAR COLOR DE OPORTUNIDAD
   const getOpportunityColor = (days) => {
     if (days > 5) return '#00f57a'; // Verde - Muy bueno
@@ -60,26 +60,28 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
     }
   };
 
-  // ✅ OBTENER EL COLOR DEL ESTADO DEL CICLO (basado en lógica de dashboard)
-  const getCycleStatusColor = (statusValue) => {
-    // Asegurarse de que el statusValue es un número o una cadena convertible
-    const numericStatusValue = Number(statusValue);
-    switch (numericStatusValue) {
-      case 1: // Completado
-        return '#00f57a';
-      case 2: // En Progreso
-        return '#1a90ff';
-      case 3: // Abierto
-        return '#fbc02d';
-      case 4: // Vencido
-        return '#fb3d61';
-      default:
-        return '#90a4ae'; // Gris por defecto
-    }
+  // ✅ OBTENER EL COLOR DEL ESTADO DEL CICLO - Usar directamente el estado del ciclo
+  const getStatusColor = (statusValue, statusList) => {
+    if (!statusList || !Array.isArray(statusList)) return '#90a4ae';
+
+    // Manejar posibles valores nulos o indefinidos
+    if (statusValue === null || statusValue === undefined) return '#90a4ae';
+
+    // Asegurar que el valor del estado sea un string para la comparación
+    const statusStr = String(statusValue);
+
+    // Buscar el estado con comparación flexible (convertir ambos a string)
+    const status = statusList.find(s => {
+      const sValue = s.value !== null && s.value !== undefined ? String(s.value) : '';
+      return sValue === statusStr;
+    });
+
+    // Si encontramos el estado, devolver su color, de lo contrario gris por defecto
+    return status ? status.color_code : '#90a4ae';
   };
 
   // Usar el estado del logtask directamente, con fallback a task_status
-  const cycleStatusColor = getCycleStatusColor(task.logtask_status || task.task_status || task.status);
+  const cycleStatusColor = getStatusColor(task.logtask_status || task.task_status || task.status, statuses);
 
   return (
     <>
@@ -101,21 +103,21 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         }}
       >
         {/* ✅ FECHA DE INICIO */}
-        <Box flex="0 0 150px" textAlign="center">
+        <Box flex="0 0 100px" textAlign="left">
           <Typography sx={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
             {startDate}
           </Typography>
         </Box>
 
         {/* ✅ FECHA DE CIERRE PROGRAMADO */}
-        <Box flex="0 0 140px" textAlign="center">
+        <Box flex="0 0 100px" textAlign="left">
           <Typography sx={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
             {endDate}
           </Typography>
         </Box>
 
         {/* ✅ FECHA DE CIERRE REAL */}
-        <Box flex="0 0 100px" textAlign="center">
+        <Box flex="0 0 100px" textAlign="left">
           <Typography sx={{
             fontSize: '0.8rem',
             color: realClosingDate === '-' ? '#90a4ae' : '#263238',
@@ -146,7 +148,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         </Box>
 
         {/* ✅ ACCIONES */}
-        <Box flex="1 1 80px" textAlign="center">
+        <Box flex="0 0 120px" textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
             {/* ✅ BOTÓN DE ADJUNTAR ARCHIVO */}
             <Tooltip title="Adjuntar archivo">
@@ -154,7 +156,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                 size="small"
                 onClick={handleAttachFileClick}
                 sx={{
-                  color: '#838383',
+                  color: '#1a90ff',
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
@@ -167,7 +169,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               <IconButton
                 size="small"
                 sx={{
-                  color: '#838383',
+                  color: '#1a90ff',
                   '&:hover': { bgcolor: '#e3f2fd' }
                 }}
               >
@@ -181,7 +183,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
                 size="small"
                 onClick={handleDeleteClick}
                 sx={{
-                  color: '#838383',
+                  color: '#fb3d61',
                   '&:hover': { bgcolor: '#ffebee' }
                 }}
               >
@@ -192,7 +194,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
         </Box>
 
         {/* ✅ PROGRESO */}
-        {/* <Box flex="0 0 120px" textAlign="center">
+        <Box flex="0 0 120px" textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
             <Box sx={{ flex: 1, maxWidth: '60px' }}>
               <LinearProgress
@@ -218,7 +220,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               {progress}%
             </Typography>
           </Box>
-        </Box> */}
+        </Box>
       </Box>
 
       {/* ✅ DIALOG DE SUBIDA DE ARCHIVOS */}
