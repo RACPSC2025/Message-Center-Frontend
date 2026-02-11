@@ -17,7 +17,7 @@ import {
   ListItem,
   ListItemAvatar,
   Avatar,
- ListItemIcon as MuiListItemIcon,
+  ListItemIcon as MuiListItemIcon,
 } from '@mui/material';
 import {
   Sync as SyncIcon,
@@ -40,6 +40,7 @@ import { fetchLogtaskList } from '../../stores/tasks/fetchLogtaskListSlice';
 import { deleteLogtask } from '../../stores/tasks/deleteLogtaskSlice'; // Importar la acción de eliminación
 import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
+import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
 
 const TasksListView = ({ onCreateTask }) => {
   const { t } = useTranslation();
@@ -58,14 +59,15 @@ const TasksListView = ({ onCreateTask }) => {
   const [tasks, setTasks] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
+  console.log("SELECTED_LOG_TASK:", selectedLogtask)
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
   const logtaskListLoading = useSelector((state) => state?.fetchLogtaskList?.loading ?? false);
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
-  const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
 
   /* 🎭 Data Mock - Bloque preservado (Migración: 05/02/2026)
   useEffect(() => {
@@ -121,31 +123,10 @@ const TasksListView = ({ onCreateTask }) => {
     });
   }, [dispatch]);
 
-  // Filtrar tareas por keywords
-  const filteredTasks = useMemo(() => {
-    if (!keywordsFilter || keywordsFilter.trim() === '') {
-      return tasks;
-    }
-
-    const searchTerm = keywordsFilter.toLowerCase().trim();
-    
-    return tasks.filter(task => {
-      const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
-      const descMatch = task.task_description?.toLowerCase().includes(searchTerm);
-      const tagsMatch = Array.isArray(task.tags) && task.tags.some(tag => 
-        typeof tag === 'string' && tag.toLowerCase().includes(searchTerm)
-      );
-      const responsiblesMatch = Array.isArray(task.responsibles) && task.responsibles.some(resp => 
-        resp.name && typeof resp.name === 'string' && resp.name.toLowerCase().includes(searchTerm)
-      );
-      
-      return titleMatch || descMatch || tagsMatch || responsiblesMatch;
-    });
-  }, [tasks, keywordsFilter]);
-
   const handleSelectTask = (task) => {
     setSelectedTask(task);
     setSelectedLogtask(null);
+    setIsEditDrawerOpen(false); // Close drawer when switching tasks
 
     if (task?.logtask_list && task.logtask_list.length > 0) {
       setLogtasks(task.logtask_list);
@@ -255,7 +236,7 @@ const TasksListView = ({ onCreateTask }) => {
                 TAREAS
               </Typography>
               <Box sx={{ bgcolor: '#eceff1', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#455a64' }}>{filteredTasks.length}</Typography>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#455a64' }}>{tasks.length}</Typography>
               </Box>
             </Box>
           )}
@@ -273,7 +254,7 @@ const TasksListView = ({ onCreateTask }) => {
             (() => {
               const startIndex = (currentPage - 1) * tasksPerPage;
               const endIndex = startIndex + tasksPerPage;
-              const paginatedTasks = filteredTasks.slice(startIndex, endIndex);
+              const paginatedTasks = tasks.slice(startIndex, endIndex);
 
               return paginatedTasks.map((task) => {
                 const isSelected = selectedTask?.id === task.id;
@@ -329,12 +310,12 @@ const TasksListView = ({ onCreateTask }) => {
               <ChevronLeftIcon sx={{ fontSize: 16 }} />
             </IconButton>
             <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#455a64', minWidth: 60, textAlign: 'center' }}>
-              {currentPage} / {Math.ceil(filteredTasks.length / tasksPerPage)}
+              {currentPage} / {Math.ceil(tasks.length / tasksPerPage)}
             </Typography>
             <IconButton
               size="small"
-              onClick={() => setCurrentPage(Math.min(Math.ceil(filteredTasks.length / tasksPerPage), currentPage + 1))}
-              disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
+              onClick={() => setCurrentPage(Math.min(Math.ceil(tasks.length / tasksPerPage), currentPage + 1))}
+              disabled={currentPage === Math.ceil(tasks.length / tasksPerPage)}
               sx={{ width: 24, height: 24 }}
             >
               <ChevronRightIcon sx={{ fontSize: 16 }} />
@@ -345,14 +326,6 @@ const TasksListView = ({ onCreateTask }) => {
 
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        {/* Contador de resultados filtrados */}
-        {keywordsFilter && (
-          <Box sx={{ px: 2, py: 1, bgcolor: '#f8fbfc', borderBottom: '1px solid #e0e6ed' }}>
-            <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.75rem' }}>
-              {filteredTasks.length} de {tasks.length} tareas encontradas
-            </Typography>
-          </Box>
-        )}
         {/* Barra de Filtros Contextual */}
         <Box sx={{
           display: 'flex',
@@ -530,11 +503,11 @@ const TasksListView = ({ onCreateTask }) => {
           {/* Tabla de Ciclos */}
           <Paper elevation={0} sx={{ border: '1px solid #edf2f4', borderRadius: 3, overflow: 'hidden', bgcolor: 'white', mt: 0.5 }}>
             <Box sx={{ display: 'flex', p: '8px 12px', bgcolor: 'white', borderBottom: '1px solid #edf2f4' }}>
-              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>INICIO</Typography></Box>
-              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE PROG.</Typography></Box>
-              <Box flex="0 0 100px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE REAL</Typography></Box>
-              <Box flex="0 0 80px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>OPORT.</Typography></Box>
-              <Box flex="1 1 80px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>ACCIONES</Typography></Box>
+              <Box flex="0 0 200px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>INICIO</Typography></Box>
+              <Box flex="0 0 200px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE PROG.</Typography></Box>
+              <Box flex="0 0 200px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>CIERRE REAL</Typography></Box>
+              <Box flex="0 0 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>OPORT.</Typography></Box>
+              <Box flex="1 1 150px" textAlign="center"><Typography variant="caption" sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.65rem' }}>ACCIONES</Typography></Box>
             </Box>
 
             <Box>
@@ -582,7 +555,10 @@ const TasksListView = ({ onCreateTask }) => {
                         opportunity_days: logtask.opportunity_days || 0
                       }}
                       statuses={listTaskStatus}
-                      onSelect={() => setSelectedLogtask(logtask)}
+                      onSelect={() => {
+                        setSelectedLogtask(logtask);
+                        setIsEditDrawerOpen(true);
+                      }}
                       isSelected={selectedLogtask?.id === logtask.id}
                     />
                   ));
@@ -629,6 +605,22 @@ const TasksListView = ({ onCreateTask }) => {
       </Box>
 
       {/* Sidebar Derecha - Detalles */}
+
+      <EditEventDetailsDrawer
+        openEditDrawer={isEditDrawerOpen}
+        onCloseEditDrawer={() => {
+          setIsEditDrawerOpen(false);
+          console.log('Cerrando drawer');
+        }}
+        logTaskDetails={selectedLogtask || {}}
+        onDrawerOpened={() => {
+          console.log('Edición finalizada / Drawer cerrado completamente');
+          // Aquí podrías disparar un refresco de la lista si hubo cambios
+          // dispatch(fetchListTaskNew({})); 
+        }}
+      />
+
+      {/*
       <Box sx={{
         width: isRightSidebarCollapsed ? '40px' : '240px',  // Reducido de 280px a 240px
         flexShrink: 0,
@@ -660,7 +652,7 @@ const TasksListView = ({ onCreateTask }) => {
             onCollapse={() => setIsRightSidebarCollapsed(true)}
           />
         )}
-      </Box>
+      </Box>*/}
     </Box>
   );
 };

@@ -15,7 +15,7 @@ const resources = {
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: process.env.NODE_ENV !== 'production' ? process.env.REACT_APP_DEFAULT_LANGUAGE : 'es', // Set the initial language
+  lng: process.env.REACT_APP_DEFAULT_LANGUAGE || 'es', // Set the initial language
   interpolation: {
     escapeValue: false // React already escapes values, so this is not needed
   }
