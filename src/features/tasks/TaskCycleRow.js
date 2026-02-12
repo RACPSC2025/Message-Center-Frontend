@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Box, Typography, Chip, LinearProgress, IconButton, Tooltip } from '@mui/material';
-import { AttachFile as AttachFileIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { alpha, useTheme } from '@mui/material/styles';
+import { AttachFile as AttachFileIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
 import { FaComment } from 'react-icons/fa';
 import FileUploadDialog from '../../components/FileUploadDialog';
 
-const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
+const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelected }) => {
+  const theme = useTheme();
   console.log("mostrando desdede TASKCYCLE", task)
   
   // ✅ ESTADO PARA DIALOG DE ARCHIVOS
@@ -51,13 +53,11 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
     // Aquí puedes agregar lógica adicional como refrescar la lista de archivos
   };
 
-  // ✅ MANEJAR ELIMINAR CICLO
-  const handleDeleteClick = (e) => {
-    e.stopPropagation(); // Evitar que se seleccione la fila
-    if (window.confirm(`¿Estás seguro de que deseas eliminar el ciclo "${displayTitle}"?`)) {
-      // Aquí iría la lógica para eliminar el ciclo
-      console.log('🗑️ Eliminando ciclo:', task.id);
-      // dispatch(deleteLogtask({ id: task.id })) - ejemplo de cómo sería
+  // ✅ ABRIR DRAWER DE SEGUIMIENTO SOLO DESDE EL ÍCONO
+  const handleOpenFollowup = (e) => {
+    e.stopPropagation();
+    if (onOpenFollowup) {
+      onOpenFollowup();
     }
   };
 
@@ -178,17 +178,17 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, isSelected }) => {
               </IconButton>
             </Tooltip>
 
-            {/* ✅ BOTÓN DE ELIMINAR */}
-            <Tooltip title="Eliminar">
+            {/* ✅ BOTÓN DE VER SEGUIMIENTO */}
+            <Tooltip title="Ver seguimiento">
               <IconButton
                 size="small"
-                onClick={handleDeleteClick}
+                onClick={handleOpenFollowup}
                 sx={{
-                  color: '#838383',
-                  '&:hover': { bgcolor: '#ffebee' }
+                  color: theme.palette.primary.main,
+                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
                 }}
               >
-                <DeleteIcon fontSize="small" />
+                <FollowUpIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>

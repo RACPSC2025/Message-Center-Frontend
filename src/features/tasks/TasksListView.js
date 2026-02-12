@@ -709,6 +709,9 @@ const TasksListView = ({ onCreateTask }) => {
                       statuses={listTaskStatus}
                       onSelect={() => {
                         setSelectedLogtask(logtask);
+                      }}
+                      onOpenFollowup={() => {
+                        setSelectedLogtask(logtask);
                         setIsEditDrawerOpen(true);
                       }}
                       isSelected={selectedLogtask?.id === logtask.id}
