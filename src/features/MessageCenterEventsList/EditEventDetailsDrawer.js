@@ -67,7 +67,7 @@ function CustomTabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
+      {value === index && <Box sx={{ py: 3, px: 0 }}>{children}</Box>}
     </div>
   );
 }
@@ -525,9 +525,8 @@ function EditEventDetailsDrawer({
     ];
     // Simula la carga de datos
     setLogtaskExecutedComments(mockComments);
-    setLogtaskRevisorComments(mockComments);
     setIsLoading('loaded'); // Importante para que se quite el loading
-  }, [logTaskDetails]);
+  }, [logTaskDetails, openEditDrawer]);
 
   const handleTabChange = (event, newValue) => {
     const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
@@ -891,6 +890,8 @@ function EditEventDetailsDrawer({
                 <Tab label={t('crear comentarios')} value="crear_comentario" />
               </Tabs>
             </Box>
+
+            {/* Tab de Comentarios Ejecutor */}
             <CustomTabPanel value={tabValue} index="comentarios">
               
               {/* // TODO: Aquí antes era === loaded: cambiar cuando se realice la API */}
@@ -932,67 +933,29 @@ function EditEventDetailsDrawer({
                 <div>{t('loading')}</div>
               )}
             </CustomTabPanel>
-
+            
+            {/* Tab de Comentarios Revisor */}
             <CustomTabPanel value={tabValue} index="seguimientos">
-              <Box sx={{ marginBottom: '30px' }}>
-                {/* <Button
-                  variant="contained"
-                  color="warning"
-                  size="large"
-                  onClick={handleAgregarComentario}
-                >
-                  + {t('add_comment')}
-                </Button> */}
-              </Box>
-
                 {/* TODO: Aquí antes era === loaded: cambiar cuando se realice la API*/}            
-                {isLoading !== 'loaded' ? (
+                {isLoading === 'loaded' ? (
                 logtaskRevisorComments.length > 0 ? (
                   logtaskRevisorComments.map((comment, index) => {
                     return (
-                      <Box key={index} sx={{ marginBottom: '30px' }}>
-                        <Box
-                          display="flex"
-                          margin="20px 20px"
-                          justifyContent="start"
-                          gap={2}
-                          alignItems="center"
-                        >
-                          <Box>
-                            <Avatar sx={{ width: '3rem', height: '3rem' }}>
-                              {comment.userName.slice(0, 2).toUpperCase()}
-                            </Avatar>
-                          </Box>
-                          <Box>
-                            <Box>
-                              <Typography variant="h6">{comment.userName}</Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="h6">{formatDate(comment.created)}</Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                        <Box>{comment.comment}</Box>
-                        {comment.attachment.length > 0 &&
-                          comment.attachment.map((attachment, index) => (
-                            <AttachmentViewer key={index} attachment={attachment} />
-                          ))
-                        }
-                        <Box display="flex" justifyContent="space-between" margin="10px 0">
-                          <Button variant="outlined" size="large">
-                            {t('highlight')}
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="large"
-                            //onClick={handleOpenAttachmentModal}
-                            onClick={() => handleOpenAttachmentModal(comment)}
-                          >
-                            {t('up_attachment')}
-                          </Button>
-                        </Box>
-                        <hr></hr>
-                      </Box>
+                      <CommentCard
+                        key={index}
+                        comment={comment}
+                        role={t('Reviewer')}
+                        onEdit={(c) => {
+                          setSelectedComment(c);
+                          handleOpenEditCommentModal();
+                        }}
+                        onDelete={(c) => {
+                          setSelectedComment(c);
+                          handleOpenDeleteCommentDialog();
+                        }}
+                        onUploadAttachment={(c) => handleOpenAttachmentModal(c)}
+                        formatDate={formatDate(comment.created)}
+                      />
                     );
                   })
                 ) : isLoading === 'loading' ? (
@@ -1010,7 +973,7 @@ function EditEventDetailsDrawer({
 
             {/* Nuevo Tab de Crear Comentario */}
             <CustomTabPanel value={tabValue} index="crear_comentario">
-              <Box>
+              <Box sx={{ px: 3, py: 1 }}>
                 <Typography variant="h6" sx={{ marginBottom: '20px' }}>
                   {t('add_comment')}
                 </Typography>

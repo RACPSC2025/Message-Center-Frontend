@@ -17,12 +17,11 @@ function CommentCard({
   formatDate
 }) {
   // Manejo de menú de acciones ("Más")
-  const [anchorEl, setAnchorEl] = useState(null);
+/*   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null);
+  const handleClose = () => setAnchorEl(null); */
 
-  // Estilos mapeados de CSS a MUI sx
   const styles = {
     card: {
       display: 'flex',
