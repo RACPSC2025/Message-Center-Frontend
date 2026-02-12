@@ -972,7 +972,7 @@ function EditEventDetailsDrawer({
             </CustomTabPanel>
 
             {/* Nuevo Tab de Crear Comentario */}
-            <CustomTabPanel value={tabValue} index="  ">
+            <CustomTabPanel value={tabValue} index="crear_comentario">
               <Box sx={{ px: 3, py: 1 }}>
                 <Typography variant="h6" sx={{ marginBottom: '20px' }}>
                   {t('add_comment')}
