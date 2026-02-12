@@ -64,11 +64,18 @@ const TasksListView = ({ onCreateTask }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   const TASK_STATUS_COLORS = useMemo(() => ({
-    '1': theme.palette.success.main, // Completado
-    '2': theme.palette.info.main, // En progreso
-    '3': theme.palette.warning.main, // Abierto
-    '4': theme.palette.error.main // Vencido
-  }), [theme]);
+    '1': '#00f57a', // Completado (verde)
+    '2': '#1a90ff', // En progreso (azul)
+    '3': '#fbc02d', // Abierto (amarillo)
+    '4': '#fb3d61' // Vencido (rojo)
+  }), []);
+
+  const STATUS_FILTER_META = useMemo(() => ({
+    '1': { label: 'Completed', color: TASK_STATUS_COLORS['1'] },
+    '2': { label: 'In_Progress', color: TASK_STATUS_COLORS['2'] },
+    '3': { label: 'abierto', color: TASK_STATUS_COLORS['3'] },
+    '4': { label: 'Expired', color: TASK_STATUS_COLORS['4'] }
+  }), [TASK_STATUS_COLORS]);
 
   console.log("SELECTED_LOG_TASK:", selectedLogtask)
   // Redux Selectors
@@ -192,36 +199,70 @@ const TasksListView = ({ onCreateTask }) => {
     }
   };
 
+  const normalizeStatusCode = (value) => {
+    const status = String(value || '').trim().toLowerCase();
+    if (!status || status === '-1' || status === '0' || status === 'all') return null;
+
+    if (status === '4' || status === 'vencido' || status === 'expired' || status === 'delayed') return '4';
+    if (status === '3' || status === 'abierto' || status === 'open' || status === 'pending') return '3';
+    if (
+      status === '2'
+      || status === 'en progreso'
+      || status === 'in progress'
+      || status === 'in_progress'
+      || status === 'under_progress'
+    ) return '2';
+    if (status === '1' || status === 'completado' || status === 'completed' || status === 'closed') return '1';
+
+    return null;
+  };
+
+  const getStatusCodeFromItem = (statusItem) =>
+    normalizeStatusCode(statusItem?.value_number)
+    || normalizeStatusCode(statusItem?.value)
+    || normalizeStatusCode(statusItem?.label)
+    || null;
+
+  const statusFilters = useMemo(() => {
+    const source = Array.isArray(listTaskStatus) ? listTaskStatus : [];
+    const backendByCode = {};
+
+    source.forEach((statusItem) => {
+      const code = getStatusCodeFromItem(statusItem);
+      if (!code || !STATUS_FILTER_META[code] || backendByCode[code]) return;
+      backendByCode[code] = statusItem;
+    });
+
+    // Siempre mostrar los 4 filtros en el orden del diseño
+    return ['3', '1', '4', '2'].map((code) => ({
+      code,
+      label: STATUS_FILTER_META[code].label,
+      color: STATUS_FILTER_META[code].color
+    }));
+  }, [listTaskStatus, STATUS_FILTER_META]);
+
+  const normalizedSelectedStatus = useMemo(
+    () => normalizeStatusCode(selectedStatus),
+    [selectedStatus]
+  );
+
+  const matchesSelectedStatus = (statusValue) => {
+    if (!normalizedSelectedStatus) return true;
+    return normalizeStatusCode(statusValue) === normalizedSelectedStatus;
+  };
+
   const getTaskPriorityStatus = (task) => {
     if (!task) return null;
 
-    const normalizeStatus = (value) => {
-      const status = String(value || '').trim().toLowerCase();
-      if (!status) return null;
-
-      if (status === '4' || status === 'vencido' || status === 'expired' || status === 'delayed') return '4';
-      if (status === '3' || status === 'abierto' || status === 'open' || status === 'pending') return '3';
-      if (
-        status === '2'
-        || status === 'en progreso'
-        || status === 'in progress'
-        || status === 'in_progress'
-        || status === 'under_progress'
-      ) return '2';
-      if (status === '1' || status === 'completado' || status === 'completed' || status === 'closed') return '1';
-
-      return null;
-    };
-
     const logtaskStatuses = Array.isArray(task.logtask_list)
       ? task.logtask_list
-        .map((item) => normalizeStatus(item?.logtask_status || item?.task_status || item?.status))
+        .map((item) => normalizeStatusCode(item?.logtask_status || item?.task_status || item?.status))
         .filter(Boolean)
       : [];
 
     const statuses = logtaskStatuses.length > 0
       ? logtaskStatuses
-      : [normalizeStatus(task.task_status || task.status)].filter(Boolean);
+      : [normalizeStatusCode(task.task_status || task.status)].filter(Boolean);
 
     if (statuses.includes('4')) return '4'; // Vencido
     if (statuses.includes('3')) return '3'; // Abierto
@@ -434,23 +475,23 @@ const TasksListView = ({ onCreateTask }) => {
               FILTRAR ESTADO
             </Typography>
             <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-              {listTaskStatus.map((status) => {
-                const isActive = selectedStatus === status.value;
+              {statusFilters.map((status) => {
+                const isActive = normalizedSelectedStatus === status.code;
                 return (
-                  <Tooltip key={status.value} title={t(status.label)}>
+                  <Tooltip key={status.code} title={t(status.label)}>
                     <Box
                       onClick={() => {
-                        const newValue = isActive ? -1 : status.value;
+                        const newValue = isActive ? -1 : status.code;
                         dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: newValue } }));
                       }}
                       sx={{
                         width: isActive ? 16 : 12,
                         height: isActive ? 16 : 12,
                         borderRadius: '50%',
-                        bgcolor: status.color_code,
+                        bgcolor: status.color,
                         cursor: 'pointer',
                         border: isActive ? '2px solid #fff' : 'none',
-                        outline: isActive ? `2px solid ${status.color_code}` : 'none',
+                        outline: isActive ? `2px solid ${status.color}` : 'none',
                         transition: 'all 0.2s ease',
                         '&:hover': { transform: 'scale(1.3)' }
                       }}
@@ -458,7 +499,7 @@ const TasksListView = ({ onCreateTask }) => {
                   </Tooltip>
                 );
               })}
-              {selectedStatus && selectedStatus !== -1 && selectedStatus !== 0 && (
+              {normalizedSelectedStatus && (
                 <Tooltip title={t('Limpiar filtro')}>
                   <IconButton
                     size="small"
@@ -628,8 +669,7 @@ const TasksListView = ({ onCreateTask }) => {
               ) : (
                 (() => {
                   const filtered = logtasks.filter(lt => {
-                    if (!selectedStatus || selectedStatus === -1 || selectedStatus === 0) return true;
-                    return String(lt.logtask_status) === String(selectedStatus);
+                    return matchesSelectedStatus(lt.logtask_status);
                   });
 
                   if (filtered.length === 0 && logtasks.length > 0) {
@@ -681,8 +721,7 @@ const TasksListView = ({ onCreateTask }) => {
             {/* Paginación de Ciclos */}
             {!logtaskListLoading && (() => {
               const filtered = logtasks.filter(lt => {
-                if (!selectedStatus || selectedStatus === -1 || selectedStatus === 0) return true;
-                return String(lt.logtask_status) === String(selectedStatus);
+                return matchesSelectedStatus(lt.logtask_status);
               });
 
               const totalPages = Math.max(1, Math.ceil(filtered.length / cyclesPerPage));
