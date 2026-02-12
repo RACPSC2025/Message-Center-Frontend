@@ -1,17 +1,43 @@
-import { Box, Typography, Avatar, IconButton, Menu, MenuItem, Button } from '@mui/material';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import ReplyIcon from '@mui/icons-material/Reply'; // Icono para 'Responder'
-// Importar iconos SVG o usar equivalentes de MUI
-import AttachmentViewer from './AttachmentViewer'; 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { Box, Typography, Avatar, Button } from '@mui/material';
+import AttachmentViewer from './AttachmentViewer'; 
+
+const styles = {
+  card: {
+    display: 'flex',
+    gap: 2,
+    padding: '20px 0',
+    borderBottom: '1px solid #e9ecef',
+    '&:last-child': { borderBottom: 'none' }
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    bgcolor: 'rgba(0, 169, 180, 0.1)',
+    color: '#00A9B4',
+    fontSize: 16,
+    fontWeight: 600,
+    border: '1.5px solid #ffffff',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+  },
+  roleBadge: {
+    fontSize: 13,
+    fontWeight: 400,
+    color: '#6c757d',
+    bgcolor: '#f8f9fa',
+    padding: '2px 10px',
+    borderRadius: '20px',
+    border: '1px solid #e9ecef'
+  }
+};
 
 function CommentCard({ 
   comment, 
   role, // 'Ejecutor' o 'Revisor'
-  onEdit, 
+  onEdit, // Preguntar: Aun no se sabe si se podra editar un comentario
   onDelete, 
   onUploadAttachment,
   formatDate
@@ -23,35 +49,6 @@ function CommentCard({
   const handleClose = () => setAnchorEl(null);
 
   const { t } = useTranslation();
-
-  const styles = {
-    card: {
-      display: 'flex',
-      gap: 2,
-      padding: '20px 0',
-      borderBottom: '1px solid #e9ecef',
-      '&:last-child': { borderBottom: 'none' }
-    },
-    avatar: {
-      width: 44,
-      height: 44,
-      bgcolor: 'rgba(0, 169, 180, 0.1)',
-      color: '#00A9B4',
-      fontSize: 16,
-      fontWeight: 600,
-      border: '1.5px solid #ffffff',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-    },
-    roleBadge: {
-      fontSize: 13,
-      fontWeight: 400,
-      color: '#6c757d',
-      bgcolor: '#f8f9fa',
-      padding: '2px 10px',
-      borderRadius: '20px',
-      border: '1px solid #e9ecef'
-    }
-  };
 
   return (
     <Box sx={styles.card}>
