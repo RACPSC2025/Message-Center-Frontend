@@ -3,8 +3,8 @@ import {
   ArrowDownward,
   AssignmentReturned,
   CalendarMonth,
+  Checklist,
   Dashboard,
-  DownloadDone,
   Insights,
   ListAlt,
   Loop,
@@ -383,9 +383,8 @@ export default function Component() {
   // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
   
   const speedDialActions = [
-    { icon: <DownloadDone />, name: 'Añadir Tarea Permanente', type: 'permanente' },
-    { icon: <Loop />, name: 'Añadir Tarea Cíclica', type: 'ciclica' },
-    { icon: <AssignmentReturned />, name: 'Añadir Tarea Única', type: 'unica' }
+    { icon: <Checklist />, name: 'Añadir Tarea', type: 'permanente' },
+    { icon: <Loop />, name: 'Añadir Ciclo', type: 'ciclica' }
   ];
  
 
