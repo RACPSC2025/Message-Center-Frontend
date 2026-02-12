@@ -258,7 +258,7 @@ const es = {
   phase: 'Fase',
   subphase: 'Subfase',
   tolerance_days: 'Tolerancia Días',
-  edit_details_of_the_activity: 'Editar Seguimientos',
+  edit_details_of_the_activity: "Editar Seguimiento del Ciclo - {{cicloId}}",
   edit_activity: 'Editar Actividad',
   activity_edited_satisfactorily: 'Actividad editada satisfatoriamente!',
   error_editing_activity: 'Error editing activity. Please try again.',

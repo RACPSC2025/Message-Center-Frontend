@@ -842,7 +842,7 @@ function EditEventDetailsDrawer({
         <AppBar position="static">
           <Toolbar>
             <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
-              {t('edit_details_of_the_activity')}
+              {t('edit_details_of_the_activity', { cicloId: logTaskDetails.id})}
             </Typography>
             <IconButton edge="end" onClick={handleCloseEditDrawer} aria-label="close">
               <CloseIcon sx={{ color: 'white' }} />
