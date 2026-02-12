@@ -33,6 +33,7 @@ import { uploadCommentAttachments } from '../../stores/actions/uploadCommentAtta
 import { showErrorMsg, showSuccessMsg } from '../../utils/others';
 import { useDispatch, useSelector } from 'react-redux';
 import AttachmentViewer from './AttachmentViewer';
+import CommentCard from './CommentCard';
 
 import {
   fetchListOfUsers,
@@ -66,7 +67,7 @@ function CustomTabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
     </div>
   );
 }
@@ -418,7 +419,7 @@ function EditEventDetailsDrawer({
         formData
       );
 
-      console.log("responseCommentsReview", response.data);
+      console.log("responseCommentsReview AAAAAAAAAAAAAAAAA", response.data);
 
       for (const comment of response.data.data) {
         const userName = await fetchUserName(comment.user_id);
@@ -485,22 +486,47 @@ function EditEventDetailsDrawer({
     }
   };
 
-  useEffect(() => {
+  /* useEffect(() => {
     setIsLoading('loading');
     setLogtaskExecutedComments([]);
     setLogtaskRevisorComments([]);
     // fetchLogtaskComments(logTaskDetails.id);
-  }, []);
+  }, []); */
 
   // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments/{id}
 
   useEffect(() => {
     console.log('LOG TASK DETAILS MMMMM???', logTaskDetails);
-    if (logTaskDetails.length === 0) return;
-    fetchLogtaskComments(logTaskDetails.id);
-    setIsLoading('loading');
-    setLogtaskExecutedComments([]);
-    setLogtaskRevisorComments([]);
+    //if (logTaskDetails.length === 0) return;
+    //fetchLogtaskComments(logTaskDetails.id);
+    //setIsLoading('loading');
+    //setLogtaskExecutedComments([]);
+    //setLogtaskRevisorComments([]);
+
+    const mockComments = [
+      {
+        userName: 'Yorleny Pérez',
+        created: '2023-02-25T10:00:00',
+        comment: 'Se realizó la clonación de la tarea de prueba según lo solicitado.\nQueda pendiente revisar la asignación de recursos.',
+        attachment: [], // Sin adjuntos
+        user_id: 1,
+        id: 101
+      },
+      {
+        userName: 'Miguel Rojas',
+        created: '2023-02-26T14:30:00',
+        comment: 'La clonación se ve correcta.',
+        attachment: [
+          { url: 'http://ejemplo.com/archivo.pdf' },
+        ], // Con adjunto simulado
+        user_id: 2,
+        id: 102
+      }
+    ];
+    // Simula la carga de datos
+    setLogtaskExecutedComments(mockComments);
+    setLogtaskRevisorComments(mockComments);
+    setIsLoading('loaded'); // Importante para que se quite el loading
   }, [logTaskDetails]);
 
   const handleTabChange = (event, newValue) => {
@@ -868,75 +894,38 @@ function EditEventDetailsDrawer({
             <CustomTabPanel value={tabValue} index="comentarios">
               
               {/* // TODO: Aquí antes era === loaded: cambiar cuando se realice la API */}
-              {isLoading !== 'loaded' ? (
+              {isLoading === 'loaded' ? (
                 logtaskExecutedComments.length > 0 ? (
                   logtaskExecutedComments.map((comment, index) => {
                     console.log('Adjuntos del comentario:', comment.attachment); // <-- test
                     return (
-                      <Box key={index} sx={{ marginBottom: '30px' }}>
-                        <Box
-                          display="flex"
-                          margin="20px 20px"
-                          justifyContent="space-between"
-                          alignItems="center"
-                        >
-                          <Box display="flex" gap={1}>
-                            <Box>
-                              <Avatar sx={{ width: '3rem', height: '3rem' }}>
-                                {comment.userName.slice(0, 2).toUpperCase()}
-                              </Avatar>
-                            </Box>
-                            <Box>
-                              <Box>
-                                <Typography variant="h6">{comment.userName}</Typography>
-                              </Box>
-                              <Box>
-                                <Typography variant="h6">{formatDate(comment.created)}</Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Tooltip title={t('options')}>
-                            <IconButton
-                              onClick={(event) => handleMenuEditCommentOpen(event, comment)}
-                            >
-                              <MoreVert />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                        <Box>{comment.comment}</Box>
-                        {/*comment.attachment.length > 0 &&
-                          comment.attachment.map((attachment, index) => (
-                            <AttachmentViewer key={index} attachment={attachment} />
-                          ))
-                        */}
-                        {comment.attachment && comment.attachment.length > 0 &&
-                          comment.attachment.map((attachment, index) => (
-                            <AttachmentViewer key={index} attachment={attachment} />
-                          ))
-                        }
-                        <Box display="flex" justifyContent="space-between" margin="10px 0">
-                          <Button variant="outlined" size="large">
-                            {t('highlight')}
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            size="large"
-                            //onClick={handleOpenAttachmentModal}
-                            onClick={() => handleOpenAttachmentModal(comment)}
-                          >
-                            {t('up_attachment')}
-                          </Button>
-                        </Box>
-                        <hr></hr>
-                      </Box>
+                      <CommentCard
+                        key={index}
+                        comment={comment}
+                        role={t('Executioner')}
+                        onEdit={(c) => {
+                          setSelectedComment(c); // Importante: actualiza el estado del comentario seleccionado
+                          // Necesita que handleOpenEditCommentModal use el estado actualizado o pasarle 'c'
+                          handleMenuEditCommentOpen({ currentTarget: null }, c); // Simulamos el evento o ajustamos la función
+                          // Mejor aún: adapta handleMenuEditCommentOpen o usa handleOpenEditCommentModal directamente
+                          // Ajuste rápido con la lógica actual:
+                          handleOpenEditCommentModal(); 
+                        }}
+                        onDelete={(c) => {
+                          setSelectedComment(c);
+                          handleOpenDeleteCommentDialog();
+                        }}
+                        onUploadAttachment={(c) => handleOpenAttachmentModal(c)}
+                        formatDate={formatDate(comment.created)}
+                      />
                     );
                   })
                 ) : isLoading === 'loading' ? (
                   <div>{t('loading')}</div>
                 ) : (
                   <EmptyState
-                    title="Aún no hay comentarios"
-                    subtitle="Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo."
+                    title={t("Aún no hay comentarios")}
+                    subtitle={t("Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo.")}
                   />
                 )
               ) : (
