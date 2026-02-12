@@ -873,14 +873,6 @@ function EditEventDetailsDrawer({
                   </Box>
                 </Tooltip>
               </Box>
-              <Button
-                variant="contained"
-                color="warning"
-                size="large"
-                onClick={handleAgregarComentarioEjecutor}
-              >
-                + {t('add_comment')}
-              </Button>
             </Box>
             <Box marginTop="40px">
               <Tabs
@@ -896,16 +888,7 @@ function EditEventDetailsDrawer({
               </Tabs>
             </Box>
             <CustomTabPanel value={tabValue} index="comentarios">
-              <Box sx={{ marginBottom: '30px' }}>
-                {/* <Button
-                  variant="contained"
-                  color="warning"
-                  size="large"
-                  onClick={handleAgregarComentarioEjecutor}
-                >
-                  + {t('add_comment')}
-                </Button> */}
-              </Box>
+              
               {/* // TODO: Aquí antes era === loaded: cambiar cuando se realice la API */}
               {isLoading !== 'loaded' ? (
                 logtaskExecutedComments.length > 0 ? (
@@ -1108,6 +1091,7 @@ function EditEventDetailsDrawer({
           </Box>
         </div>
       </Drawer>
+      
       <Modal open={openEditCommentModal} onClose={handleCloseEditCommentModal}>
         <Box sx={modalStyle}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -1178,54 +1162,7 @@ function EditEventDetailsDrawer({
           </Button>
         </Box>
       </Modal>
-      <Modal open={openModalEjecutor} onClose={handleCloseModalEjecutor}>
-        <Box sx={modalStyle}>
-          <Typography variant="h6" sx={{ marginBottom: '40px' }}>
-            {t('add_comment')}
-          </Typography>
-          {errorCommentForm ? <Alert severity="error">{t('comment_field_mandatory')}</Alert> : ''}
-          {/*
-          <FormBuilder
-            inputFields={addCommentFormData}
-            showActionButton={false}
-            controlled={true}
-            initialValues={addCommentForm}
-            onChange={(id, value) => {
-              setAddCommentForm((prevState) => ({ ...prevState, [id]: value }));
-            }}
-          />
-          */}
-          <FormBuilder
-            inputFields={addCommentFormData}
-            showActionButton={false}
-            controlled={true}
-            initialValues={{
-              ...addCommentForm,
-              progress: Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)))
-            }}
-            onChange={(id, value) => {
-              setAddCommentForm((prevState) => ({ ...prevState, [id]: value }));
-            }}
-          />
-
-          <Button
-            variant="contained"
-            size="large"
-            sx={{ marginTop: '30px' }}
-            onClick={() => handleCommentConfirmation(true)}
-          >
-            {t('add_comment')}
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            sx={{ marginTop: '30px', marginLeft: '20px' }}
-            onClick={() => setOpenModalEjecutor(false)}
-          >
-            {t('Cancel')}
-          </Button>
-        </Box>
-      </Modal>
+      
       <Dialog
         open={openDeleteCommentDialog}
         onClose={handleCloseDeleteCommentDialog}
