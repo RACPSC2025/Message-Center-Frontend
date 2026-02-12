@@ -375,7 +375,7 @@ const es = {
   delete_comment_dialog_message: '¿Está seguro de que desea eliminar este comentario?',
   enter_0_100_value: 'Por favor, ingrese un valor de 0 a 100',
   comment_field_mandatory: 'El campo comentario es obligatorio',
-  comments_executor: 'Commentarios Ejecutor',
+  comments_executor: 'Comentarios Ejecutor',
   followup_reviewer: 'Seguimientos Revisor',
   analysis_with_amatia: 'Analizar con Amat-ia',
   'Analysis text with amatia': 'Analizar texto con Amat-ia',

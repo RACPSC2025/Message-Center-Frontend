@@ -6,7 +6,7 @@ import ReplyIcon from '@mui/icons-material/Reply'; // Icono para 'Responder'
 // Importar iconos SVG o usar equivalentes de MUI
 import AttachmentViewer from './AttachmentViewer'; 
 import { useState } from 'react';
-
+import { useTranslation } from 'react-i18next';
 
 function CommentCard({ 
   comment, 
@@ -17,10 +17,12 @@ function CommentCard({
   formatDate
 }) {
   // Manejo de menú de acciones ("Más")
-/*   const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => setAnchorEl(event.currentTarget);
-  const handleClose = () => setAnchorEl(null); */
+  const handleClose = () => setAnchorEl(null);
+
+  const { t } = useTranslation();
 
   const styles = {
     card: {
@@ -96,7 +98,7 @@ function CommentCard({
             onClick={() => { handleClose(); onUploadAttachment(comment); }}
             sx={{ color: '#6c757d', textTransform: 'none', '&:hover': { bgcolor: '#f8f9fa', color: '#212529' } }}
           >
-            Subir Adjunto
+            {t('up_attachment')}
           </Button>
 
           {/* Menú desplegable para "Más" */}

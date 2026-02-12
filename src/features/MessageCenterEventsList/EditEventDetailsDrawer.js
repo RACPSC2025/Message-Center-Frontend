@@ -887,7 +887,7 @@ function EditEventDetailsDrawer({
               >
                 <Tab label={t('comments_executor')} value="comentarios" />
                 <Tab label={t('followup_reviewer')} value="seguimientos" />
-                <Tab label={t('crear comentarios')} value="crear_comentario" />
+                <Tab label={t('add_comment')} value="crear_comentario" />
               </Tabs>
             </Box>
 
@@ -972,7 +972,7 @@ function EditEventDetailsDrawer({
             </CustomTabPanel>
 
             {/* Nuevo Tab de Crear Comentario */}
-            <CustomTabPanel value={tabValue} index="crear_comentario">
+            <CustomTabPanel value={tabValue} index="  ">
               <Box sx={{ px: 3, py: 1 }}>
                 <Typography variant="h6" sx={{ marginBottom: '20px' }}>
                   {t('add_comment')}
