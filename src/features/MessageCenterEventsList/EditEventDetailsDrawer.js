@@ -852,29 +852,7 @@ function EditEventDetailsDrawer({
 
         <div style={{ maxHeight: '100vh', overflowY: 'auto' }}>
           <Box margin="30px">
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" flexDirection="column" gap={1} alignItems="start">
-                <Tooltip title="Cycle Title">
-                  <Box display="flex" gap={1} alignItems="center">
-                    {/*
-                    <TaskAlt color="white" />
-                    <Typography variant="h6">
-                      {logTaskDetails.title !== null ? logTaskDetails.title : 'no title'}
-                    </Typography>
-                    */}
-                  </Box>
-                </Tooltip>
-                <Tooltip title="Start Date - Finish Date">
-                  <Box display="flex" gap={1} alignItems="center">
-                    <AccessTime />
-                    <Typography variant="p">
-                      {logTaskDetails.start_date} -1 {logTaskDetails.finish_date}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              </Box>
-            </Box>
-            <Box marginTop="40px">
+            <Box>
               <Tabs
                 value={tabValue}
                 onChange={handleTabChange}
