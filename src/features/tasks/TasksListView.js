@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -43,25 +43,36 @@ import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
 
+const TASKS_PER_PAGE = 10;
+
 const TasksListView = ({ onCreateTask }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
+
+  // Ref para centinela de la lista de tareas
+  const loaderRef = useRef(null);
+
+  // Ref para scroll de lista de tareas
+  const listRef = useRef(null);
 
   // States
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedLogtask, setSelectedLogtask] = useState(null);
   const [logtasks, setLogtasks] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const tasksPerPage = 10;
   const [currentCyclePage, setCurrentCyclePage] = useState(1);
   const cyclesPerPage = 10;
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false);
-  const [tasks, setTasks] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
+
+  // Paginación de tareas
+  const [tasks, setTasks] = useState([]);
+  const [visibleTasks, setVisibleTasks] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const TASK_STATUS_COLORS = useMemo(() => ({
     '1': '#00f57a', // Completado (verde)
@@ -148,18 +159,61 @@ const TasksListView = ({ onCreateTask }) => {
     const searchTerm = keywordsFilter.toLowerCase().trim();
     
     return tasks.filter(task => {
+      // TODO: Implementar búsqueda por descripción y tags (la api esta fallando)
       const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
-      const descMatch = task.task_description?.toLowerCase().includes(searchTerm);
-      const tagsMatch = Array.isArray(task.tags) && task.tags.some(tag => 
-        typeof tag === 'string' && tag.toLowerCase().includes(searchTerm)
-      );
-      const responsiblesMatch = Array.isArray(task.responsibles) && task.responsibles.some(resp => 
-        resp.name && typeof resp.name === 'string' && resp.name.toLowerCase().includes(searchTerm)
-      );
+      //const descMatch = task.task_description?.toLowerCase().includes(searchTerm);
+      //const tagsMatch = Array.isArray(task.tags) && task.tags.some(tag => 
+      //  typeof tag === 'string' && tag.toLowerCase().includes(searchTerm)
+      //);
+      // const responsiblesMatch = Array.isArray(task.responsibles) && task.responsibles.some(resp => 
+      //   resp.name && typeof resp.name === 'string' && resp.name.toLowerCase().includes(searchTerm)
+      // );
       
-      return titleMatch || descMatch || tagsMatch || responsiblesMatch;
+      return titleMatch; //|| descMatch || tagsMatch || responsiblesMatch;
     });
   }, [tasks, keywordsFilter]);
+
+  // Resetear página cuando cambian las tareas filtradas
+  useEffect(() => {
+    setCurrentPage(1);
+    setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  }, [filteredTasks]);
+
+  // Cargar más tareas cuando cambia la página
+  useEffect(() => {
+    if (currentPage === 1) return; // Ya manejado arriba
+    setIsLoadingMoreTasks(true);
+    
+    const startIndex = (currentPage - 1) * TASKS_PER_PAGE;
+    const endIndex = startIndex + TASKS_PER_PAGE;
+    const nextBatch = filteredTasks.slice(startIndex, endIndex);
+
+    setTimeout(() => {
+      if (nextBatch.length > 0) {
+        setVisibleTasks(prev => [...prev, ...nextBatch]);
+      }
+      setIsLoadingMoreTasks(false);
+    }, 500);
+  }, [currentPage, filteredTasks]);
+
+  // Intersection Observer para cargar más tareas
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      // Si es visible Y aún hay tareas por mostrar
+      if (entries[0].isIntersecting && visibleTasks.length < filteredTasks.length) {
+        setCurrentPage(prev => prev + 1);
+      }
+    }, { threshold: 0.1 });
+    
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    
+    return () => {
+      observer.disconnect(); 
+    };
+  }, [visibleTasks.length, filteredTasks.length]);
 
   const handleSelectTask = (task) => {
     setSelectedTask(task);
@@ -363,16 +417,13 @@ const TasksListView = ({ onCreateTask }) => {
           </Box>
         </Box>
 
-        <List sx={{ p: 0, flex: 1, overflowY: 'auto' }}>
+        {/* Lista de tareas */}
+        <List ref={listRef} sx={{ p: 0, flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 245px)' }}>
           {taskListLoading ? (
             <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
           ) : (
             (() => {
-              const startIndex = (currentPage - 1) * tasksPerPage;
-              const endIndex = startIndex + tasksPerPage;
-              const paginatedTasks = filteredTasks.slice(startIndex, endIndex);
-
-              return paginatedTasks.map((task) => {
+              return visibleTasks.map((task) => {
                 const isSelected = selectedTask?.id === task.id;
                 const itemStatusColor = getTaskListItemColor(task);
                 const hasStatusColor = itemStatusColor !== 'transparent';
@@ -420,32 +471,14 @@ const TasksListView = ({ onCreateTask }) => {
               });
             })()
           )}
-        </List>
 
-        {/* Paginación */}
-        {!isCollapsed && tasks.length > tasksPerPage && (
-          <Box sx={{ p: 1, borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.5 }}>
-            <IconButton
-              size="small"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              sx={{ width: 24, height: 24 }}
-            >
-              <ChevronLeftIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-            <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: '#455a64', minWidth: 60, textAlign: 'center' }}>
-              {currentPage} / {Math.ceil(filteredTasks.length / tasksPerPage)}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setCurrentPage(Math.min(Math.ceil(filteredTasks.length / tasksPerPage), currentPage + 1))}
-              disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
-              sx={{ width: 24, height: 24 }}
-            >
-              <ChevronRightIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Box>
-        )}
+          {/* Elemento centinela al final */}
+          <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
+            {isLoadingMoreTasks && (
+              <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
+            )}
+          </div>
+        </List>
       </Box>
 
       {/* Panel Central con Filtro Superior */}
