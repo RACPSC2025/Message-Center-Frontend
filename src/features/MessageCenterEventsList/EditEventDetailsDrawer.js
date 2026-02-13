@@ -486,29 +486,21 @@ function EditEventDetailsDrawer({
     }
   };
 
-  /* useEffect(() => {
-    setIsLoading('loading');
-    setLogtaskExecutedComments([]);
-    setLogtaskRevisorComments([]);
-    // fetchLogtaskComments(logTaskDetails.id);
-  }, []); */
-
   // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments/{id}
 
   useEffect(() => {
     console.log('LOG TASK DETAILS MMMMM???', logTaskDetails);
-    //if (logTaskDetails.length === 0) return;
+    setIsLoading('loading');
     //fetchLogtaskComments(logTaskDetails.id);
-    //setIsLoading('loading');
-    //setLogtaskExecutedComments([]);
-    //setLogtaskRevisorComments([]);
 
     const mockComments = [
       {
         userName: 'Yorleny Pérez',
         created: '2023-02-25T10:00:00',
         comment: 'Se realizó la clonación de la tarea de prueba según lo solicitado.\nQueda pendiente revisar la asignación de recursos.',
-        attachment: [], // Sin adjuntos
+        attachment: [
+          { url: 'https://financialcrimeacademy.org/wp-content/uploads/2023/01/2-16-1024x576.jpg'}
+        ], // Sin adjuntos
         user_id: 1,
         id: 101
       },
@@ -518,6 +510,7 @@ function EditEventDetailsDrawer({
         comment: 'La clonación se ve correcta.',
         attachment: [
           { url: 'http://ejemplo.com/archivo.pdf' },
+          { url: 'https://es.alg.academy/formulario'}
         ], // Con adjunto simulado
         user_id: 2,
         id: 102
@@ -525,7 +518,7 @@ function EditEventDetailsDrawer({
     ];
     // Simula la carga de datos
     setLogtaskExecutedComments(mockComments);
-    setIsLoading('loaded'); // Importante para que se quite el loading
+    setIsLoading('loaded');
   }, [logTaskDetails, openEditDrawer]);
 
   const handleTabChange = (event, newValue) => {
