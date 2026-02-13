@@ -59,7 +59,7 @@ export default function CreateCycleDrawer({
         {/* Sección: Información General */}
         <Box sx={{ mb: 2, mt: 1 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {t('Información General')}
+            {t('Section_general_info')}
           </Typography>
 
           <Divider sx={{ mb: 2 }} />
@@ -67,7 +67,7 @@ export default function CreateCycleDrawer({
           {/* Campo: Ciclo */}
           <TextField
             fullWidth
-            label={t('Ciclo')}
+            label={t('cycle')}
             variant="outlined"
             sx={{ mb: 1 }}
           />
@@ -76,7 +76,7 @@ export default function CreateCycleDrawer({
         {/* Sección: Cronograma y Alertas */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {t('Cronograma y Alertas')}
+            {t('Section_schedule_alerts')}
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
@@ -86,7 +86,7 @@ export default function CreateCycleDrawer({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={t('fecha de inicio')}
+                label={t('ExpectedStartDate')}
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -97,7 +97,7 @@ export default function CreateCycleDrawer({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={t('fecha fin')}
+                label={t('final_date')}
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -108,7 +108,7 @@ export default function CreateCycleDrawer({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={t('Alerta Inicio (minutos antes)')}
+                label={t('start_alert')}
                 type="number"
                 variant="outlined"
               />
@@ -118,7 +118,7 @@ export default function CreateCycleDrawer({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={t('Alerta fin (minutos antes)')}
+                label={t('end_alert')}
                 type="number"
                 variant="outlined"
               />
@@ -129,7 +129,7 @@ export default function CreateCycleDrawer({
         {/* Sección: Progreso */}
         <Box sx={{ mb: 1 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {t('Progreso')}
+            {t('progress')}
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
@@ -142,11 +142,11 @@ export default function CreateCycleDrawer({
 
                 <Select
                   fullWidth
-                  label={t('Estado')}
+                  label={t('Status')}
                   defaultValue="pendiente"
                 >
-                  <MenuItem value="pendiente">{t('Pendiente')}</MenuItem>
-                  <MenuItem value="proceso">{t('Proceso')}</MenuItem>
+                  <MenuItem value="pendiente">{t('Pending')}</MenuItem>
+                  <MenuItem value="proceso">{t('InProgress')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -154,11 +154,11 @@ export default function CreateCycleDrawer({
             {/* Slider: Porcentaje de avance */}
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
-                {t('Porcentaje de avance (%)')}
+                {t('progress_percentage')}
               </Typography>
 
               <InputProgressSlider
-                label={t('porcentaje de avance (%)')}
+                label={t('progress_percentage')}
                 value={0}
                 onChange={(value) => console.log('Progress:', value)}
                 min={0}
@@ -177,7 +177,7 @@ export default function CreateCycleDrawer({
                   onClick={onCloseCreateCycleDrawer}
                   sx={{ minWidth: 120 }}
                 >
-                  {t('Cancelar')}
+                  {t('Cancel')}
                 </Button>
               </Grid>
 
@@ -189,7 +189,7 @@ export default function CreateCycleDrawer({
                   sx={{ minWidth: 120 }}
                   onClick={() => console.log('Crear ciclo')}
                 >
-                  {t('Crear ciclo')}
+                  {t('Create_cycle')}
                 </Button>
               </Grid>
             </Grid>

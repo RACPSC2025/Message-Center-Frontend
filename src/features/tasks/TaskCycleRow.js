@@ -3,9 +3,11 @@ import { Box, Typography, Chip, LinearProgress, IconButton, Tooltip } from '@mui
 import { alpha, useTheme } from '@mui/material/styles';
 import { AttachFile as AttachFileIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
 import { FaComment } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import FileUploadDialog from '../../components/FileUploadDialog';
 
 const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelected }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   console.log("mostrando desdede TASKCYCLE", task)
   
@@ -149,8 +151,22 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelec
         {/* ✅ ACCIONES */}
         <Box flex="1 1 150px" textAlign="center">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+            {/* ✅ BOTÓN DE VER SEGUIMIENTO */}
+            <Tooltip title= { t('followup_activities') }>
+              <IconButton
+                size="small"
+                onClick={handleOpenFollowup}
+                sx={{
+                  color: theme.palette.primary.main,
+                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
+                }}
+              >
+                <FollowUpIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            
             {/* ✅ BOTÓN DE ADJUNTAR ARCHIVO */}
-            <Tooltip title="Adjuntar archivo">
+            <Tooltip title={ t('attachment_file') }>
               <IconButton
                 size="small"
                 onClick={handleAttachFileClick}
@@ -164,7 +180,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelec
             </Tooltip>
 
             {/* ✅ BOTÓN DE COMENTAR */}
-            <Tooltip title="Comentar">
+            <Tooltip title={ t('comments') }>
               <IconButton
                 size="small"
                 sx={{
@@ -175,20 +191,6 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelec
                 }}
               >
                 <FaComment style={{ fontSize: '1rem' }} /> { task.comments.length }
-              </IconButton>
-            </Tooltip>
-
-            {/* ✅ BOTÓN DE VER SEGUIMIENTO */}
-            <Tooltip title="Ver seguimiento">
-              <IconButton
-                size="small"
-                onClick={handleOpenFollowup}
-                sx={{
-                  color: theme.palette.primary.main,
-                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
-                }}
-              >
-                <FollowUpIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>

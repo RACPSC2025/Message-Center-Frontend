@@ -918,8 +918,8 @@ function EditEventDetailsDrawer({
                   <div>{t('loading')}</div>
                 ) : (
                   <EmptyState
-                    title={t("Aún no hay comentarios")}
-                    subtitle={t("Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo.")}
+                    title={t('no_comments_title')}
+                    subtitle={t('no_comments_subtitle')}
                   />
                 )
               ) : (
@@ -955,8 +955,8 @@ function EditEventDetailsDrawer({
                   <div>{t('loading')}</div>
                 ) : (
                   <EmptyState
-                    title="Aún no hay comentarios"
-                    subtitle="Parece que no hay registros de seguimiento para este ciclo. Comienza agregando uno nuevo."
+                    title={t('no_comments_title')}
+                    subtitle={t('no_comments_subtitle')}
                   />
                 )
               ) : (
