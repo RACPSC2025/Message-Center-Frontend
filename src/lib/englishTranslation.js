@@ -223,6 +223,7 @@ const en = {
   task_closed: 'Closed',
   Task_status: 'Task status',
   cycles: 'Cycles',
+  Create_cycle: 'Create Cycle',
   Cycle_status: 'Cycle status',
   legal_parent: 'Legal Matrix',
   risk: 'Risk',

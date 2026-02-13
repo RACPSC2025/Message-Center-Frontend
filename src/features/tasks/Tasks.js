@@ -47,6 +47,9 @@ import { fetchEventsList } from '../../stores/events/fetchEventsListSlice';
 
 import AIActionButton from '../../components/AIActionButton';
 
+//Drawer para crear ciclo
+import CreateCycleDrawer from '../MessageCenterEventsList/CreateCycleDrawer';
+
 import { selectAppliedFilterModel, setSelectedStatus, setSelectedTaskView, selectedColumns } from '../../stores/filterSlice';
 //import { setIsTaskSelected, setLogTaskSelected ,setSelectedTaskView } from '../../stores/filterSlice';
 import {
@@ -101,6 +104,9 @@ export default function Component() {
   const [events, setEvents] = useState([]);
   const [openCreateTask, setOpenCreateTask] = useState(false);
   const [selectedTaskType, setSelectedTaskType] = useState(null);
+  
+  // Estado para controlar la apertura del drawer para crear ciclo CreateCycleDraer
+  const [openCreateCycleDrawer, setOpenCreateCycleDrawer] = useState(false);
   
   // selectedView have "report" as default value
   const [selectedView, setSelectedView] = useState('list'); // ['calendar', 'list', 'table', 'report', 'insights', 'settings'
@@ -382,9 +388,10 @@ export default function Component() {
 
   // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
   
+  // TODO: Habilitar idioma para name 
   const speedDialActions = [
-    { icon: <Checklist />, name: 'Añadir Tarea', type: 'permanente' },
-    { icon: <Loop />, name: 'Añadir Ciclo', type: 'ciclica' }
+    { icon: <Checklist />, name: 'Añadir Tarea', type: 'tarea' },
+    { icon: <Loop />, name: 'Añadir Ciclo', type: 'ciclo' }
   ];
  
 
@@ -663,24 +670,29 @@ export default function Component() {
             handleCloseSpeedDial={() => setOpenSpeedDial(false)}
             handleOpenSpeedDial={() => setOpenSpeedDial(true)}
             speedDialActions={speedDialActions}
-            handleClick={() => {
-              // Por defecto, si no se especifica un tipo, abrir con tipo genérico
-              setOpenCreateTask(true);
-            }}
             handleActionClick={(action) => {
-              // Capturar el tipo de tarea seleccionada desde la acción
-              setSelectedTaskType(action.type);
+              // Abrir el drawer correspondiente según el tipo
+              switch (action.type) {
+                case 'tarea': setOpenCreateTask(true); break;
+                case 'ciclo': setOpenCreateCycleDrawer(true); break;
+              }
             }}
            />
          
         </BaseFeaturePageLayout>
       )}
 
-      {/* Create Task Drawer */}
+      {/* Create Task Drawer (Drawer para añadir tarea) */}
       <CreateTask
         openCreateTask={openCreateTask}
         selectedTaskType={selectedTaskType}
         handleCloseCreateTask={() => setOpenCreateTask(false)}
+      />
+
+      {/* Create Cycle Drawer (Drawer para añadir ciclo)*/}
+      <CreateCycleDrawer
+        openCreateCycleDrawer={openCreateCycleDrawer}
+        onCloseCreateCycleDrawer={() => setOpenCreateCycleDrawer(false)}
       />
 
       {/* Event Details Drawer */}

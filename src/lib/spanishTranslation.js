@@ -232,6 +232,7 @@ const es = {
   task_closed: 'Cerradas',
   Task_status: 'Estado de tareas',
   cycles: 'Ciclos',
+  Create_cycle: 'Crear Ciclo',
   Cycle_status: 'Estado de ciclos',
   legal_parent: 'Matriz Legal',
   risk: 'Riesgo',
