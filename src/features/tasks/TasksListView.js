@@ -382,7 +382,13 @@ const TasksListView = ({ onCreateTask }) => {
       averageProgress: Math.round(totalProgress / logtasks.length)
     };
   }, [logtasks]);
+  
+  // Calculamos el estado de prioridad de la tarea seleccionada
+  const priorityStatus = getTaskPriorityStatus(selectedTask);
 
+  // Obtenemos el color correspondiente de TASK_STATUS_COLORS o amarillo por defecto
+  const priorityColor = TASK_STATUS_COLORS[priorityStatus] || '#fbc02d';
+  
   return (
     <Box sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
 
@@ -662,6 +668,7 @@ const TasksListView = ({ onCreateTask }) => {
                 <TaskDoubleRingChart
                   percentage={stats.averageProgress}
                   stats={stats}
+                  innerColor={priorityColor}
                   size={88}
                   strokeWidth={9}
                 />

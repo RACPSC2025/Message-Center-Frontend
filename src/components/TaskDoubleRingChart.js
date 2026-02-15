@@ -5,6 +5,7 @@ export const TaskDoubleRingChart = ({
   percentage, 
   stats,
   chartData,
+  innerColor,
   size = 80, 
   strokeWidth = 8,
   innerStrokeWidth = 6,
@@ -119,9 +120,9 @@ export const TaskDoubleRingChart = ({
           cy={center}
           strokeWidth={innerStrokeWidth}
         />
-        {percentage > 0 && (
-          <circle
-            stroke={percentage === 100 ? '#00796b' : '#9c27b0'}  // Púrpura vibrante o verde azulado oscuro
+        
+        <circle
+            stroke={innerColor || (percentage === 100 ? '#00f57a' : '#fbc02d')}  // Amarillo o verde si está completada
             fill="transparent"
             r={innerRadius}
             cx={center}
@@ -131,7 +132,6 @@ export const TaskDoubleRingChart = ({
             strokeDasharray={`${Math.max(0, innerProgressLen)} ${innerCircumference}`}
             style={transitionStyle}
           />
-        )}
 
         {/* --- OUTER RING (Status Segments) --- */}
         <circle
