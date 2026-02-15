@@ -25,7 +25,7 @@ export const TaskDoubleRingChart = ({
   // Animation for the center number
   useEffect(() => {
     let startTime;
-    const duration = 2000;
+    const duration = 500;
     const startValue = displayPercentage;
     const endValue = percentage || 0;
 
@@ -103,7 +103,7 @@ export const TaskDoubleRingChart = ({
   const innerProgressLen = ((percentage || 0) / 100) * innerCircumference;
 
   const center = size / 2;
-  const transitionStyle = { transition: 'stroke-dasharray 2s ease-out, stroke-dashoffset 2s ease-out' };
+  const transitionStyle = { transition: 'stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out' };
 
   return (
     <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }}>
