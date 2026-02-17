@@ -1,0 +1,6 @@
+{
+  "apiUrl": "http://ocensa-ambiental/",
+  "baseName": "/",
+  "environment": "development",
+  "version": "0.3.6"
+}
