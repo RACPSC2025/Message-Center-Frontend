@@ -8,8 +8,9 @@ export const fileHeader = { headers: { 'Content-Type': 'multipart/form-data' } }
 const instance = axiosConfiguration();
 
 function axiosConfiguration() {
+  const isDevelopment = process.env.NODE_ENV === 'development';
   return axios.create({
-    baseURL: API_URL,
+    baseURL: isDevelopment ? '/api' : API_URL,
     timeout: 600000,
     /*
     headers: {
