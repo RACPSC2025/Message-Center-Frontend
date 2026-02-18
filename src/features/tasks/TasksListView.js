@@ -642,13 +642,15 @@ const TasksListView = ({ onCreateTask }) => {
                   }}
                 />
               </Box>
-
+              
+              {/* Chart doble para el estado de tareas y ciclos */}
               <Box display="flex" alignItems="center" gap={3}>
                 <TaskDoubleRingChart
                   percentage={stats.averageProgress}
                   stats={stats}
                   size={88}
                   strokeWidth={9}
+                  taskState={getTaskPriorityStatus(selectedTask)} // Pasamos el estado (código '1', '2', '3' o '4')
                 />
 
                 {/* Estados de los ciclos en formato vertical */}
