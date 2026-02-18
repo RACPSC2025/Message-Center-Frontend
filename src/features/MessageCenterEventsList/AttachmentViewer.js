@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Box, Link, Dialog, IconButton } from "@mui/material";
 import InsertDriveFile from "@mui/icons-material/InsertDriveFile";
-import CloseIcon from "@mui/icons-material/Close";
+import CloseIcon from '@mui/icons-material/Close';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const AttachmentViewer = ({ attachment }) => {
   const [open, setOpen] = useState(false);
@@ -26,6 +27,28 @@ const AttachmentViewer = ({ attachment }) => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  const handleDownload = async () => {
+  try {
+    const response = await fetch(fileUrl);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || 'download';
+    document.body.appendChild(link);
+    link.click();
+    
+    // Limpieza
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error al descargar el archivo:", error);
+    // Fallback: abrir en nueva pestaña si falla el fetch
+    window.open(fileUrl, '_blank');
+  }
+};
+
   return (
     <Box margin="10px 0">
       {isImage ? (
@@ -40,24 +63,27 @@ const AttachmentViewer = ({ attachment }) => {
           />
 
           {/* Modal estilo fancybox */}
-          <Dialog open={open} onClose={handleClose} maxWidth="lg">
+          <Dialog open={open} onClose={handleClose} maxWidth="lg" PaperProps={{ sx: { bgcolor: 'transparent', boxShadow: 'none' } }}>
+            {/* Barra de Herramientas Externa */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+              <IconButton onClick={handleDownload} sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)', mr: 1, '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+                  <DownloadIcon />
+              </IconButton>
+              <IconButton onClick={handleClose} sx={{ color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+                  <CloseIcon />
+              </IconButton>
+            </Box>
+            {/* Contenedor de Imagen */}
             <Box
-              position="relative"
               display="flex"
               justifyContent="center"
               alignItems="center"
-              sx={{ background: "black" }}
+              sx={{ background: "black", borderRadius: 2, overflow: 'hidden' }}
             >
-              <IconButton
-                onClick={handleClose}
-                sx={{ position: "absolute", top: 8, right: 8, color: "white" }}
-              >
-                <CloseIcon />
-              </IconButton>
               <img
                 src={fileUrl}
                 alt={filename}
-                style={{ maxWidth: "90vw", maxHeight: "90vh" }}
+                style={{ maxWidth: "90vw", maxHeight: "85vh", objectFit: 'contain' }}
               />
             </Box>
           </Dialog>
@@ -79,7 +105,7 @@ const AttachmentViewer = ({ attachment }) => {
       ) : isExcel ? (
         <Box display="flex" alignItems="center" gap={1}>
           <InsertDriveFile sx={{ color: "green" }} /> {/* Excel verde */}
-          <Link href={fileUrl} target="_blank" sx={{ color: "green" }} rel="noreferrer">
+          <Link href={fileUrl} target="_blank" sx={{ color: "green", textDecorationColor: "green" }} rel="noreferrer">
             {filename}
           </Link>
         </Box>
