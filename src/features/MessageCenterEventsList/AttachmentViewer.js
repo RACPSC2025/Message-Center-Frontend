@@ -56,9 +56,14 @@ const AttachmentViewer = ({ attachment }) => {
           {/* Miniatura de imagen */}
           <img
             src={fileUrl}
-            width="150px"
             alt={filename}
-            style={{ cursor: "pointer", borderRadius: "4px" }}
+            style={{ 
+              cursor: "pointer", 
+              borderRadius: "4px", 
+              objectFit: 'cover', 
+              width: '150px', 
+              height: '100px' 
+            }}
             onClick={handleOpen}
           />
 

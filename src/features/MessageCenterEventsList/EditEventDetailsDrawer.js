@@ -511,7 +511,13 @@ function EditEventDetailsDrawer({
         attachment: [
           { url: 'https://www.jugandoainvertir.com.ar/descargas/Padre-Rico-Padre-Pobre.pdf' },
           { url: '/assets/person/person1.jpg'},
+          { url: '/assets/person/person2.jpg'},
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/person/person1.jpg'},
           { url: '/assets/templates/template.xlsx'},
+          { url: '/assets/templates/holamundo.docx'},
+          { url: '/assets/templates/holamundo.docx'},
           { url: '/assets/templates/holamundo.docx'},
         ], // Con adjunto simulado
         user_id: 2,

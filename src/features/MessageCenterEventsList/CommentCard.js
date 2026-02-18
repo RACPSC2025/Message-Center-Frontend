@@ -50,6 +50,23 @@ function CommentCard({
 
   const { t } = useTranslation();
 
+  // Separar adjuntos en Archivos e Imágenes para mejor visualización
+  const imageExtensions = ["png", "jpg", "jpeg", "gif", "webp"];
+  const attachments = comment.attachment || [];
+  const attachedFiles = [];
+  const attachedImages = [];
+
+  attachments.forEach(att => {
+      const url = att.url || "";
+      const filename = url.split("/").pop().split("?")[0];
+      const ext = filename.split(".").pop().toLowerCase();
+      if (imageExtensions.includes(ext)) {
+          attachedImages.push(att);
+      } else {
+          attachedFiles.push(att);
+      }
+  });
+
   return (
     <Box sx={styles.card}>
       {/* Avatar */}
@@ -79,12 +96,26 @@ function CommentCard({
           {comment.comment}
         </Typography>
 
-        {/* Adjuntos (Reutilizando AttachmentViewer) */}
-        {comment.attachment && comment.attachment.length > 0 && (
-          <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2, mt: 1 }}>
-             {comment.attachment.map((att, index) => (
-                <AttachmentViewer key={index} attachment={att} />
-             ))}
+        {/* Adjuntos (Separados por tipo) */}
+        {(attachedFiles.length > 0 || attachedImages.length > 0) && (
+          <Box sx={{ mt: 1 }}>
+            {/* 1. Archivos (Documentos) - Lista vertical */}
+            {attachedFiles.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 1, mb: attachedImages.length > 0 ? 2 : 0 }}>
+                {attachedFiles.map((att, index) => (
+                  <AttachmentViewer key={`file-${index}`} attachment={att} />
+                ))}
+              </Box>
+            )}
+
+            {/* 2. Imágenes - Galería horizontal */}
+            {attachedImages.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
+                {attachedImages.map((att, index) => (
+                  <AttachmentViewer key={`img-${index}`} attachment={att} />
+                ))}
+              </Box>
+            )}
           </Box>
         )}
 
