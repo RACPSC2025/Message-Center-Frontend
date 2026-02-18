@@ -63,8 +63,6 @@ const TasksListView = ({ onCreateTask }) => {
   const [logtasks, setLogtasks] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
 
@@ -95,20 +93,6 @@ const TasksListView = ({ onCreateTask }) => {
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
-
-  /* 🎭 Data Mock - Bloque preservado (Migración: 05/02/2026)
-  useEffect(() => {
-    dispatch(fetchListTaskNew({})).then((data) => {
-      if (data?.payload?.messages === 'Success') {
-        const tasksData = data?.payload?.data || [];
-        setTasks(tasksData);
-        if (tasksData.length > 0 && !selectedTask) {
-          handleSelectTask(tasksData[0]);
-        }
-      }
-    });
-  }, [dispatch]);
-  */
 
   // ✅ API Real - Migración Sofactia (05/02/2026)
   useEffect(() => {
@@ -160,15 +144,8 @@ const TasksListView = ({ onCreateTask }) => {
     return tasks.filter(task => {
       // TODO: Implementar búsqueda por descripción y tags (la api esta fallando)
       const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
-      //const descMatch = task.task_description?.toLowerCase().includes(searchTerm);
-      //const tagsMatch = Array.isArray(task.tags) && task.tags.some(tag => 
-      //  typeof tag === 'string' && tag.toLowerCase().includes(searchTerm)
-      //);
-      // const responsiblesMatch = Array.isArray(task.responsibles) && task.responsibles.some(resp => 
-      //   resp.name && typeof resp.name === 'string' && resp.name.toLowerCase().includes(searchTerm)
-      // );
       
-      return titleMatch; //|| descMatch || tagsMatch || responsiblesMatch;
+      return titleMatch; 
     });
   }, [tasks, keywordsFilter]);
 
@@ -342,15 +319,6 @@ const TasksListView = ({ onCreateTask }) => {
     return TASK_STATUS_COLORS[priorityStatus];
   };
 
-  // Funciones para manejar el menú desplegable
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   // Manejar la selección de tipo de tarea
   const handleCreateTask = (taskType) => {
     // Llama a la función pasada como prop para manejar la creación de tareas
@@ -400,7 +368,7 @@ const TasksListView = ({ onCreateTask }) => {
       {/* Sidebar Izquierda - Tareas (Mini Sidebar) */}
       <Box
         sx={{
-          width: isCollapsed ? '70px' : '240px',  // Reducido de 280px a 240px
+          width: isCollapsed ? 70 : 340,  
           borderRight: '1px solid #e0e0e0',
           bgcolor: 'white',
           display: 'flex',
@@ -422,9 +390,11 @@ const TasksListView = ({ onCreateTask }) => {
             </Box>
           )}
           <Box sx={{ ml: isCollapsed ? 0 : 'auto', mr: isCollapsed ? 0 : 1 }}>
-            <IconButton size="small" onClick={() => setIsCollapsed(!isCollapsed)} sx={{ color: '#b0bec5' }}>
-              {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-            </IconButton>
+            <Tooltip title="Ver Tareas">
+              <IconButton size="small" onClick={() => setIsCollapsed(!isCollapsed)} sx={{ color: '#b0bec5' }}>
+                {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -556,74 +526,6 @@ const TasksListView = ({ onCreateTask }) => {
               )}
             </Box>
           </Box>
-
-          {/* <Button
-            variant="contained"
-            sx={{
-              bgcolor: '#D9FDD3',  // Color estándar
-              color: '#00a884',
-              '&:hover': { bgcolor: '#c8eac5' },  // Efecto de hover más sutil
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontWeight: 800,
-              fontSize: '0.85rem',
-              px: 3,
-              boxShadow: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-            onClick={handleMenuOpen}
-            endIcon={<MoreVert />}
-            aria-controls={openMenu ? 'task-creation-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={openMenu ? 'true' : undefined}
-          >
-            Crear tarea
-          </Button> */}
-
-          <Menu
-            id="task-creation-menu"
-            anchorEl={anchorEl}
-            open={openMenu}
-            onClose={handleMenuClose}
-            onClick={handleMenuClose}
-            PaperProps={{
-              elevation: 0,
-              sx: {
-                overflow: 'visible',
-                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                mt: 1.5,
-                '& .MuiAvatar-root': {
-                  width: 32,
-                  height: 32,
-                  ml: -0.5,
-                  mr: 1,
-                },
-              },
-            }}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-          >
-            <MenuItem onClick={() => handleCreateTask('permanente')}>
-              <MuiListItemIcon>
-                <DownloadDone fontSize="small" />
-              </MuiListItemIcon>
-              <Typography>Añadir Tarea Permanente</Typography>
-            </MenuItem>
-            <MenuItem onClick={() => handleCreateTask('ciclica')}>
-              <MuiListItemIcon>
-                <Loop fontSize="small" />
-              </MuiListItemIcon>
-              <Typography>Añadir Tarea Cíclica</Typography>
-            </MenuItem>
-            <MenuItem onClick={() => handleCreateTask('unica')}>
-              <MuiListItemIcon>
-                <AssignmentReturned fontSize="small" />
-              </MuiListItemIcon>
-              <Typography>Añadir Tarea Única</Typography>
-            </MenuItem>
-          </Menu>
         </Box>
 
         {/* Contenido Scrollable: Dashboard + Tabla */}
@@ -728,40 +630,6 @@ const TasksListView = ({ onCreateTask }) => {
           // dispatch(fetchListTaskNew({})); 
         }}
       />
-
-      {/*
-      <Box sx={{
-        width: isRightSidebarCollapsed ? '40px' : '240px',  // Reducido de 280px a 240px
-        flexShrink: 0,
-        bgcolor: 'white',
-        borderLeft: '1px solid #e0e0e0',
-        overflowX: 'hidden',
-        overflowY: 'auto',
-        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative'
-      }}>
-        {isRightSidebarCollapsed ? (
-          <IconButton
-            size="small"
-            onClick={() => setIsRightSidebarCollapsed(false)}
-            sx={{
-              color: '#b0bec5',
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              zIndex: 10
-            }}
-          >
-            <ChevronLeftIcon />
-          </IconButton>
-        ) : (
-          <TaskDetailsSidebar
-            selectedTask={selectedLogtask || selectedTask}
-            statuses={listTaskStatus}
-            onCollapse={() => setIsRightSidebarCollapsed(true)}
-          />
-        )}
-      </Box>*/}
     </Box>
   );
 };
