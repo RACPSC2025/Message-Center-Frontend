@@ -429,7 +429,7 @@ const TasksListView = ({ onCreateTask }) => {
         </Box>
 
         {/* Lista de tareas */}
-        <List ref={listRef} sx={{ p: 0, flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 245px)' }}>
+        <List ref={listRef} sx={{ p: 0, flex: 1, overflowY: 'auto' }}>
           {taskListLoading ? (
             <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
           ) : (

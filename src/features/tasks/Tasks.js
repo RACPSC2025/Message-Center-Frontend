@@ -510,7 +510,7 @@ export default function Component() {
   };
   
   return (
-    <Box sx={{ width: '100%', py: 1 }}>
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', pt: 1 }}>
       {/* Barra de Filtros y Navegación de Vistas (Estilo Imagen 1 & 2) */}
       <Box sx={{ 
         display: 'flex', 
@@ -604,54 +604,13 @@ export default function Component() {
         </Box>
       </Box>
 
-      {selectedView === 'report' ? (
-        <TaskReport />
-      ) : selectedView === 'calendar' ? (
-        <Box className="w-full px-1 py-3 overflow-hidden">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="w-full lg:w-1/2">
-              <TaskCalender
-                events={events}
-                language={language}
-                handleDateClick={(arg) => setSelectedDate(dayjs(arg.dateStr))}
-                handleEventClick={handleEventClick}
-                initialDate={selectedDate.format('YYYY-MM-DD')}
-              />
-            </div>
-            <div className="w-full lg:w-1/2 space-y-4">
-              <DayTaskList
-                eventDate={formatDayjs(selectedDate, 'ddd, MMM DD')}
-                eventList={allEventsForSelectedDate()}
-                eventClick={(eventInfo) => handleEventClick({ event: eventInfo })}
-              />
-              <UpcomingTaskList />
-            </div>
-          </div>
-        </Box>
-      ) : (
-        <BaseFeaturePageLayout showFooter={true}>
-          <Box className="px-0 py-0 w-full min-h-full flex-grow">
-            <Box
-              ref={calendarContainerRef}
-              sx={{
-                width: '100%',
-                minHeight: '100%',
-                bgcolor: 'white',
-                p: 0
-              }}
-            >
-              {selectedView === 'list' ? (
-                <TasksListView
-                  onCreateTask={(taskType) => {
-                    // Guardamos el tipo de tarea seleccionado
-                    setSelectedTaskType(taskType);
-                    // Abrimos el formulario de creación
-                    setOpenCreateTask(true);
-                  }}
-                />
-              ) : selectedView === 'table' ? (
-                <TaskTableList />
-              ) : (
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        {selectedView === 'report' ? (
+          <TaskReport />
+        ) : selectedView === 'calendar' ? (
+          <Box className="w-full px-1 py-3 overflow-hidden">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="w-full lg:w-1/2">
                 <TaskCalender
                   events={events}
                   language={language}
@@ -659,28 +618,72 @@ export default function Component() {
                   handleEventClick={handleEventClick}
                   initialDate={selectedDate.format('YYYY-MM-DD')}
                 />
-              )}
-            </Box>
+              </div>
+              <div className="w-full lg:w-1/2 space-y-4">
+                <DayTaskList
+                  eventDate={formatDayjs(selectedDate, 'ddd, MMM DD')}
+                  eventList={allEventsForSelectedDate()}
+                  eventClick={(eventInfo) => handleEventClick({ event: eventInfo })}
+                />
+                <UpcomingTaskList />
+              </div>
+            </div>
           </Box>
+        ) : (
+          <BaseFeaturePageLayout showFooter={true}>
+            <Box className="px-0 py-0 w-full h-full flex-grow">
+              <Box
+                ref={calendarContainerRef}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  bgcolor: 'white',
+                  p: 0,
+                  overflow: 'hidden'
+                }}
+              >
+                {selectedView === 'list' ? (
+                  <TasksListView
+                    onCreateTask={(taskType) => {
+                      // Guardamos el tipo de tarea seleccionado
+                      setSelectedTaskType(taskType);
+                      // Abrimos el formulario de creación
+                      setOpenCreateTask(true);
+                    }}
+                  />
+                ) : selectedView === 'table' ? (
+                  <TaskTableList />
+                ) : (
+                  <TaskCalender
+                    events={events}
+                    language={language}
+                    handleDateClick={(arg) => setSelectedDate(dayjs(arg.dateStr))}
+                    handleEventClick={handleEventClick}
+                    initialDate={selectedDate.format('YYYY-MM-DD')}
+                  />
+                )}
+              </Box>
+            </Box>
 
-          {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
+            {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
+            
+            <SpeedDialComponent
+              openSpeedDial={openSpeedDial}
+              handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+              handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+              speedDialActions={speedDialActions}
+              handleActionClick={(action) => {
+                // Abrir el drawer correspondiente según el tipo
+                switch (action.type) {
+                  case 'tarea': setOpenCreateTask(true); break;
+                  case 'ciclo': setOpenCreateCycleDrawer(true); break;
+                }
+              }}
+            />
           
-          <SpeedDialComponent
-            openSpeedDial={openSpeedDial}
-            handleCloseSpeedDial={() => setOpenSpeedDial(false)}
-            handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-            speedDialActions={speedDialActions}
-            handleActionClick={(action) => {
-              // Abrir el drawer correspondiente según el tipo
-              switch (action.type) {
-                case 'tarea': setOpenCreateTask(true); break;
-                case 'ciclo': setOpenCreateCycleDrawer(true); break;
-              }
-            }}
-           />
-         
-        </BaseFeaturePageLayout>
-      )}
+          </BaseFeaturePageLayout>
+        )}
+      </Box>
 
       {/* Create Task Drawer (Drawer para añadir tarea) */}
       <CreateTask
