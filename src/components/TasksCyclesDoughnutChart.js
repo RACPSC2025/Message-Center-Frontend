@@ -73,7 +73,9 @@ function TaskCyclesDoughnutChart({
   }
 }) {
   const { t } = useTranslation();
-  const listTaskStatus = useFilterItemValue('task', 'task_list_status');
+
+  // listTaskStatus podría ser null o undefined en algunos momentos, como al recargar la página o limpiar filtros
+  const listTaskStatus = useFilterItemValue('task', 'task_list_status') || [];
 
   /*
   const chartData = {

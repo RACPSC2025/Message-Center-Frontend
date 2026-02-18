@@ -72,20 +72,6 @@ const TasksListView = ({ onCreateTask }) => {
   const [visibleTasks, setVisibleTasks] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const TASK_STATUS_COLORS = useMemo(() => ({
-    '1': '#00f57a', // Completado (verde)
-    '2': '#1a90ff', // En progreso (azul)
-    '3': '#fbc02d', // Abierto (amarillo)
-    '4': '#fb3d61' // Vencido (rojo)
-  }), []);
-
-  const STATUS_FILTER_META = useMemo(() => ({
-    '1': { label: 'Completed', color: TASK_STATUS_COLORS['1'] },
-    '2': { label: 'In_Progress', color: TASK_STATUS_COLORS['2'] },
-    '3': { label: 'abierto', color: TASK_STATUS_COLORS['3'] },
-    '4': { label: 'Expired', color: TASK_STATUS_COLORS['4'] }
-  }), [TASK_STATUS_COLORS]);
-
   console.log("SELECTED_LOG_TASK:", selectedLogtask)
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
@@ -94,6 +80,41 @@ const TasksListView = ({ onCreateTask }) => {
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
+
+  // ✅ COLORES DINÁMICOS DESDE REDUX
+  const TASK_STATUS_COLORS = useMemo(() => {
+    // 1. Definir defaults por seguridad
+    const defaults = {
+      '1': '#00f57a', // Completado (verde)
+      '2': '#1a90ff', // En progreso (azul)
+      '3': '#fbc02d', // Abierto (amarillo)
+      '4': '#fb3d61' // Vencido (rojo)
+    };
+
+    // 2. Si no hay datos de la API, retornar defaults
+    if (!listTaskStatus || listTaskStatus.length === 0) return defaults;
+
+    // 3. Sobreescribir con colores de la API
+    const dynamicColors = { ...defaults };
+    
+    listTaskStatus.forEach(status => {
+      // ↓ La API a veces devuelve el entero o string ↓ 
+      const code = String(status.value_number);
+
+      if (status.color_code) dynamicColors[code] = status.color_code;
+    });
+
+    return dynamicColors;
+  }, [listTaskStatus]);
+
+  const STATUS_FILTER_META = useMemo(() => ({
+    '1': { label: 'Completed', color: TASK_STATUS_COLORS['1'] },
+    '2': { label: 'In_Progress', color: TASK_STATUS_COLORS['2'] },
+    '3': { label: 'abierto', color: TASK_STATUS_COLORS['3'] },
+    '4': { label: 'Expired', color: TASK_STATUS_COLORS['4'] }
+  }), [TASK_STATUS_COLORS]);
+
+
 
   // ✅ API Real - Migración Sofactia (05/02/2026)
   useEffect(() => {
@@ -136,6 +157,7 @@ const TasksListView = ({ onCreateTask }) => {
     });
   }, [dispatch]);
 
+  // ✅ Filtro de tareas por palabras clave
   const filteredTasks = useMemo(() => {
     if (!keywordsFilter || keywordsFilter.trim() === '') {
       return tasks;
@@ -151,7 +173,8 @@ const TasksListView = ({ onCreateTask }) => {
     });
   }, [tasks, keywordsFilter]);
 
-  // Resetear página cuando cambian las tareas filtradas
+  // ✅ LAZY LOADING DE TAREAS
+  // 1. Resetear página cuando cambian las tareas filtradas
   useEffect(() => {
     setCurrentPage(1);
     setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
@@ -160,7 +183,7 @@ const TasksListView = ({ onCreateTask }) => {
     }
   }, [filteredTasks]);
 
-  // Cargar más tareas cuando cambia la página
+  // 2. Cargar más tareas cuando cambia la página
   useEffect(() => {
     if (currentPage === 1) return; // Ya manejado arriba
     setIsLoadingMoreTasks(true);
@@ -179,7 +202,7 @@ const TasksListView = ({ onCreateTask }) => {
     return () => clearTimeout(timer);
   }, [currentPage, filteredTasks]);
 
-  // Intersection Observer para cargar más tareas
+  // 3. Intersection Observer para cargar más tareas
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
       // Si es visible Y aún hay tareas por mostrar
@@ -195,6 +218,10 @@ const TasksListView = ({ onCreateTask }) => {
     };
   }, [visibleTasks.length, filteredTasks.length]);
 
+  /*
+    Selecciona una tarea y gestiona la carga de sus seguimientos (logtasks).
+    Si la tarea ya tiene logs, los usa; de lo contrario, los solicita a la API.
+   */
   const handleSelectTask = (task) => {
     setSelectedTask(task);
     setSelectedLogtask(null);
@@ -257,6 +284,7 @@ const TasksListView = ({ onCreateTask }) => {
     || normalizeStatusCode(statusItem?.label)
     || null;
 
+  
   const statusFilters = useMemo(() => {
     const source = Array.isArray(listTaskStatus) ? listTaskStatus : [];
     const backendByCode = {};
@@ -285,6 +313,13 @@ const TasksListView = ({ onCreateTask }) => {
     return normalizeStatusCode(statusValue) === normalizedSelectedStatus;
   };
 
+  // ✅ Obtener estado de prioridad de la tarea
+  /*
+    Si hay al menos uno Vencido ('4'), la tarea se pinta roja.
+    Si no, busca Abierto ('3') -> Amarilla.
+    Si no, busca En Progreso ('2') -> Azul.
+    Si todo está Completado ('1') -> Verde.
+  */ 
   const getTaskPriorityStatus = (task) => {
     if (!task) return null;
 
@@ -418,6 +453,7 @@ const TasksListView = ({ onCreateTask }) => {
             (() => {
               return visibleTasks.map((task) => {
                 const isSelected = selectedTask?.id === task.id;
+
                 const itemStatusColor = getTaskListItemColor(task);
                 const hasStatusColor = itemStatusColor !== 'transparent';
                 const selectedBgColor = hasStatusColor
@@ -426,6 +462,7 @@ const TasksListView = ({ onCreateTask }) => {
                 const hoverBgColor = hasStatusColor
                   ? alpha(itemStatusColor, isSelected ? 0.18 : 0.08)
                   : alpha(theme.palette.primary.main, isSelected ? 0.12 : 0.04);
+
                 return (
                   <Tooltip key={task.id} title={isCollapsed ? task.task_title : ""} placement="right">
                     <ListItemButton
