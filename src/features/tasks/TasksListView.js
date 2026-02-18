@@ -43,6 +43,7 @@ import { deleteLogtask } from '../../stores/tasks/deleteLogtaskSlice'; // Import
 import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
+import ExpandableText from '../../components/ExpandableText';
 
 const TASKS_PER_PAGE = 10;
 
@@ -655,18 +656,19 @@ const TasksListView = ({ onCreateTask }) => {
                 >
                   {selectedTask.task_title}
                 </Typography>
-                <Typography
-                  variant="body2"
+                {/* Descripción de la tarea */}
+                <ExpandableText 
+                  text={'Colocar Descripción aquí cuando se tenga disponible el campo desde la API. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem'}
+                  maxChars={100}
                   sx={{
-                    mt: 0.25,
+                    mt: 1,
+                    mr: 3,
                     fontWeight: 500,
                     color: '#607d8b',
                     fontSize: '0.85rem',
                     lineHeight: 1.25
                   }}
-                >
-                  Colocar Descripción aquí cuando se tenga disponible el campo desde la API
-                </Typography>
+                />
               </Box>
 
               <Box display="flex" alignItems="center" gap={3}>
