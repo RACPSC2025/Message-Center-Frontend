@@ -38,13 +38,17 @@ export const TaskDoubleRingChart = ({
   const innerCircumference = innerRadius * 2 * Math.PI;
 
   // --- 2. Animación del Porcentaje ---
+  // --- 2. Animación del Porcentaje ---
   useEffect(() => {
-    let startTime;
-    const duration = 2000;
+    let animationFrameId;
+    const duration = 1500; 
     const startValue = displayPercentage;
-    const endValue = percentage || 0;
+    const endValue = Number(percentage) || 0; // Forzamos a número
 
-    if (startValue === endValue) return;
+    // Si ya estamos en el valor final, no hacemos nada
+    if (Math.round(startValue) === Math.round(endValue)) return;
+
+    let startTime = null;
 
     const step = (timestamp) => {
       if (!startTime) startTime = timestamp;
@@ -53,13 +57,19 @@ export const TaskDoubleRingChart = ({
       const easeOutQuart = (x) => 1 - Math.pow(1 - x, 4);
       const current = startValue + (endValue - startValue) * easeOutQuart(progress);
       
-      setDisplayPercentage(Math.round(current));
-      if (progress < 1) window.requestAnimationFrame(step);
+      setDisplayPercentage(current); // Guardamos el float para precisión
+
+      if (progress < 1) {
+        animationFrameId = window.requestAnimationFrame(step);
+      }
     };
 
-    window.requestAnimationFrame(step);
-  }, [percentage]);
+    animationFrameId = window.requestAnimationFrame(step);
 
+    // LIMPIEZA: Evita que se solapen animaciones si percentage cambia rápido
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [percentage]);
+console.log('porcentaje', percentage);
   // --- 3. Preparación de Colores ---
   // Mapa base (defaults)
   const defaultColors = {
@@ -136,8 +146,9 @@ export const TaskDoubleRingChart = ({
   console.log("Mostrando estadísticas de la tarea", stats);
   console.log("Mostrando estado de la tarea", taskState);
   console.log("Color seleccionado para estado", taskState, ":", innerRingColor);
-
+  const finalValueToShow = displayPercentage > 0 ? displayPercentage : percentage;
   return (
+    
     <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }}>
       {/* SVG Container: Rotado -90deg para empezar desde arriba */}
       <svg
@@ -204,7 +215,7 @@ export const TaskDoubleRingChart = ({
       {/* Texto Central */}
       <Box sx={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <Typography variant="caption" sx={{ fontWeight: 900, fontSize: size > 80 ? '1rem' : '0.75rem', color: '#263238' }}>
-          {displayPercentage}%
+          {Math.round(finalValueToShow)}%
         </Typography>
       </Box>
     </Box>
