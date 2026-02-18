@@ -44,10 +44,13 @@ export default function CreateCycleDrawer({
       {/* Header del drawer (Crear ciclo) */}
       <AppBar position="static">
         <Toolbar>
+
+          {/* Titulo: Crear ciclo */}
           <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
-            {t('Create_cycle')}
+            {t('create_cycle')}
           </Typography>
 
+          {/* Boton de cerrar */}
           <IconButton edge="end" onClick={onCloseCreateCycleDrawer} aria-label="close">
             <Close sx={{ color: 'white' }} />
           </IconButton>
@@ -59,7 +62,7 @@ export default function CreateCycleDrawer({
         {/* Sección: Información General */}
         <Box sx={{ mb: 2, mt: 1 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {t('Section_general_info')}
+            {t('section_general_info')}
           </Typography>
 
           <Divider sx={{ mb: 2 }} />
@@ -76,7 +79,7 @@ export default function CreateCycleDrawer({
         {/* Sección: Cronograma y Alertas */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {t('Section_schedule_alerts')}
+            {t('section_schedule_alerts')}
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
@@ -86,7 +89,7 @@ export default function CreateCycleDrawer({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={t('ExpectedStartDate')}
+                label={t('expected_start_date')}
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -189,7 +192,7 @@ export default function CreateCycleDrawer({
                   sx={{ minWidth: 120 }}
                   onClick={() => console.log('Crear ciclo')}
                 >
-                  {t('Create_cycle')}
+                  {t('create_cycle')}
                 </Button>
               </Grid>
             </Grid>

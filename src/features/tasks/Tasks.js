@@ -387,11 +387,9 @@ export default function Component() {
   };
 
   // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
-  
-  // TODO: Habilitar idioma para name 
   const speedDialActions = [
-    { icon: <Checklist />, name: 'Añadir Tarea', type: 'tarea' },
-    { icon: <Loop />, name: 'Añadir Ciclo', type: 'ciclo' }
+    { icon: <Checklist />, name: t('create_task'), type: 'tarea' },
+    { icon: <Loop />, name: t('create_cycle'), type: 'ciclo' }
   ];
  
 

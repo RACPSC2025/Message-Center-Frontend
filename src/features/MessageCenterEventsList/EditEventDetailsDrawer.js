@@ -927,7 +927,7 @@ function EditEventDetailsDrawer({
                 ) : (
                   <EmptyState
                     title={t('no_comments_title')}
-                    subtitle={t('no_comments_subtitle')}
+                    subtitle={t('no_comments_description')}
                   />
                 )
               ) : (
@@ -964,7 +964,7 @@ function EditEventDetailsDrawer({
                 ) : (
                   <EmptyState
                     title={t('no_comments_title')}
-                    subtitle={t('no_comments_subtitle')}
+                    subtitle={t('no_comments_description')}
                   />
                 )
               ) : (

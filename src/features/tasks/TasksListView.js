@@ -554,9 +554,11 @@ const TasksListView = ({ onCreateTask }) => {
           flexShrink: 0
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography sx={{ fontWeight: 800, color: '#90a4ae', fontSize: '0.75rem', letterSpacing: 1.5 }}>
-              FILTRAR ESTADO
+            {/* Filtrado por estado */}
+            <Typography sx={{ textTransform: 'uppercase', fontWeight: 800, color: '#90a4ae', fontSize: '0.75rem', letterSpacing: 1.5 }}>
+              {t('FilterBy') + ' ' + t('Status')}
             </Typography>
+            
             <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
               {statusFilters.map((status) => {
                 const isActive = normalizedSelectedStatus === status.code;
