@@ -222,8 +222,33 @@ function EditEventDetailsDrawer({
     }
   };
 
+  // 
   const handleSelectImage = (event) => {
     const file = event.target.files[0];
+
+    if (!file) return;
+
+    // Definir tipos permitidos (debe coincidir con el 'accept' del input)
+    const allowedTypes = [
+      'image/png', 
+      'image/jpeg', 
+      'image/jpg', 
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      // Mostrar mensaje de error usando la utilidad existente
+      showErrorMsg(t('Tipo de archivo no permitido.'));
+
+      // Limpiar el input para permitir seleccionar el mismo archivo nuevamente si se desea
+      event.target.value = ''; 
+      
+      return; // Detener la ejecución
+    }
+
     setAttachmentComment(file);
 
     if (file && file.type.startsWith('image/')) {
