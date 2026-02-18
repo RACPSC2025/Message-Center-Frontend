@@ -104,6 +104,7 @@ const TasksListView = ({ onCreateTask }) => {
         const tasksData = data?.payload?.data || [];
 
         console.log("📋 Procesando tareas recibidas:", tasksData.length);
+        console.log("📋 Tareas recibidas:", tasksData);
 
         // ⚠️ MAPEO CRÍTICO: La API devuelve campos con nombres diferentes
         const mappedTasks = tasksData.map(task => ({
@@ -168,12 +169,14 @@ const TasksListView = ({ onCreateTask }) => {
     const endIndex = startIndex + TASKS_PER_PAGE;
     const nextBatch = filteredTasks.slice(startIndex, endIndex);
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (nextBatch.length > 0) {
         setVisibleTasks(prev => [...prev, ...nextBatch]);
       }
       setIsLoadingMoreTasks(false);
     }, 500);
+
+    return () => clearTimeout(timer);
   }, [currentPage, filteredTasks]);
 
   // Intersection Observer para cargar más tareas
@@ -381,17 +384,25 @@ const TasksListView = ({ onCreateTask }) => {
       >
         <Box sx={{ p: '12px 0 8px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
           {!isCollapsed && (
-            <Box sx={{ position: 'absolute', left: 20, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Typography sx={{ fontWeight: 800, color: '#b0bec5', fontSize: '0.75rem', letterSpacing: 1.5 }}>
-                TAREAS
+            <Box sx={{ position: 'absolute', left: 20, display: 'flex', alignItems: 'center', gap: 1 }}>
+              { /* TAREAS */}
+              <Typography sx={{ fontWeight: 800, color: '#474b4e', fontSize: '0.75rem', letterSpacing: 1.5 }}>
+                {t('tasks').toUpperCase()}
               </Typography>
-              <Box sx={{ bgcolor: '#eceff1', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#455a64' }}>{filteredTasks.length}</Typography>
+
+              { /* CANTIDAD DE TAREAS */}
+              <Box sx={{ bgcolor: '#eceff1', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#455a64' }}>
+                  {filteredTasks.length}
+                </Typography>
               </Box>
             </Box>
           )}
+
+          {/* Botón de colapsar */}
           <Box sx={{ ml: isCollapsed ? 0 : 'auto', mr: isCollapsed ? 0 : 1 }}>
-            <Tooltip title="Ver Tareas">
+            {/* Ver más tareas */}
+            <Tooltip title={t('show_more') + ' ' + t('tasks')}>
               <IconButton size="small" onClick={() => setIsCollapsed(!isCollapsed)} sx={{ color: '#b0bec5' }}>
                 {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
               </IconButton>
@@ -430,18 +441,38 @@ const TasksListView = ({ onCreateTask }) => {
                         minHeight: '36px'
                       }}
                     >
+                      {/* Ícono tipo de tarea */}
                       <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 40, justifyContent: 'center' }}>
                         {getTaskIcon(task.task_type, isSelected)}
                       </ListItemIcon>
+
+                      {/* Título de la tarea */}
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Typography sx={{ fontWeight: 700, color: isSelected ? '#5b5b5b' : '#263238', fontSize: '0.75rem', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <Typography 
+                              sx={{ 
+                                fontWeight: isSelected ? 600 : 500, 
+                                color: isSelected ? '#263238' : '#5b5b5b', 
+                                fontSize: '0.8rem', 
+                                lineHeight: 1.1, 
+                                whiteSpace: 'nowrap', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis',
+                                letterSpacing: isSelected ? 1 : 0
+                              }}
+                            >
                               {task.task_title}
                             </Typography>
                           }
                           secondary={
-                            <Typography sx={{ textTransform: 'uppercase', fontSize: '0.5rem', fontWeight: 800, color: isSelected ? '#5b5b5b' : '#b0bec5', mt: 0.1 }}>
+                            <Typography sx={{ 
+                              textTransform: 'uppercase', 
+                              fontSize: '0.7rem', 
+                              fontWeight: 500, 
+                              color: isSelected ? '#5b5b5b' : '#adadad', 
+                              mt: 0.1 
+                            }}>
                               {task.task_type || 'CÍCLICA'}
                             </Typography>
                           }
