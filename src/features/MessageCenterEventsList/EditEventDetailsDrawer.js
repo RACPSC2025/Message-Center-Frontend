@@ -499,7 +499,7 @@ function EditEventDetailsDrawer({
         created: '2023-02-25T10:00:00',
         comment: 'Se realizó la clonación de la tarea de prueba según lo solicitado.\nQueda pendiente revisar la asignación de recursos.',
         attachment: [
-          { url: 'https://financialcrimeacademy.org/wp-content/uploads/2023/01/2-16-1024x576.jpg'}
+          { url: '/assets/person/person2.jpg'}
         ], // Sin adjuntos
         user_id: 1,
         id: 101
@@ -509,8 +509,10 @@ function EditEventDetailsDrawer({
         created: '2023-02-26T14:30:00',
         comment: 'La clonación se ve correcta.',
         attachment: [
-          { url: 'http://ejemplo.com/archivo.pdf' },
-          { url: 'https://es.alg.academy/formulario'}
+          { url: 'https://www.jugandoainvertir.com.ar/descargas/Padre-Rico-Padre-Pobre.pdf' },
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/templates/template.xlsx'},
+          { url: '/assets/templates/holamundo.docx'},
         ], // Con adjunto simulado
         user_id: 2,
         id: 102
