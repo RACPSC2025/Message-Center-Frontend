@@ -140,7 +140,18 @@ export const filterConfigs = {
   events: [
     textSearchField,
     // Configuration for events filters
-    
+    {
+      labelKey: 'Status',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_status',
+      default_value: '',
+      options: [],
+      api_details: {
+        api_url: '/message_center_api/action_api/dashboard_actions_status'
+      },
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
     {
       // TODO: Both dropdowns are the same. I need to individually fetch the options for each dropdown.
       ...dropdownReviewerList,
@@ -151,6 +162,7 @@ export const filterConfigs = {
       ...dropdownReviewerList,
       labelKey: 'Reviewer'
     },
+    
     {
       labelKey: 'Etiquetas',
       type: 'autocompleteWithoutLevel',
@@ -163,7 +175,9 @@ export const filterConfigs = {
         { value: '3', label: 'Gestión social' },
         { value: '4', label: 'Gestión PMA' }
       ],
-      api_details: {}
+      api_details: {},
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
     },
     
     dateRangeField
