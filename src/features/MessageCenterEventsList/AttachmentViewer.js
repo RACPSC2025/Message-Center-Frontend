@@ -104,8 +104,8 @@ const AttachmentViewer = ({ attachment }) => {
         </Box>
       ) : isExcel ? (
         <Box display="flex" alignItems="center" gap={1}>
-          <InsertDriveFile sx={{ color: "green" }} /> {/* Excel verde */}
-          <Link href={fileUrl} target="_blank" sx={{ color: "green", textDecorationColor: "green" }} rel="noreferrer">
+          <InsertDriveFile sx={{ color: "green.main" }} /> {/* Excel verde */}
+          <Link href={fileUrl} target="_blank" sx={{ color: "green.main", textDecorationColor: "green.main" }} rel="noreferrer">
             {filename}
           </Link>
         </Box>
