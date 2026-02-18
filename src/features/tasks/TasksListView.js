@@ -627,7 +627,7 @@ const TasksListView = ({ onCreateTask }) => {
         </Box>
 
         {/* Contenido Scrollable: Dashboard + Tabla */}
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', p: 2 }}>
           {/* Card de Cabecera (Dashboard) */}
           {selectedTask && (
             <Paper

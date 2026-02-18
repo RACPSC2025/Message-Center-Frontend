@@ -326,7 +326,10 @@ const TaskCyclesTable = ({
         overflow: 'hidden', 
         bgcolor: 'white', 
         mt: 0.5,
-        height: '500px' 
+        height: '100%',
+        px: 1,
+        pb: 2,
+        pt: 1
       }}>
         <TableComponent
           rowData={rowData}
