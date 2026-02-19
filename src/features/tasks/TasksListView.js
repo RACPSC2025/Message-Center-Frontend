@@ -87,7 +87,9 @@ const TasksListView = ({ onCreateTask }) => {
   //  Redux Selectors Filters 
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
   const statusFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_status'));
+  const sortBy = useSelector((state) => selectFilterItemValue(state, 'events', 'sort_by'));
   console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
+  console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
 
   // ✅ COLORES DINÁMICOS DESDE REDUX
   const TASK_STATUS_COLORS = useMemo(() => {
@@ -167,7 +169,7 @@ const TasksListView = ({ onCreateTask }) => {
 
   // ✅ Filtro de tareas por palabras clave
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
+    let result = tasks.filter(task => {
       // 1. Filtro por Palabras Clave (Existente)
       if (keywordsFilter && keywordsFilter.trim() !== '') {
         const searchTerm = keywordsFilter.toLowerCase().trim();
@@ -185,7 +187,27 @@ const TasksListView = ({ onCreateTask }) => {
 
       return true; // Pasa todos los filtros
     });
-  }, [tasks, keywordsFilter, statusFilter]);
+
+    // 3. Filtro por Ordenamiento (Sort By)
+    if (sortBy) {
+      result.sort((a, b) => {
+        switch (sortBy) {
+          case '1': // A - Z
+            return (a.task_title || '').localeCompare(b.task_title || '');
+          case '2': // Z - A
+            return (b.task_title || '').localeCompare(a.task_title || '');
+          case '3': // Newest (Más reciente)
+            return new Date(b.task_start_date || 0) - new Date(a.task_start_date || 0);
+          case '4': // Oldest (Más antiguo)
+            return new Date(a.task_start_date || 0) - new Date(b.task_start_date || 0);
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return result;
+  }, [tasks, keywordsFilter, statusFilter, sortBy]);
 
 
   // ✅ LAZY LOADING DE TAREAS
