@@ -275,6 +275,8 @@ const en = {
   edit_responsible: 'Edit Responsible',
   update_progress: 'Update Progress',
   followup_activities: 'Follow-up Activities',
+  close_cycle: 'Close Cycle',
+  closing_cycle: 'Closing cycle',
   add_comment: 'Add comment',
   highlight: 'Highlight',
   up_attachment: 'Upload Attachment',

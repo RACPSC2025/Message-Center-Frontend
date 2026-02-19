@@ -116,7 +116,9 @@ function EditEventDetailsDrawer({
   openEditDrawer,
   onCloseEditDrawer,
   logTaskDetails,
-  onDrawerOpened
+  onDrawerOpened,
+  initialTab = 'comentarios',
+  initialCommentText = ''
 }) {
   const dispatch = useDispatch();
   const [selectedFile, setSezlectedFile] = useState(null);
@@ -518,6 +520,19 @@ function EditEventDetailsDrawer({
     setIsLoading('loading');
     //fetchLogtaskComments(logTaskDetails.id);
 
+    // Posicionar en el tab indicado al abrir el drawer
+    if (openEditDrawer) {
+      const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
+      setTabValue(validTabs.includes(initialTab) ? initialTab : 'comentarios');
+
+      // Pre-poblar el campo comment si se recibe texto inicial
+      if (initialCommentText) {
+        setAddCommentForm((prev) => ({ ...prev, comment: initialCommentText, progress: 100 }));
+      } else {
+        setAddCommentForm({});
+      }
+    }
+
     const mockComments = [
       {
         userName: 'Yorleny Pérez',
@@ -552,7 +567,7 @@ function EditEventDetailsDrawer({
     // Simula la carga de datos
     setLogtaskExecutedComments(mockComments);
     setIsLoading('loaded');
-  }, [logTaskDetails, openEditDrawer]);
+  }, [logTaskDetails, openEditDrawer, initialTab, initialCommentText]);
 
   const handleTabChange = (event, newValue) => {
     const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
@@ -1014,7 +1029,9 @@ function EditEventDetailsDrawer({
                   controlled={true}
                   initialValues={{
                     ...addCommentForm,
-                    progress: Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)))
+                    progress: addCommentForm.progress !== undefined
+                      ? addCommentForm.progress
+                      : Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)))
                   }}
                   onChange={(id, value) => {
                     setAddCommentForm((prevState) => ({ ...prevState, [id]: value }));

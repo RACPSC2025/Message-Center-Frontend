@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Chip, IconButton, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import { AttachFile as AttachFileIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
+import { AttachFile as AttachFileIcon, CheckCircle as CheckCircleIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
 import { FaComment } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import TableComponent from '../../components/TableComponent';
@@ -12,6 +12,7 @@ const TaskCyclesTable = ({
   isLoading = false,
   onSelectCycle,
   onOpenFollowup,
+  onCloseCycle,
   selectedLogtaskId = null
 }) => {
   const { t } = useTranslation();
@@ -159,6 +160,23 @@ const TaskCyclesTable = ({
             }}
           >
             <FaComment style={{ fontSize: '1rem' }} /> {task?.comments?.length || 0}
+          </IconButton>
+        </Tooltip>
+
+        {/* ✅ BOTÓN DE CERRAR CICLO */}
+        <Tooltip title={t('close_cycle')}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCloseCycle && onCloseCycle(task);
+            }}
+            sx={{
+              color: theme.palette.primary.main,
+              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
+            }}
+          >
+            <CheckCircleIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>

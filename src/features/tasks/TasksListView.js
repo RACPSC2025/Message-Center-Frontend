@@ -66,6 +66,8 @@ const TasksListView = ({ onCreateTask }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [initialDrawerTab, setInitialDrawerTab] = useState('comentarios');
+  const [initialCommentText, setInitialCommentText] = useState('');
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
 
   // Paginación de tareas
@@ -677,6 +679,14 @@ const TasksListView = ({ onCreateTask }) => {
             }}
             onOpenFollowup={(cycle) => {
               setSelectedLogtask(cycle);
+              setInitialDrawerTab('comentarios');
+              setInitialCommentText('');
+              setIsEditDrawerOpen(true);
+            }}
+            onCloseCycle={(cycle) => {
+              setSelectedLogtask(cycle);
+              setInitialDrawerTab('crear_comentario');
+              setInitialCommentText(t('close_cycle'));
               setIsEditDrawerOpen(true);
             }}
             selectedLogtaskId={selectedLogtask?.id}
@@ -690,9 +700,13 @@ const TasksListView = ({ onCreateTask }) => {
         openEditDrawer={isEditDrawerOpen}
         onCloseEditDrawer={() => {
           setIsEditDrawerOpen(false);
+          setInitialDrawerTab('comentarios');
+          setInitialCommentText('');
           console.log('Cerrando drawer');
         }}
         logTaskDetails={selectedLogtask || {}}
+        initialTab={initialDrawerTab}
+        initialCommentText={initialCommentText}
         onDrawerOpened={() => {
           console.log('Edición finalizada / Drawer cerrado completamente');
           // Aquí podrías disparar un refresco de la lista si hubo cambios
