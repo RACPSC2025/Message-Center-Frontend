@@ -44,6 +44,7 @@ import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
 import ExpandableText from '../../components/ExpandableText';
+import { normalizeStatusCode } from '../../utils/others';
 
 const TASKS_PER_PAGE = 10;
 
@@ -76,10 +77,15 @@ const TasksListView = ({ onCreateTask }) => {
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
   const logtaskListLoading = useSelector((state) => state?.fetchLogtaskList?.loading ?? false);
+  const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
+
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
-  const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
+
+  //  Redux Selectors Filters 
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
+  const statusFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_status'));
+  console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
 
   // ✅ COLORES DINÁMICOS DESDE REDUX
   const TASK_STATUS_COLORS = useMemo(() => {
@@ -159,19 +165,26 @@ const TasksListView = ({ onCreateTask }) => {
 
   // ✅ Filtro de tareas por palabras clave
   const filteredTasks = useMemo(() => {
-    if (!keywordsFilter || keywordsFilter.trim() === '') {
-      return tasks;
-    }
-
-    const searchTerm = keywordsFilter.toLowerCase().trim();
-    
     return tasks.filter(task => {
-      // TODO: Implementar búsqueda por descripción y tags (la api esta fallando)
-      const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
-      
-      return titleMatch; 
+      // 1. Filtro por Palabras Clave (Existente)
+      if (keywordsFilter && keywordsFilter.trim() !== '') {
+        const searchTerm = keywordsFilter.toLowerCase().trim();
+        const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
+        if (!titleMatch) return false;
+      }
+
+      // 2. Filtro por Estado (Panel Lateral)
+      if (statusFilter && statusFilter !== '') {
+        const statusFilterCode = normalizeStatusCode(statusFilter)
+        const taskStatus = String(task.task_status || task.status);
+
+        if (taskStatus !== String(statusFilterCode)) return false;
+      }
+
+      return true; // Pasa todos los filtros
     });
-  }, [tasks, keywordsFilter]);
+  }, [tasks, keywordsFilter, statusFilter]);
+
 
   // ✅ LAZY LOADING DE TAREAS
   // 1. Resetear página cuando cambian las tareas filtradas
@@ -258,24 +271,6 @@ const TasksListView = ({ onCreateTask }) => {
       case 'CÍCLICA':
       default: return <SyncIcon sx={iconStyle} />;
     }
-  };
-
-  const normalizeStatusCode = (value) => {
-    const status = String(value || '').trim().toLowerCase();
-    if (!status || status === '-1' || status === '0' || status === 'all') return null;
-
-    if (status === '4' || status === 'vencido' || status === 'expired' || status === 'delayed') return '4';
-    if (status === '3' || status === 'abierto' || status === 'open' || status === 'pending') return '3';
-    if (
-      status === '2'
-      || status === 'en progreso'
-      || status === 'in progress'
-      || status === 'in_progress'
-      || status === 'under_progress'
-    ) return '2';
-    if (status === '1' || status === 'completado' || status === 'completed' || status === 'closed') return '1';
-
-    return null;
   };
 
   const getStatusCodeFromItem = (statusItem) =>

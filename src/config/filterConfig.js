@@ -147,7 +147,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/action_api/dashboard_actions_status'
+        api_url: '/tasklist_api/list_task_status'
       },
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'

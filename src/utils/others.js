@@ -126,3 +126,23 @@ export const getLocalStorageData = (key) => {
 export const removeLocalStorageData = (key) => {
   return localStorage.removeItem(key);
 };
+
+export const normalizeStatusCode = (value) => {
+  const status = String(value || '').trim().toLowerCase();
+  if (!status || status === '-1' || status === '0' || status === 'all') return null;
+
+  if (status === '4' || status === 'vencido' || status === 'expired' || status === 'delayed') return '4';
+  if (status === '3' || status === 'abierto' || status === 'open' || status === 'pending') return '3';
+  if (
+    status === '2'
+    || status === 'permanent'
+    || status === 'en progreso'
+    || status === 'in progress'
+    || status === 'in_progress'
+    || status === 'under_progress'
+  ) return '2';
+
+  if (status === '1' || status === 'completado' || status === 'completed' || status === 'closed') return '1';
+
+  return null;
+};
