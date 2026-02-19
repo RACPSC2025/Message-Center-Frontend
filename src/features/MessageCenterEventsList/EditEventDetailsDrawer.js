@@ -1,4 +1,5 @@
-import { AccessTime, ChatBubbleOutline, InsertDriveFile, MoreVert, TaskAlt } from '@mui/icons-material';
+import { AccessTime, ChatBubbleOutline, InsertDriveFile, MoreVert } from '@mui/icons-material';
+import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import CloseIcon from '@mui/icons-material/Close';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import {
@@ -153,6 +154,9 @@ function EditEventDetailsDrawer({
   const [openAttachmentModal, setOpenAttachmentModal] = useState(false);
   const [commentType, setCommentType] = useState('');
   const [attachmentComment, setAttachmentComment] = useState('');
+  
+  // Modal de validacion de comentarios y porcentaje
+  const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
   const menuEditOpen = Boolean(anchorEl);
   const API_URL = process.env.REACT_APP_API_URL;
   //const [userData, setUserData] = useState(null);
@@ -748,6 +752,9 @@ function EditEventDetailsDrawer({
       setErrorCommentForm(true);
       return;
     }
+    
+    // TODO: VALIDAR MODAL
+    setOpenFeedbackModal(true);
 
     setErrorCommentForm(false);
 
@@ -1296,6 +1303,49 @@ function EditEventDetailsDrawer({
           </Box>
         </Box>
       </Modal>
+      
+      {/* Modal de Feedback para ciclos al 100% sin comentarios previos */}
+      <Dialog
+        open={openFeedbackModal}
+        onClose={() => setOpenFeedbackModal(false)}
+        aria-labelledby="feedback-dialog-title"
+        aria-describedby="feedback-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent>
+          <Box display="flex" flexDirection="column" alignItems="center" textAlign="center" py={2}>
+            <Box
+              sx={{
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: '#fff3cd'
+              }}
+            >
+              <DoNotDisturbIcon sx={{ fontSize: 32, color: '#f39c12' }} />
+            </Box>
+            <Typography variant="h6" component="div" gutterBottom sx={{ mt: 2 }}>
+              {t('feedback_required_title')}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+              {t('feedback_required_message')}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setOpenFeedbackModal(false)}
+            autoFocus
+          >
+            {t('understood')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

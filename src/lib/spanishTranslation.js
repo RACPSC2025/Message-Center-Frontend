@@ -814,6 +814,11 @@ const es = {
   
   // Communications Ledger
   "regulatory_communications_ledger": "Libro Mayor de Comunicaciones Regulatorias",
+  
+  // Feedback Modal
+  "feedback_required_title": "Comentario Requerido",
+  "feedback_required_message": "Un ciclo no puede llegar al 100% si no tiene al menos un comentario previo. Por favor, agregue comentarios antes de marcar el ciclo como completado.",
+  "understood": "Entendido",
   "regulatory_communications": "Comunicaciones Regulatorias",
   "high_stakes_compliance_tracking": "Seguimiento de Cumplimiento de Alto Riesgo",
   "new_filing_request": "Nueva Solicitud de Radicación",

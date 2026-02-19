@@ -847,6 +847,11 @@ const en = {
   "priority_level": "Priority Level",
   "low_30_days": "Low (30 days)",
   "medium_14_days": "Medium (14 days)",
+  
+  // Feedback Modal
+  "feedback_required_title": "Comment required",
+  "feedback_required_message": "A cycle cannot reach 100% if it doesn't have at least one previous comment. Please add comments before marking the cycle as completed.",
+  "understood": "Understood",
   "high_72_hours": "High (72 hours)",
   "critical_urgent": "Critical (Urgent)",
   "expected_response_date": "Expected Response Date",
