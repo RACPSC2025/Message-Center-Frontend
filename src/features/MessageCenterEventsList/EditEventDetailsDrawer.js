@@ -865,7 +865,8 @@ function EditEventDetailsDrawer({
       id: 'comment',
       label: t('comment'),
       type: 'textarea',
-      defaultValue: ''
+      defaultValue: '',
+      autoFocus: !!initialCommentText
     },
     {
       id: 'sharepoint_link',

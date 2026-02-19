@@ -291,7 +291,7 @@ const es = {
   edit_responsible: 'Editar Responsables',
   update_progress: 'Actualizar Progreso',
   followup_activities: 'Seguimiento Actividades',
-  close_cycle: 'Cerrar ciclo',
+  close_cycle: 'Cerrar ciclo: ',
   closing_cycle: 'Cerrando ciclo',
   add_comment: 'Agregar Comentario',
   highlight: 'Destacar',
