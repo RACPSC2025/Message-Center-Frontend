@@ -179,6 +179,22 @@ export const filterConfigs = {
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
     },
+
+    {
+      labelKey: 'SortBy',
+      type: 'autocompleteWithoutLevel',
+      name: 'sort_by',
+      default_value: '',
+      options: [
+        { value: '1', label: 'SortByAZ' },
+        { value: '2', label: 'SortByZA' },
+        { value: '3', label: 'SortByNewest' },
+        { value: '4', label: 'SortByOldest' }
+      ],
+      api_details: {},
+      group_by_key: 'sort_by',
+      group_by_label: 'sort'
+    },
     
     dateRangeField
   ],
