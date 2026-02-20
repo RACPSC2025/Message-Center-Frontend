@@ -8,6 +8,7 @@ import {
   Avatar,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -131,6 +132,8 @@ function EditEventDetailsDrawer({
   const [logtaskRevisorComments, setLogtaskRevisorComments] = useState([]);
   const [isLoading, setIsLoading] = useState('loading');
   const [openModal, setOpenModal] = useState(false);
+  const [hasExecutedComments, setHasExecutedComments] = useState(false);
+  const [hasRevisorComments, setHasRevisorComments] = useState(false);
   const [openModalEjecutor, setOpenModalEjecutor] = useState(false);
   const [addCommentForm, setAddCommentForm] = useState([]);
   const [commentExecutedAttachments, setCommentExecutedAttachments] = useState([]);
@@ -161,6 +164,8 @@ function EditEventDetailsDrawer({
   const API_URL = process.env.REACT_APP_API_URL;
   //const [userData, setUserData] = useState(null);
   const userData = useSelector((state) => state.globalData.userDetails);
+
+  console.log('logTaskDetails TTTTTKKKKKKKKKKKKKKKKKKKKKKKKKK', logTaskDetails);
 
 
   const UPLOADS_URL = `${API_URL}uploads/registros/tasklegal/`;
@@ -270,7 +275,7 @@ function EditEventDetailsDrawer({
     console.log('Uploading attachment for comment ID:');
     console.log('comment ID:', selectedComment.comment_id);
     //console.log('logTaskDetails:', logTaskDetails);
-    console.log('logtask ID: ', logTaskDetails.id);
+    console.log('logtask HHHHHHAAAAAATTTTTTTT: ', logTaskDetails);
     if (attachmentComment) {
       //handleUploadComments(selectedComment, attachmentComment);
       attachImageToComment(logTaskDetails.id, selectedComment.comment_id, attachmentComment);
@@ -355,8 +360,6 @@ function EditEventDetailsDrawer({
     }
   };
 
-  useEffect(() => {}, [logtaskRevisorComments]);
-
   /*
   const getExecutedComments = async (logtask_id) => {
     try {
@@ -402,41 +405,43 @@ function EditEventDetailsDrawer({
   const getExecutedComments = async (logtask_id) => {
     try {
       let formData = new FormData();
-      formData.append("comment_type", "executed");
+      formData.append('comment_type', 'executed');
 
       const response = await axiosInstance.post(
         `/tasklist_api/get_logtask_comments/${logtask_id}`,
         formData
       );
 
-      console.log("responseComments", response.data);
-
-      for (const comment of response.data.data) {
-        const userName = await fetchUserName(comment.user_id);
-        const attachmentsResponse = await fetchCommentsAttachments(comment.id);
-
-        // attachmentsResponse ya es el array de adjuntos
-        const attachments = Array.isArray(attachmentsResponse) ? attachmentsResponse : [];
-        console.log("attachments for comment ", comment.id, ": ", attachments);
-
-        setLogtaskExecutedComments((prevComments) => [
-          ...prevComments,
-          {
-            user_id: comment.user_id,
-            comment: comment.comment,
-            created: comment.created,
-            userName: userName,
-            comment_id: comment.id,
-            attachment: attachments,
-          },
+      // 1. Mapeamos las promesas en lugar de un for...of (Peticiones en Paralelo)
+      const processedCommentsPromises = response.data.data.map(async (comment) => {
+        // Estas dos peticiones para cada comentario corren a la vez usando Promise.all
+        const [userName, attachmentsResponse] = await Promise.all([
+          fetchUserName(comment.user_id),
+          fetchCommentsAttachments(comment.id)
         ]);
-      }
 
-      setIsLoading("loaded");
+        const attachments = Array.isArray(attachmentsResponse) ? attachmentsResponse : [];
+
+        return {
+          user_id: comment.user_id,
+          comment: comment.comment,
+          created: comment.created,
+          userName: userName,
+          comment_id: comment.id,
+          attachment: attachments
+        };
+      });
+
+      // 2. Esperamos a que TODOS los comentarios estén procesados
+      const finalCommentsMap = await Promise.all(processedCommentsPromises);
+      console.log('finalCommentsMap GGGGGGGGGGGGGGGGGGGGGGGGGGGGG', finalCommentsMap);
+
+      // 3. Seteamos el estado UNA SOLA VEZ (y reemplazamos el array completo)
+      setLogtaskExecutedComments(finalCommentsMap);
+      setHasExecutedComments(finalCommentsMap.length > 0);
     } catch (error) {
-      console.error("Error fetching logtask comments ", error);
-      setIsLoading("error");
-      return [];
+      console.error('Error fetching logtask comments ', error);
+      setIsLoading('error');
     }
   };
 
@@ -450,29 +455,32 @@ function EditEventDetailsDrawer({
         formData
       );
 
-      console.log("responseCommentsReview AAAAAAAAAAAAAAAAA", response.data);
+      // 1. Mapeamos las promesas en lugar de un for...of (Peticiones en Paralelo)
+      const processedCommentsPromises = response.data.data.map(async (comment) => {
+        // Estas dos peticiones para cada comentario corren a la vez usando Promise.all
+        const [userName, attachmentsResponse] = await Promise.all([
+          fetchUserName(comment.user_id),
+          fetchCommentsAttachments(comment.id)
+        ]);
 
-      for (const comment of response.data.data) {
-        const userName = await fetchUserName(comment.user_id);
-        const attachmentsResponse = await fetchCommentsAttachments(comment.id);
-
-        // Usar el array directamente, igual que en ejecutor
         const attachments = Array.isArray(attachmentsResponse) ? attachmentsResponse : [];
 
-        setLogtaskRevisorComments((prevComments) => [
-          ...prevComments,
-          {
-            user_id: comment.user_id,
-            comment: comment.comment,
-            created: comment.created,
-            userName: userName,
-            comment_id: comment.id,
-            attachment: attachments,
-          },
-        ]);
-      }
+        return {
+          user_id: comment.user_id,
+          comment: comment.comment,
+          created: comment.created,
+          userName: userName,
+          comment_id: comment.id,
+          attachment: attachments
+        };
+      });
 
-      setIsLoading("loaded");
+      // 2. Esperamos a que TODOS los comentarios estén procesados
+      const finalCommentsMap = await Promise.all(processedCommentsPromises);
+
+      // 3. Seteamos el estado UNA SOLA VEZ (y reemplazamos el array completo)
+      setLogtaskRevisorComments(finalCommentsMap);
+      setHasRevisorComments(finalCommentsMap.length > 0);
     } catch (error) {
       console.error("Error fetching logtask comments ", error);
       setIsLoading("error");
@@ -483,6 +491,8 @@ function EditEventDetailsDrawer({
   const fetchLogtaskComments = async (logtask_id) => {
     setCommentExecutedAttachments([]);
     setCommentRevisorAttachments([]);
+    setLogtaskExecutedComments([]);
+    setLogtaskRevisorComments([]);
     await getExecutedComments(logtask_id);
     await getRevisorComments(logtask_id);
   };
@@ -520,9 +530,12 @@ function EditEventDetailsDrawer({
   // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments/{id}
 
   useEffect(() => {
-    console.log('LOG TASK DETAILS MMMMM???', logTaskDetails);
-    setIsLoading('loading');
-    //fetchLogtaskComments(logTaskDetails.id);
+    if (logTaskDetails && openEditDrawer) {
+      setIsLoading('loading');
+      fetchLogtaskComments(logTaskDetails.id).then(() => {
+        setIsLoading('loaded');
+      });
+    }
 
     // Posicionar en el tab indicado al abrir el drawer
     if (openEditDrawer) {
@@ -536,41 +549,6 @@ function EditEventDetailsDrawer({
         setAddCommentForm({});
       }
     }
-
-    const mockComments = [
-      {
-        userName: 'Yorleny Pérez',
-        created: '2023-02-25T10:00:00',
-        comment: 'Se realizó la clonación de la tarea de prueba según lo solicitado.\nQueda pendiente revisar la asignación de recursos.',
-        attachment: [
-          { url: '/assets/person/person2.jpg'}
-        ], // Sin adjuntos
-        user_id: 1,
-        id: 101
-      },
-      {
-        userName: 'Miguel Rojas',
-        created: '2023-02-26T14:30:00',
-        comment: 'La clonación se ve correcta.',
-        attachment: [
-          { url: 'https://www.jugandoainvertir.com.ar/descargas/Padre-Rico-Padre-Pobre.pdf' },
-          { url: '/assets/person/person1.jpg'},
-          { url: '/assets/person/person2.jpg'},
-          { url: '/assets/person/person1.jpg'},
-          { url: '/assets/person/person1.jpg'},
-          { url: '/assets/person/person1.jpg'},
-          { url: '/assets/templates/template.xlsx'},
-          { url: '/assets/templates/holamundo.docx'},
-          { url: '/assets/templates/holamundo.docx'},
-          { url: '/assets/templates/holamundo.docx'},
-        ], // Con adjunto simulado
-        user_id: 2,
-        id: 102
-      }
-    ];
-    // Simula la carga de datos
-    setLogtaskExecutedComments(mockComments);
-    setIsLoading('loaded');
   }, [logTaskDetails, openEditDrawer, initialTab, initialCommentText]);
 
   const handleTabChange = (event, newValue) => {
@@ -954,7 +932,7 @@ function EditEventDetailsDrawer({
               
               {/* // TODO: Aquí antes era === loaded: cambiar cuando se realice la API */}
               {isLoading === 'loaded' ? (
-                logtaskExecutedComments.length > 0 ? (
+                hasExecutedComments ? (
                   logtaskExecutedComments.map((comment, index) => {
                     console.log('Adjuntos del comentario:', comment.attachment); // <-- test
                     return (
@@ -979,8 +957,6 @@ function EditEventDetailsDrawer({
                       />
                     );
                   })
-                ) : isLoading === 'loading' ? (
-                  <div>{t('loading')}</div>
                 ) : (
                   <EmptyState
                     title={t('no_comments_title')}
@@ -988,7 +964,9 @@ function EditEventDetailsDrawer({
                   />
                 )
               ) : (
-                <div>{t('loading')}</div>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
+                  <CircularProgress />
+                </Box>
               )}
             </CustomTabPanel>
             
@@ -996,7 +974,7 @@ function EditEventDetailsDrawer({
             <CustomTabPanel value={tabValue} index="seguimientos">
                 {/* TODO: Aquí antes era === loaded: cambiar cuando se realice la API*/}            
                 {isLoading === 'loaded' ? (
-                logtaskRevisorComments.length > 0 ? (
+                hasRevisorComments ? (
                   logtaskRevisorComments.map((comment, index) => {
                     return (
                       <CommentCard
@@ -1016,8 +994,6 @@ function EditEventDetailsDrawer({
                       />
                     );
                   })
-                ) : isLoading === 'loading' ? (
-                  <div>{t('loading')}</div>
                 ) : (
                   <EmptyState
                     title={t('no_comments_title')}
@@ -1025,7 +1001,9 @@ function EditEventDetailsDrawer({
                   />
                 )
               ) : (
-                <div>{t('loading')}</div>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
+                  <CircularProgress />
+                </Box>
               )}
             </CustomTabPanel>
 

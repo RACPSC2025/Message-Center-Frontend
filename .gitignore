@@ -26,6 +26,8 @@ build.zip
 buildLOCAL.zip
 buildDEV.zip
 
+./reports/*
+
 # pnpm
 pnpm-lock.yaml
 .pnpm-debug.log
