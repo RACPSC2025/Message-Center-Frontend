@@ -2,7 +2,7 @@ import { Box, Typography, Slider } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-export default function InputProgressSlider({ value, defaultValue = 0, onChange, disabled = false }) {
+export default function InputProgressSlider({ field, value, defaultValue = 0, onChange, disabled = false }) {
   const { t } = useTranslation();
 
   const normalize = (val) => {
@@ -36,7 +36,7 @@ export default function InputProgressSlider({ value, defaultValue = 0, onChange,
         onChangeCommitted={(e, newValue) => {
           const safeValue = normalize(newValue);
           setLocalValue(safeValue);
-          if (onChange) onChange(safeValue);
+          if (onChange) onChange(field.id, safeValue);
         }}
       />
       {/*

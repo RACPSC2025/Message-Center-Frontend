@@ -754,8 +754,16 @@ function EditEventDetailsDrawer({
     }
     
     // TODO: VALIDAR MODAL
-    setOpenFeedbackModal(true);
+    const progreso = parseInt(addCommentForm.progress, 10) || 0
+    const cantidadComentarios = parseInt(logTaskDetails.comments_logtask_count, 10) || 0
+    console.log('🤪 MOSTRANDO DATOS DE FORMULARIO', progreso);
+    console.log('🤪 PROGRESO ACTUAL', cantidadComentarios);
 
+    if(progreso === 100 && cantidadComentarios <= 0) {
+      setOpenFeedbackModal(true);
+      return;
+    }
+    
     setErrorCommentForm(false);
 
     const comment_type = addCommentForm.type === 1 ? 'executed' : 'revisor';
@@ -767,6 +775,7 @@ function EditEventDetailsDrawer({
       formData.append('comment', addCommentForm.comment);
       formData.append('sharepoint_link', addCommentForm.sharepoint_link || '');
       formData.append('logtask_id', logTaskDetails.id);
+      // formData.append('progress', addCommentForm.progress);
       formData.append('comment_type', comment_type);
       formData.append('user_id', userData.id_administradores);
       formData.append('user_name', userData.fullname);
