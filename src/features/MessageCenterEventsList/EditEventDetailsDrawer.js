@@ -478,8 +478,40 @@ function EditEventDetailsDrawer({
       // 2. Esperamos a que TODOS los comentarios estén procesados
       const finalCommentsMap = await Promise.all(processedCommentsPromises);
 
+      const mockComments = [
+      {
+        userName: 'Yorleny Pérez',
+        created: '2023-02-25T10:00:00',
+        comment: 'Se realizó la clonación de la tarea de prueba según lo solicitado.\nQueda pendiente revisar la asignación de recursos.',
+        attachment: [
+          { url: '/assets/person/person2.jpg'}
+        ], // Sin adjuntos
+        user_id: 1,
+        id: 101
+      },
+      {
+        userName: 'Miguel Rojas',
+        created: '2023-02-26T14:30:00',
+        comment: 'La clonación se ve correcta.',
+        attachment: [
+          { url: 'https://www.jugandoainvertir.com.ar/descargas/Padre-Rico-Padre-Pobre.pdf' },
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/person/person2.jpg'},
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/person/person1.jpg'},
+          { url: '/assets/templates/template.xlsx'},
+          { url: '/assets/templates/holamundo.docx'},
+          { url: '/assets/templates/holamundo.docx'},
+          { url: '/assets/templates/holamundo.docx'},
+        ], // Con adjunto simulado
+        user_id: 2,
+        id: 102
+      }
+    ];
+
       // 3. Seteamos el estado UNA SOLA VEZ (y reemplazamos el array completo)
-      setLogtaskRevisorComments(finalCommentsMap);
+      setLogtaskRevisorComments([...finalCommentsMap, ...mockComments]);
       setHasRevisorComments(finalCommentsMap.length > 0);
     } catch (error) {
       console.error("Error fetching logtask comments ", error);
