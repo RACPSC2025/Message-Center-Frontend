@@ -664,6 +664,25 @@ const TasksListView = ({ onCreateTask }) => {
               }}
             >
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                {/* ID de la tarea*/}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#757575',
+                      fontSize: '0.9rem',
+                      backgroundColor: '#f5f5f5',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    ID: {selectedTask.id}
+                  </Typography>
+                </Box>
+
+                {/* Título de la tarea */}
                 <Typography
                   variant="h6"
                   sx={{
@@ -675,6 +694,7 @@ const TasksListView = ({ onCreateTask }) => {
                 >
                   {selectedTask.task_title}
                 </Typography>
+
                 {/* Descripción de la tarea */}
                 <ExpandableText 
                   text={'Colocar Descripción aquí cuando se tenga disponible el campo desde la API. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem'}
