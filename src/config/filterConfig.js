@@ -38,6 +38,17 @@ const dropdownAdminList = {
   group_by_label: 'FilterBy'
 };
 
+const dropdownExecutorList = {
+  type: 'autocompleteWithoutLevel',
+  name: 'filter_executor',
+  default_value: '',
+  options: [],
+  storageType: 'global',
+  storageKey: 'listOfUsers',
+  group_by_key: 'filter_by',
+  group_by_label: 'FilterBy'
+};
+
 const dropdownReviewerList = {
   type: 'autocompleteWithoutLevel',
   name: 'filter_reviewer',
@@ -154,7 +165,7 @@ export const filterConfigs = {
     },
     {
       // TODO: Both dropdowns are the same. I need to individually fetch the options for each dropdown.
-      ...dropdownReviewerList,
+      ...dropdownExecutorList,
       labelKey: 'Executor'
     },
     {
