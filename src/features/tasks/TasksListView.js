@@ -88,6 +88,8 @@ const TasksListView = ({ onCreateTask }) => {
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
   const statusFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_status'));
   const sortBy = useSelector((state) => selectFilterItemValue(state, 'events', 'sort_by'));
+  const startDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_start_date'));
+  const endDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_end_date'));
   console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
   console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
 
@@ -167,22 +169,43 @@ const TasksListView = ({ onCreateTask }) => {
     });
   }, [dispatch]);
 
-  // ✅ Filtro de tareas por palabras clave
+  // ✅ Filtro de tareas por palabras clave, estado y fechas
   const filteredTasks = useMemo(() => {
     let result = tasks.filter(task => {
-      // 1. Filtro por Palabras Clave (Existente)
+      // 1. Filtro por Palabras Clave
       if (keywordsFilter && keywordsFilter.trim() !== '') {
         const searchTerm = keywordsFilter.toLowerCase().trim();
         const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
         if (!titleMatch) return false;
       }
 
-      // 2. Filtro por Estado (Panel Lateral)
+      // 2. Filtro por Estado
       if (statusFilter && statusFilter !== '') {
         const statusFilterCode = normalizeStatusCode(statusFilter)
         const taskStatus = String(task.task_status || task.status);
 
         if (taskStatus !== String(statusFilterCode)) return false;
+      }
+
+      // 3. Filtro por Rango de Fechas: Muestra tareas que se solapan con el rango seleccionado
+      // Ej: Tarea anual (2025-01-01 a 2025-12-31) aparece en búsqueda de septiembre
+      if (startDateFilter || endDateFilter) {
+        const taskStartDate = task.start_date ? new Date(task.start_date) : null;
+        const taskEndDate = task.end_date ? new Date(task.end_date) : null;
+        const filterStartDate = startDateFilter ? new Date(startDateFilter) : null;
+        const filterEndDate = endDateFilter ? new Date(endDateFilter) : null;
+
+        // Si hay fecha de inicio del filtro, verificar que la tarea empiece después
+        if (filterStartDate) {
+          const taskDateToCheck = taskEndDate || taskStartDate; // Priorizar fecha de fin, sino fecha de inicio
+          if (!taskDateToCheck || taskDateToCheck < filterStartDate) return false;
+        }
+
+        // Si hay fecha de fin del filtro, verificar que la tarea termine antes
+        if (filterEndDate) {
+          const taskDateToCheck = taskStartDate || taskEndDate; // Priorizar fecha de inicio, sino fecha de fin
+          if (!taskDateToCheck || taskDateToCheck > filterEndDate) return false;
+        }
       }
 
       return true; // Pasa todos los filtros
@@ -207,7 +230,7 @@ const TasksListView = ({ onCreateTask }) => {
     }
 
     return result;
-  }, [tasks, keywordsFilter, statusFilter, sortBy]);
+  }, [tasks, keywordsFilter, statusFilter, sortBy, startDateFilter, endDateFilter]);
 
 
   // ✅ LAZY LOADING DE TAREAS
@@ -581,7 +604,7 @@ const TasksListView = ({ onCreateTask }) => {
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         {/* Contador de resultados filtrados */}
-        {keywordsFilter && (
+        {(keywordsFilter || startDateFilter || endDateFilter) && (
           <Box sx={{ px: 2, py: 1, bgcolor: '#f8fbfc', borderBottom: '1px solid #e0e6ed' }}>
             <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.75rem' }}>
               {filteredTasks.length} de {tasks.length} tareas encontradas
