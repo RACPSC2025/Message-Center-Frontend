@@ -506,20 +506,33 @@ const TasksListView = ({ onCreateTask }) => {
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Typography 
-                              sx={{ 
-                                fontWeight: isSelected ? 600 : 500, 
-                                color: isSelected ? '#263238' : '#5b5b5b', 
-                                fontSize: '0.8rem', 
-                                lineHeight: 1.1, 
-                                whiteSpace: 'nowrap', 
-                                overflow: 'hidden', 
-                                textOverflow: 'ellipsis',
-                                letterSpacing: isSelected ? 1 : 0
-                              }}
-                            >
-                              {task.task_title}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography 
+                                sx={{ 
+                                  fontWeight: isSelected ? 600 : 500, 
+                                  color: isSelected ? '#263238' : '#5b5b5b', 
+                                  fontSize: '0.8rem', 
+                                  lineHeight: 1.1, 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis',
+                                  letterSpacing: isSelected ? 1 : 0,
+                                  flex: 1
+                                }}
+                              >
+                                {task.task_title}
+                              </Typography>
+                              <Typography 
+                                sx={{ 
+                                  fontSize: '0.8rem', 
+                                  fontWeight: 400, 
+                                  color: isSelected ? '#78909c' : '#90a4ae',
+                                  paddingRight: 1
+                                }}
+                              >
+                                # {task.id}
+                              </Typography>
+                            </Box>
                           }
                           secondary={
                             <Typography sx={{ 
