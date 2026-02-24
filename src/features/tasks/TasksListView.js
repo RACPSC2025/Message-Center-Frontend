@@ -280,6 +280,21 @@ const TasksListView = ({ onCreateTask }) => {
     }
   };
 
+  const handleRefreshLogtasks = () => {
+    if (selectedTask) {
+      dispatch(fetchLogtaskList({ task_id: selectedTask.id })).then((data) => {
+        if (data?.payload?.messages === 'Success') {
+          const logtaskData = data?.payload?.data || [];
+          setLogtasks(logtaskData);
+          if (selectedLogtask) {
+            const updatedCurrent = logtaskData.find(lt => lt.id === selectedLogtask.id);
+            if (updatedCurrent) setSelectedLogtask(updatedCurrent);
+          }
+        }
+      });
+    }
+  };
+
   const getTaskIcon = (type, isSelected) => {
     const typeColors = {
       'ÚNICA': '#ba68c8',
@@ -725,6 +740,7 @@ const TasksListView = ({ onCreateTask }) => {
               setIsEditDrawerOpen(true);
             }}
             selectedLogtaskId={selectedLogtask?.id}
+            onAttachmentUploaded={handleRefreshLogtasks}
           />
         </Box>
       </Box>
@@ -747,6 +763,7 @@ const TasksListView = ({ onCreateTask }) => {
           // Aquí podrías disparar un refresco de la lista si hubo cambios
           // dispatch(fetchListTaskNew({})); 
         }}
+        onCommentAdded={handleRefreshLogtasks}
       />
     </Box>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Box, Chip, IconButton, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AttachFile as AttachFileIcon, CheckCircle as CheckCircleIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
@@ -13,11 +13,12 @@ const TaskCyclesTable = ({
   onSelectCycle,
   onOpenFollowup,
   onCloseCycle,
-  selectedLogtaskId = null
+  selectedLogtaskId = null,
+  onAttachmentUploaded
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  
+
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedTaskForUpload, setSelectedTaskForUpload] = useState(null);
 
@@ -61,6 +62,9 @@ const TaskCyclesTable = ({
   // ✅ MANEJAR SUBIDA DE ARCHIVOS
   const handleFileUpload = (results) => {
     console.log('📎 Archivos subidos para ciclo:', selectedTaskForUpload?.id, results);
+    if (onAttachmentUploaded && selectedTaskForUpload) {
+      onAttachmentUploaded(selectedTaskForUpload.id);
+    }
     setUploadDialogOpen(false);
     setSelectedTaskForUpload(null);
   };
@@ -111,6 +115,8 @@ const TaskCyclesTable = ({
   // ✅ CELL RENDERER PARA ACCIONES
   const ActionsCellRenderer = (params) => {
     const task = params.data;
+    const attachmentCount = parseInt(task?.attachments_logtask_count, 10) || 0;
+    const commentCount = parseInt(task?.comments_logtask_count, 10) || 0;
     
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, height: '100%' }}>
@@ -144,7 +150,7 @@ const TaskCyclesTable = ({
               '&:hover': { bgcolor: '#e3f2fd' }
             }}
           >
-            <AttachFileIcon fontSize="small" /> 0
+            <AttachFileIcon fontSize="small" /> {attachmentCount}
           </IconButton>
         </Tooltip>
 
@@ -159,7 +165,7 @@ const TaskCyclesTable = ({
               '&:hover': { bgcolor: '#e3f2fd' },
             }}
           >
-            <FaComment style={{ fontSize: '1rem' }} /> {task?.comments_logtask_count ? task.comments_logtask_count : 0}
+            <FaComment style={{ fontSize: '1rem' }} /> {commentCount}
           </IconButton>
         </Tooltip>
 
