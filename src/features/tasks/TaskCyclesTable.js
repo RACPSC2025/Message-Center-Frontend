@@ -159,7 +159,7 @@ const TaskCyclesTable = ({
               '&:hover': { bgcolor: '#e3f2fd' },
             }}
           >
-            <FaComment style={{ fontSize: '1rem' }} /> {task?.comments?.length || 0}
+            <FaComment style={{ fontSize: '1rem' }} /> {task?.comments_logtask_count ? task.comments_logtask_count : 0}
           </IconButton>
         </Tooltip>
 

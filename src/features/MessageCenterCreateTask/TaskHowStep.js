@@ -1,17 +1,24 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Typography } from '@mui/material';
-import { useState } from 'react';
 import FormBuilder from '../../components/FormBuilder';
 import LexicalInput from '../../components/Input/lexicalWYSWYG/LexicalInput';
 
-import { useTranslation } from 'react-i18next';
+function TaskHowStep({ onTaskHowStepChange, taskHowFormModel }) {
+  const [howFormModel, setHowFormModel] = useState({});
+  const { t } = useTranslation();
 
-function TaskHowStep() {
-  const [HowFormModel, setHowFormModel] = useState({ task_description: '' });
   const handleLexicalInput = (data) => {
     setHowFormModel((prevState) => ({ ...prevState, task_description: data }));
   };
 
-  const { t } = useTranslation();
+  useEffect(() => {
+    setHowFormModel(taskHowFormModel || {});
+  }, [taskHowFormModel]);
+
+  useEffect(() => {
+    onTaskHowStepChange && onTaskHowStepChange(howFormModel);
+  }, [howFormModel, onTaskHowStepChange]);
 
   const FormDataHow = [
     {
@@ -43,7 +50,15 @@ function TaskHowStep() {
       <Typography variant="body1" margin="20px 0">
         {t('how_step_description')}
       </Typography>
-      <FormBuilder showActionButton={false} inputFields={FormDataHow} />
+      <FormBuilder 
+        showActionButton={false} 
+        inputFields={FormDataHow} 
+        controlled={true}
+        initialValues={howFormModel}
+        onChange={(id, value) => {
+          setHowFormModel((prevState) => ({ ...prevState, [id]: value }));
+        }}
+      />
       <LexicalInput placeholder={t('training_material')} JSONData={handleLexicalInput} />
     </>
   );

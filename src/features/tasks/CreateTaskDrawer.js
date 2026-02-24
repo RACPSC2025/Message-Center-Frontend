@@ -15,7 +15,7 @@ const TaskHowStep = lazy(() => import('../MessageCenterCreateTask/TaskHowStep'))
 
 const steps = ['What', 'Where', 'When', 'Who', 'Why', 'How'];
 
-export default function CreateTask({ openCreateTask = false, handleCloseCreateTask = () => {} }) {
+export default function CreateTask({ openCreateTask = false, handleCloseCreateTask = () => {}, onTaskCreated = () => {} }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [activeStep, setActiveStep] = useState(0);
@@ -89,10 +89,27 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
     setWhyFormModel(data);
   };
 
+  const handleTaskHowStep = (data) => {
+    setHowFormModel(data);
+  };
+
   const handleSaveTask = () => {
     dispatch(saveTask(taskCreationData)).then((data) => {
-      if (data?.payload?.messgaes === 'Success') {
+      console.log('🤪 MOSTRANDO DATOS DE DATA VVVVVVVVVVVVVVVVVVVVVVVVVVVVVV', data);
+      
+      let isSuccess = false;
+      const payload = data?.payload;
+
+      // El backend de PHP a veces devuelve warnings HTML antes del JSON, volviendo el payload un string.
+      if (typeof payload === 'string') {
+        isSuccess = payload.includes('"messages":"success"') || payload.includes('"messages":"Success"');
+      } else if (payload?.messages === 'success' || payload?.messages === 'Success') {
+        isSuccess = true;
+      }
+
+      if (isSuccess) {
         setTaskSubmissionStatus('success');
+        onTaskCreated();
       } else {
         setTaskSubmissionStatus('error');
       }
@@ -132,7 +149,7 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
     ),
     Who: <TaskWhoStep onTaskWhoStepChange={handleTaskWhoStep} taskWhoFormModel={whoFormModel} />,
     Why: <TaskWhyStep onTaskWhyStepChange={handleTaskWhyStep} taskWhyFormModel={whyFormModel} />,
-    How: <TaskHowStep />
+    How: <TaskHowStep onTaskHowStepChange={handleTaskHowStep} taskHowFormModel={howFormModel} />
   };
 
   useEffect(() => {
@@ -188,6 +205,13 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
     setWhyFormModel({
       goals: '',
       location: ''
+    });
+
+    setHowFormModel({
+      tracking: '',
+      internal_comments: false,
+      upload: false,
+      task_description: ''
     });
   }, []);
 

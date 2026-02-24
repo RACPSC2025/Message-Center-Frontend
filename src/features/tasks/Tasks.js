@@ -688,6 +688,7 @@ export default function Component() {
         openCreateTask={openCreateTask}
         selectedTaskType={selectedTaskType}
         handleCloseCreateTask={() => setOpenCreateTask(false)}
+        onTaskCreated={handleFetchEventList}
       />
 
       {/* Create Cycle Drawer (Drawer para añadir ciclo)*/}
