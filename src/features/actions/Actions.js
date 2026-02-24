@@ -440,6 +440,7 @@ export function Component() {
             isFetching={actionListLoading}
             onClickTableAction={handleClickTableActionButton}
             newActionByUser={newActionByDescription}
+            onRefreshData={handleFetchActionList}
           />
         </Box>
       </Box>
