@@ -115,6 +115,7 @@ function TaskWhatStep({ onTaskWhatStepChange, taskWhatFormModel }) {
       id: 'task_description',
       label: `${t('task_description')}`,
       type: 'textarea',
+      required: true,
       defaultValue: ''
     },
     {
@@ -122,7 +123,6 @@ function TaskWhatStep({ onTaskWhatStepChange, taskWhatFormModel }) {
       label: `${t('fase')}`,
       type: 'dropdown',
       options: phase,
-      required: true,
       dependent: 'task_subphase',
       defaultValue: ''
     },

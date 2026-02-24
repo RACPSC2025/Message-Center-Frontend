@@ -155,7 +155,7 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
   useEffect(() => {
     setWhatFormModel({
       task_title: '',
-      tags: '',
+      tags: [],
       corrective_plan: false,
       manage_costs: false,
       task_description: '',
