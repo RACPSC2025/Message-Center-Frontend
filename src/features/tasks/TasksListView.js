@@ -90,6 +90,7 @@ const TasksListView = ({ onCreateTask }) => {
   const sortBy = useSelector((state) => selectFilterItemValue(state, 'events', 'sort_by'));
   const startDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_start_date'));
   const endDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_end_date'));
+  const reviewerFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_reviewer'));
   console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
   console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
 
@@ -208,7 +209,17 @@ const TasksListView = ({ onCreateTask }) => {
         }
       }
 
-      return true; // Pasa todos los filtros
+      // 4. Filtro por Revisor
+      if (reviewerFilter && reviewerFilter.trim() !== '') {
+        const reviewers = task.reviewers || {};
+        
+        // buscar directamente en las claves numéricas de la API
+        const hasReviewer = reviewers.hasOwnProperty(reviewerFilter.trim());
+        
+        if (!hasReviewer) return false;
+      }
+
+      return true; 
     });
 
     // 3. Filtro por Ordenamiento (Sort By)
@@ -230,7 +241,7 @@ const TasksListView = ({ onCreateTask }) => {
     }
 
     return result;
-  }, [tasks, keywordsFilter, statusFilter, sortBy, startDateFilter, endDateFilter]);
+  }, [tasks, keywordsFilter, statusFilter, sortBy, startDateFilter, endDateFilter, reviewerFilter]);
 
 
   // ✅ LAZY LOADING DE TAREAS

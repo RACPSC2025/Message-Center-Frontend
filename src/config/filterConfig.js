@@ -39,7 +39,7 @@ const dropdownAdminList = {
 };
 
 const dropdownReviewerList = {
-  type: 'autocomplete',
+  type: 'autocompleteWithoutLevel',
   name: 'filter_reviewer',
   default_value: '',
   options: [],
