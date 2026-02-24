@@ -723,13 +723,13 @@ const TasksListView = ({ onCreateTask }) => {
                 {/* Estados de los ciclos en formato vertical */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3, alignItems: 'flex-start' }}>
                   {[
-                    { label: 'Completado', color: '#00f57a', count: stats.completed },
-                    { label: 'En Progreso', color: '#1a90ff', count: stats.inProgress },
-                    { label: 'Vencido', color: '#fb3d61', count: stats.expired },
-                    { label: 'Abierto', color: '#fbc02d', count: stats.open }
+                    { label: t('Completed'), statusKey: '1', count: stats.completed },
+                    { label: t('InProgress'), statusKey: '2', count: stats.inProgress },
+                    { label: t('Delayed'), statusKey: '4', count: stats.expired },
+                    { label: t('Pending'), statusKey: '3', count: stats.open }
                   ].map((item) => (
                     <Box key={item.label} display="flex" alignItems="center" gap={0.5}>
-                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: item.color }} />
+                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: TASK_STATUS_COLORS[item.statusKey] }} />
                       <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.6rem' }}>
                         {item.label}: <b>{item.count}</b>
                       </Typography>
