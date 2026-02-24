@@ -483,7 +483,7 @@ const TasksListView = ({ onCreateTask }) => {
                   : alpha(theme.palette.primary.main, isSelected ? 0.12 : 0.04);
 
                 return (
-                  <Tooltip key={task.id} title={isCollapsed ? task.task_title : ""} placement="right">
+                  <Tooltip key={task.id} title={task.task_title} placement="right">
                     <ListItemButton
                       selected={isSelected}
                       onClick={() => handleSelectTask(task)}
