@@ -48,7 +48,7 @@ import { normalizeStatusCode } from '../../utils/others';
 
 const TASKS_PER_PAGE = 10;
 
-const TasksListView = ({ onCreateTask }) => {
+const TasksListView = ({ onCreateTask, refreshKey }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
@@ -173,7 +173,7 @@ const TasksListView = ({ onCreateTask }) => {
       setIsInitialized(true);
       console.error("❌ Error al cargar tareas:", error);
     });
-  }, [dispatch]);
+  }, [dispatch, refreshKey]);
 
   // ✅ Filtro de tareas por palabras clave, estado y fechas
   const filteredTasks = useMemo(() => {

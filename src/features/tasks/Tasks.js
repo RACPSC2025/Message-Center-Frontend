@@ -107,6 +107,7 @@ export default function Component() {
   
   // Estado para controlar la apertura del drawer para crear ciclo CreateCycleDraer
   const [openCreateCycleDrawer, setOpenCreateCycleDrawer] = useState(false);
+  const [refreshTasksKey, setRefreshTasksKey] = useState(0);
   
   // selectedView have "report" as default value
   const [selectedView, setSelectedView] = useState('list'); // ['calendar', 'list', 'table', 'report', 'insights', 'settings'
@@ -367,6 +368,7 @@ export default function Component() {
   };
 
   const handleFetchEventList = () => {
+    setRefreshTasksKey((prev) => prev + 1);
     dispatch(fetchEventsList()).then((data) => {
       if (data?.payload?.messages === 'Success') {
         const eventData = data?.payload?.data ?? [];
@@ -642,6 +644,7 @@ export default function Component() {
               >
                 {selectedView === 'list' ? (
                   <TasksListView
+                    refreshKey={refreshTasksKey}
                     onCreateTask={(taskType) => {
                       // Guardamos el tipo de tarea seleccionado
                       setSelectedTaskType(taskType);
