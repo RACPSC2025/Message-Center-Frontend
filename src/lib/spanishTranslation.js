@@ -147,6 +147,8 @@ const es = {
   how: 'Cómo',
   reset: 'Reiniciar',
   createTask: 'Crear Tarea',
+  task_created_success: 'Tarea creada exitosamente',
+  error_creating_task: 'Hubo un error al crear la tarea. Revisa los datos ingresados.',
   Create: 'Crear',
   table: 'Tabla',
   list: 'Lista',

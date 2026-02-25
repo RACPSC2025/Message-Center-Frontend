@@ -141,6 +141,8 @@ const en = {
   how: 'How',
   reset: 'Reset',
   createTask: 'Create Task',
+  task_created_success: 'Task created successfully',
+  error_creating_task: 'There was an error creating the task. Please check the entered data.',
   table: 'Table',
   list: 'List',
   reports: 'Reports',

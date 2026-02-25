@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import BaseTab from '../../components/BaseTab';
 import { saveTask } from '../../stores/tasks/saveTaskSlice';
+import { showErrorMsg, showSuccessMsg } from '../../utils/others';
 
 const TaskWhenStep = lazy(() => import('../MessageCenterCreateTask/TaskWhenStep'));
 const TaskWhatStep = lazy(() => import('../MessageCenterCreateTask/TaskWhatStep'));
@@ -28,6 +29,7 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
   const [howFormModel, setHowFormModel] = useState({});
   const [taskCreationData, setTaskCreationData] = useState({});
   const [taskSubmissionStatus, setTaskSubmissionStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isStepOptional = (step) => {
     return step === 1 || step === 3;
@@ -94,6 +96,9 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
   };
 
   const handleSaveTask = () => {
+    setIsSubmitting(true);
+    setTaskSubmissionStatus('');
+
     dispatch(saveTask(taskCreationData)).then((data) => {
       console.log('🤪 MOSTRANDO DATOS DE DATA VVVVVVVVVVVVVVVVVVVVVVVVVVVVVV', data);
       
@@ -107,11 +112,18 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
         isSuccess = true;
       }
 
+      setIsSubmitting(false);
+
       if (isSuccess) {
-        setTaskSubmissionStatus('success');
+        showSuccessMsg(t('task_created_success') || 'Tarea creada exitosamente');
         onTaskCreated();
+        
+        // Reset everything and close modal automatically
+        resetFormModels();
+        handleReset();
+        handleCloseCreateTask();
       } else {
-        setTaskSubmissionStatus('error');
+        showErrorMsg(t('error_creating_task') || 'Hubo un error al crear la tarea. Revisa los datos ingresados.');
       }
     });
   };
@@ -152,7 +164,7 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
     How: <TaskHowStep onTaskHowStepChange={handleTaskHowStep} taskHowFormModel={howFormModel} />
   };
 
-  useEffect(() => {
+  const resetFormModels = () => {
     setWhatFormModel({
       task_title: '',
       tags: [],
@@ -213,6 +225,10 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
       upload: false,
       task_description: ''
     });
+  };
+
+  useEffect(() => {
+    resetFormModels();
   }, []);
 
   useEffect(() => {
@@ -281,20 +297,35 @@ export default function CreateTask({ openCreateTask = false, handleCloseCreateTa
         >
           {activeStep === steps.length ? (
             <Box>
-              <Typography sx={{ mt: 2, mb: 1, textAlign: 'center' }}>
-                {t('stepsCompleted')}
-                <Box>
-                  <Button sx={{ mt: 2 }} variant="contained" onClick={handleSubmitForm}>
-                    {t('sendForm')}
-                  </Button>
-                </Box>
-                <Box>
-                  <Button sx={{ mt: 2 }} variant="outlined" onClick={handleReset}>
-                    {t('reset')}
-                  </Button>
-                </Box>
+              <Typography sx={{ mt: 2, mb: 1, textAlign: 'center', fontWeight: '500', fontSize: '1.1rem' }}>
+                {t('stepsCompleted') || 'Has terminado todos los pasos'}
               </Typography>
-              <Typography>{taskSubmissionStatus}</Typography>
+              
+              <Box sx={{ mt: 3, p: 3, bgcolor: '#f8fbfc', border: '1px solid #e0e6ed', borderRadius: 2 }}>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Revisa que la información en las pestañas anteriores esté correcta antes de enviar. 
+                  Una vez enviada, la tarea se creará en el sistema y se asignará al responsable seleccionado.
+                </Typography>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={handleReset}
+                    disabled={isSubmitting}
+                  >
+                    {t('reset') || 'Revisar datos'}
+                  </Button>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleSubmitForm}
+                    disabled={isSubmitting}
+                    sx={{ minWidth: 150 }}
+                  >
+                    {isSubmitting ? t('loading') || 'Creando...' : t('sendForm') || 'Crear Tarea'}
+                  </Button>
+                </Box>
+              </Box>
             </Box>
           ) : (
             <Box>
