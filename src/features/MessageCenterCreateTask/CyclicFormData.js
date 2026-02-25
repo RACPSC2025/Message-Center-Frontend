@@ -63,22 +63,25 @@ function CyclicFormData({ formModel, onFormModelChange, alert }) {
     // TODO: pass this to the parent component
     const selectedDays = Object.entries(selectedDayButtons)
       .filter(([key, value]) => value)
-      .map(([key]) => key);
+      .map(([key]) => key)
+      .join(',');
 
     const selectedMonths = Object.entries(selectedMonthButtons)
       .filter(([key, value]) => value)
-      .map(([key]) => key);
+      .map(([key]) => key)
+      .join(',');
 
     const selectedYears = Object.entries(selectedYearButtons)
       .filter(([key, value]) => value)
-      .map(([key]) => key);
+      .map(([key]) => key)
+      .join(',');
 
-    setCyclicFormModel({
-      ...cyclicFormModel,
+    setCyclicFormModel((prev) => ({
+      ...prev,
       losdias: selectedDays,
       losmeses: selectedMonths,
       losanos: selectedYears
-    });
+    }));
   }, [selectedDayButtons, selectedMonthButtons, selectedYearButtons]);
 
   return (

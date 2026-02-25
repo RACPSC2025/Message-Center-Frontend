@@ -112,14 +112,23 @@ function TaskWhenStep({ onTaskWhenStepChange, taskWhenFormModel }) {
   }, [selectedWhenSwitch]);
 
   useEffect(() => {
-    setWhenFormModel((prevState) => ({
-      ...prevState,
-      ...uniqueFormModel,
-      ...cyclicFormModel,
-      ...permanentFormModel,
-      activity_type: activityType
-    }));
-  }, [uniqueFormModel, cyclicFormModel, permanentFormModel]);
+    setWhenFormModel((prevState) => {
+      let activeModel = {};
+      if (activityType === '1') {
+        activeModel = uniqueFormModel;
+      } else if (activityType === '3') {
+        activeModel = cyclicFormModel;
+      } else if (activityType === '5') {
+        activeModel = permanentFormModel;
+      }
+
+      return {
+        ...prevState,
+        ...activeModel,
+        activity_type: activityType
+      };
+    });
+  }, [uniqueFormModel, cyclicFormModel, permanentFormModel, activityType]);
 
   useEffect(() => {
     setUniqueFormModel(taskWhenFormModel);
