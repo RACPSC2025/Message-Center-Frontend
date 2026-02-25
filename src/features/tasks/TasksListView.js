@@ -69,6 +69,7 @@ const TasksListView = ({ onCreateTask }) => {
   const [initialDrawerTab, setInitialDrawerTab] = useState('comentarios');
   const [initialCommentText, setInitialCommentText] = useState('');
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Paginación de tareas
   const [tasks, setTasks] = useState([]);
@@ -157,6 +158,7 @@ const TasksListView = ({ onCreateTask }) => {
         }));
 
         setTasks(mappedTasks);
+        setIsInitialized(true);
 
         // Auto-seleccionar primera tarea si existe
         if (mappedTasks.length > 0 && !selectedTask) {
@@ -164,9 +166,11 @@ const TasksListView = ({ onCreateTask }) => {
           handleSelectTask(mappedTasks[0]);
         }
       } else {
+        setIsInitialized(true);
         console.error("❌ Error en respuesta de API:", data?.payload?.messages);
       }
     }).catch((error) => {
+      setIsInitialized(true);
       console.error("❌ Error al cargar tareas:", error);
     });
   }, [dispatch]);
@@ -258,6 +262,7 @@ const TasksListView = ({ onCreateTask }) => {
   useEffect(() => {
     setCurrentPage(1);
     setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
+    setIsLoadingMoreTasks(false);
     if (listRef.current) {
       listRef.current.scrollTop = 0;
     }
@@ -524,8 +529,14 @@ const TasksListView = ({ onCreateTask }) => {
 
         {/* Lista de tareas */}
         <List ref={listRef} sx={{ p: 0, flex: 1, overflowY: 'auto' }}>
-          {taskListLoading ? (
+          {(!isInitialized || taskListLoading) ? (
             <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
+          ) : filteredTasks.length === 0 ? (
+            <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
+              <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
+                No se encontraron tareas
+              </Typography>
+            </Box>
           ) : (
             (() => {
               return visibleTasks.map((task) => {
@@ -613,11 +624,21 @@ const TasksListView = ({ onCreateTask }) => {
           )}
 
           {/* Elemento centinela al final */}
-          <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
-            {isLoadingMoreTasks && (
-              <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
-            )}
-          </div>
+          {visibleTasks.length < filteredTasks.length ? (
+            <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
+              {isLoadingMoreTasks && (
+                <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
+              )}
+            </div>
+          ) : (
+            visibleTasks.length > 0 && (
+              <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
+                <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
+                  No hay más tareas
+                </Typography>
+              </Box>
+            ) 
+          )}
         </List>
       </Box>
 
