@@ -368,7 +368,6 @@ export default function Component() {
   };
 
   const handleFetchEventList = () => {
-    setRefreshTasksKey((prev) => prev + 1);
     dispatch(fetchEventsList()).then((data) => {
       if (data?.payload?.messages === 'Success') {
         const eventData = data?.payload?.data ?? [];
@@ -431,6 +430,11 @@ export default function Component() {
   useEffect(() => {
     handleFetchEventList();
   }, [filterData]);
+
+  const handleTaskCreated = () => {
+    setRefreshTasksKey((prev) => prev + 1);
+    handleFetchEventList();
+  };
   
   function handleClearFilters() {
     setLevel1Selected('');
@@ -691,7 +695,7 @@ export default function Component() {
         openCreateTask={openCreateTask}
         selectedTaskType={selectedTaskType}
         handleCloseCreateTask={() => setOpenCreateTask(false)}
-        onTaskCreated={handleFetchEventList}
+        onTaskCreated={handleTaskCreated}
       />
 
       {/* Create Cycle Drawer (Drawer para añadir ciclo)*/}

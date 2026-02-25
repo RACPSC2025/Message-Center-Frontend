@@ -231,7 +231,6 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         
         if (!hasReviewer) return false;
       }
-
       return true; 
     });
 
@@ -301,7 +300,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     return () => {
       observer.disconnect(); 
     };
-  }, [visibleTasks.length, filteredTasks.length]);
+  }, [visibleTasks, filteredTasks]);
 
   /*
     Selecciona una tarea y gestiona la carga de sus seguimientos (logtasks).
@@ -624,20 +623,22 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           )}
 
           {/* Elemento centinela al final */}
-          {visibleTasks.length < filteredTasks.length ? (
-            <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
-              {isLoadingMoreTasks && (
-                <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
-              )}
-            </div>
-          ) : (
-            visibleTasks.length > 0 && (
-              <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
-                <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
-                  No hay más tareas
-                </Typography>
-              </Box>
-            ) 
+          {(!taskListLoading && isInitialized) && filteredTasks.length > 0 && (
+            visibleTasks.length < filteredTasks.length ? (
+              <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
+                {isLoadingMoreTasks && (
+                  <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
+                )}
+              </div>
+            ) : (
+              visibleTasks.length > 0 && (
+                <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
+                    No hay más tareas
+                  </Typography>
+                </Box>
+              ) 
+            )
           )}
         </List>
       </Box>
