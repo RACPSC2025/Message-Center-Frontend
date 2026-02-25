@@ -18,8 +18,8 @@ function TaskWhereStep({ onTaskWhereStepChange, taskWhereFormModel }) {
   const handleFetchTaskListLevel = (level, formData) => {
     const data = { level, formData };
     return dispatch(fetchTaskListLevel(data)).then((data) => {
-      if (data?.payload?.messages === 'Success') {
-        return data?.payload?.data ?? [];
+      if (data?.payload?.data?.messages === 'Success') {
+        return data?.payload?.data?.data ?? [];
       }
     });
   };
