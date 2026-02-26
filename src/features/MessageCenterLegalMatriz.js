@@ -887,7 +887,7 @@ export function Component() {
   useEffect(() => {
     if (isSelected_articulo_id && selected_articulo_id && selected_requisito_id) {
       setOptinDrawerData({ id: selected_requisito_id });
-      setActiveTab(2);
+      setActiveTab(3); // Tab de artículos
       handleOpenOptionsDrawer();
     }
   }, [isSelected_articulo_id, selected_articulo_id, selected_requisito_id]);

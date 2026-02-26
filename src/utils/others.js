@@ -230,11 +230,28 @@ export const stripHtmlTags = (text) => {
     decoded = textarea.value;
   }
 
-  // E. Eliminar etiquetas HTML
+  // E. Tras decodificar entidades, re-verificar si el resultado es JSON (Lexical con &quot;)
+  const decodedTrimmed = decoded.trim().replace(/^"+|"+$/g, ''); // quitar comillas envolventes
+  if (decodedTrimmed.startsWith('{') || decodedTrimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(decodedTrimmed);
+      if (parsed?.root) {
+        const extracted = extractTextFromLexicalNode(parsed);
+        const result = extracted.replace(/\s+/g, ' ').trim();
+        if (result) return result;
+        return '';
+      }
+      return '';
+    } catch {
+      // No es JSON válido, continuar con limpieza HTML
+    }
+  }
+
+  // F. Eliminar etiquetas HTML
   const div = document.createElement('div');
   div.innerHTML = decoded;
   const plainText = div.textContent || div.innerText || '';
 
-  // F. Colapsar espacios múltiples y limpiar
+  // G. Colapsar espacios múltiples y limpiar
   return plainText.replace(/\s+/g, ' ').trim();
 };
