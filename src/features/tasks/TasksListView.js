@@ -44,7 +44,7 @@ import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
 import ExpandableText from '../../components/ExpandableText';
-import { normalizeStatusCode } from '../../utils/others';
+import { normalizeStatusCode, stripHtmlTags } from '../../utils/others';
 
 const TASKS_PER_PAGE = 10;
 
@@ -649,7 +649,7 @@ const TasksListView = ({ onCreateTask }) => {
                 </Typography>
                 {/* Descripción de la tarea */}
                 <ExpandableText 
-                  text={'Colocar Descripción aquí cuando se tenga disponible el campo desde la API. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem'}
+                  text={stripHtmlTags(selectedTask.task_description || '')}
                   maxChars={100}
                   sx={{
                     mt: 1,

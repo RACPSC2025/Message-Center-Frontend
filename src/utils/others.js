@@ -146,3 +146,95 @@ export const normalizeStatusCode = (value) => {
 
   return null;
 };
+
+/**
+ * Extrae texto plano de un árbol Lexical Editor (estructura JSON con nodos).
+ * Recorre recursivamente todos los nodos y concatena el texto de los nodos "text".
+ */
+const extractTextFromLexicalNode = (node) => {
+  if (!node || typeof node !== 'object') return '';
+
+  // Nodo de texto directo
+  if (node.type === 'text' && typeof node.text === 'string') {
+    return node.text;
+  }
+
+  // Nodo con hijos (paragraph, root, etc.)
+  if (Array.isArray(node.children)) {
+    return node.children
+      .map(extractTextFromLexicalNode)
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  // Nodo raíz de Lexical { root: { children: [...] } }
+  if (node.root) {
+    return extractTextFromLexicalNode(node.root);
+  }
+
+  return '';
+};
+
+/**
+ * Limpia texto que puede contener HTML, entidades HTML codificadas,
+ * objetos Lexical Editor o JSON de Lexical Editor.
+ * Maneja casos como:
+ *   "<p>Texto</p>"
+ *   "&lt;p&gt;Texto&lt;/p&gt;"
+ *   "&lt;p&gt;Otorgar autorizaci&oacute;n&lt;/p&gt;"
+ *   "&lt;p&gt;Notificar el&nbsp; acto&lt;/p&gt;"
+ *   { root: { children: [...] } }  (objeto Lexical)
+ *   '{"root":{"children":[...]}}' (JSON string de Lexical)
+ */
+export const stripHtmlTags = (text) => {
+  if (!text) return '';
+
+  // A. Si es un objeto (e.g. Lexical editor state pasado directamente)
+  if (typeof text === 'object') {
+    const extracted = extractTextFromLexicalNode(text);
+    return extracted.replace(/\s+/g, ' ').trim() || '';
+  }
+
+  if (typeof text !== 'string') return '';
+
+  // B. Detectar string "[object Object]" (objeto serializado erróneamente)
+  const trimmed = text.trim();
+  if (trimmed === '[object Object]') return '';
+
+  // C. Intentar parsear como JSON (Lexical Editor u otra estructura con texto)
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      // Lexical Editor: { root: { children: [...] } }
+      if (parsed?.root) {
+        const extracted = extractTextFromLexicalNode(parsed);
+        const result = extracted.replace(/\s+/g, ' ').trim();
+        if (result) return result;
+        return ''; // JSON Lexical válido pero sin texto visible
+      }
+      // Otro JSON no reconocido → devolver vacío en lugar del JSON crudo
+      return '';
+    } catch {
+      // No es JSON válido, continuar con limpieza HTML
+    }
+  }
+
+  // C. Decodificar entidades HTML (e.g. &lt; -> <, &oacute; -> ó, &nbsp; -> ' ')
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  let decoded = textarea.value;
+
+  // D. Si tras decodificar aún quedan entidades (doble encoding), decodificar de nuevo
+  if (/&[a-zA-Z]+;|&#\d+;/.test(decoded)) {
+    textarea.innerHTML = decoded;
+    decoded = textarea.value;
+  }
+
+  // E. Eliminar etiquetas HTML
+  const div = document.createElement('div');
+  div.innerHTML = decoded;
+  const plainText = div.textContent || div.innerText || '';
+
+  // F. Colapsar espacios múltiples y limpiar
+  return plainText.replace(/\s+/g, ' ').trim();
+};
