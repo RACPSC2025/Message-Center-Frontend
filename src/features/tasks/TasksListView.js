@@ -762,8 +762,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
                 {/* Descripción de la tarea */}
                 <ExpandableText 
-                  text={'<strong>Colocar</strong> Descripción aquí cuando se tenga disponible el campo desde la API. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quod. Lorem'}
-                  maxChars={100}
+                  text={selectedTask.task_description}
                   sx={{
                     mt: 1,
                     mr: 3,
