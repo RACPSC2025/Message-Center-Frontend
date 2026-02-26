@@ -120,7 +120,8 @@ function EditEventDetailsDrawer({
   logTaskDetails,
   onDrawerOpened,
   initialTab = 'comentarios',
-  initialCommentText = ''
+  initialCommentText = '',
+  onCommentAdded
 }) {
   const dispatch = useDispatch();
   const [selectedFile, setSezlectedFile] = useState(null);
@@ -685,7 +686,7 @@ function EditEventDetailsDrawer({
     }
   };
 
-  const handleAddReviewerComment = () => {
+  const handleAddReviewerComment = async () => {
     const formDetails = {
       comment: addCommentForm.comment,
       sharepoint_link: addCommentForm.sharepoint_link,
@@ -693,8 +694,11 @@ function EditEventDetailsDrawer({
       comment_type: 'revisor'
     };
 
-    postComment(formDetails);
+    let resp = await postComment(formDetails);
     setOpenModal(false);
+    if (resp && resp.status) {
+      if (onCommentAdded) onCommentAdded();
+    }
   };
 
   const handleAddEjecutorComment = async () => {
@@ -709,6 +713,7 @@ function EditEventDetailsDrawer({
 
     if (resp.status) {
       setCommentConfirmation(t('comment_created_successfully'));
+      if (onCommentAdded) onCommentAdded();
     } else {
       setCommentConfirmation(t('could_not_create_comment'));
     }

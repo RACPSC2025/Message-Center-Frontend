@@ -48,7 +48,7 @@ import { normalizeStatusCode, stripHtmlTags } from '../../utils/others';
 
 const TASKS_PER_PAGE = 10;
 
-const TasksListView = ({ onCreateTask }) => {
+const TasksListView = ({ onCreateTask, refreshKey }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
@@ -69,6 +69,7 @@ const TasksListView = ({ onCreateTask }) => {
   const [initialDrawerTab, setInitialDrawerTab] = useState('comentarios');
   const [initialCommentText, setInitialCommentText] = useState('');
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Paginación de tareas
   const [tasks, setTasks] = useState([]);
@@ -88,6 +89,10 @@ const TasksListView = ({ onCreateTask }) => {
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
   const statusFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_status'));
   const sortBy = useSelector((state) => selectFilterItemValue(state, 'events', 'sort_by'));
+  const startDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_start_date'));
+  const endDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_end_date'));
+  const executorFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_executor'));
+  const reviewerFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_reviewer'));
   console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
   console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
 
@@ -153,6 +158,7 @@ const TasksListView = ({ onCreateTask }) => {
         }));
 
         setTasks(mappedTasks);
+        setIsInitialized(true);
 
         // Auto-seleccionar primera tarea si existe
         if (mappedTasks.length > 0 && !selectedTask) {
@@ -160,24 +166,26 @@ const TasksListView = ({ onCreateTask }) => {
           handleSelectTask(mappedTasks[0]);
         }
       } else {
+        setIsInitialized(true);
         console.error("❌ Error en respuesta de API:", data?.payload?.messages);
       }
     }).catch((error) => {
+      setIsInitialized(true);
       console.error("❌ Error al cargar tareas:", error);
     });
-  }, [dispatch]);
+  }, [dispatch, refreshKey]);
 
-  // ✅ Filtro de tareas por palabras clave
+  // ✅ Filtro de tareas por palabras clave, estado y fechas
   const filteredTasks = useMemo(() => {
     let result = tasks.filter(task => {
-      // 1. Filtro por Palabras Clave (Existente)
+      // 1. Filtro por Palabras Clave
       if (keywordsFilter && keywordsFilter.trim() !== '') {
         const searchTerm = keywordsFilter.toLowerCase().trim();
         const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
         if (!titleMatch) return false;
       }
 
-      // 2. Filtro por Estado (Panel Lateral)
+      // 2. Filtro por Estado
       if (statusFilter && statusFilter !== '') {
         const statusFilterCode = normalizeStatusCode(statusFilter)
         const taskStatus = String(task.task_status || task.status);
@@ -185,7 +193,45 @@ const TasksListView = ({ onCreateTask }) => {
         if (taskStatus !== String(statusFilterCode)) return false;
       }
 
-      return true; // Pasa todos los filtros
+      // 3. Filtro por Rango de Fechas: Muestra tareas que se solapan con el rango seleccionado
+      // Ej: Tarea anual (2025-01-01 a 2025-12-31) aparece en búsqueda de septiembre
+      if (startDateFilter || endDateFilter) {
+        const taskStartDate = task.start_date ? new Date(task.start_date) : null;
+        const taskEndDate = task.end_date ? new Date(task.end_date) : null;
+        const filterStartDate = startDateFilter ? new Date(startDateFilter) : null;
+        const filterEndDate = endDateFilter ? new Date(endDateFilter) : null;
+
+        // Si hay fecha de inicio del filtro, verificar que la tarea empiece después
+        if (filterStartDate) {
+          const taskDateToCheck = taskEndDate || taskStartDate; // Priorizar fecha de fin, sino fecha de inicio
+          if (!taskDateToCheck || taskDateToCheck < filterStartDate) return false;
+        }
+
+        // Si hay fecha de fin del filtro, verificar que la tarea termine antes
+        if (filterEndDate) {
+          const taskDateToCheck = taskStartDate || taskEndDate; // Priorizar fecha de inicio, sino fecha de fin
+          if (!taskDateToCheck || taskDateToCheck > filterEndDate) return false;
+        }
+      }
+
+      // 4. Filtro por Executor(responsibles)
+      if (executorFilter && executorFilter.trim() !== '') {
+        const executors = task.responsibles || {};
+        // busca en las claves numéricas de la API
+        const hasExecutor = executors.hasOwnProperty(executorFilter.trim());
+        
+        if (!hasExecutor) return false;
+      }
+
+      // 5. Filtro por Revisor
+      if (reviewerFilter && reviewerFilter.trim() !== '') {
+        const reviewers = task.reviewers || {};
+        // buscar directamente en las claves numéricas de la API
+        const hasReviewer = reviewers.hasOwnProperty(reviewerFilter.trim());
+        
+        if (!hasReviewer) return false;
+      }
+      return true; 
     });
 
     // 3. Filtro por Ordenamiento (Sort By)
@@ -207,7 +253,7 @@ const TasksListView = ({ onCreateTask }) => {
     }
 
     return result;
-  }, [tasks, keywordsFilter, statusFilter, sortBy]);
+  }, [tasks, keywordsFilter, statusFilter, sortBy, startDateFilter, endDateFilter, executorFilter, reviewerFilter]);
 
 
   // ✅ LAZY LOADING DE TAREAS
@@ -215,6 +261,7 @@ const TasksListView = ({ onCreateTask }) => {
   useEffect(() => {
     setCurrentPage(1);
     setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
+    setIsLoadingMoreTasks(false);
     if (listRef.current) {
       listRef.current.scrollTop = 0;
     }
@@ -253,7 +300,7 @@ const TasksListView = ({ onCreateTask }) => {
     return () => {
       observer.disconnect(); 
     };
-  }, [visibleTasks.length, filteredTasks.length]);
+  }, [visibleTasks, filteredTasks]);
 
   /*
     Selecciona una tarea y gestiona la carga de sus seguimientos (logtasks).
@@ -274,6 +321,21 @@ const TasksListView = ({ onCreateTask }) => {
           setLogtasks(logtaskData);
           if (logtaskData.length > 0) {
             setSelectedLogtask(logtaskData[0]);
+          }
+        }
+      });
+    }
+  };
+
+  const handleRefreshLogtasks = () => {
+    if (selectedTask) {
+      dispatch(fetchLogtaskList({ task_id: selectedTask.id })).then((data) => {
+        if (data?.payload?.messages === 'Success') {
+          const logtaskData = data?.payload?.data || [];
+          setLogtasks(logtaskData);
+          if (selectedLogtask) {
+            const updatedCurrent = logtaskData.find(lt => lt.id === selectedLogtask.id);
+            if (updatedCurrent) setSelectedLogtask(updatedCurrent);
           }
         }
       });
@@ -466,8 +528,14 @@ const TasksListView = ({ onCreateTask }) => {
 
         {/* Lista de tareas */}
         <List ref={listRef} sx={{ p: 0, flex: 1, overflowY: 'auto' }}>
-          {taskListLoading ? (
+          {(!isInitialized || taskListLoading) ? (
             <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
+          ) : filteredTasks.length === 0 ? (
+            <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
+              <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
+                No se encontraron tareas
+              </Typography>
+            </Box>
           ) : (
             (() => {
               return visibleTasks.map((task) => {
@@ -483,7 +551,7 @@ const TasksListView = ({ onCreateTask }) => {
                   : alpha(theme.palette.primary.main, isSelected ? 0.12 : 0.04);
 
                 return (
-                  <Tooltip key={task.id} title={isCollapsed ? task.task_title : ""} placement="right">
+                  <Tooltip key={task.id} title={task.task_title} placement="right">
                     <ListItemButton
                       selected={isSelected}
                       onClick={() => handleSelectTask(task)}
@@ -506,20 +574,33 @@ const TasksListView = ({ onCreateTask }) => {
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Typography 
-                              sx={{ 
-                                fontWeight: isSelected ? 600 : 500, 
-                                color: isSelected ? '#263238' : '#5b5b5b', 
-                                fontSize: '0.8rem', 
-                                lineHeight: 1.1, 
-                                whiteSpace: 'nowrap', 
-                                overflow: 'hidden', 
-                                textOverflow: 'ellipsis',
-                                letterSpacing: isSelected ? 1 : 0
-                              }}
-                            >
-                              {task.task_title}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography 
+                                sx={{ 
+                                  fontWeight: isSelected ? 600 : 500, 
+                                  color: isSelected ? '#263238' : '#5b5b5b', 
+                                  fontSize: '0.8rem', 
+                                  lineHeight: 1.1, 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis',
+                                  letterSpacing: isSelected ? 1 : 0,
+                                  flex: 1
+                                }}
+                              >
+                                {task.task_title}
+                              </Typography>
+                              <Typography 
+                                sx={{ 
+                                  fontSize: '0.8rem', 
+                                  fontWeight: 400, 
+                                  color: isSelected ? '#78909c' : '#90a4ae',
+                                  paddingRight: 1
+                                }}
+                              >
+                                # {task.id}
+                              </Typography>
+                            </Box>
                           }
                           secondary={
                             <Typography sx={{ 
@@ -542,18 +623,30 @@ const TasksListView = ({ onCreateTask }) => {
           )}
 
           {/* Elemento centinela al final */}
-          <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
-            {isLoadingMoreTasks && (
-              <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
-            )}
-          </div>
+          {(!taskListLoading && isInitialized) && filteredTasks.length > 0 && (
+            visibleTasks.length < filteredTasks.length ? (
+              <div ref={loaderRef} style={{ height: 20, margin: 10, backgroundColor: 'transparent' }}>
+                {isLoadingMoreTasks && (
+                  <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
+                )}
+              </div>
+            ) : (
+              visibleTasks.length > 0 && (
+                <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
+                    No hay más tareas
+                  </Typography>
+                </Box>
+              ) 
+            )
+          )}
         </List>
       </Box>
 
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         {/* Contador de resultados filtrados */}
-        {keywordsFilter && (
+        {(keywordsFilter || startDateFilter || endDateFilter) && (
           <Box sx={{ px: 2, py: 1, bgcolor: '#f8fbfc', borderBottom: '1px solid #e0e6ed' }}>
             <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.75rem' }}>
               {filteredTasks.length} de {tasks.length} tareas encontradas
@@ -636,6 +729,25 @@ const TasksListView = ({ onCreateTask }) => {
               }}
             >
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                {/* ID de la tarea*/}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#757575',
+                      fontSize: '0.9rem',
+                      backgroundColor: '#f5f5f5',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    ID: {selectedTask.id}
+                  </Typography>
+                </Box>
+
+                {/* Título de la tarea */}
                 <Typography
                   variant="h6"
                   sx={{
@@ -647,6 +759,7 @@ const TasksListView = ({ onCreateTask }) => {
                 >
                   {selectedTask.task_title}
                 </Typography>
+
                 {/* Descripción de la tarea */}
                 <ExpandableText 
                   text={stripHtmlTags(selectedTask.task_description || '')}
@@ -675,13 +788,13 @@ const TasksListView = ({ onCreateTask }) => {
                 {/* Estados de los ciclos en formato vertical */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3, alignItems: 'flex-start' }}>
                   {[
-                    { label: 'Completado', color: '#00f57a', count: stats.completed },
-                    { label: 'En Progreso', color: '#1a90ff', count: stats.inProgress },
-                    { label: 'Vencido', color: '#fb3d61', count: stats.expired },
-                    { label: 'Abierto', color: '#fbc02d', count: stats.open }
+                    { label: t('Completed'), statusKey: '1', count: stats.completed },
+                    { label: t('InProgress'), statusKey: '2', count: stats.inProgress },
+                    { label: t('Delayed'), statusKey: '4', count: stats.expired },
+                    { label: t('Pending'), statusKey: '3', count: stats.open }
                   ].map((item) => (
                     <Box key={item.label} display="flex" alignItems="center" gap={0.5}>
-                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: item.color }} />
+                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: TASK_STATUS_COLORS[item.statusKey] }} />
                       <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.6rem' }}>
                         {item.label}: <b>{item.count}</b>
                       </Typography>
@@ -712,6 +825,7 @@ const TasksListView = ({ onCreateTask }) => {
               setIsEditDrawerOpen(true);
             }}
             selectedLogtaskId={selectedLogtask?.id}
+            onAttachmentUploaded={handleRefreshLogtasks}
           />
         </Box>
       </Box>
@@ -734,6 +848,7 @@ const TasksListView = ({ onCreateTask }) => {
           // Aquí podrías disparar un refresco de la lista si hubo cambios
           // dispatch(fetchListTaskNew({})); 
         }}
+        onCommentAdded={handleRefreshLogtasks}
       />
     </Box>
   );

@@ -10,6 +10,7 @@ import { COLUMN_TYPES, COLUMN_TYPE_TO_WIDTH_MAPPING } from '../config/table';
 import { Description, Field, Label, Textarea } from '@headlessui/react';
 import clsx from 'clsx';
 import axiosInstance from '../../lib/axios';
+import { showErrorMsg } from '../../utils/others';
 
 export default function ActionTable({
   actions,
@@ -17,7 +18,8 @@ export default function ActionTable({
   columnConfig,
   isFetching,
   onClickTableAction,
-  newActionByUser
+  newActionByUser,
+  onRefreshData
 }) {
   const [tableWidth, setTableWidth] = useState(1560);
   const tableContainerRef = useRef(null);
@@ -117,7 +119,7 @@ export default function ActionTable({
           width: 200, // ✅ Ancho fijo
           editable: false, // Usamos renderer custom
           cellRenderer: (params) => {
-            return getAdminCellRenderer(params);
+            return getAdminCellRenderer(params); // 📍 RENDERIZA CELDAS DE ADMINISTRADORES EDITABLES
           },
         });
       } 
@@ -129,7 +131,7 @@ export default function ActionTable({
           width: 200, // ✅ Ancho fijo
           editable: false, // Usamos renderer custom
           cellRenderer: (params) => {
-            return getDateCellRenderer(params);
+            return getDateCellRenderer(params); // 📍 RENDERIZA CELDAS DE FECHA EDITABLES
           },
         });
       }
@@ -141,7 +143,7 @@ export default function ActionTable({
           width: 170, // ✅ Ancho fijo
           editable: false,
           cellRenderer: (params) => {
-            return getTableDefaultCellRenderer(params);
+            return getTableDefaultCellRenderer(params); // 📍 RENDERIZA CELDA DE ESTADO EDITABLE
           },
         });
       }
@@ -152,7 +154,7 @@ export default function ActionTable({
           ...restColumnConfig,
           editable: false,
           cellRenderer: (params) => {
-            return getTableDefaultCellRenderer(params);
+            return getTableDefaultCellRenderer(params); // 📍 RENDERIZA CELDAS ESTÁNDAR (ID, FECHA, ACCIONES)
           },
         });
       }
@@ -425,6 +427,7 @@ export default function ActionTable({
     );
   };
 
+  // 📍 RENDERIZA CELDAS ESTÁNDAR - Switch principal para diferentes tipos de columnas
   const getTableDefaultCellRenderer = (params) => {
     const {
       colDef: { column_type },
@@ -434,9 +437,11 @@ export default function ActionTable({
 
     switch (column_type) {
       case COLUMN_TYPES.DATE:
+        // CELDA DE FECHA ESTÁNDAR (no editable)
         return !value ? '-' : formatDayjs(value, 'DD MMMM YYYY');
       
       case COLUMN_TYPES.ID_WITH_STATUS: {
+        // CELDA DE ID CON BARRA DE COLOR DE ESTADO
         const { color_code } = actionStatus[data.action_status] || {};
         return (
           <Box sx={{ pl: 3 }}>
@@ -456,6 +461,7 @@ export default function ActionTable({
       }
       
       case COLUMN_TYPES.STATUS: {
+        // CELDA DE ESTADO EDITABLE con dropdown y colores
         const statusInfo = actionStatus[value] || {};
         const { color_code, label } = statusInfo;
         const isEditing = editingStatusCell === data.action_id;
@@ -478,8 +484,8 @@ export default function ActionTable({
                         <Chip
                           label={statusData.label}
                           size="small"
-                          sx={{ 
-                            backgroundColor: statusData.color_code, 
+                          sx={{
+                            backgroundColor: statusData.color_code,
                             color: 'white',
                             minWidth: 100
                           }}
@@ -504,9 +510,9 @@ export default function ActionTable({
                 <Chip
                   label={label || 'Sin estado'}
                   size="small"
-                  sx={{ 
-                    backgroundColor: color_code || '#ccc', 
-                    color: 'white' 
+                  sx={{
+                    backgroundColor: color_code || '#ccc',
+                    color: 'white'
                   }}
                 />
                 <IconButton
@@ -526,6 +532,7 @@ export default function ActionTable({
       }
       
       case COLUMN_TYPES.ACTIONS:
+        // CELDA DE ACCIONES (botones de comentarios y edición)
         return (
           <>
             <Badge
@@ -558,6 +565,7 @@ export default function ActionTable({
         );
       
       default:
+        // CELDA DE TEXTO ESTÁNDAR
         return value;
     }
   };
@@ -577,6 +585,7 @@ export default function ActionTable({
           pageOption={[20, 50, 100]}
           perPage={20}
           onCellValueChanged={handleCellValueChanged}
+          onRefresh={onRefreshData || (() => showErrorMsg('No se puede refrescar los datos'))}
         />
       )}
     </Box>
