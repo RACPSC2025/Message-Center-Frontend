@@ -10,7 +10,8 @@ const instance = axiosConfiguration();
 function axiosConfiguration() {
   const isDevelopment = process.env.NODE_ENV === 'development';
   return axios.create({
-    baseURL: isDevelopment ? '/api' : API_URL,
+    //baseURL: isDevelopment ? '/api' : API_URL,
+    baseURL: API_URL,
     timeout: 600000,
     /*
     headers: {
@@ -19,6 +20,15 @@ function axiosConfiguration() {
     */
   });
 }
+
+/*
+function axiosConfiguration() {
+  return axios.create({
+    baseURL: API_URL,
+    timeout: 600000,
+  });
+}
+*/
 
 // Add a request interceptor
 instance.interceptors.request.use(
