@@ -33,6 +33,14 @@ export default function ActionTable({
   const [editingAdminCell, setEditingAdminCell] = useState(null); // { action_id: string, field: string }
   // Estado para controlar qué celda de fecha está siendo editada
   const [editingDateCell, setEditingDateCell] = useState(null); // { action_id: string, field: string }
+  
+  // ESTADO GLOBAL DE EDICIÓN POR FILA - Nueva funcionalidad
+  const [globalEditMode, setGlobalEditMode] = useState({
+    enabled: false,
+    actionId: null,
+    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_name', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date']
+    // MODIFICAR AQUÍ: Cambia los campos que serán editables en modo global
+  });
 
   const updateWidth = useCallback(() => {
     if (tableContainerRef.current) {
@@ -59,10 +67,39 @@ export default function ActionTable({
   }, [debouncedUpdateWidth, updateWidth]);
 
   const getFinalColumnConfig = (columnConfig, width) => {
+    console.log("Estado", COLUMN_TYPES)
     const finalColumms = [];
     const actionColumnWidth = getAbsoluteColumnWidth(COLUMN_TYPES.ACTIONS, width);
     let remainingWidth = width - actionColumnWidth;
     let isColumnWidthAcceptable = false;
+
+    // 🔄 COLUMNA DE EDICIÓN GLOBAL - Nueva funcionalidad
+    // Se añade al inicio para que esté fija a la izquierda antes del ID
+    finalColumms.push({
+      field: 'global_edit',
+      headerName: 'Opciones',
+      width: 50,
+      pinned: 'left', // Fijada a la izquierda
+      sortable: false,
+      filter: false,
+      editable: false,
+      cellRenderer: (params) => {
+        const isCurrentlyEditing = globalEditMode.enabled && globalEditMode.actionId === params.data.action_id;
+        return (
+          <IconButton
+            size="small"
+            onClick={() => toggleGlobalEditMode(params.data.action_id)}
+            sx={{ 
+              p: 0.5,
+              color: isCurrentlyEditing ? 'primary.main' : 'default'
+            }}
+            title={isCurrentlyEditing ? 'Cancelar edición' : 'Editar fila'}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        );
+      }
+    });
 
     // Solo saltamos estas columnas específicas
     const skippedColumns = ['responsible_person', 'action_created_by', 'nb_pais'];
@@ -72,6 +109,9 @@ export default function ActionTable({
     const dateColumns = ['action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date'];
     
     console.log("columnConfig: ", columnConfig);
+
+    // Ajustar el ancho restante después de añadir la columna de edición
+    remainingWidth -= 50; // Restar el ancho de la columna de edición global
 
     for (let i = 0; i < columnConfig.length; i++) {
       // Saltar solo las columnas en skippedColumns
@@ -141,7 +181,7 @@ export default function ActionTable({
           column_type: column_type,
           ...restColumnConfig,
           width: 170, // ✅ Ancho fijo
-          editable: false,
+          editable: true,
           cellRenderer: (params) => {
             return getTableDefaultCellRenderer(params); // 📍 RENDERIZA CELDA DE ESTADO EDITABLE
           },
@@ -224,6 +264,20 @@ export default function ActionTable({
     console.log('Fecha actualizada:', { actionId, field, newDate: newDateValue });
   };
 
+  // 🔄 FUNCIÓN GLOBAL DE EDICIÓN - Nueva funcionalidad
+  const toggleGlobalEditMode = (actionId) => {
+    setGlobalEditMode(prev => ({
+      enabled: !prev.enabled,
+      actionId: prev.enabled ? null : actionId, // Si ya está activo, lo desactiva
+      editableFields: prev.editableFields // Mantiene los mismos campos editables
+    }));
+    
+    // Limpiar estados de edición individuales al cambiar modo global
+    setEditingStatusCell(null);
+    setEditingAdminCell(null);
+    setEditingDateCell(null);
+  };
+
   const handleCreateNewAction = () => {
     console.log('handleCreateNewAction called');
     console.log("columnConfig: ", columnConfig);
@@ -291,8 +345,7 @@ export default function ActionTable({
       } catch (error) {
         console.error("Error fetching administradores: ", error);
       }
-    };
-
+    };  
     fetchAdministradores();
   }, []);
 
@@ -300,7 +353,13 @@ export default function ActionTable({
   const getAdminCellRenderer = (params) => {
     const { data, value, colDef } = params;
     const field = colDef.field;
-    const isEditing = editingAdminCell?.action_id === data.action_id && editingAdminCell?.field === field;
+    
+    // VERIFICACIÓN DE MODO GLOBAL - Nueva funcionalidad
+    const isGloballyEditing = globalEditMode.enabled && 
+                           globalEditMode.actionId === data.action_id &&
+                           globalEditMode.editableFields.includes(field);
+    const isIndividualEditing = editingAdminCell?.action_id === data.action_id && editingAdminCell?.field === field;
+    const isEditing = isGloballyEditing || isIndividualEditing;
 
     // Encontrar el value actual del administrador
     const currentAdmin = administradores.find(a => a.label === value);
@@ -324,33 +383,24 @@ export default function ActionTable({
                 </MenuItem>
               ))}
             </Select>
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                event.stopPropagation();
-                setEditingAdminCell(null);
-              }}
-              sx={{ p: 0.5 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
+            {/* SOLO MOSTRAR CERRAR EN MODO INDIVIDUAL - Nueva funcionalidad */}
+            {!isGloballyEditing && (
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditingAdminCell(null);
+                }}
+                sx={{ p: 0.5 }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
           </>
         ) : (
-          <>
-            <Box sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {value || '-'}
-            </Box>
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                event.stopPropagation();
-                setEditingAdminCell({ action_id: data.action_id, field: field });
-              }}
-              sx={{ p: 0.5 }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </>
+          <Box sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {value || '-'}
+          </Box>
         )}
       </Box>
     );
@@ -360,7 +410,13 @@ export default function ActionTable({
   const getDateCellRenderer = (params) => {
     const { data, value, colDef } = params;
     const field = colDef.field;
-    const isEditing = editingDateCell?.action_id === data.action_id && editingDateCell?.field === field;
+    
+    // VERIFICACIÓN DE MODO GLOBAL - Nueva funcionalidad
+    const isGloballyEditing = globalEditMode.enabled && 
+                           globalEditMode.actionId === data.action_id &&
+                           globalEditMode.editableFields.includes(field);
+    const isIndividualEditing = editingDateCell?.action_id === data.action_id && editingDateCell?.field === field;
+    const isEditing = isGloballyEditing || isIndividualEditing;
 
     // Formatear la fecha para el input type="date" (YYYY-MM-DD)
     const formatDateForInput = (dateValue) => {
@@ -383,57 +439,43 @@ export default function ActionTable({
               type="date"
               value={currentDateValue}
               onChange={(e) => handleDateChange(data.action_id, field, e.target.value)}
-              size="small"
               sx={{ flex: 1 }}
-              autoFocus
-              onClick={(e) => e.stopPropagation()}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              inputProps={{
-                min: '1950-01-01',
-                max: '2050-12-31'
-              }}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: '1950-01-01', max: '2050-12-31' }}
             />
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                event.stopPropagation();
-                setEditingDateCell(null);
-              }}
-              sx={{ p: 0.5 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
+            {/* SOLO MOSTRAR CERRAR EN MODO INDIVIDUAL - Nueva funcionalidad */}
+            {!isGloballyEditing && (
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditingDateCell(null);
+                }}
+                sx={{ p: 0.5 }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
           </>
         ) : (
-          <>
-            <Box sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {value ? formatDayjs(value, 'DD MMMM YYYY') : '-'}
-            </Box>
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                event.stopPropagation();
-                setEditingDateCell({ action_id: data.action_id, field: field });
-              }}
-              sx={{ p: 0.5 }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </>
+          <Box sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {value || '-'}
+          </Box>
         )}
       </Box>
     );
   };
 
-  // 📍 RENDERIZA CELDAS ESTÁNDAR - Switch principal para diferentes tipos de columnas
   const getTableDefaultCellRenderer = (params) => {
+    console.log("columnas types", COLUMN_TYPES)
+    console.log("Colores:", actionStatus)
     const {
       colDef: { column_type },
+      colDef,
       data,
       value
     } = params;
+    const field = colDef?.field || 'action_status'; // Obtener el field del colDef
 
     switch (column_type) {
       case COLUMN_TYPES.DATE:
@@ -443,6 +485,7 @@ export default function ActionTable({
       case COLUMN_TYPES.ID_WITH_STATUS: {
         // CELDA DE ID CON BARRA DE COLOR DE ESTADO
         const { color_code } = actionStatus[data.action_status] || {};
+        console.log("Color code")
         return (
           <Box sx={{ pl: 3 }}>
             <Box
@@ -452,10 +495,10 @@ export default function ActionTable({
                 top: 0,
                 height: '100%',
                 width: '5px',
-                bgcolor: color_code
+                bgcolor: color_code || '#ccc'
               }}
             />
-            {data.action_id}
+            {data.action_id} 
           </Box>
         );
       }
@@ -464,7 +507,13 @@ export default function ActionTable({
         // CELDA DE ESTADO EDITABLE con dropdown y colores
         const statusInfo = actionStatus[value] || {};
         const { color_code, label } = statusInfo;
-        const isEditing = editingStatusCell === data.action_id;
+        
+        // VERIFICACIÓN DE MODO GLOBAL - Nueva funcionalidad
+        const isGloballyEditing = globalEditMode.enabled && 
+                               globalEditMode.actionId === data.action_id &&
+                               globalEditMode.editableFields.includes(field);
+        const isIndividualEditing = editingStatusCell === data.action_id;
+        const isEditing = isGloballyEditing || isIndividualEditing;
 
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -485,7 +534,7 @@ export default function ActionTable({
                           label={statusData.label}
                           size="small"
                           sx={{
-                            backgroundColor: statusData.color_code,
+                            backgroundColor: statusData.color_code || '#ccc',
                             color: 'white',
                             minWidth: 100
                           }}
@@ -494,38 +543,30 @@ export default function ActionTable({
                     </MenuItem>
                   ))}
                 </Select>
-                <IconButton
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setEditingStatusCell(null);
-                  }}
-                  sx={{ p: 0.5 }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
+                {/* SOLO MOSTRAR CERRAR EN MODO INDIVIDUAL - Nueva funcionalidad */}
+                {!isGloballyEditing && (
+                  <IconButton
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditingStatusCell(null);
+                    }}
+                    sx={{ p: 0.5 }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                )}
               </>
             ) : (
-              <>
-                <Chip
-                  label={label || 'Sin estado'}
-                  size="small"
-                  sx={{
-                    backgroundColor: color_code || '#ccc',
-                    color: 'white'
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setEditingStatusCell(data.action_id);
-                  }}
-                  sx={{ p: 0.5 }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </>
+              <Chip
+                label={label || 'Sin estado'}
+                size="small"
+                sx={{
+                  backgroundColor: color_code || '#ccc',
+                  color: 'white',
+                  minWidth: 100
+                }}
+              />
             )}
           </Box>
         );
