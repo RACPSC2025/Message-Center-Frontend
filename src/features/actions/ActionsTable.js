@@ -42,7 +42,7 @@ export default function ActionTable({
   const [globalEditMode, setGlobalEditMode] = useState({
     enabled: false,
     actionId: null,
-    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_name', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date']
+    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_email', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date']
     // MODIFICAR AQUÍ: Cambia los campos que serán editables en modo global
   });
 
@@ -116,7 +116,7 @@ export default function ActionTable({
     // Solo saltamos estas columnas específicas
     const skippedColumns = ['responsible_person', 'action_created_by', 'nb_pais'];
     // Columnas de administradores editables
-    const adminColumns = ['responsible_person_name', 'reviewer_person_name', 'action_created_by_name'];
+    const adminColumns = ['responsible_person_name', 'reviewer_person_email', 'action_created_by_name'];
     // Columnas de fecha editables
     const dateColumns = ['action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date'];
     
@@ -150,11 +150,13 @@ export default function ActionTable({
       
       remainingWidth = remainingWidth - columnWidth;
 
-      isColumnWidthAcceptable =
-        remainingWidth > 0 ||
-        (remainingWidth < 0 && columnWidth + remainingWidth >= columnWidth * 0.75);
+      // 🔥 ELIMINAR LA VALIDACIÓN DE ANCHO - Permitir scroll horizontal
+      // Comentar o eliminar la validación que previene el scroll
+      // isColumnWidthAcceptable =
+      //   remainingWidth > 0 ||
+      //   (remainingWidth < 0 && columnWidth + remainingWidth >= columnWidth * 0.75);
 
-      if (!isColumnWidthAcceptable) break;
+      // if (!isColumnWidthAcceptable) break;
 
       restColumnConfig.width = columnWidth;
 
@@ -165,7 +167,7 @@ export default function ActionTable({
           headerName:
             restColumnConfig.field === 'responsible_person_name'
               ? 'Responsable'
-              : restColumnConfig.field === 'reviewer_person_name'
+              : restColumnConfig.field === 'reviewer_person_email'
               ? 'Revisor'
               : 'Creado por',
           width: 200, // ✅ Ancho fijo
@@ -211,7 +213,8 @@ export default function ActionTable({
         });
       }
 
-      if (remainingWidth < 0) break;
+      // 🔥 ELIMINAR EL BREAK QUE DETIENE EL PROCESAMIENTO DE COLUMNAS
+      // if (remainingWidth < 0) break;
     }
 
     console.log("Final columns: ", finalColumms.map(c => c.field));
