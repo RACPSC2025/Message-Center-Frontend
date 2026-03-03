@@ -1,16 +1,20 @@
-import CommentIcon from '@mui/icons-material/Comment';
-import EditIcon from '@mui/icons-material/Edit';
-import CloseIcon from '@mui/icons-material/Close';
-import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField } from '@mui/material';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField } from '@mui/material';
+import {
+  CheckCircle as CheckCircleIcon,
+  Close as CloseIcon,
+  Comment as CommentIcon,
+  Edit as EditIcon,
+  VisibilityOutlined as FollowUpIcon
+} from '@mui/icons-material';
 import { debounce } from 'radash';
 import TableComponent from '../../components/TableComponent';
 import { formatDayjs } from '../../utils/dateTimeFunctions';
 import { COLUMN_TYPES, COLUMN_TYPE_TO_WIDTH_MAPPING } from '../config/table';
-import { Description, Field, Label, Textarea } from '@headlessui/react';
-import clsx from 'clsx';
 import axiosInstance from '../../lib/axios';
 import { showErrorMsg } from '../../utils/others';
+import { Description, Field, Label, Textarea } from '@headlessui/react';
+import clsx from 'clsx';
 
 export default function ActionTable({
   actions,
@@ -78,7 +82,7 @@ export default function ActionTable({
     finalColumms.push({
       field: 'global_edit',
       headerName: 'Opciones',
-      width: 50,
+      width: 100,
       pinned: 'left', // Fijada a la izquierda
       sortable: false,
       filter: false,
@@ -86,17 +90,25 @@ export default function ActionTable({
       cellRenderer: (params) => {
         const isCurrentlyEditing = globalEditMode.enabled && globalEditMode.actionId === params.data.action_id;
         return (
-          <IconButton
-            size="small"
-            onClick={() => toggleGlobalEditMode(params.data.action_id)}
-            sx={{ 
-              p: 0.5,
-              color: isCurrentlyEditing ? 'primary.main' : 'default'
-            }}
-            title={isCurrentlyEditing ? 'Cancelar edición' : 'Editar fila'}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.2, width: '100%' }}>             <IconButton
+              size="small"
+              onClick={() => toggleGlobalEditMode(params.data.action_id)}
+              sx={{
+                color: isCurrentlyEditing ? 'primary.main' : 'default'
+              }}
+              title={isCurrentlyEditing ? 'Cancelar edición' : 'Editar fila'}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+
+            <IconButton size="small" title="Seguimiento">
+              <FollowUpIcon fontSize="small" />
+            </IconButton>
+
+            <IconButton size="small" title="Completar acción">
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
+          </Box>
         );
       }
     });
@@ -237,6 +249,8 @@ export default function ActionTable({
     setEditingStatusCell(null);
     
     console.log('Status actualizado:', { actionId, newStatus: newStatusValue });
+    const statusInfo = actionStatus[newStatusValue] || {};
+    console.log('Contenido de la celda (estado):', statusInfo.label || newStatusValue);
   };
 
   // Manejar el cambio de administrador
@@ -251,6 +265,7 @@ export default function ActionTable({
     setEditingAdminCell(null);
     
     console.log('Administrador actualizado:', { actionId, field, newAdmin: newAdminValue });
+    console.log('Contenido de la celda:', selectedAdmin ? selectedAdmin.label : newAdminValue);
   };
 
   // Manejar el cambio de fecha
@@ -516,7 +531,7 @@ export default function ActionTable({
         const isEditing = isGloballyEditing || isIndividualEditing;
 
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isEditing ? (
               <>
                 <Select
