@@ -31,3 +31,6 @@ buildDEV.zip
 # pnpm
 pnpm-lock.yaml
 .pnpm-debug.log
+
+# config files
+src/lib/axios.js
