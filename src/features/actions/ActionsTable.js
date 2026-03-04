@@ -100,7 +100,14 @@ export default function ActionTable({
               <EditIcon fontSize="small" />
             </IconButton>
 
-            <IconButton size="small" title="Seguimiento">
+            <IconButton 
+              size="small" 
+              title="Seguimiento"
+              onClick={(event) => {
+                event.stopPropagation();
+                onClickTableAction(params.data, 'view_comment');
+              }}
+            >
               <FollowUpIcon fontSize="small" />
             </IconButton>
 

@@ -433,7 +433,6 @@ export const filterConfigs = {
       // TODO: Both dropdowns are the same. I need to individually fetch the options for each dropdown.
       ...dropdownReviewerList,
       labelKey: 'Reviewer'
-    },
-    dateRangeField
+    }
   ]
 };
