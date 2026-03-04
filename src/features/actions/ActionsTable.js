@@ -71,7 +71,6 @@ export default function ActionTable({
   }, [debouncedUpdateWidth, updateWidth]);
 
   const getFinalColumnConfig = (columnConfig, width) => {
-    console.log("Estado", COLUMN_TYPES)
     const finalColumms = [];
     const actionColumnWidth = getAbsoluteColumnWidth(COLUMN_TYPES.ACTIONS, width);
     let remainingWidth = width - actionColumnWidth;
@@ -150,14 +149,6 @@ export default function ActionTable({
       
       remainingWidth = remainingWidth - columnWidth;
 
-      // 🔥 ELIMINAR LA VALIDACIÓN DE ANCHO - Permitir scroll horizontal
-      // Comentar o eliminar la validación que previene el scroll
-      // isColumnWidthAcceptable =
-      //   remainingWidth > 0 ||
-      //   (remainingWidth < 0 && columnWidth + remainingWidth >= columnWidth * 0.75);
-
-      // if (!isColumnWidthAcceptable) break;
-
       restColumnConfig.width = columnWidth;
 
       // 🔥 Columnas de administradores - EDITABLES con renderer custom
@@ -212,9 +203,6 @@ export default function ActionTable({
           },
         });
       }
-
-      // 🔥 ELIMINAR EL BREAK QUE DETIENE EL PROCESAMIENTO DE COLUMNAS
-      // if (remainingWidth < 0) break;
     }
 
     console.log("Final columns: ", finalColumms.map(c => c.field));
@@ -248,12 +236,10 @@ export default function ActionTable({
     const updatedData = editableActions.map((row) =>
       row.action_id === actionId ? { ...row, action_status: newStatusValue } : row
     );
+    console.log('[API] Status actualizado:', { actionId, newStatus: newStatusValue });
+    
     setEditableActions(updatedData);
     setEditingStatusCell(null);
-    
-    console.log('Status actualizado:', { actionId, newStatus: newStatusValue });
-    const statusInfo = actionStatus[newStatusValue] || {};
-    console.log('Contenido de la celda (estado):', statusInfo.label || newStatusValue);
   };
 
   // Manejar el cambio de administrador
@@ -267,8 +253,7 @@ export default function ActionTable({
     setEditableActions(updatedData);
     setEditingAdminCell(null);
     
-    console.log('Administrador actualizado:', { actionId, field, newAdmin: newAdminValue });
-    console.log('Contenido de la celda:', selectedAdmin ? selectedAdmin.label : newAdminValue);
+    console.log('[API] Datos de Actualización:', { actionId, field, newAdmin: newAdminValue });
   };
 
   // Manejar el cambio de fecha
@@ -279,7 +264,7 @@ export default function ActionTable({
     setEditableActions(updatedData);
     setEditingDateCell(null);
     
-    console.log('Fecha actualizada:', { actionId, field, newDate: newDateValue });
+    console.log('[API] Fecha actualizada:', { actionId, field, newDate: newDateValue });
   };
 
   // 🔄 FUNCIÓN GLOBAL DE EDICIÓN - Nueva funcionalidad
@@ -485,8 +470,6 @@ export default function ActionTable({
   };
 
   const getTableDefaultCellRenderer = (params) => {
-    console.log("columnas types", COLUMN_TYPES)
-    console.log("Colores:", actionStatus)
     const {
       colDef: { column_type },
       colDef,
@@ -503,7 +486,6 @@ export default function ActionTable({
       case COLUMN_TYPES.ID_WITH_STATUS: {
         // CELDA DE ID CON BARRA DE COLOR DE ESTADO
         const { color_code } = actionStatus[data.action_status] || {};
-        console.log("Color code")
         return (
           <Box sx={{ pl: 3 }}>
             <Box
@@ -539,7 +521,9 @@ export default function ActionTable({
               <>
                 <Select
                   value={value || ''}
-                  onChange={(e) => handleStatusChange(data.action_id, e.target.value)}
+                  onChange={(e) => {
+                    handleStatusChange(data.action_id, e.target.value);
+                  }}
                   size="small"
                   sx={{ minWidth: 120 }}
                   autoFocus
