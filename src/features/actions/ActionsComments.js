@@ -1,11 +1,11 @@
-import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import BaseEmptyState from '../../components/BaseEmptyState';
 import BaseTab from '../../components/BaseTab';
 import CommentCard from '../../components/CommentCard';
 import FormBuilder from '../../components/FormBuilder';
+import EmptyState from '../../components/EmptyState';
 import { editActionComments } from '../../stores/actions/editActionCommentsSlice';
 import { fetchActionComments } from '../../stores/actions/fetchActionCommentsSlice';
 import { showSuccessMsg } from '../../utils/others';
@@ -15,6 +15,7 @@ export default function ActionsComments({ actionDetails = {} }) {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('list');
   const [commentModel, setCommentModel] = useState({ comment: '', comment_id: null });
+
 
   const { loading: actionCommentsLoading = false, data: actionCommentsData = {} } = useSelector(
     (state) => state?.fetchActionComments || {}
@@ -27,7 +28,10 @@ export default function ActionsComments({ actionDetails = {} }) {
   const actionComments = actionCommentsData?.data || [];
 
   const handleFetchActionComments = ({ action_id, action_table }) => {
-    dispatch(fetchActionComments({ action_id, action_table }));
+    console.log('[DEBUG] Haciendo fetch con datos (ID acción): ', action_id);
+    // dispatch(fetchActionComments({ action_id, action_table }));
+    dispatch(fetchActionComments({ action_id }));
+    console.log('[DEBUG] Comentarios de acción (actionComments)', actionComments)
   };
 
   const handleAddEditComments = (payload, resetFormFields) => {
@@ -83,18 +87,37 @@ export default function ActionsComments({ actionDetails = {} }) {
       ));
     }
 
-    if (actionComments.length > 0) {
-      return actionComments.map((comment, index) => (
+    const renderCommentGroup = (comments, role) => {
+      if (!comments?.length) return null;
+      
+      return comments.map((comment, index) => (
         <CommentCard
-          key={comment.id}
+          key={comment.id || `${role}-${index}`}
           comment={comment}
+          role={role}
           wrapperStyle={index > 0 ? { mt: 1 } : {}}
           onClickEdit={() => handleClickCommentEdit(comment)}
         />
       ));
-    }
+    };
 
-    return <BaseEmptyState module="actions" section="comment_list" />;
+    return (
+      <>
+        {renderCommentGroup(actionComments.responsible_comments, t('Executor'))}
+        {renderCommentGroup(actionComments.reviewer_comments, t('Reviewer'))}
+        {renderCommentGroup(actionComments.other_comments, t('Other'))}
+        
+        {/* Mostrar estado vacío si no hay comentarios en ningún grupo */}
+        {!actionComments.responsible_comments?.length && 
+         !actionComments.reviewer_comments?.length && 
+         !actionComments.other_comments?.length && (
+          <EmptyState 
+            title={t('no_comments_title')}
+            subtitle={t('no_comments_description')}
+          />
+        )}
+      </>
+    );
   };
 
   const tabItems = [
@@ -103,13 +126,14 @@ export default function ActionsComments({ actionDetails = {} }) {
   ];
 
   useEffect(() => {
+    // eliminar la actionDetails?.action_table
     if (activeTab === 'list' && actionDetails?.action_id && actionDetails?.action_table) {
       handleFetchActionComments({
         action_id: actionDetails?.action_id,
-        action_table: actionDetails?.action_table
+        action_table: actionDetails?.action_table // Eliminar esto
       });
     }
-  }, [activeTab, actionDetails]);
+  }, [activeTab, actionDetails]); // Modificar para que solo sea por el cambio del id
 
   return (
     <Box
@@ -121,6 +145,16 @@ export default function ActionsComments({ actionDetails = {} }) {
         overflow: 'hidden'
       }}
     >
+      {/* Descripción de la acción */}
+      <Box sx={{ p: 2, borderBottom: '1px solid #e9ecef' }}>
+        <Typography variant="h6" sx={{ mb: 1, color: '#212529' }}>
+          {t('what_description')}
+        </Typography>
+        <Typography variant="body1" sx={{ color: '#6c757d', lineHeight: 1.5 }}>
+          {actionDetails?.what_description || 'Sin descripción'}
+        </Typography>
+      </Box>
+
       <BaseTab
         items={tabItems}
         activeTab={tabItems.findIndex((tab) => tab.key === activeTab)}
@@ -128,7 +162,6 @@ export default function ActionsComments({ actionDetails = {} }) {
           sx: { my: 2 },
           onChange: (_, value) => setActiveTab(tabItems[value].key)
         }}
-        // showBorderBottom
       />
       <Box
         sx={{

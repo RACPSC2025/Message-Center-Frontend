@@ -12,6 +12,23 @@ export const fetchActionComments = createAsyncThunk(
   async (data = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
+        '/message_center_api/action_api/dashboard_actions_list_comments_amatia_express',
+        data
+      );
+      console.log('[DEBUG] Datos de fetch', data)
+      console.log('[DEBUG] Datos de la respuesta', response.data)
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const fetchActionComments2 = createAsyncThunk(
+  'comments/list_action_comments_original',
+  async (data = {}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
         '/message_center_api/action_api/list_action_comments',
         data
       );

@@ -1,13 +1,11 @@
 import { Add, Close } from '@mui/icons-material';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { AppBar, Box, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
 import { clone, isEmpty, isObject } from 'radash';
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
-import AIActionButton from '../../components/AIActionButton';
-import ActionOrganizationFilter from './ActionOrganizationFilter';
 import { useModuleData } from '../../hooks/useModuleData';
 import { fetchActionFormFields } from '../../stores/actions/fetchActionFormFieldsSlice';
 import { fetchActionFormModel } from '../../stores/actions/fetchActionFormModelSlice';
@@ -20,8 +18,6 @@ import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
 
-// const MessageCenterActionDetails = lazy(() => import('../MessageCenterActionDetails'));
-// const MessageCenterActionComments = lazy(() => import('../MessageCenterActionComments'));
 const ActionsDetails = lazy(() => import('./ActionsDetails'));
 const ActionsComments = lazy(() => import('./ActionsComments'));
 
@@ -165,24 +161,10 @@ export function Component() {
     return config.filter(isTableColumnConfig ? tableConfigFilterFn : otherConfigFilterFn);
   };
 
-  /*
-  const modifyTableColumns = (columnConfig) => {
-    return columnConfig.map((config) => {
-      const { column: field, title: headerName, column_width: width, ...rest } = config;
-      return {
-        ...rest,
-        field,
-        headerName,
-        width
-      };
-    });
-  };
-  */
   const modifyTableColumns = (columnConfig) => {
     return columnConfig.map((config) => {
       const { column: field, title: headerName, column_width: width, ...rest } = config;
 
-      // Agregar cellEditorParams para columna de fecha_accion
       const columnProps = {
         ...rest,
         field,
@@ -224,6 +206,7 @@ export function Component() {
 
   const handleClickTableActionButton = (actionData, viewType) => {
     setSelectedAction(actionData);
+    console.log('[DEBUG] Mostrando datos de acción', actionData);
     setViewType(viewType);
     setDrawerOpen(true);
   };
@@ -297,41 +280,6 @@ export function Component() {
   };
 
   const speedDialActions = [{ icon: <Add />, name: 'Crear Acción' }];
-
-  // const filterArray = [
-  //   {
-  //     id: 'level1',
-  //     label: 'Business',
-  //     value: level1Selected,
-  //     handleChange: setLevel1Selected,
-  //     options: level1Options,
-  //     isDisabled: false
-  //   },
-  //   {
-  //     id: 'level2',
-  //     label: 'Company',
-  //     value: level2Selected,
-  //     handleChange: setLevel2Selected,
-  //     options: level2Options,
-  //     isDisabled: loadingLevel2
-  //   },
-  //   {
-  //     id: 'level3',
-  //     label: 'Region',
-  //     value: level3Selected,
-  //     handleChange: setLevel3Selected,
-  //     options: level3Options,
-  //     isDisabled: loadingLevel3
-  //   },
-  //   {
-  //     id: 'level4',
-  //     label: 'Location',
-  //     value: level4Selected,
-  //     handleChange: setLevel4Selected,
-  //     options: level4Options,
-  //     isDisabled: loadingLevel4
-  //   }
-  // ];
 
   const handleFetchTableColumns = () => {
     dispatch(fetchTableColumns()).then((data) => {
@@ -455,6 +403,7 @@ export function Component() {
       />
       }
 
+      {/* Drawer para detalles de la acción */}
       {drawerOpen && (
         <Drawer
           anchor="right"
@@ -462,16 +411,21 @@ export function Component() {
           onClose={handleCloseDrawer}
           PaperProps={drawerStyleAttrs[viewType] || {}}
         >
+
           <AppBar position="static">
+            {/* Header */}
             <Toolbar>
               <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
-                {t(drawerTitle)}
+                {`${t(drawerTitle)} #${selectedAction?.action_id}`}
               </Typography>
+
               <IconButton edge="end" onClick={handleCloseDrawer} aria-label="close">
                 <Close sx={{ color: 'white' }} />
               </IconButton>
             </Toolbar>
           </AppBar>
+
+          {/* Contenido del drawer */}
           <Suspense fallback={<div>{t('loading')}</div>}>
             {viewType === 'view_comment' ? (
               <ActionsComments actionDetails={selectedAction} />

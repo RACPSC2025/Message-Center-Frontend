@@ -13,6 +13,7 @@ import { formatDayjs } from '../../utils/dateTimeFunctions';
 import { COLUMN_TYPES, COLUMN_TYPE_TO_WIDTH_MAPPING } from '../config/table';
 import axiosInstance from '../../lib/axios';
 import { showErrorMsg } from '../../utils/others';
+import { useTranslation } from 'react-i18next';
 import { Description, Field, Label, Textarea } from '@headlessui/react';
 import clsx from 'clsx';
 
@@ -45,6 +46,8 @@ export default function ActionTable({
     editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_email', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date']
     // MODIFICAR AQUÍ: Cambia los campos que serán editables en modo global
   });
+
+  const { t } = useTranslation();
 
   const updateWidth = useCallback(() => {
     if (tableContainerRef.current) {
@@ -95,14 +98,14 @@ export default function ActionTable({
               sx={{
                 color: isCurrentlyEditing ? 'primary.main' : 'default'
               }}
-              title={isCurrentlyEditing ? 'Cancelar edición' : 'Editar fila'}
+              title={isCurrentlyEditing ? t('Cancel_edit') : t('edit_row')}
             >
               <EditIcon fontSize="small" />
             </IconButton>
 
             <IconButton 
               size="small" 
-              title="Seguimiento"
+              title={t('followups')}
               onClick={(event) => {
                 event.stopPropagation();
                 onClickTableAction(params.data, 'view_comment');
@@ -111,7 +114,7 @@ export default function ActionTable({
               <FollowUpIcon fontSize="small" />
             </IconButton>
 
-            <IconButton size="small" title="Completar acción">
+            <IconButton size="small" title={t('complete_action')}>
               <CheckCircleIcon fontSize="small" />
             </IconButton>
           </Box>
