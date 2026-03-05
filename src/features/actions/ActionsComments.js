@@ -11,11 +11,26 @@ import { fetchActionComments } from '../../stores/actions/fetchActionCommentsSli
 import { selectListOptions } from '../../stores/filterSlice';
 import { showSuccessMsg } from '../../utils/others';
 
-export default function ActionsComments({ actionDetails = {}, defaultTab = 'list' }) {
+export default function ActionsComments({ 
+  actionDetails = {}, 
+  defaultTab = 'list', 
+  onRefreshTable // Callback para actualizar tabla
+}) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [commentModel, setCommentModel] = useState({ comment: '', comment_id: null, progress: 0, status: 'open' });
+  
+  // Determinar los valores iniciales según el tab
+  const initialProgress = defaultTab === 'form' ? 100 : 0;
+  const initialStatus = defaultTab === 'form' ? 'closed' : 'open';
+  const initialComment = defaultTab === 'form' ? 'Cerrar acción: ' : '';
+  
+  const [commentModel, setCommentModel] = useState({ 
+    comment: initialComment, 
+    comment_id: null, 
+    progress: initialProgress, 
+    status: initialStatus 
+  });
 
   // Obtener la lista de estados desde el store de filtros
   const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
@@ -44,6 +59,11 @@ export default function ActionsComments({ actionDetails = {}, defaultTab = 'list
         showSuccessMsg(data?.payload?.messages);
         resetFormFields();
         setActiveTab('list');
+        
+        // Llamar al callback para actualizar la tabla
+        if (onRefreshTable) {
+          onRefreshTable();
+        }
       }
     });
   };
@@ -65,12 +85,19 @@ export default function ActionsComments({ actionDetails = {}, defaultTab = 'list
 
   const handleFormCancel = () => {
     setActiveTab('list');
-    setCommentModel({ comment: '', comment_id: null, progress: 0, status: 'open' });
+    // Resetear los valores según el tab original
+    const resetProgress = defaultTab === 'form' ? 100 : 0;
+    const resetStatus = defaultTab === 'form' ? 'closed' : 'open';
+    const resetComment = defaultTab === 'form' ? 'Cerrar acción: ' : '';
+    setCommentModel({ comment: resetComment, comment_id: null, progress: resetProgress, status: resetStatus });
   };
 
   const handleClickCommentEdit = (commentObj) => {
     const { comment, id: comment_id } = commentObj;
-    setCommentModel({ comment, comment_id });
+    // Al editar un comentario, mantener los valores según el contexto
+    const editProgress = defaultTab === 'form' ? 100 : 0;
+    const editStatus = defaultTab === 'form' ? 'closed' : 'open';
+    setCommentModel({ comment, comment_id, progress: editProgress, status: editStatus });
     setActiveTab('form');
   };
 
@@ -133,6 +160,29 @@ export default function ActionsComments({ actionDetails = {}, defaultTab = 'list
     }
   }, [activeTab, actionDetails]); // Modificar para que solo sea por el cambio del id
 
+  // Hacer focus en el textarea 
+  useEffect(() => {
+    if (activeTab === 'form') {
+      // Pequeño delay para asegurar que el componente esté renderizado
+      setTimeout(() => {
+        // Intentar encontrar el textarea por su ID o selector
+        const textarea = document.querySelector('textarea[name="comment"]') || 
+                       document.querySelector('textarea[placeholder*="comment"]') ||
+                       document.querySelector('textarea');
+        
+        if (textarea) {
+          textarea.focus();
+          // Mover cursor al final del texto
+          const length = textarea.value.length;
+          textarea.setSelectionRange(length, length);
+          console.log('[DEBUG] Focus aplicado al textarea');
+        } else {
+          console.log('[DEBUG] No se encontró el textarea');
+        }
+      }, 200);
+    }
+  }, [activeTab]);
+
   return (
     <Box
       sx={{
@@ -179,7 +229,7 @@ export default function ActionsComments({ actionDetails = {}, defaultTab = 'list
               { id: 'comment', 
                 type: 'textarea', 
                 label: t('comment'), 
-                required: true 
+                required: true
               },
               { id: 'filePicker', 
                 type: 'file', 

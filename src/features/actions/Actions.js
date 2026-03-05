@@ -41,6 +41,7 @@ export function Component() {
   const [selectedAction, setSelectedAction] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewType, setViewType] = useState(null);
+  const [initialCommentTab, setInitialCommentTab] = useState('list'); // Nuevo estado
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
 
   const filterData = useAppliedFilterModel('actions');
@@ -204,10 +205,11 @@ export function Component() {
     return group;
   };
 
-  const handleClickTableActionButton = (actionData, viewType) => {
-    setSelectedAction(actionData);
+  const handleClickTableActionButton = (actionData, viewType, initialTab = 'list') => {
     console.log('[DEBUG] Mostrando datos de acción', actionData);
+    setSelectedAction(actionData);
     setViewType(viewType);
+    setInitialCommentTab(initialTab); // Establecer el tab inicial
     setDrawerOpen(true);
   };
 
@@ -428,7 +430,11 @@ export function Component() {
           {/* Contenido del drawer */}
           <Suspense fallback={<div>{t('loading')}</div>}>
             {viewType === 'view_comment' ? (
-              <ActionsComments actionDetails={selectedAction} />
+              <ActionsComments 
+                actionDetails={selectedAction} 
+                defaultTab={initialCommentTab}
+                onRefreshTable={handleFetchActionList}
+              />
             ) : viewType === 'view_action' ? (
               <ActionsDetails
                 isFetching={actionDetailsLoading}

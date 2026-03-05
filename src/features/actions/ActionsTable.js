@@ -108,7 +108,7 @@ export default function ActionTable({
               title={t('followups')}
               onClick={(event) => {
                 event.stopPropagation();
-                onClickTableAction(params.data, 'view_comment');
+                onClickTableAction(params.data, 'view_comment', 'list');
               }}
             >
               <FollowUpIcon fontSize="small" />
@@ -117,7 +117,7 @@ export default function ActionTable({
             <IconButton size="small" title={t('complete_action')}
               onClick={(event) => {
                 event.stopPropagation();
-                onClickTableAction(params.data, 'view_comment');
+                onClickTableAction(params.data, 'view_comment', 'form');
               }}
             >
               <CheckCircleIcon fontSize="small" />
