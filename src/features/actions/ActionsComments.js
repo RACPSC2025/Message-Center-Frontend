@@ -8,13 +8,17 @@ import FormBuilder from '../../components/FormBuilder';
 import EmptyState from '../../components/EmptyState';
 import { editActionComments } from '../../stores/actions/editActionCommentsSlice';
 import { fetchActionComments } from '../../stores/actions/fetchActionCommentsSlice';
+import { selectListOptions } from '../../stores/filterSlice';
 import { showSuccessMsg } from '../../utils/others';
 
-export default function ActionsComments({ actionDetails = {} }) {
+export default function ActionsComments({ actionDetails = {}, defaultTab = 'list' }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('list');
-  const [commentModel, setCommentModel] = useState({ comment: '', comment_id: null });
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [commentModel, setCommentModel] = useState({ comment: '', comment_id: null, progress: 0, status: 'open' });
+
+  // Obtener la lista de estados desde el store de filtros
+  const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
 
 
   const { loading: actionCommentsLoading = false, data: actionCommentsData = {} } = useSelector(
@@ -45,29 +49,23 @@ export default function ActionsComments({ actionDetails = {} }) {
   };
 
   const handleFormSuccess = (updatedFormModel, resetFormFields) => {
-    const { action_table, action_id, module_id } = actionDetails;
-    const { comment, comment_id, filePicker = null } = updatedFormModel;
+    const { action_id, module_id } = actionDetails;
+    const { comment, filePicker = null, progress, status } = updatedFormModel;
 
-    const formData = new FormData();
-    formData.append('action_table', action_table);
-    formData.append('action_id', action_id);
-    formData.append('module_id', module_id);
-    formData.append('comment', comment);
-
-    if (comment_id) {
-      formData.append('comment_id', comment_id);
-    }
-
-    if (filePicker) {
-      formData.append('attachment', filePicker);
-    }
-
-    handleAddEditComments(formData, resetFormFields);
+    // Crear objeto directamente, sin FormData
+    const payload = {
+      action_id,
+      comment,
+      action_status: status,
+      percentage: progress
+    };
+    
+    handleAddEditComments(payload, resetFormFields);
   };
 
   const handleFormCancel = () => {
     setActiveTab('list');
-    setCommentModel({ comment: '', comment_id: null });
+    setCommentModel({ comment: '', comment_id: null, progress: 0, status: 'open' });
   };
 
   const handleClickCommentEdit = (commentObj) => {
@@ -165,7 +163,7 @@ export default function ActionsComments({ actionDetails = {} }) {
       />
       <Box
         sx={{
-          px: 2,
+          px: 4,
           pt: activeTab === 'form' ? 1 : 2,
           pb: 2,
           flexGrow: 1,
@@ -178,8 +176,33 @@ export default function ActionsComments({ actionDetails = {} }) {
         ) : (
           <FormBuilder
             inputFields={[
-              { id: 'comment', type: 'textarea', label: 'Comment', required: true },
-              { id: 'filePicker', type: 'file', label: 'Upload File', required: false }
+              { id: 'comment', 
+                type: 'textarea', 
+                label: t('comment'), 
+                required: true 
+              },
+              { id: 'filePicker', 
+                type: 'file', 
+                label: t('upload_file'), 
+                required: false },
+              {
+                id: "status",
+                label: t("status"),
+                type: "dropdown",
+                defaultValue: "open",
+                required: true,
+                options: actionStatusList.map(status => ({
+                  value: status.value,
+                  label: status.label
+                }))
+              },
+              {
+                id: "progress",
+                label: t("progress"),
+                type: "progress",
+                defaultValue: 0,
+                required: false
+              }
             ]}
             initialValues={commentModel}
             isLoading={editActionCommentsLoading}

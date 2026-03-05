@@ -114,7 +114,12 @@ export default function ActionTable({
               <FollowUpIcon fontSize="small" />
             </IconButton>
 
-            <IconButton size="small" title={t('complete_action')}>
+            <IconButton size="small" title={t('complete_action')}
+              onClick={(event) => {
+                event.stopPropagation();
+                onClickTableAction(params.data, 'view_comment');
+              }}
+            >
               <CheckCircleIcon fontSize="small" />
             </IconButton>
           </Box>

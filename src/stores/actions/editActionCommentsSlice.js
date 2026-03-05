@@ -7,14 +7,30 @@ const initialState = {
   error: null
 };
 
-export const editActionComments = createAsyncThunk(
-  'comments/add_edit_comment',
+export const editActionComments2 = createAsyncThunk(
+  'comments/add_edit_comment_original',
   async (data = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
         '/message_center_api/action_api/add_edit_comment',
         data
       );
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const editActionComments = createAsyncThunk(
+  'comments/add_edit_comment',
+  async (data = {}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        '/message_center_api/action_api/dashboard_actions_create_comment_amatia_express',
+        data
+      );
+      
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);
