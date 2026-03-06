@@ -7,16 +7,41 @@ const initialState = {
   error: null
 };
 
-export const submitActionForm = createAsyncThunk(
-  'actions/action_form_submit',
+// TODO: Utilizar más adelante, ha sido duplicada el endpoint muestra error 500
+/* Reportan que aparentemente se trata de un problema de 
+autenticación en el backend, así que de manera provisional se estará usando submitActionForm*/
+export const submitActionForm2 = createAsyncThunk(
+  'actions/action_form_submit_original',
   async (data = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
         '/message_center_api/action_api/action_form_submit',
         data
       );
+
       return response?.data;
     } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const submitActionForm = createAsyncThunk(
+  'actions/action_form_submit',
+  async (data = {}, { rejectWithValue }) => {
+    try {
+      console.log('[DEBUG] API submitActionForm data', data);
+      const response = await axiosInstance.post(
+        '/message_center_api/action_api/action_form_submit_amatia_express',
+        data
+      );
+
+      console.log('[DEBUG] API submitActionForm response', response);
+      console.log('[DEBUG] API submitActionForm datos response', response?.data);
+
+      return response?.data;
+    } catch (error) {
+      console.log('[DEBUG] API submitActionForm error', error);
       return rejectWithValue(error.message);
     }
   }

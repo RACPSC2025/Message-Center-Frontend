@@ -1,0 +1,117 @@
+{
+  "version": "1.0.0",
+  "description": "Configuración global de permisos y características de la plataforma",
+  "modules": {
+    "legal_matrix": {
+      "enabled": true,
+      "description": "Módulo de gestión de matriz legal",
+      "order": "0",
+      "permissions": {
+        "create_article": true,
+        "create_requirement": true
+      },
+      "features": {
+        "ia": {
+          "documents": true,
+          "images": true
+        }
+      },
+      "catalogs": {
+        "status": [
+          {
+            "code": "pending",
+            "numeric_code": 3,
+            "label": "Abierto",
+            "color": "#f59c1a"
+          },
+          {
+            "code": "completed",
+            "numeric_code": 1,
+            "label": "Cerrado",
+            "color": "#00acac"
+          },
+          {
+            "code": "delayed",
+            "numeric_code": 4,
+            "label": "Vencido",
+            "color": "#ff5b57"
+          },
+          {
+            "code": "permanent",
+            "numeric_code": 2,
+            "label": "Permanente",
+            "color": "#348fe2"
+          }
+        ]
+      }
+    },
+    "task": {
+      "enabled": true,
+      "description": "Módulo de gestión de tareas",
+      "order": "1",
+      "permissions": {
+        "create_comments": true,
+        "create_cycle": true,
+        "create_task": true
+      },
+      "features": {
+        "require_attachments_in_comments": true,
+        "require_comments_on_close_cycle": true
+      },
+      "catalogs": {
+        "status": [
+          {
+            "code": "pending",
+            "numeric_code": 3,
+            "label": "Abierto",
+            "color": "#ffc107"
+          },
+          {
+            "code": "completed",
+            "numeric_code": 1,
+            "label": "Cerrado",
+            "color": "#28a745"
+          },
+          {
+            "code": "delayed",
+            "numeric_code": 4,
+            "label": "Vencido",
+            "color": "#dc3545"
+          },
+          {
+            "code": "permanent",
+            "numeric_code": 2,
+            "label": "Permanente",
+            "color": "#348fe2"
+          }
+        ]
+      }
+    },
+    "findings": {
+      "enabled": true,
+      "description": "Es el módulo de hallazgos de Amatia Express",
+      "order": "3",
+      "permissions": {
+        "asing_responsibles": true,
+        "create_actions": true,
+        "save_changes": true,
+        "view_images": true
+      },
+      "features": {},
+      "catalogs": {}
+    },
+    "actions": {
+      "enabled": true,
+      "description": "Es el módulo de acciones para Amatia Express",
+      "order": "2",
+      "permissions": {
+        "chage_state": true,
+        "change_responsible": true,
+        "change_reviewer": true,
+        "create_action": true
+      },
+      "features": {},
+      "catalogs": {}
+    }
+  }
+}

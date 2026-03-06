@@ -68,6 +68,7 @@ import findingsStatsReducer from './stores/findings/fetchFindingsStatsSlice';
 import unreadMessagesReducer from './stores/messages/unreadMessagesSlice';
 import updateMessageFlagReducer from './stores/messages/updateMessageFlagSlice';
 import fetchModuleNavigationIdsReducer from './stores/messages/fetchModuleNavigationIdsSlice';
+import platformConfigReducer from './stores/platformConfigSlice';
 
 
 export const store = configureStore({
@@ -139,6 +140,7 @@ export const store = configureStore({
     unreadMessages: unreadMessagesReducer,
     updateMessageFlag: updateMessageFlagReducer,
     moduleNavigation: fetchModuleNavigationIdsReducer,
+    platformConfig: platformConfigReducer,
   }
 });
 
