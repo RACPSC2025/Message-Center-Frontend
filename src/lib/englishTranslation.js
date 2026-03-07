@@ -72,7 +72,7 @@ const en = {
   FileSizeLimitExceeded: 'File size should be less than',
   ActionCommentSaved: 'Comemnt Updated Successfully',
   Clear: 'Clear',
-  ClearFilters: 'Clear All Filters',
+  ClearFilters: 'Clear Filters',
   CreateAction: 'Create Action',
   StartDate: 'Start Date',
   issue_date: 'Issue date',

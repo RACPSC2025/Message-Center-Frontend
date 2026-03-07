@@ -1,3 +1,4 @@
+import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, IconButton, InputAdornment, Typography } from '@mui/material';
 import { isEmpty } from 'radash';
@@ -155,7 +156,7 @@ function BaseFilter({ component = '' }) {
           </Box>
         );
       })}
-      <Button variant="contained" sx={{ mt: 2, width: '100%' }} onClick={clearAllFilters}>
+      <Button variant="contained" sx={{ mt: 2, width: '100%', color: 'black !important' }} onClick={clearAllFilters} startIcon={<FilterListOffIcon sx={{ color: 'black !important' }} />}>
         {t('ClearFilters')}
       </Button>
     </>

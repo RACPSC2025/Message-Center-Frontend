@@ -78,7 +78,7 @@ const es = {
   FileSizeLimitExceeded: 'El tamaño del archivo debe ser menor que',
   ActionCommentSaved: 'Comentario actualizado con éxito',
   Clear: 'Limpiar',
-  ClearFilters: 'Limpiar todos los filtros',
+  ClearFilters: 'Limpiar filtros',
   CreateAction: 'Crear Acción',
   action_details: 'Detalles de la acción',
   action_comments: 'Comentarios de la acción',
