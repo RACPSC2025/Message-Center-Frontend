@@ -349,7 +349,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       'CÍCLICA': '#90a4ae'
     };
     const iconColor = isSelected ? '#a4a4a4' : (typeColors[type?.toUpperCase()] || '#90a4ae');
-    const iconStyle = { fontSize: 24, color: iconColor, transition: 'color 0.2s ease' };
+    const iconStyle = { fontSize: 16, color: iconColor, transition: 'color 0.2s ease' };
 
     switch (type?.toUpperCase()) {
       case 'ÚNICA': return <UniqueIcon sx={iconStyle} />;
@@ -565,16 +565,12 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                         minHeight: '36px'
                       }}
                     >
-                      {/* Ícono tipo de tarea */}
-                      <ListItemIcon sx={{ minWidth: isCollapsed ? 0 : 40, justifyContent: 'center' }}>
-                        {getTaskIcon(task.task_type, isSelected)}
-                      </ListItemIcon>
-
+                      
                       {/* Título de la tarea */}
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
                               <Typography 
                                 sx={{ 
                                   fontWeight: isSelected ? 600 : 500, 
@@ -590,6 +586,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                               >
                                 {task.task_title}
                               </Typography>
+
                               <Typography 
                                 sx={{ 
                                   fontSize: '0.8rem', 
@@ -603,15 +600,35 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                             </Box>
                           }
                           secondary={
-                            <Typography sx={{ 
-                              textTransform: 'uppercase', 
-                              fontSize: '0.7rem', 
-                              fontWeight: 500, 
-                              color: isSelected ? '#5b5b5b' : '#adadad', 
-                              mt: 0.1 
-                            }}>
-                              {task.task_type || 'CÍCLICA'}
-                            </Typography>
+                            <Chip 
+                              icon={getTaskIcon(task.task_type, isSelected)}
+                              label={task.task_type || 'CÍCLICA'}
+                              size="small"
+                              sx={{
+                                height: 'auto',
+                                mt: 0.5,
+                                mb: 0.5,
+                                mx: 0.5,
+                                p: 0.3,
+                                backgroundColor: isSelected ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.03)',
+                                border: '1px solid rgba(0,0,0,0.08)',
+                                borderRadius: '12px',
+                                '& .MuiChip-label': {
+                                  textTransform: 'uppercase',
+                                  fontSize: '0.6rem',
+                                  fontWeight: 500,
+                                  color: isSelected ? '#4a4a4a' : '#6a6a6a',
+                                  px: 0.5
+                                },
+                                '& .MuiChip-icon': {
+                                  marginLeft: 0.5,
+                                  marginRight: -0.2,
+                                  color: isSelected ? '#6a6a6a' : '#8a8a8a',
+                                  fontSize: '1.27em !important',
+                                  transform: 'translateY(-1px)'
+                                }
+                              }}
+                            />
                           }
                         />
                       )}
