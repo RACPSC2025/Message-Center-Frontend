@@ -80,10 +80,10 @@ const MODULE_CONFIG = [
     activeModuleKey: 'actions',
     chartComponent: StatusDoughnutChart,
     getStatusData: (processedData) => [
-      { key: STATUS.completed, value: processedData.completedActions },
-      { key: STATUS.delayed, value: processedData.delayedActions },
-      { key: STATUS.pending, value: processedData.pendingActions },
-      { key: STATUS.in_progress, value: processedData.inProgressActions }
+      { key: 'open', value: processedData.openActions },
+      { key: 'closed', value: processedData.closedActions },
+      { key: 'cancelled', value: processedData.cancelledActions },
+      { key: 'delayed', value: processedData.delayedActions }
     ]
   }
 ];

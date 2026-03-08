@@ -13,10 +13,11 @@ const MODULE_CONFIG = [
     label: 'Actions',
     reduxFetchAction: fetchActionCount,
     transformData: (data) => ({
-      completedActions: parseInt(data.closed),
-      inProgressActions: parseInt(data.open),
-      pendingActions: parseInt(data.cancelled),
-      delayedActions: parseInt(data.delayed)
+      openActions: parseInt(data.open),
+      closedActions: parseInt(data.closed),
+      cancelledActions: parseInt(data.cancelled),
+      delayedActions: parseInt(data.delayed),
+      totalActions: parseInt(data.total)
     })
   },
   {
@@ -58,11 +59,6 @@ const MODULE_CONFIG = [
 export const useModuleData = () => {
   const dispatch = useDispatch();
   const moduleData = useSelector((state) => state.moduleStatistics);
-
-  // Debug logging
-  // useEffect(() => {
-  //   console.log('Module Statistics State Updated:', moduleData);
-  // }, [moduleData]);
 
   // Function to fetch data for a specific module
   const fetchModuleData = (moduleConfig) => {

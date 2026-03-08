@@ -2,8 +2,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
-
-import { STATUS } from '../config/constants';
+import { useSelector } from 'react-redux';
+import { selectListOptions } from '../stores/filterSlice';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -13,17 +13,21 @@ function StatusDoughnutChart({
     cutout: '80%'
   }
 }) {
-  const STATUS_TO_COLOR_MAPPING = {
-    [STATUS.completed]: 'rgba(33,239,136, 1)',
-    [STATUS.delayed]: 'rgba(240, 98, 125, 1)',
-    [STATUS.pending]: 'rgba(214, 203, 111, 1)',
-    [STATUS.in_progress]: 'rgba(22, 185, 172, 1)'
-  };
   const { t } = useTranslation();
+  
+  // Obtener los colores desde el filterSlice
+  const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
+
+  const colorMap = actionStatusList.reduce((acc, status) => {
+    acc[status.value] = status.color_code;
+    return acc;
+  }, {});
 
   const chartDataValue = dataSet.map(({ value }) => value);
-  const chartDataStatusKeys = dataSet.map(({ key }) => key);
-  const chartDataColors = chartDataStatusKeys.map((key) => STATUS_TO_COLOR_MAPPING[key]);
+  const chartDataColors = dataSet.map(({ key }) => {
+    const color = colorMap[key] || '#ccc';
+    return color;
+  });
 
   const chartData = {
     datasets: [
@@ -39,10 +43,6 @@ function StatusDoughnutChart({
 
   
   const totalDataValue = chartDataValue.reduce((sum, value) => sum + value, 0);
-
-  //console.log('dataSet Actions: ', dataSet);
-
-  //return <Doughnut options={chartOptions} data={chartData} />;
 
   return (
     <Box>
