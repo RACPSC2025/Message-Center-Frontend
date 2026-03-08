@@ -171,7 +171,7 @@ const en = {
   permanent: 'Permanent',
   User: 'User',
   User_Unnamed: 'Unnamed user',
-  complete_action: 'Complete action',
+  close_action: 'Close action',
   switch_task: 'Switch Task',
   switch_task_description:
     'There may be unregistered changes. Are you sure you want to switch the task type?',
@@ -288,7 +288,7 @@ const en = {
   edit_responsible: 'Edit Responsible',
   update_progress: 'Update Progress',
   followup_activities: 'Follow-up Activities',
-  close_cycle: 'Close Cycle: ',
+  close_cycle: 'Close Cycle ',
   closing_cycle: 'Closing cycle',
   add_comment: 'Add comment',
   highlight: 'Highlight',

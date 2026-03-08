@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
+  Lock as CloseActionIcon,
   Close as CloseIcon,
   Comment as CommentIcon,
-  Edit as EditIcon,
-  VisibilityOutlined as FollowUpIcon
+  Forum as CommentForumIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
+import { alpha, useTheme } from '@mui/material/styles';
 import { debounce } from 'radash';
 import TableComponent from '../../components/TableComponent';
 import { formatDayjs } from '../../utils/dateTimeFunctions';
@@ -31,6 +32,8 @@ export default function ActionTable({
   const [editableActions, setEditableActions] = useState(actions);
   const [newActionDescription, setNewActionDescription] = useState('');
   const [administradores, setAdministradores] = useState([]);
+
+  const theme = useTheme();
   
   // Estado para controlar qué celda de status está siendo editada
   const [editingStatusCell, setEditingStatusCell] = useState(null);
@@ -105,22 +108,22 @@ export default function ActionTable({
 
             <IconButton 
               size="small" 
-              title={t('followups')}
+              title={t('comments')}
               onClick={(event) => {
                 event.stopPropagation();
                 onClickTableAction(params.data, 'view_comment', 'list');
               }}
             >
-              <FollowUpIcon fontSize="small" />
+              <CommentForumIcon fontSize="small" />
             </IconButton>
 
-            <IconButton size="small" title={t('complete_action')}
+            <IconButton size="small" title={t('close_action')}
               onClick={(event) => {
                 event.stopPropagation();
                 onClickTableAction(params.data, 'view_comment', 'form');
               }}
             >
-              <CheckCircleIcon fontSize="small" />
+              <CloseActionIcon fontSize="small" />
             </IconButton>
           </Box>
         );

@@ -1,8 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Box, Chip, IconButton, Tooltip } from '@mui/material';
+import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import { AttachFile as AttachFileIcon, CheckCircle as CheckCircleIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
-import { FaComment } from 'react-icons/fa';
+import {
+  AttachFile as AttachFileIcon, 
+  Forum as CommentIcon,
+  Lock as CloseCycleIcon, 
+} from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import TableComponent from '../../components/TableComponent';
 import FileUploadDialog from '../../components/FileUploadDialog';
@@ -120,22 +123,6 @@ const TaskCyclesTable = ({
     
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, height: '100%' }}>
-        {/* ✅ BOTÓN DE VER SEGUIMIENTO */}
-        <Tooltip title={t('followup_activities')}>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenFollowup && onOpenFollowup(task);
-            }}
-            sx={{
-              color: theme.palette.primary.main,
-              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
-            }}
-          >
-            <FollowUpIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
         
         {/* ✅ BOTÓN DE ADJUNTAR ARCHIVO */}
         <Tooltip title={t('attachment_file')}>
@@ -156,17 +143,26 @@ const TaskCyclesTable = ({
 
         {/* ✅ BOTÓN DE COMENTAR */}
         <Tooltip title={t('comments')}>
-          <IconButton
-            size="small"
-            sx={{
-              display: 'flex',
-              gap: 0.5,
-              color: '#838383',
-              '&:hover': { bgcolor: '#e3f2fd' },
-            }}
-          >
-            <FaComment style={{ fontSize: '1rem' }} /> {commentCount}
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenFollowup && onOpenFollowup(task);
+              }}
+              sx={{
+                display: 'flex',
+                color: theme.palette.primary.main,
+                minHeight: 'auto',
+                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) },
+              }}
+            >
+              <CommentIcon style={{ fontSize: '1.1rem' }} />
+            </IconButton>
+            <Typography variant="body2" color={theme.palette.primary.main} sx={{ fontWeight: 500, fontSize: '0.9rem', ml: -0.2 }}>
+              {commentCount}
+            </Typography>
+          </Box>
         </Tooltip>
 
         {/* ✅ BOTÓN DE CERRAR CICLO */}
@@ -182,7 +178,7 @@ const TaskCyclesTable = ({
               '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
             }}
           >
-            <CheckCircleIcon fontSize="small" />
+            <CloseCycleIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>
