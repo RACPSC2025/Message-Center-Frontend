@@ -18,6 +18,10 @@ import {
   ListItemAvatar,
   Avatar,
   ListItemIcon as MuiListItemIcon,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -29,8 +33,9 @@ import {
   DownloadDone,
   Loop,
   AssignmentReturned,
-  MoreVert,
+  MoreVert as MoreVertIcon,
   DeleteOutline,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -70,6 +75,44 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [initialCommentText, setInitialCommentText] = useState('');
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Menú de opciones de tarea
+  const [taskMenuAnchor, setTaskMenuAnchor] = useState(null);
+  const [selectedTaskForMenu, setSelectedTaskForMenu] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Manejadores del menú de opciones
+  const handleTaskMenuClick = (event, task) => {
+    event.stopPropagation();
+    setTaskMenuAnchor(event.currentTarget);
+    setSelectedTaskForMenu(task);
+  };
+
+  const handleTaskMenuClose = () => {
+    setTaskMenuAnchor(null);
+    setSelectedTaskForMenu(null);
+  };
+
+  const handleEditTask = () => {
+    console.log('Editar tarea:', selectedTaskForMenu);
+    handleTaskMenuClose();
+  };
+
+  const handleDeleteTask = () => {
+    setDeleteDialogOpen(true);
+    handleTaskMenuClose();
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Eliminar tarea:', selectedTaskForMenu);
+    setDeleteDialogOpen(false);
+    setSelectedTaskForMenu(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setSelectedTaskForMenu(null);
+  };
 
   // Paginación de tareas
   const [tasks, setTasks] = useState([]);
@@ -565,12 +608,12 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                         minHeight: '36px'
                       }}
                     >
-                      
+
                       {/* Título de la tarea */}
                       {!isCollapsed && (
                         <ListItemText
                           primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 1 }}>
                               <Typography 
                                 sx={{ 
                                   fontWeight: isSelected ? 600 : 500, 
@@ -591,12 +634,48 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                                 sx={{ 
                                   fontSize: '0.8rem', 
                                   fontWeight: 400, 
-                                  color: isSelected ? '#78909c' : '#90a4ae',
-                                  paddingRight: 1
+                                  color: isSelected ? '#78909c' : '#90a4ae'
                                 }}
                               >
                                 # {task.id}
                               </Typography>
+                              <Tooltip title={t('task_options')}>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleTaskMenuClick(e, task)}
+                                  sx={{
+                                    p: 0.5,
+                                    color: isSelected ? '#757575' : '#90a4ae',
+                                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) }
+                                  }}
+                                >
+                                  <MoreVertIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              {/* Menú de opciones de tarea */}
+                              <Menu
+                                anchorEl={taskMenuAnchor}
+                                open={Boolean(taskMenuAnchor)}
+                                onClose={handleTaskMenuClose}
+                                onClick={(e) => e.stopPropagation()}
+                                PaperProps={{
+                                  elevation: 1,
+                                  sx: {
+                                    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.07)',
+                                    border: '1px solid rgba(0, 0, 0, 0.04)',
+                                    borderRadius: '8px'
+                                  }
+                                }}
+                              >
+                                <MenuItem onClick={handleEditTask}>
+                                  <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                                  {t('edit_task')}
+                                </MenuItem>
+                                <MenuItem onClick={handleDeleteTask} sx={{ '&:hover': { color: '#d32f2f', bgcolor: 'rgba(211, 47, 47, 0.04)' } }}>
+                                  <DeleteOutline fontSize="small" sx={{ mr: 1, '&:hover': { color: '#d32f2f' } }} />
+                                  {t('delete_task')}
+                                </MenuItem>
+                              </Menu>
                             </Box>
                           }
                           secondary={
@@ -746,8 +825,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
               }}
             >
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                {/* ID de la tarea*/}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                {/* ID de la tarea */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                   <Typography
                     variant="body2"
                     sx={{
@@ -867,6 +946,51 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         }}
         onCommentAdded={handleRefreshLogtasks}
       />
+
+      {/* Diálogo de confirmación para eliminar tarea */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+            {t('confirm_delete_title')}
+          </Typography>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 1, pb: 2 }}>
+          <Typography variant="body1" sx={{ color: '#546e7a' }}>
+            {t('confirm_delete_message')}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={handleCancelDelete}
+            sx={{ 
+              textTransform: 'none',
+              color: '#757575',
+              '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+            }}
+          >
+            {t('cancel')}
+          </Button>
+          
+          <Button 
+            onClick={handleConfirmDelete}
+            variant="contained"
+            sx={{ 
+              textTransform: 'none',
+              bgcolor: '#d32f2f',
+              '&:hover': { bgcolor: '#b71c1c' }
+            }}
+          >
+            {t('delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
