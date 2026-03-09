@@ -9,14 +9,33 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 function StatusDoughnutChart({
   dataSet,
-  chartOptions = {
-    cutout: '80%'
-  }
+  chartOptions = {}
 }) {
   const { t } = useTranslation();
   
   // Obtener los colores desde el filterSlice
   const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
+
+  // Configuración por defecto con tooltip personalizado
+  const defaultOptions = {
+    cutout: '80%',
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const value = context.parsed;
+            const dataIndex = context.dataIndex;
+            const statusKey = dataSet[dataIndex]?.key;
+            const statusLabel = actionStatusList.find(status => status.value === statusKey)?.label || statusKey;
+            return `${value} ${statusLabel}`;
+          }
+        }
+      }
+    }
+  };
+
+  // Combinar opciones por defecto con opciones personalizadas
+  const finalChartOptions = { ...defaultOptions, ...chartOptions };
 
   const colorMap = actionStatusList.reduce((acc, status) => {
     acc[status.value] = status.color_code;
@@ -55,7 +74,7 @@ function StatusDoughnutChart({
           height: '100%'
         }}
       >
-        <Doughnut options={chartOptions} data={chartData} />
+        <Doughnut options={finalChartOptions} data={chartData} />
         <Typography color="white" variant="h5" sx={{ textAlign:'center', position: 'absolute', marginTop: '0.5rem' }}>
           {totalDataValue + ' ' + t('Actions')}
         </Typography>
