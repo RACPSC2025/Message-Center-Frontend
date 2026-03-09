@@ -3,8 +3,8 @@ RewriteEngine On
 
 # Set the base path to the subdirectory
 # IMPORTANTE: Este valor debe coincidir con "baseName" en config.json
-# RewriteBase /ambiental/message-center/
-RewriteBase /amatia/message-center/
+RewriteBase /ambiental/message-center/
+# RewriteBase /amatia/message-center/
 
 # Check if the requested file exists, if not, serve index.html
 RewriteCond %{REQUEST_FILENAME} !-f

@@ -1,4 +1,4 @@
-import { getApiUrl, getRuntimeConfig } from './runtimeConfig';
+import { getApiUrl, getBaseName as _getBaseName, getEnvironment, getVersion } from './runtimeConfig';
 
 // ============================================================================
 // LAYOUT CONSTANTS
@@ -11,49 +11,29 @@ export const backgroundColor = '#ffffff';
 export const maxFileSizeAllowedInBytes = 5 * 1024 * 1024;
 
 // ============================================================================
-// RUNTIME CONFIGURATION (Loaded from config.json)
+// RUNTIME CONFIGURATION (Loaded from config.json → window.__APP_CONFIG__)
 // ============================================================================
 
-/**
- * Get API URL from runtime configuration
- * Falls back to environment variable if config not loaded
- */
+/** API URL from window.__APP_CONFIG__.apiUrl */
 export const getAPIUrl = () => {
-  try {
-    return getApiUrl();
-  } catch (error) {
-    // Fallback to .env if runtime config not loaded yet
-    return process.env.REACT_APP_API_URL || 'https://promigasdev.sofacto.info/amatia/';
-  }
+  return window.__APP_CONFIG__?.apiUrl || process.env.REACT_APP_API_URL;
 };
 
-/**
- * Get base name from runtime configuration
- * Falls back to environment variable if config not loaded
- */
+/** Base name from window.__APP_CONFIG__.baseName */
 export const getBaseName = () => {
-  try {
-    return getRuntimeConfig().baseName;
-  } catch (error) {
-    // Fallback to .env if runtime config not loaded yet
-    return process.env.REACT_APP_BASE_NAME || '/message-center';
-  }
+  return window.__APP_CONFIG__?.baseName || process.env.REACT_APP_BASE_NAME || '/message-center';
 };
 
-/**
- * Get environment from runtime configuration
- */
+/** Environment from window.__APP_CONFIG__.environment */
 export const getEnvironmentName = () => {
-  try {
-    return getRuntimeConfig().environment;
-  } catch (error) {
-    return process.env.NODE_ENV || 'development';
-  }
+  return window.__APP_CONFIG__?.environment || process.env.NODE_ENV || 'development';
 };
 
-// Legacy export for backwards compatibility
-// Use getAPIUrl() function instead for runtime config
-export const API_URL = process.env.REACT_APP_API_URL || 'https://promigasdev.sofacto.info/amatia/';
+/** Backwards-compatible static-like API_URL that reads from runtime config */
+export const API_URL = (() => window.__APP_CONFIG__?.apiUrl || process.env.REACT_APP_API_URL)();
+
+// Re-export for modules that import from constants
+export { getVersion };
 
 // ============================================================================
 // AUTHENTICATION TOKENS
