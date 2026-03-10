@@ -57,7 +57,8 @@ const dropdownReviewerList = {
   storageType: 'global',
   storageKey: 'listOfUsers',
   group_by_key: 'filter_by',
-  group_by_label: 'FilterBy'
+  group_by_label: 'FilterBy',
+  minSearchLength: 3
 };
 
 export const filterConfigs = {
@@ -237,7 +238,6 @@ export const filterConfigs = {
       ...dropdownReviewerList,
       labelKey: 'Reviewer'
     }
-    //dateRangeField,
   ],
   /*
   ,

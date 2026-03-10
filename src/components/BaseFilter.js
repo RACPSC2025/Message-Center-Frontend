@@ -179,7 +179,8 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
     storageKey = null,
     api_details = {},
     modifierFn,
-    level
+    level,
+    minSearchLength = 0
   } = rest;
 
   const updatedStyle = { ...fieldStyle, mb: gutterBottom ? 2 : 0 };
@@ -430,6 +431,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
           field={{ id, options: updatedOptions, label: t(label) }}
           value={value}
           onChange={(_, value) => handleSetFilterItemValue(value)}
+          minSearchLength={minSearchLength}
           sx={updatedStyle}
         />
       );

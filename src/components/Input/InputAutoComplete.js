@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../lib/axios';
 import BaseFormControl from '../BaseFormControl';
 
-const InputAutoComplete = ({ field, value, onChange, error, size = 'small', ...rest }) => {
+const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minSearchLength = 0, ...rest }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [inputValue, setInputValue] = useState('');
   const prevApiDetailsRef = useRef();
 
   const fieldID = `${field.id}-select`;
@@ -65,6 +66,11 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', ...r
     }
     return value;
   }, [value, options, isOptionItemTypeObject]);
+
+  const filteredOptions = useMemo(() => {
+    if (inputValue.length < minSearchLength) return [];
+    return options;
+  }, [options, inputValue, minSearchLength]);
 
   useEffect(() => {
     let active = true;
@@ -126,15 +132,23 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', ...r
         size={size}
         open={open}
         onOpen={() => {
-          setOpen(true);
+          if (inputValue.length >= minSearchLength) {
+            setOpen(true);
+          }
         }}
         onClose={() => {
           setOpen(false);
         }}
+        onInputChange={(event, newInputValue) => {
+          setInputValue(newInputValue);
+          if (newInputValue.length >= minSearchLength && !open) {
+            setOpen(true);
+          }
+        }}
         getOptionKey={(option) => option.value}
         value={internalValue}
         onChange={handleChangeSelection}
-        options={options}
+        options={filteredOptions}
         getOptionLabel={(option) => t(option.label)} // Aquí se traduce el label
         loading={loading}
         renderInput={(params) => (
