@@ -4,11 +4,13 @@ import { alpha, useTheme } from '@mui/material/styles';
 import {
   AttachFile as AttachFileIcon, 
   Forum as CommentIcon,
+  Person as ResponsableIcon,
   Lock as CloseCycleIcon, 
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import TableComponent from '../../components/TableComponent';
 import FileUploadDialog from '../../components/FileUploadDialog';
+import EditResponsablesDrawer from '../MessageCenterEventsList/EditResponsablesDrawer';
 
 const TaskCyclesTable = ({ 
   logtasks = [], 
@@ -24,6 +26,10 @@ const TaskCyclesTable = ({
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedTaskForUpload, setSelectedTaskForUpload] = useState(null);
+
+  // Drawe de responsables y revisores
+  const [responsablesDrawerOpen, setResponsablesDrawerOpen] = useState(false);
+  const [selectedTaskForResponsables, setSelectedTaskForResponsables] = useState(null);
 
   // ✅ FORMATEAR FECHA PARA ORDENAMIENTO (YYYY-MM-DD)
   const parseDate = (dateString) => {
@@ -70,6 +76,18 @@ const TaskCyclesTable = ({
     }
     setUploadDialogOpen(false);
     setSelectedTaskForUpload(null);
+  };
+
+  // ✅ MANEJAR CLIC EN RESPONSABLES
+  const handleResponsiblesClick = (task) => {
+    setSelectedTaskForResponsables(task);
+    setResponsablesDrawerOpen(true);
+  };
+
+  // ✅ MANEJAR CIERRE DE DRAWER DE RESPONSABLES
+  const handleCloseResponsablesDrawer = () => {
+    setResponsablesDrawerOpen(false);
+    setSelectedTaskForResponsables(null);
   };
 
   // ✅ CELL RENDERER PARA FECHAS
@@ -163,6 +181,23 @@ const TaskCyclesTable = ({
               {commentCount}
             </Typography>
           </Box>
+        </Tooltip>
+
+        {/* ✅ BOTÓN DE REVISORES Y RESPONSABLES */}
+        <Tooltip title={t('responsibles')}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleResponsiblesClick(task);
+            }}
+            sx={{
+              color: theme.palette.primary.main,
+              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) }
+            }}
+          >
+            <ResponsableIcon fontSize="small" />
+          </IconButton>
         </Tooltip>
 
         {/* ✅ BOTÓN DE CERRAR CICLO */}
@@ -385,6 +420,16 @@ const TaskCyclesTable = ({
           acceptedTypes=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
           maxFileSize={10 * 1024 * 1024} // 10MB
           maxFiles={5}
+        />
+      )}
+
+      {/* ✅ DRAWER DE RESPONSABLES */}
+      {selectedTaskForResponsables && (
+        <EditResponsablesDrawer
+          openEditResponsablesDrawer={responsablesDrawerOpen}
+          onCloseEditResponsablesDrawer={handleCloseResponsablesDrawer}
+          taskDetails={selectedTaskForResponsables}
+          formModel={{ logtask_id: selectedTaskForResponsables.id }}
         />
       )}
     </>

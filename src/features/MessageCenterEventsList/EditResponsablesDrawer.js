@@ -274,7 +274,11 @@ function EditResponsablesDrawer({
 
         <Box sx={{ height: 'calc(100vh - 112px)', overflow: 'auto' }}>
           <TabPanel value={tabValue} index={0}>
-            <Box>
+            <Box
+              sx={{
+                padding: '10px 15px 10px 15px'
+              }}
+            >
               <Typography
                 variant="h6"
                 sx={{
@@ -286,7 +290,25 @@ function EditResponsablesDrawer({
               >
                 {t('implementers')}
               </Typography>
-              <TableComponent rowData={responsables} columnDefs={tableColumns} pagination={false} />
+              {responsables.length === 0 ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    py: 2,
+                    textAlign: 'center',
+                    border: '1px dashed rgba(0, 0, 0, 0.3)',
+                    borderRadius: 1,
+                    bgcolor: 'rgba(0, 0, 0, 0.02)'
+                  }}
+                >
+                  {t('emptyResponsible')}
+                </Typography>
+              ) : (
+                <TableComponent rowData={responsables} columnDefs={tableColumns} pagination={false} />
+              )}
               {/* <DataGrid
                 rows={responsables}
                 columns={tableColumns}
@@ -329,7 +351,25 @@ function EditResponsablesDrawer({
               >
                 {t('review_officers')}
               </Typography>
-              <TableComponent rowData={reviewers} columnDefs={tableColumns} pagination={false} />
+              {reviewers.length === 0 ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    py: 2,
+                    textAlign: 'center',
+                    border: '1px dashed rgba(0, 0, 0, 0.3)',
+                    borderRadius: 1,
+                    bgcolor: 'rgba(0, 0, 0, 0.02)'
+                  }}
+                >
+                  {t('emptyReviewers')}
+                </Typography>
+              ) : (
+                <TableComponent rowData={reviewers} columnDefs={tableColumns} pagination={false} />
+              )}
               {/* <DataGrid
                 rows={reviewers}
                 columns={tableColumns}
@@ -363,7 +403,11 @@ function EditResponsablesDrawer({
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Box>
+            <Box
+              sx={{
+                padding: '10px 15px 10px 15px'
+              }}
+            >
               {errorEditResponsable && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                   {t('please_complete_all_required_fields')}

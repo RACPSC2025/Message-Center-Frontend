@@ -125,6 +125,8 @@ const en = {
   emptyActionCommentDesc: 'empty Action Comment Desc',
   emptyEventTitle: 'No tasks to show',
   emptyEventDesc: '',
+  emptyReviewers: 'No reviewers assigned',
+  emptyResponsible: 'No responsible assigned',
   loading: 'Loading...',
   loading_ai: 'Loading AI...',
   noFormFields: 'No form fields available',

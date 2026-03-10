@@ -132,6 +132,8 @@ const es = {
   emptyActionCommentDesc: 'Acción Comentario Vacío - Descripción',
   emptyEventTitle: 'No hay tareas para mostrar',
   emptyEventDesc: '',
+  emptyReviewers: 'No hay revisores asignados',
+  emptyResponsible: 'No hay responsables asignados',
   loading: 'Cargando...',
   noFormFields: 'No hay campos de formulario disponibles',
   noEventSelected: 'No hay un evento seleccionado',
