@@ -1,6 +1,6 @@
 {
-  "apiUrl": "https://promigasdev.sofacto.info/amatia/",
-  "baseName": "/amatia/message-center",
+  "apiUrl": "https://ocensacentral.dev.sofacto.info/ambiental/",
+  "baseName": "/ambiental/message-center",
   "environment": "development",
   "version": "0.3.6"
 }

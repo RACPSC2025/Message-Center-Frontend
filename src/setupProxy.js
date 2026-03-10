@@ -3,7 +3,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 module.exports = function (app) {
   // Lee la URL del API desde variables de entorno
   // Fallback a la URL de desarrollo por defecto
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://promigasdev.sofacto.info/amatia/';
+  const apiUrl = process.env.REACT_APP_API_URL || 'https://ocensacentral.dev.sofacto.info/ambiental/';
   
   console.log('🔄 Configurando proxy de desarrollo hacia:', apiUrl);
   

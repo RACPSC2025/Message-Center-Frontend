@@ -1,51 +1,66 @@
 // Runtime configuration loader
-let runtimeConfig = null;
+// Expected config.json structure:
+// { "apiUrl": string, "baseName": string, "environment": string, "version": string }
+//
+// Config is stored in window.__APP_CONFIG__ for synchronous access from any module.
+
+const REQUIRED_FIELDS = ['apiUrl', 'baseName', 'environment', 'version'];
+
+const DEFAULT_CONFIG = {
+  apiUrl: process.env.REACT_APP_API_URL || '',
+  baseName: process.env.REACT_APP_BASE_NAME || '/message-center',
+  environment: process.env.NODE_ENV || 'development',
+  version: process.env.REACT_APP_VERSION || '0.3.6'
+};
 
 /**
- * Load configuration from public/config.json
+ * Validate that config has all required fields
+ */
+const validateConfig = (config) => {
+  const missing = REQUIRED_FIELDS.filter((field) => config[field] == null);
+  if (missing.length > 0) {
+    console.warn(`⚠️ Config missing fields: ${missing.join(', ')}. Using defaults for those.`);
+    return { ...DEFAULT_CONFIG, ...config };
+  }
+  return config;
+};
+
+/**
+ * Load configuration from public/config.json and store in window.__APP_CONFIG__
  * This allows changing config without rebuilding the app
  */
 export const loadRuntimeConfig = async () => {
-  if (runtimeConfig) {
-    return runtimeConfig;
+  if (window.__APP_CONFIG__) {
+    return window.__APP_CONFIG__;
   }
 
   try {
-    // Fetch config.json from public folder
-    // Add timestamp to prevent caching
     const response = await fetch(`${process.env.PUBLIC_URL}/config.json?t=${Date.now()}`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to load config: ${response.status}`);
     }
-    
-    runtimeConfig = await response.json();
-    console.log('✅ Runtime configuration loaded:', runtimeConfig);
-    return runtimeConfig;
+
+    const config = await response.json();
+    window.__APP_CONFIG__ = Object.freeze(validateConfig(config));
+    console.log('✅ Runtime configuration loaded:', window.__APP_CONFIG__);
+    return window.__APP_CONFIG__;
   } catch (error) {
     console.error('❌ Error loading runtime config, using fallback:', error);
-    
-    // Fallback to .env variables if config.json fails
-    runtimeConfig = {
-      apiUrl: process.env.REACT_APP_API_URL || 'https://promigasdev.sofacto.info/amatia/',
-      baseName: process.env.REACT_APP_BASE_NAME || '/message-center',
-      environment: process.env.NODE_ENV || 'development',
-      version: process.env.REACT_APP_VERSION || '0.3.6'
-    };
-    
-    return runtimeConfig;
+    window.__APP_CONFIG__ = Object.freeze({ ...DEFAULT_CONFIG });
+    return window.__APP_CONFIG__;
   }
 };
 
 /**
- * Get current runtime configuration
- * Must call loadRuntimeConfig() first
+ * Get current runtime configuration (synchronous)
+ * Reads from window.__APP_CONFIG__ — available after loadRuntimeConfig() resolves
  */
 export const getRuntimeConfig = () => {
-  if (!runtimeConfig) {
+  if (!window.__APP_CONFIG__) {
     throw new Error('Runtime config not loaded. Call loadRuntimeConfig() first.');
   }
-  return runtimeConfig;
+  return window.__APP_CONFIG__;
 };
 
 /**
@@ -67,4 +82,11 @@ export const getBaseName = () => {
  */
 export const getEnvironment = () => {
   return getRuntimeConfig().environment;
+};
+
+/**
+ * Get app version from runtime config
+ */
+export const getVersion = () => {
+  return getRuntimeConfig().version;
 };
