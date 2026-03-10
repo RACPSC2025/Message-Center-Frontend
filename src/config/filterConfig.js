@@ -46,7 +46,8 @@ const dropdownExecutorList = {
   storageType: 'global',
   storageKey: 'listOfUsers',
   group_by_key: 'filter_by',
-  group_by_label: 'FilterBy'
+  group_by_label: 'FilterBy',
+  minSearchLength: 3
 };
 
 const dropdownReviewerList = {
@@ -426,7 +427,7 @@ export const filterConfigs = {
     },
     {
       // TODO: Both dropdowns are the same. I need to individually fetch the options for each dropdown.
-      ...dropdownReviewerList,
+      ...dropdownExecutorList,
       labelKey: 'Executor'
     },
     {

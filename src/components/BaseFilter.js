@@ -432,6 +432,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
           value={value}
           onChange={(_, value) => handleSetFilterItemValue(value)}
           minSearchLength={minSearchLength}
+          useCustomDropdown={true}
           sx={updatedStyle}
         />
       );

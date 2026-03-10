@@ -1,16 +1,31 @@
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Autocomplete, CircularProgress, TextField, Paper, MenuItem, List, ListItem, IconButton } from '@mui/material';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import Clear from '@mui/icons-material/Clear';
+
 import { isEmpty, isEqual, isObject, isString } from 'radash';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../lib/axios';
 import BaseFormControl from '../BaseFormControl';
 
-const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minSearchLength = 0, ...rest }) => {
+const InputAutoComplete = ({ 
+  field, 
+  value, 
+  onChange, 
+  error, 
+  size = 'small', 
+  minSearchLength = 0, 
+  useCustomDropdown = false, 
+  ...rest 
+}) => {
+  
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [justSelected, setJustSelected] = useState(false);
   const prevApiDetailsRef = useRef();
 
   const fieldID = `${field.id}-select`;
@@ -46,6 +61,48 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minS
     }
   };
 
+  const handleCustomInputChange = (event) => {
+    const newInputValue = event.target.value;
+    setInputValue(newInputValue);
+    
+    if (newInputValue.length >= minSearchLength) {
+      setShowDropdown(true);
+    } else if (minSearchLength === 0) {
+      setShowDropdown(true); // Siempre mostrar dropdown cuando minSearchLength es 0
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  const handleClear = () => {
+    setInputValue('');
+    onChange(field.id, '');
+    setShowDropdown(false);
+  };
+
+  const handleDropdownToggle = () => {
+    if (minSearchLength === 0) {
+      setShowDropdown(!showDropdown);
+    }
+  };
+
+  const handleCustomSelect = (option) => {
+    const selectedValue = option.value || option;
+    onChange(field.id, selectedValue);
+    setInputValue(t(option.label || option));
+    setShowDropdown(false);
+  };
+
+  const handleInputFocus = () => {
+    if (inputValue.length >= minSearchLength || minSearchLength === 0) {
+      setShowDropdown(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    setTimeout(() => setShowDropdown(false), 200);
+  };
+
   const handleChangeSelection = (e, newValue) => {
     if (Object.prototype.isPrototypeOf(newValue)) onChange(field.id, newValue.value);
     else onChange(field.id, newValue);
@@ -68,13 +125,21 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minS
   }, [value, options, isOptionItemTypeObject]);
 
   const filteredOptions = useMemo(() => {
-    if (inputValue.length < minSearchLength) return [];
+    if (minSearchLength > 0 && inputValue.length < minSearchLength) return [];
+    
+    if (minSearchLength === 0 || inputValue.length >= minSearchLength) {
+      return options.filter(option => {
+        const label = t(option.label || option).toLowerCase();
+        return label.includes(inputValue.toLowerCase());
+      });
+    }
+    
     return options;
   }, [options, inputValue, minSearchLength]);
 
   useEffect(() => {
     let active = true;
-    const shouldFetch = (open || value) && options.length === 0;
+    const shouldFetch = ((useCustomDropdown && showDropdown) || (!useCustomDropdown && (open || value))) && options.length === 0;
 
     if (!shouldFetch) return undefined;
 
@@ -93,7 +158,7 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minS
     return () => {
       active = false;
     };
-  }, [open, value, options]);
+  }, [open, showDropdown, value, options, useCustomDropdown]);
 
   useEffect(() => {
     const currentApiDetails = field.api_details;
@@ -124,6 +189,81 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minS
     return fieldOptions.length > 0 || checkAPICallRequirements(api_details);
   }, [field]);
 
+  // Renderizar dropdown personalizado si useCustomDropdown es true
+  if (useCustomDropdown) {
+    return (
+      <BaseFormControl field={field} value={value} error={error} {...rest}>
+        <div style={{ position: 'relative' }}>
+          <TextField
+            id={fieldID}
+            disabled={!isEnabled}
+            size={size}
+            value={inputValue}
+            onChange={handleCustomInputChange}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            label={t(field.label)}
+            InputProps={{
+              endAdornment: (
+                <Fragment>
+                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                  {inputValue && (
+                    <IconButton
+                      size="small"
+                      onClick={handleClear}
+                      disabled={!isEnabled}
+                      style={{ marginLeft: 0, marginRight: 0 }}
+                    >
+                      <Clear fontSize="small" />
+                    </IconButton>
+                  )}
+                  {minSearchLength === 0 && !inputValue && (
+                    <IconButton
+                      size="small"
+                      onClick={handleDropdownToggle}
+                      disabled={!isEnabled}
+                      style={{ marginRight: 0 }}
+                    >
+                      <ArrowDropDown fontSize="small" />
+                    </IconButton>
+                  )}
+                </Fragment>
+              )
+            }}
+            fullWidth
+          />
+          {showDropdown && filteredOptions.length > 0 && (
+            <Paper
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 2,
+                maxHeight: 200,
+                overflow: 'auto'
+              }}
+            >
+              <List dense>
+                {filteredOptions.map((option, index) => (
+                  <ListItem
+                    key={option.value || index}
+                    button
+                    onClick={() => handleCustomSelect(option)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {t(option.label || option)}
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          )}
+        </div>
+      </BaseFormControl>
+    );
+  }
+
+  // Renderizar Autocomplete original para otros casos
   return (
     <BaseFormControl field={field} value={value} error={error} {...rest}>
       <Autocomplete
@@ -132,7 +272,7 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minS
         size={size}
         open={open}
         onOpen={() => {
-          if (inputValue.length >= minSearchLength) {
+          if (inputValue.length >= minSearchLength && !justSelected) {
             setOpen(true);
           }
         }}
@@ -141,13 +281,18 @@ const InputAutoComplete = ({ field, value, onChange, error, size = 'small', minS
         }}
         onInputChange={(event, newInputValue) => {
           setInputValue(newInputValue);
-          if (newInputValue.length >= minSearchLength && !open) {
+          if (newInputValue.length >= minSearchLength && !open && !justSelected) {
             setOpen(true);
           }
+          setJustSelected(false);
         }}
         getOptionKey={(option) => option.value}
         value={internalValue}
-        onChange={handleChangeSelection}
+        onChange={(e, newValue) => {
+          handleChangeSelection(e, newValue);
+          setJustSelected(true);
+          setOpen(false);
+        }}
         options={filteredOptions}
         getOptionLabel={(option) => t(option.label)} // Aquí se traduce el label
         loading={loading}
