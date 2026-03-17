@@ -26,6 +26,7 @@ const InputAutoComplete = ({
   const [inputValue, setInputValue] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [justSelected, setJustSelected] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
   const prevApiDetailsRef = useRef();
 
   const fieldID = `${field.id}-select`;
@@ -183,6 +184,34 @@ const InputAutoComplete = ({
       setOptions([]);
     }
   }, [open]);
+
+  // Efecto para sincronizar inputValue cuando la prop value cambia (especialmente cuando se limpian filtros)
+  useEffect(() => {
+    // Evitar ejecutar en el primer render para no interferir con la carga inicial
+    if (isInitialRender) {
+      setIsInitialRender(false);
+      return;
+    }
+
+    // Solo sincronizar si el dropdown NO está abierto para evitar cerrarlo inesperadamente
+    if (showDropdown) return;
+
+    if (value === null || value === undefined || value === '') {
+      setInputValue('');
+      setShowDropdown(false);
+    } else if (isString(value)) {
+      // Si el value es un string, buscar en options y actualizar inputValue
+      const selectedOption = options.find((opt) => opt.value === value);
+      if (selectedOption) {
+        setInputValue(t(selectedOption.label));
+      } else {
+        setInputValue(value);
+      }
+    } else if (isObject(value) && value.label) {
+      // Si el value es un objeto con label
+      setInputValue(t(value.label));
+    }
+  }, [value, options, isString, isObject, t, isInitialRender, showDropdown]);
 
   const isEnabled = useMemo(() => {
     const { api_details = {}, options: fieldOptions } = field;

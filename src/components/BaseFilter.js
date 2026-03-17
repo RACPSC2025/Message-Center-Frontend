@@ -375,21 +375,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
     return value;
   };
 
-  let value;
-  if (type === 'date-range') {
-    const [startDateKey, endDateKey] = id.split('#');
-    const dateRanges = [
-      useFilterItemValue(module, startDateKey),
-      useFilterItemValue(module, endDateKey)
-    ];
-    if (dateRanges.every((datePart) => !datePart)) {
-      value = getDefaultFilterItemValue(type);
-    } else {
-      value = dateRanges;
-    }
-  } else {
-    value = useFilterItemValue(module, id) || getDefaultFilterItemValue(type);
-  }
+  const value = useFilterItemValue(module, id) || getDefaultFilterItemValue(type);
 
   switch (type) {
     case 'text-search-field':
