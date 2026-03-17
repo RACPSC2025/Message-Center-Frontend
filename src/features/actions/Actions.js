@@ -1,4 +1,4 @@
-import { Add, Close } from '@mui/icons-material';
+import { Add, Close, CheckCircle } from '@mui/icons-material';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { AppBar, Box, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
 import { clone, isEmpty, isObject } from 'radash';
@@ -52,6 +52,10 @@ export function Component() {
     (state) => state?.actionData?.actionList || {}
   );
   const actionList = actionListData?.data || [];
+  const { loading: actionCountLoading = false, data: actionCountData = {} } = useSelector(
+    (state) => state?.actionData?.actionCount || {}
+  );
+  const actionCount = actionCountData?.data?.total || actionList.length;
 
   const actionStatusList = useListOptions('actions', 'filter_status');
   const actionStatus = actionStatusList.reduce((acc, cur) => {
@@ -383,7 +387,24 @@ export function Component() {
           bgcolor: 'background.paper'
         }}
       >
-        <Box sx={{ flexGrow: 1, minHeight: 0, pt: 2 }}>
+        
+        <Box sx={{ pt: 2, px: 4, display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CheckCircle sx={{ fontSize: '1.2rem', color: 'text.secondary' }} />
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                fontWeight: 600,
+                fontSize: '1rem',
+                fontStyle: 'italic'
+              }}
+            >
+              {actionCountLoading ? 'Cargando...' : `${actionCount} acciones encontradas`}
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ flexGrow: 1, minHeight: 0, px: 1 }}>
           <ActionTable
             actions={actionList}
             actionStatus={actionStatus}

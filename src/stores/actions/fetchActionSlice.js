@@ -62,7 +62,24 @@ const fetchActionSlice = createSlice({
     });
     builder.addCase(fetchActionList.fulfilled, (state, action) => {
       state.actionList.loading = false;
-      state.actionList.data = action.payload;
+      // Convertir action_id a numérico en los datos recibidos
+      const processedData = action.payload;
+      if (processedData?.data && Array.isArray(processedData.data)) {
+        processedData.data = processedData.data.map(item => {
+          const convertedId = item.action_id ? parseInt(item.action_id, 10) : item.action_id;
+          console.log('[DEBUG] action_id conversion:', { 
+            original: item.action_id, 
+            converted: convertedId, 
+            type: typeof convertedId 
+          });
+          return {
+            ...item,
+            action_id: convertedId
+          };
+        });
+        console.log('[DEBUG] Lista completa de acciones con action_id convertidos:', processedData.data);
+      }
+      state.actionList.data = processedData;
       state.actionList.error = null;
     });
 
