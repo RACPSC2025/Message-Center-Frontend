@@ -11,6 +11,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 function StatusDoughnutChart({
   dataSet,
+  showInfoOnHover = false,
   chartOptions = {
     cutout: '80%'
   }
@@ -71,7 +72,18 @@ function StatusDoughnutChart({
     ]
   };
 
-  return <Doughnut options={chartOptions} data={chartData} />;
+  const mergedChartOptions = {
+    ...chartOptions,
+    plugins: {
+      ...(chartOptions?.plugins ?? {}),
+      tooltip: {
+        ...(chartOptions?.plugins?.tooltip ?? {}),
+        enabled: showInfoOnHover
+      }
+    }
+  };
+
+  return <Doughnut options={mergedChartOptions} data={chartData} />;
 }
 
 export default StatusDoughnutChart;

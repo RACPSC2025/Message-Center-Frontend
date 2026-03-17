@@ -106,6 +106,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
 
   const [listActionStatus, setListActionStatus] = useState({});
   const [loadingActionStatus, setLoadingActionStatus] = useState(true);
+  const [showChartInfoOnHover] = useState(false);
 
   // Fetch data for all modules on component mount
   useEffect(() => {
@@ -276,6 +277,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
               isActive={activeModule === module.routeKey}
               sx={{ px: 0.5, mt: index > 0 ? 1 : 0 }}
               dataSet={module.statusData}
+              showChartInfoOnHover={showChartInfoOnHover}
               onClick={() => navigate(`/view/${module.routeKey}`)}
             />
           ))}
