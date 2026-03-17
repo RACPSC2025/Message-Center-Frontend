@@ -20,7 +20,7 @@ export const fetchActionList = createAsyncThunk(
   async (data = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/message_center_api/action_api/dashboard_actions',
+        '/message_center_api/action_api/dashboard_actions_amatia_express',
         data
       );
       return response?.data;
@@ -67,17 +67,11 @@ const fetchActionSlice = createSlice({
       if (processedData?.data && Array.isArray(processedData.data)) {
         processedData.data = processedData.data.map(item => {
           const convertedId = item.action_id ? parseInt(item.action_id, 10) : item.action_id;
-          console.log('[DEBUG] action_id conversion:', { 
-            original: item.action_id, 
-            converted: convertedId, 
-            type: typeof convertedId 
-          });
           return {
             ...item,
             action_id: convertedId
           };
         });
-        console.log('[DEBUG] Lista completa de acciones con action_id convertidos:', processedData.data);
       }
       state.actionList.data = processedData;
       state.actionList.error = null;
