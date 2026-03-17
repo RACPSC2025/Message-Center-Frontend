@@ -5,6 +5,7 @@ import { Box, IconButton, SvgIcon, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { ReactComponent as AmatiaIcon } from '../assets/icons/amatia-v-logo.svg';
 import { headerHeight, navbarCollapsedWidth, navbarWidth, STATUS } from '../config/constants';
 import { useModuleData } from '../hooks/useModuleData';
@@ -49,6 +50,7 @@ const useFilterItemValue = (module, fieldName) =>
 const MODULE_CONFIG = [
   {
     id: 'legals',
+    configKey: 'legal_matrix',
     label: 'Legals',
     icon: Apps,
     activeModuleKey: 'LegalMatriz',
@@ -62,6 +64,7 @@ const MODULE_CONFIG = [
   },
   {
     id: 'tasks',
+    configKey: 'task',
     label: 'Tasks',
     icon: CalendarToday,
     activeModuleKey: 'events',
@@ -75,6 +78,7 @@ const MODULE_CONFIG = [
   },
   {
     id: 'actions',
+    configKey: 'actions',
     label: t('Actions'),
     icon: CheckCircleOutline,
     activeModuleKey: 'actions',
@@ -91,6 +95,7 @@ const MODULE_CONFIG = [
 function TheLayoutNavbar({ expanded = false, onToggle }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { moduleData, fetchAllModulesData, getModuleData, isModuleLoaded } = useModuleData();
 
   const [listLegalStatus, setListLegalStatus] = useState({});
@@ -157,21 +162,26 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
     }
   }, [loadingLegalStatus]);
 
+  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? {});
+
   // Process modules for display - memoized to prevent recalculation on every render
   const modules = useMemo(() => {
     return MODULE_CONFIG.map((module) => {
       const moduleProcessedData = getModuleData(module.id) || {};
       const isLoaded = isModuleLoaded(module.id);
+      const isEnabled = platformModules?.[module.configKey]?.enabled ?? false;
 
       return {
         id: module.id,
         icon: module.icon,
         label: module.label,
+        routeKey: module.activeModuleKey,
         statusData: isLoaded ? module.getStatusData(moduleProcessedData) : [],
-        isLoaded
+        isLoaded,
+        isEnabled
       };
-    }).filter((module) => module.isLoaded); // Only show modules that have loaded data
-  }, [moduleData]);
+    }).filter((module) => module.isLoaded && module.isEnabled); // Show loaded modules enabled in platform config
+  }, [moduleData, platformModules]);
 
   const activeModule = useSelector((state) => state.globalData.activeModule);
   const { data: actionCountData = {} } = useSelector(
@@ -263,9 +273,10 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
               key={module.id}
               icon={module.icon}
               label={t(module.label)}
-              isActive={index === 0}
+              isActive={activeModule === module.routeKey}
               sx={{ px: 0.5, mt: index > 0 ? 1 : 0 }}
               dataSet={module.statusData}
+              onClick={() => navigate(`/view/${module.routeKey}`)}
             />
           ))}
 
