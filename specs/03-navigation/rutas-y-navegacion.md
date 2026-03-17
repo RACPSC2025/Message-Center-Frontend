@@ -42,6 +42,11 @@ Mapeo actual en RoutesFile:
 - TheLayout hace polling cada 5 minutos para nuevos mensajes (si la pestaña esta visible).
 - Header usa polling corto para no leidos y escucha evento custom dashboard-message-created.
 - BaseTab recibe items desde modulePermissions.
+- Los DoughnutChart del sidebar izquierdo solo se muestran si el modulo esta habilitado en platformConfig (modules.*.enabled = true).
+- Al hacer click en un DoughnutChart del sidebar, la app navega al modulo correspondiente:
+  - legals -> /view/LegalMatriz
+  - tasks -> /view/events
+  - actions -> /view/actions
 
 ## Constantes de layout
 

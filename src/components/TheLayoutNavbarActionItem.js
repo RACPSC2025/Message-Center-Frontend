@@ -5,7 +5,7 @@ import StatusDoughnutChartNavbar from './StatusDoughnutChartNavbar';
 function TheLayoutNavbarActionItem({ icon, label, isActive, ...rest }) {
   let base = '1.5rem';
   let defaultStyle = { width: '100%', position: 'relative', color: 'icon.main', cursor: 'pointer' };
-  const { sx, ...others } = rest;
+  const { sx, onClick, showChartInfoOnHover = false, ...others } = rest;
 
   if (isActive) {
     defaultStyle = {
@@ -41,8 +41,19 @@ function TheLayoutNavbarActionItem({ icon, label, isActive, ...rest }) {
           ],
         }}
       >
-      <Box sx={{ ...defaultStyle, ...sx }}>
-        <StatusDoughnutChartNavbar {...others} />
+      <Box
+        sx={{ ...defaultStyle, ...sx }}
+        onClick={onClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick?.();
+          }
+        }}
+      >
+        <StatusDoughnutChartNavbar showInfoOnHover={showChartInfoOnHover} {...others} />
         <SvgIcon
           component={icon}
           inheritViewBox
