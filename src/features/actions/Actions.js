@@ -148,7 +148,6 @@ export function Component() {
     if (isObject(selectedAction) || shouldCreateNewAction) {
       const { action_id = '', action_table: module_string_id = 'hs_action' } = selectedAction || {};
       const formData = { ...actionFormModel, action_id, module_string_id };
-      console.log('[DEBUG]: handleSubmitActionData', formData);
       handleActionForm(formData);
     }
   };
@@ -211,7 +210,6 @@ export function Component() {
   };
 
   const handleClickTableActionButton = (actionData, viewType, initialTab = 'list') => {
-    console.log('[DEBUG] Mostrando datos de acción', actionData);
     setSelectedAction(actionData);
     setViewType(viewType);
     setInitialCommentTab(initialTab); // Establecer el tab inicial
