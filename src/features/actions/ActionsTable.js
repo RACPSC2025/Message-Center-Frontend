@@ -46,8 +46,7 @@ export default function ActionTable({
   const [globalEditMode, setGlobalEditMode] = useState({
     enabled: false,
     actionId: null,
-    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_email', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date']
-    // MODIFICAR AQUÍ: Cambia los campos que serán editables en modo global
+    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_email', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date', 'module_string_id']
   });
 
   const { t } = useTranslation();
@@ -154,15 +153,19 @@ export default function ActionTable({
       console.log("Processing column: ", restColumnConfig.field);
       
       // 🔥 Ancho fijo para diferentes tipos de columnas
-      let columnWidth;
-      if (restColumnConfig.field === 'action_status') {
-        columnWidth = 170;
-      } else if (adminColumns.includes(restColumnConfig.field)) {
-        columnWidth = 200;
-      } else if (dateColumns.includes(restColumnConfig.field)) {
-        columnWidth = 200; // ✅ Ancho fijo para columnas de fecha
-      } else {
-        columnWidth = getAbsoluteColumnWidth(column_type, width);
+      let columnWidth = restColumnConfig.width;
+      if (!columnWidth) {
+        if (restColumnConfig.field === 'module_string_id') {
+          columnWidth = 170;
+        } else if (restColumnConfig.field === 'action_status') {
+          columnWidth = 170;
+        } else if (adminColumns.includes(restColumnConfig.field)) {
+          columnWidth = 200;
+        } else if (dateColumns.includes(restColumnConfig.field)) {
+          columnWidth = 200; // ✅ Ancho fijo para columnas de fecha
+        } else {
+          columnWidth = getAbsoluteColumnWidth(column_type, width);
+        }
       }
       
       remainingWidth = remainingWidth - columnWidth;
@@ -505,7 +508,7 @@ export default function ActionTable({
         // CELDA DE ID CON BARRA DE COLOR DE ESTADO
         const { color_code } = actionStatus[data.action_status] || {};
         return (
-          <Box sx={{ pl: 3 }}>
+          <Box sx={{ pl: 1 }}>
             <Box
               sx={{
                 position: 'absolute',

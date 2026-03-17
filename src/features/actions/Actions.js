@@ -29,7 +29,7 @@ const useListOptions = (module, fieldName) =>
   useSelector((state) => selectListOptions(state, module, fieldName));
 
 export function Component() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const newActionFormModel = useRef(null);
   const { fetchModuleDataById } = useModuleData();
@@ -168,14 +168,25 @@ export function Component() {
 
   const modifyTableColumns = (columnConfig) => {
     return columnConfig.map((config) => {
-      const { column: field, title: headerName, column_width: width, ...rest } = config;
+      const { 
+        column: field, 
+        title, 
+        title_es, 
+        title_en, 
+        column_width, 
+        edit,
+        ...rest 
+      } = config;
 
+      // Determinamos el nombre del encabezado según el idioma
+      const headerName = i18n.language === 'en' ? (title_en || title) : (title_es || title);
+      
       const columnProps = {
         ...rest,
         field,
         headerName,
-        width,
-        editable: true
+        width: column_width && column_width !== "" ? parseInt(column_width, 10) : undefined,
+        editable: edit ?? true
       };
 
       if (
@@ -290,9 +301,9 @@ export function Component() {
     dispatch(fetchTableColumns()).then((data) => {
       if (data?.payload?.messages === 'Success') {
         const tableData = data?.payload?.data ?? {};
-        const config = Object.keys(tableData?.headers).map(
-          (columnKey) => tableData?.headers[columnKey]
-        );
+        const config = Object.keys(tableData?.headers)
+          .map((columnKey) => tableData?.headers[columnKey])
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
         const columnConfig = modifyTableColumns(getConfig(config));
         setTableColumnConfig(columnConfig);
       }

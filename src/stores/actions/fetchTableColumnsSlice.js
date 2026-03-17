@@ -12,7 +12,7 @@ export const fetchTableColumns = createAsyncThunk(
   async (formData = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/message_center_api/action_api/dashboard_actions_table_headers'
+        '/message_center_api/action_api/dashboard_actions_table_headers_amatia_express'
       );
       return response?.data;
     } catch (error) {
