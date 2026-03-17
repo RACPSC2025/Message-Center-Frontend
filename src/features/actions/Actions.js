@@ -440,7 +440,7 @@ export function Component() {
             {/* Header */}
             <Toolbar>
               <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
-                {`${t(drawerTitle)} #${selectedAction?.action_id}`}
+                {`${t('CreateAction')}`}
               </Typography>
 
               <IconButton edge="end" onClick={handleCloseDrawer} aria-label="close">
