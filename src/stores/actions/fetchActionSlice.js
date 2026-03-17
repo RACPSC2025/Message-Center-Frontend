@@ -20,7 +20,7 @@ export const fetchActionList = createAsyncThunk(
   async (data = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/message_center_api/action_api/dashboard_actions',
+        '/message_center_api/action_api/dashboard_actions_amatia_express',
         data
       );
       return response?.data;
