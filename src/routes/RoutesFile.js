@@ -1,5 +1,5 @@
-import { Suspense, createContext, lazy, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { Suspense, createContext, lazy, useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import TheFullPageLoader from '../components/TheFullPageLoader';
 import TheLayout from '../components/TheLayout';
@@ -13,6 +13,8 @@ import {
   fetchUserDetails,
   setActiveModule
 } from '../stores/globalDataSlice';
+import { useLanguage } from '../providers/languageProvider';
+import { fetchPlatformConfig as fetchPlatformConfiguration } from '../stores/platformConfigSlice';
 
 const MessageCenterEvents = lazy(() => import('../features/MessageCenterEvents'));
 const MessageCenterActions = lazy(() => import('../features/MessageCenterActions'));
@@ -27,10 +29,19 @@ export const GlobalConfig = createContext();
 export default function RoutesFile() {
   const dispatch = useDispatch();
   const location = useLocation();
+  const { language } = useLanguage();
+  const platformConfig = useSelector((state) => state.platformConfig?.data);
   const [permitRoutes, setPermitRoutes] = useState([]);
   const [defaultRoute, setDefaultRoute] = useState();
   const subdomain = APP_SUBDOMAIN; //'Alimentos';
-  const config = getGlobalConfiguration(subdomain) ?? {}; // Fetch configuration based on subdomain
+  const config = useMemo(
+    () => getGlobalConfiguration(subdomain, { platformConfig, language }) ?? {},
+    [subdomain, platformConfig, language]
+  );
+
+  useEffect(() => {
+    dispatch(fetchPlatformConfiguration());
+  }, [dispatch]);
 
   useEffect(() => {
     setPermitRoutes(config?.modulePermissions ?? []);
@@ -40,7 +51,7 @@ export default function RoutesFile() {
     );
     if (notificationsModule?.visibility === false) {
       // setDefaultRoute('/view/LegalMatriz');
-      const sortedPermissions = config?.modulePermissions.sort((a, b) => {
+      const sortedPermissions = [...(config?.modulePermissions ?? [])].sort((a, b) => {
         // Place objects with visibility: false at the end
         return (a.visibility === false) - (b.visibility === false);
       });
@@ -49,7 +60,7 @@ export default function RoutesFile() {
     } else {
       setDefaultRoute('/view/notifications');
     }
-  }, [subdomain]);
+  }, [config]);
 
   useEffect(() => {
     dispatch(fetchUserDetails('userId')); // Pass the actual userId here

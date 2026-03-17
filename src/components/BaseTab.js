@@ -49,7 +49,8 @@ function BaseTab({
 
         dynamicProps = { ...dynamicProps, ...tabItemProps };
 
-        return <Tab key={index} label={t(item.label)} {...dynamicProps} />;
+        const tabLabel = item?.skipTranslation ? item?.label : t(item?.label);
+        return <Tab key={index} label={tabLabel} {...dynamicProps} />;
       })}
     </Tabs>
   );

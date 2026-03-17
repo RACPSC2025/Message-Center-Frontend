@@ -15,7 +15,7 @@ export const usePlatformConfig = () => {
  */
 export const useIsModuleEnabled = (moduleName) => {
   return useSelector((state) => {
-    const module = state.platformConfig.data.modules[moduleName];
+    const module = state.platformConfig?.data?.modules?.[moduleName];
     return module?.enabled ?? false;
   });
 };
@@ -28,7 +28,7 @@ export const useIsModuleEnabled = (moduleName) => {
  */
 export const useHasPermission = (moduleName, permission) => {
   return useSelector((state) => {
-    const module = state.platformConfig.data.modules[moduleName];
+    const module = state.platformConfig?.data?.modules?.[moduleName];
     if (!module?.enabled) return false;
     return module.permissions?.[permission] ?? false;
   });
@@ -42,8 +42,12 @@ export const useHasPermission = (moduleName, permission) => {
  */
 export const useModuleFeature = (moduleName, featurePath) => {
   return useSelector((state) => {
-    const module = state.platformConfig.data.modules[moduleName];
+    const module = state.platformConfig?.data?.modules?.[moduleName];
     if (!module) return null;
+
+    if (!module?.features || Array.isArray(module.features)) {
+      return null;
+    }
     
     const keys = featurePath.split('.');
     let value = module.features;
@@ -65,14 +69,18 @@ export const useModuleFeature = (moduleName, featurePath) => {
  */
 export const useModuleCatalogs = (moduleName, catalogName = null) => {
   return useSelector((state) => {
-    const module = state.platformConfig.data.modules[moduleName];
-    if (!module?.catalogs) return catalogName ? null : {};
-    
-    if (catalogName) {
-      return module.catalogs[catalogName] ?? null;
+    const module = state.platformConfig?.data?.modules?.[moduleName];
+    const catalogs = module?.catalogs;
+
+    if (!catalogs || Array.isArray(catalogs)) {
+      return catalogName ? null : {};
     }
     
-    return module.catalogs;
+    if (catalogName) {
+      return catalogs[catalogName] ?? null;
+    }
+    
+    return catalogs;
   });
 };
 
@@ -99,14 +107,16 @@ export const useIsConfigFromApi = () => {
  */
 export const useModuleInfo = (moduleName) => {
   return useSelector((state) => {
-    const config = state.platformConfig.data.modules[moduleName];
+    const config = state.platformConfig?.data?.modules?.[moduleName];
     return {
       enabled: config?.enabled ?? false,
       description: config?.description ?? '',
       order: config?.order ?? '0',
       permissions: config?.permissions ?? {},
-      features: config?.features ?? {},
-      catalogs: config?.catalogs ?? {}
+      features: Array.isArray(config?.features) ? {} : (config?.features ?? {}),
+      catalogs: Array.isArray(config?.catalogs) ? {} : (config?.catalogs ?? {}),
+      title_es: config?.title_es ?? '',
+      title_en: config?.title_en ?? ''
     };
   });
 };

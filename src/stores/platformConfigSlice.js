@@ -13,14 +13,15 @@ export const fetchPlatformConfig = createAsyncThunk(
   'platformConfig/fetchPlatformConfig',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('/api/configuration/');
-      
-      // Si la respuesta es vacía o no tiene datos, retornar null para usar el default
-      if (!response.data || Object.keys(response.data).length === 0) {
+      const response = await axiosInstance.get('/message_center_api/legal_api/get_configuration_amatia_express');
+      const configuration = response?.data?.configuration;
+
+      // Si la respuesta es vacía o no tiene configuración, retornar null para usar el default
+      if (!configuration || Object.keys(configuration).length === 0) {
         return null;
       }
-      
-      return response.data;
+
+      return configuration;
     } catch (error) {
       return rejectWithValue(error.message);
     }
