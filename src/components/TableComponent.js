@@ -414,10 +414,41 @@ export default function TableComponent({
       suppressQuotes: false,
     });
 
-    // Parsear CSV manualmente
-    const rows = csv.split("\n").map((row) => row.split(","));
-    const headers = rows[0]; // primera fila => encabezados de AG Grid
-    const data = rows.slice(1); // resto => datos
+    const sanitizeCsvValue = (value) => {
+      if (value === null || value === undefined) {
+        return '';
+      }
+
+      if (typeof value !== 'string') {
+        return value;
+      }
+
+      let normalized = value.trim();
+
+      // Remove wrapping quotes added by CSV export and unescape inner double quotes.
+      if (normalized.startsWith('"') && normalized.endsWith('"')) {
+        normalized = normalized.slice(1, -1).replace(/""/g, '"');
+      }
+
+      // Convert numeric text to number so Excel does not keep it as quoted text.
+      if (/^-?\d+(\.\d+)?$/.test(normalized)) {
+        return Number(normalized);
+      }
+
+      return normalized;
+    };
+
+    // Parse CSV reliably (handles quoted values and commas inside text).
+    const csvWorkbook = XLSX.read(csv, { type: 'string' });
+    const csvSheet = csvWorkbook.Sheets[csvWorkbook.SheetNames[0]];
+    const parsedRows = XLSX.utils.sheet_to_json(csvSheet, {
+      header: 1,
+      blankrows: false,
+      defval: ''
+    });
+
+    const headers = (parsedRows[0] || []).map(sanitizeCsvValue);
+    const data = parsedRows.slice(1).map((row) => row.map(sanitizeCsvValue));
 
     // 2. Cargar plantilla
     const response = await fetch(process.env.PUBLIC_URL + "/assets/templates/template.xlsx");
