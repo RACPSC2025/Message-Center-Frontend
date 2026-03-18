@@ -35,3 +35,6 @@ pnpm-lock.yaml
 # config files
 src/lib/axios.js
 src/setupProxy.js
+
+# documentation
+specs/docs/

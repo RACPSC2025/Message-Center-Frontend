@@ -9,6 +9,7 @@ import fetchTableColumnsSlice from './stores/actions/fetchTableColumnsSlice';
 import getActionDetailsSlice from './stores/actions/getActionDetailsSlice';
 import getActionLogtaskSlice from './stores/actions/getActionLogtaskSlice';
 import submitActionFormSlice from './stores/actions/submitActionFormSlice';
+import updateActionSlice from './stores/actions/updateActionSlice';
 import uploadCommentAttachmentsSlice from './stores/actions/uploadCommentAttachmentsSlice';
 import fetchEventsListSlice from './stores/events/fetchEventsListSlice';
 import filterReducer from './stores/filterSlice';
@@ -94,6 +95,7 @@ export const store = configureStore({
     editActionComments: editActionCommentsSlice,
     actionData: fetchActionSlice,
     submitActionForm: submitActionFormSlice,
+    updateAction: updateActionSlice,
     getActionDetails: getActionDetailsSlice,
     getActionLogtask: getActionLogtaskSlice,
     fetchLogtaskList: fetchLogtaskListSlice,
