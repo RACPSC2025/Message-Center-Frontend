@@ -7,6 +7,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { useTranslation } from 'react-i18next';
 
 export default function TablePaginationComponent({
@@ -20,7 +21,8 @@ export default function TablePaginationComponent({
   paginationLegendElement = null,
   onRefresh = null,
   onResetFilters = null,
-  onExport = null
+  onExport = null,
+  onToggleColumnSelector = null
 }) {
   const { t } = useTranslation();
 
@@ -62,6 +64,15 @@ export default function TablePaginationComponent({
           <Tooltip title={t('excel_export')}>
             <IconButton onClick={onExport} size="small" color="primary">
               <FileDownloadIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Boton de Seleccionar Columnas (Opcional) */}
+        {onToggleColumnSelector && (
+          <Tooltip title={t('Select_columns')}>
+            <IconButton onClick={onToggleColumnSelector} size="small" color="primary">
+              <ViewColumnIcon />
             </IconButton>
           </Tooltip>
         )}

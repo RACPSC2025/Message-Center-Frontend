@@ -22,16 +22,6 @@ import { AgGridReact } from 'ag-grid-react';
 import { useTranslation } from 'react-i18next';
 import { isValidArray } from '../utils/others';
 
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchAutocompleteOptions,
-  removeAllFilters,
-  removeFilter,
-  selectFilterItemValue,
-  selectListOptions,
-  setFilter
-} from '../stores/filterSlice';
-
 import { agGridLocaleEs } from '../lib/agGridLocaleEs';
 //import { useLanguage } from './LanguageProvider';
 import { useLanguage } from '../providers/languageProvider';
@@ -95,6 +85,7 @@ export default function TableComponent({
   const [totalRows, setTotalRows] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(perPage);
   const [pageSize, setPageSize] = useState(pageOption[0]);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   const updatePaginationInfo = () => {
     if (gridRef.current?.api) {
@@ -349,10 +340,6 @@ export default function TableComponent({
   //   );
   // };
 
-  const selectedColumns =
-    useSelector((state) => selectFilterItemValue(state, 'task', 'selectedColumns')) || false;
-
-    
   // 🔹 Exportar CSV directamente (función de AG Grid)
   const exportCSV = () => {
     gridRef.current.api.exportDataAsCsv({ fileName: "datos.csv" });
@@ -496,7 +483,7 @@ export default function TableComponent({
       }}
     >
       {/* Column selector with checkboxes */}
-      {selectedColumns && (
+      {showColumnSelector && (
         <Box sx={{ flexShrink: 0, mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
           <FormControl sx={{ width: 300 }}>
             <InputLabel>{t('Select_columns')}</InputLabel>
@@ -532,6 +519,7 @@ export default function TableComponent({
           onRefresh={onRefresh}
           onResetFilters={handleResetAllFilters}
           onExport={exportExcelWithTemplate}
+          onToggleColumnSelector={() => setShowColumnSelector((prev) => !prev)}
         />
       </Box>
 
