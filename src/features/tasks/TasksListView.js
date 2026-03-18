@@ -42,6 +42,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import TaskCycleRow from './TaskCycleRow';
 import TaskCyclesTable from './TaskCyclesTable';
 import TaskDetailsSidebar from './TaskDetailsSidebar';
+import UnsavedChangesDialog from '../../components/UnsavedChangesDialog';
 import { fetchListTaskNew } from '../../stores/tasks/fetchListTaskNewSlice';
 import { fetchLogtaskList } from '../../stores/tasks/fetchLogtaskListSlice';
 import { deleteLogtask } from '../../stores/tasks/deleteLogtaskSlice'; // Importar la acción de eliminación
@@ -73,6 +74,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [initialDrawerTab, setInitialDrawerTab] = useState('comentarios');
   const [initialCommentText, setInitialCommentText] = useState('');
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingCloseAction, setPendingCloseAction] = useState(null);
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -80,6 +83,20 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [taskMenuAnchor, setTaskMenuAnchor] = useState(null);
   const [selectedTaskForMenu, setSelectedTaskForMenu] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Manejadores para el diálogo de cambios sin guardar
+  const handleConfirmExitWithoutSave = () => {
+    if (pendingCloseAction) {
+      pendingCloseAction();
+      setPendingCloseAction(null);
+    }
+    setShowUnsavedChangesDialog(false);
+  };
+
+  const handleCancelExit = () => {
+    setPendingCloseAction(null);
+    setShowUnsavedChangesDialog(false);
+  };
 
   // Manejadores del menú de opciones
   const handleTaskMenuClick = (event, task) => {
@@ -930,19 +947,25 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
       <EditEventDetailsDrawer
         openEditDrawer={isEditDrawerOpen}
-        onCloseEditDrawer={() => {
-          setIsEditDrawerOpen(false);
-          setInitialDrawerTab('comentarios');
-          setInitialCommentText('');
-          console.log('Cerrando drawer');
+        onCloseEditDrawer={(hasUnsavedChanges = false) => {
+          if (hasUnsavedChanges) {
+            setShowUnsavedChangesDialog(true);
+            setPendingCloseAction(() => () => {
+              setIsEditDrawerOpen(false);
+              setInitialDrawerTab('comentarios');
+              setInitialCommentText('');
+            });
+          } else {
+            setIsEditDrawerOpen(false);
+            setInitialDrawerTab('comentarios');
+            setInitialCommentText('');
+          }
         }}
         logTaskDetails={selectedLogtask || {}}
         initialTab={initialDrawerTab}
         initialCommentText={initialCommentText}
         onDrawerOpened={() => {
-          console.log('Edición finalizada / Drawer cerrado completamente');
-          // Aquí podrías disparar un refresco de la lista si hubo cambios
-          // dispatch(fetchListTaskNew({})); 
+          console.log('[DEBUG] Edición finalizada / Drawer cerrado completamente');
         }}
         onCommentAdded={handleRefreshLogtasks}
       />
@@ -991,6 +1014,14 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Diálogo de confirmación para cambios sin guardar */}
+      <UnsavedChangesDialog
+        open={showUnsavedChangesDialog}
+        onClose={handleCancelExit}
+        onConfirm={handleConfirmExitWithoutSave}
+        onCancel={handleCancelExit}
+      />
     </Box>
   );
 };

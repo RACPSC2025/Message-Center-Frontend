@@ -159,6 +159,10 @@ function EditEventDetailsDrawer({
   const [commentType, setCommentType] = useState('');
   const [attachmentComment, setAttachmentComment] = useState('');
   
+  // Estados para detectar cambios no guardados
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialProgress, setInitialProgress] = useState(logTaskDetails.progress);
+  
   // Modal de validacion de comentarios y porcentaje
   const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
   const menuEditOpen = Boolean(anchorEl);
@@ -184,6 +188,29 @@ function EditEventDetailsDrawer({
 
   const { language } = useLanguage();
   const locale = language === 'en' ? 'en-US' : 'es-ES';
+
+  // Efecto para actualizar estado inicial cuando cambia la tarea
+  useEffect(() => {
+    if (logTaskDetails) {
+      setInitialProgress(logTaskDetails.progress);
+      setHasUnsavedChanges(false);
+    }
+  }, [logTaskDetails]);
+
+  // Efecto para detectar cambios en el progreso y comentario
+  useEffect(() => {
+    const currentProgress = addCommentForm.progress !== undefined 
+      ? addCommentForm.progress 
+      : Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)));
+    
+    const hasCommentText = addCommentForm.comment && addCommentForm.comment.trim().length > 0;
+    
+    if (currentProgress !== initialProgress || hasCommentText) {
+      setHasUnsavedChanges(true);
+    } else {
+      setHasUnsavedChanges(false);
+    }
+  }, [addCommentForm.progress, addCommentForm.comment, initialProgress, logTaskDetails.progress]);
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -724,13 +751,19 @@ function EditEventDetailsDrawer({
   };
 
   const handleCloseEditDrawer = () => {
-    onCloseEditDrawer();
-    setUpdateProgressErrors(false);
-    setProgressUpdated(false);
-    setLogtaskExecutedComments([]);
-    setLogtaskRevisorComments([]);
-    onDrawerOpened();
-    // logTaskDetails = [];
+    if (hasUnsavedChanges) {
+      // Mostrar diálogo de confirmación si hay cambios sin guardar
+      setHasUnsavedChanges(false); // Resetear para evitar múltiples diálogos
+      onCloseEditDrawer(true); // Pasar indicador de que hay cambios sin guardar
+    } else {
+      // Cerrar directamente si no hay cambios
+      onCloseEditDrawer();
+      setUpdateProgressErrors(false);
+      setProgressUpdated(false);
+      setLogtaskExecutedComments([]);
+      setLogtaskRevisorComments([]);
+      onDrawerOpened();
+    }
   };
 
   const updateProgress = async (percentage) => {
