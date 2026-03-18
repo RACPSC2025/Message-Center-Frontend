@@ -223,6 +223,24 @@ export default function ComunicationsLedger() {
     return date.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' });
   };
 
+  const handleDownloadFile = async (fileUrl, fileName) => {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName || 'attachment';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      showErrorMsg(t('error_downloading_file'));
+    }
+  };
+
   // Aplicar filtros y paginación
   const mainRequests = getMainRequests();
   const filteredRequests = applyFilters(mainRequests);
@@ -686,10 +704,7 @@ export default function ComunicationsLedger() {
                                                 <IconButton 
                                                   size="small" 
                                                   color="primary"
-                                                  component="a"
-                                                  href={file.url}
-                                                  download={file.file_name}
-                                                  target="_blank"
+                                                  onClick={() => handleDownloadFile(file.url, file.file_name)}
                                                 >
                                                   <Download fontSize="small" />
                                                 </IconButton>

@@ -932,6 +932,9 @@ const es = {
   "in_progress_status": "En Progreso",
   "resolved_status": "Resuelto",
   "expired_status": "Vencido",
+  "preview": "Vista previa",
+  "download": "Descargar",
+  "error_downloading_file": "Error al descargar el archivo",
   "resolved": "Resuelto",
 };
 

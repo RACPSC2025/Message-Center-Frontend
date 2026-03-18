@@ -902,7 +902,10 @@ const en = {
   "open_status": "Open",
   "in_progress_status": "In Progress",
   "resolved_status": "Resolved",
-  "expired_status": "Expired"
+  "expired_status": "Expired",
+  "preview": "Preview",
+  "download": "Download",
+  "error_downloading_file": "Error downloading file"
 };
 
 export default en;
