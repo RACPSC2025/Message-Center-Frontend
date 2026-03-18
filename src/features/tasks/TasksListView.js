@@ -593,7 +593,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           ) : filteredTasks.length === 0 ? (
             <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
               <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
-                No se encontraron tareas
+                {t('no_tasks_found')}
               </Typography>
             </Box>
           ) : (
@@ -747,7 +747,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
               visibleTasks.length > 0 && (
                 <Box sx={{ mx: 2, my: 0.5, py: 2, textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ color: '#888888', fontSize: '0.75rem', fontWeight: 600 }}>
-                    No hay más tareas
+                    {t('no_more_tasks')}
                   </Typography>
                 </Box>
               ) 
@@ -762,7 +762,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         {(keywordsFilter || startDateFilter || endDateFilter) && (
           <Box sx={{ px: 2, py: 1, bgcolor: '#f8fbfc', borderBottom: '1px solid #e0e6ed' }}>
             <Typography variant="caption" sx={{ color: '#90a4ae', fontSize: '0.75rem' }}>
-              {filteredTasks.length} de {tasks.length} tareas encontradas
+              {t('tasks_found_count', { filtered: filteredTasks.length, total: tasks.length })}
             </Typography>
           </Box>
         )}

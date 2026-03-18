@@ -672,6 +672,7 @@ const es = {
   'No data available': 'No hay datos disponibles',
   'Current file': 'Archivo actual',
   Tasks: 'Tareas',
+  
   tasks: 'Tareas',
   'Articles list': 'Lista de artículos',
   'Standard analysis': 'Análisis de norma',
@@ -810,6 +811,9 @@ const es = {
   'overdue': 'Vencido',
   'Error updating status': 'Error al actualizar el estado',
   'File uploaded successfully': 'Archivo subido exitosamente',
+  'no_tasks_found': 'No se encontraron tareas',
+  'no_more_tasks': 'No hay más tareas',
+  'tasks_found_count': '{{filtered}} de {{total}} tareas encontradas',
   'Error uploading file': 'Error al subir el archivo',
   'File deleted successfully': 'Archivo eliminado exitosamente',
   'Error deleting file': 'Error al eliminar el archivo',
