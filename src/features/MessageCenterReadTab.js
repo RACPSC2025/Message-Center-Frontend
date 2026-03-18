@@ -11,9 +11,11 @@ const MessageCenterReadTab = ({
   filterData = {},
   showArchivedMessages = false,
   showSelectionCheckbox = false,
+  focusedMessageId = null,
   selectedMessages,
   messageDetails,
   handleFetchMessagesDetails,
+  handleSelectMessage,
   handleChangeMessageSelection,
   toggleMessageAsImportant,
   markMessageAsRead,
@@ -85,8 +87,11 @@ const MessageCenterReadTab = ({
 
         if (replaceData || nextPage === 1) {
           setMessages(data);
-          // Seleccionar el primer mensaje si no hay ninguno seleccionado
-          if (data.length > 0 && !messageDetails && onMessagesLoaded) {
+          const hasSelectedMessageInCurrentTab =
+            focusedMessageId && data.some((msg) => msg.id_message === focusedMessageId);
+
+          // Seleccionar el primer mensaje por defecto cuando no hay selección válida en este tab
+          if (data.length > 0 && onMessagesLoaded && !hasSelectedMessageInCurrentTab) {
             onMessagesLoaded(data[0]);
           }
         } else {
@@ -128,13 +133,13 @@ const MessageCenterReadTab = ({
               desc={msg[singleNotificationDescriptionKey]}
               date={msg.date_message}
               isSelected={selectedMessages.includes(msg.id_message)}
-              isActive={messageDetails?.id_message === msg.id_message}
+              isActive={focusedMessageId === msg.id_message}
               isUnread={msg.is_read === '0'}
               isImportant={msg.is_important !== '0'}
               targetDate={msg.due_date}
               status={msg.status}
               onClick={() => {
-                handleFetchMessagesDetails(msg?.id_message);
+                handleSelectMessage(msg?.id_message);
               }}
               onCheckChanged={(isChecked) =>
                 handleChangeMessageSelection(isChecked, msg.id_message)

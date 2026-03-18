@@ -86,6 +86,8 @@ function MessageCenterCardItem({
           : isUnread 
             ? 'rgba(25, 118, 210, 0.08)'
             : backgroundColor,
+        border: isActive ? `1px solid ${blue[500]}` : '1px solid transparent',
+        boxShadow: isActive ? '0px 2px 8px rgba(25, 118, 210, 0.25)' : 'none',
         pt: 0.5,
         pl: 3.5,
         transition: 'all 0.3s ease',

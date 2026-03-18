@@ -69,6 +69,11 @@ function MessageCenterNotifications() {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [tabKey, setTabKey] = useState(0); // Key para forzar remount de tabs
+  const [focusedMessageByTab, setFocusedMessageByTab] = useState({
+    important: null,
+    unread: null,
+    read: null
+  });
   const [showSelectionCheckbox] = useState(false);
   const [showSidebar] = useState(false);
   const [showHeaderActions] = useState(false);
@@ -124,6 +129,14 @@ function MessageCenterNotifications() {
         // if (msgDetails.is_read === '0') markMessageAsRead(msgDetails.id_message);
       }
     });
+  };
+
+  const handleSelectMessage = (tabName, messageID) => {
+    setFocusedMessageByTab((prevState) => ({
+      ...prevState,
+      [tabName]: messageID
+    }));
+    handleFetchMessagesDetails(messageID);
   };
 
   /*
@@ -261,6 +274,11 @@ function MessageCenterNotifications() {
   const refreshData = () => {
     // Forzar remount de tabs incrementando la key
     setTabKey((prev) => prev + 1);
+    setFocusedMessageByTab({
+      important: null,
+      unread: null,
+      read: null
+    });
     setSelectedMessages([]);
     setMessageDetails(null);
     setIsFetchingDetails(true);
@@ -324,9 +342,9 @@ function MessageCenterNotifications() {
   const singleNotificationEmployeeKey =
     language === 'en' ? 'employee_message_en' : 'employee_message_es';
 
-  const handleMessagesLoaded = (firstMessage) => {
-    if (firstMessage?.id_message && messageDetails === null) {
-      handleFetchMessagesDetails(firstMessage.id_message);
+  const handleMessagesLoaded = (tabName, firstMessage) => {
+    if (firstMessage?.id_message) {
+      handleSelectMessage(tabName, firstMessage.id_message);
       handleFetchMessageStatistics();
     }
   };
@@ -546,9 +564,11 @@ function MessageCenterNotifications() {
                 filterData={filterData}
                 showArchivedMessages={showArchivedMessages}
                 showSelectionCheckbox={showSelectionCheckbox}
+                focusedMessageId={focusedMessageByTab.important}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
+                handleSelectMessage={(messageID) => handleSelectMessage('important', messageID)}
                 handleChangeMessageSelection={handleChangeMessageSelection}
                 toggleMessageAsImportant={toggleMessageAsImportant}
                 markMessageAsRead={markMessageAsRead}
@@ -556,7 +576,7 @@ function MessageCenterNotifications() {
                 singleNotificationEmployeeKey={singleNotificationEmployeeKey}
                 singleNotificationMessageKey={singleNotificationMessageKey}
                 singleNotificationDescriptionKey={singleNotificationDescriptionKey}
-                onMessagesLoaded={handleMessagesLoaded}
+                onMessagesLoaded={(firstMessage) => handleMessagesLoaded('important', firstMessage)}
               />
             )}
             
@@ -566,9 +586,11 @@ function MessageCenterNotifications() {
                 filterData={filterData}
                 showArchivedMessages={showArchivedMessages}
                 showSelectionCheckbox={showSelectionCheckbox}
+                focusedMessageId={focusedMessageByTab.unread}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
+                handleSelectMessage={(messageID) => handleSelectMessage('unread', messageID)}
                 handleChangeMessageSelection={handleChangeMessageSelection}
                 toggleMessageAsImportant={toggleMessageAsImportant}
                 markMessageAsRead={markMessageAsRead}
@@ -576,7 +598,7 @@ function MessageCenterNotifications() {
                 singleNotificationEmployeeKey={singleNotificationEmployeeKey}
                 singleNotificationMessageKey={singleNotificationMessageKey}
                 singleNotificationDescriptionKey={singleNotificationDescriptionKey}
-                onMessagesLoaded={handleMessagesLoaded}
+                onMessagesLoaded={(firstMessage) => handleMessagesLoaded('unread', firstMessage)}
               />
             )}
             
@@ -586,9 +608,11 @@ function MessageCenterNotifications() {
                 filterData={filterData}
                 showArchivedMessages={showArchivedMessages}
                 showSelectionCheckbox={showSelectionCheckbox}
+                focusedMessageId={focusedMessageByTab.read}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
+                handleSelectMessage={(messageID) => handleSelectMessage('read', messageID)}
                 handleChangeMessageSelection={handleChangeMessageSelection}
                 toggleMessageAsImportant={toggleMessageAsImportant}
                 markMessageAsRead={markMessageAsRead}
@@ -596,7 +620,7 @@ function MessageCenterNotifications() {
                 singleNotificationEmployeeKey={singleNotificationEmployeeKey}
                 singleNotificationMessageKey={singleNotificationMessageKey}
                 singleNotificationDescriptionKey={singleNotificationDescriptionKey}
-                onMessagesLoaded={handleMessagesLoaded}
+                onMessagesLoaded={(firstMessage) => handleMessagesLoaded('read', firstMessage)}
               />
             )}
           </Box>
