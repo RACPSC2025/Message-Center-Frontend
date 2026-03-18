@@ -8,9 +8,14 @@ import MessageCenterCardItem from './MessageCenterCardItem';
 import MessageCenterCarditemSkeleton from './MessageCenterCarditemSkeleton';
 
 const MessageCenterImportantTab = ({
+  filterData = {},
+  showArchivedMessages = false,
+  showSelectionCheckbox = false,
+  focusedMessageId = null,
   selectedMessages,
   messageDetails,
   handleFetchMessagesDetails,
+  handleSelectMessage,
   handleChangeMessageSelection,
   toggleMessageAsImportant,
   markMessageAsRead,
@@ -46,11 +51,33 @@ const MessageCenterImportantTab = ({
     }
   }, [isIntersecting, hasReachedEnd, isLoading]);
 
-  const fetchMessages = () => {
+  useEffect(() => {
+    setMessages([]);
+    setHasReachedEnd(false);
+    setPageNum(1);
+    fetchMessages(1, true);
+  }, [filterData, showArchivedMessages]);
+
+  const fetchMessages = (nextPage = pageNum, replaceData = false) => {
     setIsLoading(true);
     const formData = new FormData();
     formData.append('user_id', '1');
-    formData.append('page', pageNum);
+    formData.append('page', nextPage);
+    formData.append('filter_show_archived_messages', showArchivedMessages ? '1' : '0');
+
+    Object.keys(filterData || {}).forEach((filterKey) => {
+      const filterValue = filterData[filterKey];
+      if (filterValue === undefined || filterValue === null || filterValue === '') {
+        return;
+      }
+
+      if (dayjs.isDayjs(filterValue)) {
+        formData.append(filterKey, filterValue.format('YYYY-MM-DD'));
+        return;
+      }
+
+      formData.append(filterKey, filterValue);
+    });
 
     dispatch(dashboardMessageImportant(formData)).then((res) => {
       const dataObj = res?.payload;
@@ -58,16 +85,21 @@ const MessageCenterImportantTab = ({
         const data = dataObj?.data || [];
         const next = dataObj?.next;
 
-        if (pageNum === 1) {
+        if (replaceData || nextPage === 1) {
           setMessages(data);
-          // Seleccionar el primer mensaje
-          if (data.length > 0 && onMessagesLoaded) {
+          const hasSelectedMessageInCurrentTab =
+            focusedMessageId && data.some((msg) => msg.id_message === focusedMessageId);
+
+          // Seleccionar el primer mensaje por defecto cuando no hay selección válida en este tab
+          if (data.length > 0 && onMessagesLoaded && !hasSelectedMessageInCurrentTab) {
             onMessagesLoaded(data[0]);
           }
         } else {
-          const existingIds = new Set(messages.map((m) => m.id_message));
-          const newMessages = data.filter((m) => !existingIds.has(m.id_message));
-          setMessages([...messages, ...newMessages]);
+          setMessages((prevMessages) => {
+            const existingIds = new Set(prevMessages.map((m) => m.id_message));
+            const newMessages = data.filter((m) => !existingIds.has(m.id_message));
+            return [...prevMessages, ...newMessages];
+          });
         }
         setHasReachedEnd(!next);
       }
@@ -95,18 +127,19 @@ const MessageCenterImportantTab = ({
           {msgs.map((msg) => (
             <MessageCenterCardItem
               key={msg.id_message}
+              showSelectionCheckbox={showSelectionCheckbox}
               reviewer={msg[singleNotificationEmployeeKey]}
               message={msg[singleNotificationMessageKey]}
               desc={msg[singleNotificationDescriptionKey]}
               date={msg.date_message}
               isSelected={selectedMessages.includes(msg.id_message)}
-              isActive={messageDetails?.id_message === msg.id_message}
+              isActive={focusedMessageId === msg.id_message}
               isUnread={msg.is_read === '0'}
               isImportant={msg.is_important !== '0'}
               targetDate={msg.due_date}
               status={msg.status}
               onClick={() => {
-                handleFetchMessagesDetails(msg?.id_message);
+                handleSelectMessage(msg?.id_message);
               }}
               onCheckChanged={(isChecked) =>
                 handleChangeMessageSelection(isChecked, msg.id_message)

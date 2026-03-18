@@ -16,6 +16,10 @@ La respuesta esperada tiene estructura:
 
 La propiedad configuration contiene version, environment y modules con permisos, features y catalogos por modulo.
 
+Nota:
+
+- El backend retorna el campo enviroment (con esa escritura) y se usa para mostrar el ambiente en el sidebar (ej: DEV).
+
 ## Dónde se guarda en Redux
 
 Archivo:
@@ -66,6 +70,7 @@ Reglas aplicadas:
 - label usa title_es o title_en segun idioma actual
 - si no hay titulo en API, usa fallback de etiqueta local
 - notifications se mantiene como modulo de navegacion del sistema
+- enviroment se usa para renderizar la etiqueta de ambiente en el sidebar izquierdo
 
 ## Idioma de los titulos
 

@@ -69,6 +69,14 @@ function MessageCenterNotifications() {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [tabKey, setTabKey] = useState(0); // Key para forzar remount de tabs
+  const [focusedMessageByTab, setFocusedMessageByTab] = useState({
+    important: null,
+    unread: null,
+    read: null
+  });
+  const [showSelectionCheckbox] = useState(false);
+  const [showSidebar] = useState(false);
+  const [showHeaderActions] = useState(false);
 
   const sortOrderOptions = ['Newest on top', 'Oldest on top'];
 
@@ -121,6 +129,14 @@ function MessageCenterNotifications() {
         // if (msgDetails.is_read === '0') markMessageAsRead(msgDetails.id_message);
       }
     });
+  };
+
+  const handleSelectMessage = (tabName, messageID) => {
+    setFocusedMessageByTab((prevState) => ({
+      ...prevState,
+      [tabName]: messageID
+    }));
+    handleFetchMessagesDetails(messageID);
   };
 
   /*
@@ -258,6 +274,12 @@ function MessageCenterNotifications() {
   const refreshData = () => {
     // Forzar remount de tabs incrementando la key
     setTabKey((prev) => prev + 1);
+    setFocusedMessageByTab({
+      important: null,
+      unread: null,
+      read: null
+    });
+    setSelectedMessages([]);
     setMessageDetails(null);
     setIsFetchingDetails(true);
     setStats(defaultStatistics);
@@ -320,9 +342,9 @@ function MessageCenterNotifications() {
   const singleNotificationEmployeeKey =
     language === 'en' ? 'employee_message_en' : 'employee_message_es';
 
-  const handleMessagesLoaded = (firstMessage) => {
-    if (firstMessage?.id_message && messageDetails === null) {
-      handleFetchMessagesDetails(firstMessage.id_message);
+  const handleMessagesLoaded = (tabName, firstMessage) => {
+    if (firstMessage?.id_message) {
+      handleSelectMessage(tabName, firstMessage.id_message);
       handleFetchMessageStatistics();
     }
   };
@@ -331,121 +353,123 @@ function MessageCenterNotifications() {
     <>
       <BaseFeaturePageLayout statsConfig={statsConfig}>
         {/* Sidebar de navegación */}
-        <Box
-          sx={{
-            width: '240px',
-            height: '100%',
-            backgroundColor: '#f5f5f5',
-            borderRight: '1px solid #e0e0e0',
-            display: 'flex',
-            flexDirection: 'column',
-            p: 2
-          }}
-        >
-          {/* Logo y título */}
-          <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white'
-              }}
-            >
-              <BusinessIcon />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                CENTRO SST
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-                SISTEMA DE GESTIÓN
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Menú de navegación */}
-          <List sx={{ flexGrow: 1 }}>
-            <ListItem disablePadding>
-              <ListItemButton
+        {showSidebar && (
+          <Box
+            sx={{
+              width: '240px',
+              height: '100%',
+              backgroundColor: '#f5f5f5',
+              borderRight: '1px solid #e0e0e0',
+              display: 'flex',
+              flexDirection: 'column',
+              p: 2
+            }}
+          >
+            {/* Logo y título */}
+            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
                 sx={{
+                  width: 40,
+                  height: 40,
                   borderRadius: 1,
-                  mb: 0.5,
-                  '&.Mui-selected': {
-                    bgcolor: 'primary.light',
-                    color: 'primary.main',
-                    '&:hover': {
-                      bgcolor: 'primary.light'
-                    }
-                  }
+                  bgcolor: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white'
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                  <InboxIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t('MessageCenter')}
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton sx={{ borderRadius: 1, mb: 0.5 }}>
-                <ListItemIcon sx={{ minWidth: 36 }}>
-                  <NotificationsIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t('Alerts')}
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton sx={{ borderRadius: 1, mb: 0.5 }}>
-                <ListItemIcon sx={{ minWidth: 36 }}>
-                  <HistoryIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t('History')}
-                  primaryTypographyProps={{ fontSize: '0.875rem' }}
-                />
-              </ListItemButton>
-            </ListItem>
-          </List>
+                <BusinessIcon />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  CENTRO DE NOTIFICACIONES
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                  SISTEMA DE GESTIÓN
+                </Typography>
+              </Box>
+            </Box>
 
-          {/* Sección de configuración */}
-          <Box>
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.secondary',
-                fontWeight: 600,
-                px: 2,
-                mb: 1,
-                display: 'block'
-              }}
-            >
-              {t('configuration').toUpperCase()}
-            </Typography>
-            <List>
+            {/* Menú de navegación */}
+            <List sx={{ flexGrow: 1 }}>
               <ListItem disablePadding>
-                <ListItemButton sx={{ borderRadius: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <SettingsIcon />
+                <ListItemButton
+                  sx={{
+                    borderRadius: 1,
+                    mb: 0.5,
+                    '&.Mui-selected': {
+                      bgcolor: 'primary.light',
+                      color: 'primary.main',
+                      '&:hover': {
+                        bgcolor: 'primary.light'
+                      }
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+                    <InboxIcon />
                   </ListItemIcon>
                   <ListItemText
-                    primary={t('Settings')}
+                    primary={t('MessageCenter')}
+                    primaryTypographyProps={{ fontSize: '0.875rem' }}
+                  />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton sx={{ borderRadius: 1, mb: 0.5 }}>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <NotificationsIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t('Alerts')}
+                    primaryTypographyProps={{ fontSize: '0.875rem' }}
+                  />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding>
+                <ListItemButton sx={{ borderRadius: 1, mb: 0.5 }}>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <HistoryIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t('History')}
                     primaryTypographyProps={{ fontSize: '0.875rem' }}
                   />
                 </ListItemButton>
               </ListItem>
             </List>
+
+            {/* Sección de configuración */}
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 600,
+                  px: 2,
+                  mb: 1,
+                  display: 'block'
+                }}
+              >
+                {t('configuration').toUpperCase()}
+              </Typography>
+              <List>
+                <ListItem disablePadding>
+                  <ListItemButton sx={{ borderRadius: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <SettingsIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={t('Settings')}
+                      primaryTypographyProps={{ fontSize: '0.875rem' }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </List>
+            </Box>
           </Box>
-        </Box>
+        )}
 
         {/* Panel de mensajes */}
         <Box
@@ -475,20 +499,23 @@ function MessageCenterNotifications() {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              {t('notifications')}
+              {/*t('notifications')*/}
+              CENTRO DE NOTIFICACIONES
             </Typography>
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              <BaseSortPopper
-                sortOrderOptions={sortOrderOptions}
-                selectedSortOrder={selectedSortOrder}
-                handleSortOrderOptionClick={handleSortOrderOptionClick}
-              />
-              <Tooltip title="Refresh">
-                <IconButton onClick={refreshData} size="small">
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            {showHeaderActions && (
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <BaseSortPopper
+                  sortOrderOptions={sortOrderOptions}
+                  selectedSortOrder={selectedSortOrder}
+                  handleSortOrderOptionClick={handleSortOrderOptionClick}
+                />
+                <Tooltip title="Refresh">
+                  <IconButton onClick={refreshData} size="small">
+                    <RefreshIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
           </Box>
 
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -534,9 +561,14 @@ function MessageCenterNotifications() {
             {activeTab === 0 && (
               <MessageCenterImportantTab
                 key={`important-${tabKey}`}
+                filterData={filterData}
+                showArchivedMessages={showArchivedMessages}
+                showSelectionCheckbox={showSelectionCheckbox}
+                focusedMessageId={focusedMessageByTab.important}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
+                handleSelectMessage={(messageID) => handleSelectMessage('important', messageID)}
                 handleChangeMessageSelection={handleChangeMessageSelection}
                 toggleMessageAsImportant={toggleMessageAsImportant}
                 markMessageAsRead={markMessageAsRead}
@@ -544,16 +576,21 @@ function MessageCenterNotifications() {
                 singleNotificationEmployeeKey={singleNotificationEmployeeKey}
                 singleNotificationMessageKey={singleNotificationMessageKey}
                 singleNotificationDescriptionKey={singleNotificationDescriptionKey}
-                onMessagesLoaded={handleMessagesLoaded}
+                onMessagesLoaded={(firstMessage) => handleMessagesLoaded('important', firstMessage)}
               />
             )}
             
             {activeTab === 1 && (
               <MessageCenterUnreadTab
                 key={`unread-${tabKey}`}
+                filterData={filterData}
+                showArchivedMessages={showArchivedMessages}
+                showSelectionCheckbox={showSelectionCheckbox}
+                focusedMessageId={focusedMessageByTab.unread}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
+                handleSelectMessage={(messageID) => handleSelectMessage('unread', messageID)}
                 handleChangeMessageSelection={handleChangeMessageSelection}
                 toggleMessageAsImportant={toggleMessageAsImportant}
                 markMessageAsRead={markMessageAsRead}
@@ -561,16 +598,21 @@ function MessageCenterNotifications() {
                 singleNotificationEmployeeKey={singleNotificationEmployeeKey}
                 singleNotificationMessageKey={singleNotificationMessageKey}
                 singleNotificationDescriptionKey={singleNotificationDescriptionKey}
-                onMessagesLoaded={handleMessagesLoaded}
+                onMessagesLoaded={(firstMessage) => handleMessagesLoaded('unread', firstMessage)}
               />
             )}
             
             {activeTab === 2 && (
               <MessageCenterReadTab
                 key={`read-${tabKey}`}
+                filterData={filterData}
+                showArchivedMessages={showArchivedMessages}
+                showSelectionCheckbox={showSelectionCheckbox}
+                focusedMessageId={focusedMessageByTab.read}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
+                handleSelectMessage={(messageID) => handleSelectMessage('read', messageID)}
                 handleChangeMessageSelection={handleChangeMessageSelection}
                 toggleMessageAsImportant={toggleMessageAsImportant}
                 markMessageAsRead={markMessageAsRead}
@@ -578,7 +620,7 @@ function MessageCenterNotifications() {
                 singleNotificationEmployeeKey={singleNotificationEmployeeKey}
                 singleNotificationMessageKey={singleNotificationMessageKey}
                 singleNotificationDescriptionKey={singleNotificationDescriptionKey}
-                onMessagesLoaded={handleMessagesLoaded}
+                onMessagesLoaded={(firstMessage) => handleMessagesLoaded('read', firstMessage)}
               />
             )}
           </Box>

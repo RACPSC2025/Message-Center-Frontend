@@ -1075,6 +1075,7 @@ export function Component() {
   const adjustmentOptions = [{ label: 'Select columns', value: 'selectedColumnsOption' }];
 
   const [selectedAdjustments, setSelectedAdjustments] = useState([]);
+  const [showTopActionButtons, setShowTopActionButtons] = useState(false);
 
   const [adjustmentAnchorEl, setAdjustmentAnchorEl] = useState(null);
   const [selectedAdjustmentOption, setSelectedAdjustmentOption] = useState(null);
@@ -1142,51 +1143,53 @@ export function Component() {
           }
           </Box>
 
-          <Box className="flex gap-6 mt-2 xl:mt-0">
-            {viewTab.map((tab, tabIndex) => {
-              return (
-                <Box
-                  key={tabIndex}
-                  sx={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  onClick={(e) => {
-                    setSelectedView(tab.name);
-                    if (tab.name === 'requirements') {
-                      setRequirementIconColor('warning');
-                      setListaIconColor('action');
-                    } else if (tab.name === 'list') {
-                      setRequirementIconColor('action');
-                      setListaIconColor('warning');
-                    }
-                  }}
-                >
-                  {tab.icon}
-                  {<Typography variant="h8">{t(tab.name)}</Typography>}
-                </Box>
-              );
-            })}
-            <Box
-              key={'adjustmensts'}
-              sx={{
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={(e) => {
-                handleOpenAdjustments(e);
-              }}
-            >
-              {adjustmensts.icon}
-              {<Typography variant="h8">{t(adjustmensts.name)}</Typography>}
+          {showTopActionButtons && (
+            <Box className="flex gap-6 mt-2 xl:mt-0">
+              {viewTab.map((tab, tabIndex) => {
+                return (
+                  <Box
+                    key={tabIndex}
+                    sx={{
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    onClick={(e) => {
+                      setSelectedView(tab.name);
+                      if (tab.name === 'requirements') {
+                        setRequirementIconColor('warning');
+                        setListaIconColor('action');
+                      } else if (tab.name === 'list') {
+                        setRequirementIconColor('action');
+                        setListaIconColor('warning');
+                      }
+                    }}
+                  >
+                    {tab.icon}
+                    {<Typography variant="h8">{t(tab.name)}</Typography>}
+                  </Box>
+                );
+              })}
+              <Box
+                key={'adjustmensts'}
+                sx={{
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onClick={(e) => {
+                  handleOpenAdjustments(e);
+                }}
+              >
+                {adjustmensts.icon}
+                {<Typography variant="h8">{t(adjustmensts.name)}</Typography>}
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
 
         <Menu

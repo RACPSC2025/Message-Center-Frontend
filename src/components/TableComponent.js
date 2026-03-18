@@ -22,16 +22,6 @@ import { AgGridReact } from 'ag-grid-react';
 import { useTranslation } from 'react-i18next';
 import { isValidArray } from '../utils/others';
 
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchAutocompleteOptions,
-  removeAllFilters,
-  removeFilter,
-  selectFilterItemValue,
-  selectListOptions,
-  setFilter
-} from '../stores/filterSlice';
-
 import { agGridLocaleEs } from '../lib/agGridLocaleEs';
 //import { useLanguage } from './LanguageProvider';
 import { useLanguage } from '../providers/languageProvider';
@@ -95,6 +85,7 @@ export default function TableComponent({
   const [totalRows, setTotalRows] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(perPage);
   const [pageSize, setPageSize] = useState(pageOption[0]);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   const updatePaginationInfo = () => {
     if (gridRef.current?.api) {
@@ -349,10 +340,6 @@ export default function TableComponent({
   //   );
   // };
 
-  const selectedColumns =
-    useSelector((state) => selectFilterItemValue(state, 'task', 'selectedColumns')) || false;
-
-    
   // 🔹 Exportar CSV directamente (función de AG Grid)
   const exportCSV = () => {
     gridRef.current.api.exportDataAsCsv({ fileName: "datos.csv" });
@@ -427,10 +414,41 @@ export default function TableComponent({
       suppressQuotes: false,
     });
 
-    // Parsear CSV manualmente
-    const rows = csv.split("\n").map((row) => row.split(","));
-    const headers = rows[0]; // primera fila => encabezados de AG Grid
-    const data = rows.slice(1); // resto => datos
+    const sanitizeCsvValue = (value) => {
+      if (value === null || value === undefined) {
+        return '';
+      }
+
+      if (typeof value !== 'string') {
+        return value;
+      }
+
+      let normalized = value.trim();
+
+      // Remove wrapping quotes added by CSV export and unescape inner double quotes.
+      if (normalized.startsWith('"') && normalized.endsWith('"')) {
+        normalized = normalized.slice(1, -1).replace(/""/g, '"');
+      }
+
+      // Convert numeric text to number so Excel does not keep it as quoted text.
+      if (/^-?\d+(\.\d+)?$/.test(normalized)) {
+        return Number(normalized);
+      }
+
+      return normalized;
+    };
+
+    // Parse CSV reliably (handles quoted values and commas inside text).
+    const csvWorkbook = XLSX.read(csv, { type: 'string' });
+    const csvSheet = csvWorkbook.Sheets[csvWorkbook.SheetNames[0]];
+    const parsedRows = XLSX.utils.sheet_to_json(csvSheet, {
+      header: 1,
+      blankrows: false,
+      defval: ''
+    });
+
+    const headers = (parsedRows[0] || []).map(sanitizeCsvValue);
+    const data = parsedRows.slice(1).map((row) => row.map(sanitizeCsvValue));
 
     // 2. Cargar plantilla
     const response = await fetch(process.env.PUBLIC_URL + "/assets/templates/template.xlsx");
@@ -496,7 +514,7 @@ export default function TableComponent({
       }}
     >
       {/* Column selector with checkboxes */}
-      {selectedColumns && (
+      {showColumnSelector && (
         <Box sx={{ flexShrink: 0, mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
           <FormControl sx={{ width: 300 }}>
             <InputLabel>{t('Select_columns')}</InputLabel>
@@ -532,6 +550,7 @@ export default function TableComponent({
           onRefresh={onRefresh}
           onResetFilters={handleResetAllFilters}
           onExport={exportExcelWithTemplate}
+          onToggleColumnSelector={() => setShowColumnSelector((prev) => !prev)}
         />
       </Box>
 
