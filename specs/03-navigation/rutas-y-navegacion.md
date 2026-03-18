@@ -51,6 +51,10 @@ Mapeo actual en RoutesFile:
   - BackToDashboard redirige a {apiUrl}dashboard
   - SignOut redirige a {apiUrl}login-express/
   - {apiUrl} se obtiene de runtime config (public/config.json -> window.__APP_CONFIG__.apiUrl)
+- En el sidebar izquierdo:
+  - El texto de ambiente (ej: DEV) se toma de platformConfig.enviroment (respuesta de get_configuration_amatia_express).
+  - Al hacer click en el logo de Amatia, se redirige a {origin}{baseName}/#/view/notifications.
+  - {baseName} se obtiene de runtime config (config.json -> baseName).
 
 ## Constantes de layout
 

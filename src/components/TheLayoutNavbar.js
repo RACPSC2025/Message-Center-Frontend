@@ -5,7 +5,7 @@ import { Box, IconButton, SvgIcon, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ReactComponent as AmatiaIcon } from '../assets/icons/amatia-v-logo.svg';
 import { headerHeight, navbarCollapsedWidth, navbarWidth, STATUS } from '../config/constants';
 import { useModuleData } from '../hooks/useModuleData';
@@ -96,6 +96,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { moduleData, fetchAllModulesData, getModuleData, isModuleLoaded } = useModuleData();
   const showSettingsAndHelp = process.env.REACT_APP_SHOW_SETTINGS_HELP === 'true';
 
@@ -186,10 +187,20 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
   }, [moduleData, platformModules]);
 
   const activeModule = useSelector((state) => state.globalData.activeModule);
+  const platformConfig = useSelector((state) => state.platformConfig?.data ?? {});
   const { data: actionCountData = {} } = useSelector(
     (state) => state?.actionData?.actionCount || {}
   );
   const actionCount = actionCountData?.data || {};
+  const environmentLabel =
+    platformConfig?.enviroment || platformConfig?.environment || 'DEV';
+
+  const handleLogoClick = () => {
+    if (location.pathname === '/view/notifications') {
+      return;
+    }
+    navigate('/view/notifications');
+  };
 
   // Default datasets for charts when data isn't available
   const cyclesDataset = [
@@ -233,8 +244,10 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
             alignItems: 'center',
             justifyContent: 'center',
             p: 0.5,
-            transition: 'all 0.3s ease-in-out'
+            transition: 'all 0.3s ease-in-out',
+            cursor: 'pointer'
           }}
+          onClick={handleLogoClick}
         >
           <SvgIcon
             component={AmatiaIcon}
@@ -254,7 +267,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
           }}
         >
           <Typography variant="overline" color="icon.main" display="block" gutterBottom>
-            DEV
+            {environmentLabel}
           </Typography>
 
           <Tooltip title={expanded ? t('Collapse') : t('Expand')} placement="right">
