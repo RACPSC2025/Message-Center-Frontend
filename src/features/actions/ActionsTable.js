@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField } from '@mui/material';
+import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField, Typography } from '@mui/material';
 import {
   Lock as CloseActionIcon,
   Close as CloseIcon,
@@ -86,7 +86,7 @@ export default function ActionTable({
     finalColumms.push({
       field: 'global_edit',
       headerName: 'Opciones',
-      width: 100,
+      width: 125,
       pinned: 'left', // Fijada a la izquierda
       sortable: false,
       filter: false,
@@ -105,17 +105,6 @@ export default function ActionTable({
               <EditIcon fontSize="small" />
             </IconButton>
 
-            <IconButton 
-              size="small" 
-              title={t('comments')}
-              onClick={(event) => {
-                event.stopPropagation();
-                onClickTableAction(params.data, 'view_comment', 'list');
-              }}
-            >
-              <CommentForumIcon fontSize="small" />
-            </IconButton>
-
             <IconButton size="small" title={t('close_action')}
               onClick={(event) => {
                 event.stopPropagation();
@@ -124,6 +113,22 @@ export default function ActionTable({
             >
               <CloseActionIcon fontSize="small" />
             </IconButton>
+
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <IconButton 
+                size="small" 
+                title={t('comments')}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onClickTableAction(params.data, 'view_comment', 'list');
+                }}
+              >
+                <CommentForumIcon fontSize="small" />
+              </IconButton>
+              <Typography variant="body2" color="currentColor" sx={{ fontWeight: 500, fontSize: '0.9rem', ml: -0.2 }}>
+                {params.data.comment_count || 0}
+              </Typography>
+            </Box>
           </Box>
         );
       }
