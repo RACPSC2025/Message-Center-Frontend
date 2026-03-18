@@ -13,8 +13,10 @@ import TableComponent from '../../components/TableComponent';
 import { formatDayjs } from '../../utils/dateTimeFunctions';
 import { COLUMN_TYPES, COLUMN_TYPE_TO_WIDTH_MAPPING } from '../config/table';
 import axiosInstance from '../../lib/axios';
-import { showErrorMsg } from '../../utils/others';
+import { showErrorMsg, showSuccessMsg } from '../../utils/others';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateAction } from '../../stores/actions/updateActionSlice';
 import { Description, Field, Label, Textarea } from '@headlessui/react';
 import clsx from 'clsx';
 
@@ -46,10 +48,17 @@ export default function ActionTable({
   const [globalEditMode, setGlobalEditMode] = useState({
     enabled: false,
     actionId: null,
-    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_email', 'action_created_by_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date', 'module_string_id']
+    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'module_string_id']
   });
 
+  // Estado para acumular cambios pendientes por acción
+  const [pendingChanges, setPendingChanges] = useState({});
+
   const { t } = useTranslation();
+  const dispatch = useDispatch();
+  const { loading: updateLoading, data: updateData, error: updateError } = useSelector(
+    (state) => state?.updateAction || {}
+  );
 
   const updateWidth = useCallback(() => {
     if (tableContainerRef.current) {
@@ -94,7 +103,8 @@ export default function ActionTable({
       cellRenderer: (params) => {
         const isCurrentlyEditing = globalEditMode.enabled && globalEditMode.actionId === params.data.action_id;
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.2, width: '100%' }}>             <IconButton
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.2, width: '100%' }}>             
+            <IconButton
               size="small"
               onClick={() => toggleGlobalEditMode(params.data.action_id)}
               sx={{
@@ -137,9 +147,9 @@ export default function ActionTable({
     // Solo saltamos estas columnas específicas
     const skippedColumns = ['responsible_person', 'action_created_by', 'nb_pais'];
     // Columnas de administradores editables
-    const adminColumns = ['responsible_person_name', 'reviewer_person_email', 'action_created_by_name'];
+    const adminColumns = ['responsible_person_name', 'reviewer_person_name'];
     // Columnas de fecha editables
-    const dateColumns = ['action_closing_date', 'action_real_closing_date', 'action_start_date', 'action_registered_date'];
+    const dateColumns = ['action_closing_date', 'action_real_closing_date', 'action_start_date'];
     
     console.log("columnConfig: ", columnConfig);
 
@@ -184,9 +194,9 @@ export default function ActionTable({
           headerName:
             restColumnConfig.field === 'responsible_person_name'
               ? 'Responsable'
-              : restColumnConfig.field === 'reviewer_person_email'
+              : restColumnConfig.field === 'reviewer_person_name'
               ? 'Revisor'
-              : 'Creado por',
+              : restColumnConfig.headerName,
           width: 200, // ✅ Ancho fijo
           editable: false, // Usamos renderer custom
           cellRenderer: (params) => {
@@ -257,12 +267,72 @@ export default function ActionTable({
     setEditableActions(updatedData);
   };
 
+  // Función para acumular cambios pendientes
+  const addPendingChange = (actionId, field, newValue) => {
+    setPendingChanges(prev => {
+      const currentChanges = prev[actionId] || {};
+      const updatedChanges = {
+        ...currentChanges,
+        [field]: newValue
+      };
+      
+      return {
+        ...prev,
+        [actionId]: updatedChanges
+      };
+    });
+  };
+
+  // Función para procesar y mostrar los cambios acumulados
+  const processPendingChanges = async (actionId) => {
+    const changes = pendingChanges[actionId];
+    if (!changes || Object.keys(changes).length === 0) {
+      //console.log('[API] No hay cambios pendientes para la acción:', actionId);
+      return;
+    }
+
+    const apiPayload = {
+      action_id: parseInt(actionId),
+      ...changes
+    };
+
+    //console.log('[API] Enviando actualización al endpoint:', apiPayload);
+    
+    try {
+      // Despachar la acción de Redux para actualizar
+      const result = await dispatch(updateAction(apiPayload)).unwrap();
+      
+      if (result?.status === 1) {
+        showSuccessMsg(result?.messages || 'Acción actualizada correctamente');
+        
+        // Refrescar datos si hay función de refresco
+        if (onRefreshData) {
+          onRefreshData();
+        }
+      } else {
+        showErrorMsg(result?.messages || 'Error al actualizar la acción');
+      }
+    } catch (error) {
+      showErrorMsg('Error al actualizar la acción');
+    }
+    
+    // Limpiar cambios procesados
+    setPendingChanges(prev => {
+      const newPending = { ...prev };
+      delete newPending[actionId];
+      return newPending;
+    });
+  };
+
   // Manejar el cambio de status
   const handleStatusChange = (actionId, newStatusValue) => {
+    // Acumular cambio pendiente
+    addPendingChange(actionId, 'action_status', newStatusValue);
+    
     const updatedData = editableActions.map((row) =>
       row.action_id === actionId ? { ...row, action_status: newStatusValue } : row
     );
-    console.log('[API] Status actualizado:', { actionId, newStatus: newStatusValue });
+    //console.log('[API] Status actualizado localmente:', { actionId, newStatus: newStatusValue });
     
     setEditableActions(updatedData);
     setEditingStatusCell(null);
@@ -272,29 +342,40 @@ export default function ActionTable({
   const handleAdminChange = (actionId, field, newAdminValue) => {
     // Buscar el label del administrador seleccionado
     const selectedAdmin = administradores.find(a => a.value === newAdminValue);
+    const finalValue = selectedAdmin ? selectedAdmin.label : newAdminValue;
+    
+    // Acumular cambio pendiente
+    addPendingChange(actionId, field, finalValue);
     
     const updatedData = editableActions.map((row) =>
-      row.action_id === actionId ? { ...row, [field]: selectedAdmin ? selectedAdmin.label : newAdminValue } : row
+      row.action_id === actionId ? { ...row, [field]: finalValue } : row
     );
     setEditableActions(updatedData);
     setEditingAdminCell(null);
     
-    console.log('[API] Datos de Actualización:', { actionId, field, newAdmin: newAdminValue });
+    //console.log('[API] Administrador actualizado localmente:', { actionId, field, newAdmin: finalValue });
   };
 
   // Manejar el cambio de fecha
   const handleDateChange = (actionId, field, newDateValue) => {
+    // Acumular cambio pendiente
+    addPendingChange(actionId, field, newDateValue);
+    
     const updatedData = editableActions.map((row) =>
       row.action_id === actionId ? { ...row, [field]: newDateValue } : row
     );
     setEditableActions(updatedData);
     setEditingDateCell(null);
     
-    console.log('[API] Fecha actualizada:', { actionId, field, newDate: newDateValue });
   };
 
-  // 🔄 FUNCIÓN GLOBAL DE EDICIÓN - Nueva funcionalidad
+  // FUNCIÓN GLOBAL DE EDICIÓN - Nueva funcionalidad
   const toggleGlobalEditMode = (actionId) => {
+    const wasEditing = globalEditMode.enabled && globalEditMode.actionId === actionId;
+    
+    // Si estaba editando, procesar los cambios pendientes antes de desactivar
+    if (wasEditing) processPendingChanges(actionId);
+    
     setGlobalEditMode(prev => ({
       enabled: !prev.enabled,
       actionId: prev.enabled ? null : actionId, // Si ya está activo, lo desactiva
