@@ -8,6 +8,8 @@ import MessageCenterCardItem from './MessageCenterCardItem';
 import MessageCenterCarditemSkeleton from './MessageCenterCarditemSkeleton';
 
 const MessageCenterReadTab = ({
+  filterData = {},
+  showArchivedMessages = false,
   selectedMessages,
   messageDetails,
   handleFetchMessagesDetails,
@@ -46,11 +48,33 @@ const MessageCenterReadTab = ({
     }
   }, [isIntersecting, hasReachedEnd, isLoading]);
 
-  const fetchMessages = () => {
+  useEffect(() => {
+    setMessages([]);
+    setHasReachedEnd(false);
+    setPageNum(1);
+    fetchMessages(1, true);
+  }, [filterData, showArchivedMessages]);
+
+  const fetchMessages = (nextPage = pageNum, replaceData = false) => {
     setIsLoading(true);
     const formData = new FormData();
     formData.append('user_id', '1');
-    formData.append('page', pageNum);
+    formData.append('page', nextPage);
+    formData.append('filter_show_archived_messages', showArchivedMessages ? '1' : '0');
+
+    Object.keys(filterData || {}).forEach((filterKey) => {
+      const filterValue = filterData[filterKey];
+      if (filterValue === undefined || filterValue === null || filterValue === '') {
+        return;
+      }
+
+      if (dayjs.isDayjs(filterValue)) {
+        formData.append(filterKey, filterValue.format('YYYY-MM-DD'));
+        return;
+      }
+
+      formData.append(filterKey, filterValue);
+    });
 
     dispatch(dashboardMessageRead(formData)).then((res) => {
       const dataObj = res?.payload;
@@ -58,16 +82,18 @@ const MessageCenterReadTab = ({
         const data = dataObj?.data || [];
         const next = dataObj?.next;
 
-        if (pageNum === 1) {
+        if (replaceData || nextPage === 1) {
           setMessages(data);
           // Seleccionar el primer mensaje si no hay ninguno seleccionado
           if (data.length > 0 && !messageDetails && onMessagesLoaded) {
             onMessagesLoaded(data[0]);
           }
         } else {
-          const existingIds = new Set(messages.map((m) => m.id_message));
-          const newMessages = data.filter((m) => !existingIds.has(m.id_message));
-          setMessages([...messages, ...newMessages]);
+          setMessages((prevMessages) => {
+            const existingIds = new Set(prevMessages.map((m) => m.id_message));
+            const newMessages = data.filter((m) => !existingIds.has(m.id_message));
+            return [...prevMessages, ...newMessages];
+          });
         }
         setHasReachedEnd(!next);
       }

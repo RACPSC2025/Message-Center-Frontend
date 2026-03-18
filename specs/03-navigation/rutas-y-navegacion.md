@@ -56,6 +56,27 @@ Mapeo actual en RoutesFile:
   - Al hacer click en el logo de Amatia, se redirige a {origin}{baseName}/#/view/notifications.
   - {baseName} se obtiene de runtime config (config.json -> baseName).
 
+## Filtros en notifications
+
+- El modulo notifications usa el filtro definido en src/config/filterConfig.js > notifications.
+- Filtros activos:
+  - filter_keywords
+  - filter_start_date
+  - filter_end_date
+- Estos valores se leen desde Redux (filter.modules.notifications.filterData) y se envian por POST en los tabs:
+  - importantes
+  - no leidos
+  - leidos
+- Si se pulsa ClearFilters en BaseFilter para notifications:
+  - se limpia filterData del modulo
+  - los tabs resetean paginacion y vuelven a consultar pagina 1
+  - se limpia la seleccion de mensajes en MessageCenterNotifications
+- En notifications, los tabs Important/Unread/Read consumen filtros del modulo notifications (Redux filter.modules.notifications.filterData):
+  - filter_keywords
+  - filter_start_date
+  - filter_end_date
+- El boton ClearFilters de BaseFilter ejecuta removeAllFilters({ module: 'notifications' }) y dispara recarga de tabs por cambio de filterData.
+
 ## Constantes de layout
 
 - src/config/constants.js

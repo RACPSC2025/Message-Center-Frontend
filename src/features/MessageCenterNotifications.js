@@ -260,6 +260,7 @@ function MessageCenterNotifications() {
   const refreshData = () => {
     // Forzar remount de tabs incrementando la key
     setTabKey((prev) => prev + 1);
+    setSelectedMessages([]);
     setMessageDetails(null);
     setIsFetchingDetails(true);
     setStats(defaultStatistics);
@@ -541,6 +542,8 @@ function MessageCenterNotifications() {
             {activeTab === 0 && (
               <MessageCenterImportantTab
                 key={`important-${tabKey}`}
+                filterData={filterData}
+                showArchivedMessages={showArchivedMessages}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
@@ -558,6 +561,8 @@ function MessageCenterNotifications() {
             {activeTab === 1 && (
               <MessageCenterUnreadTab
                 key={`unread-${tabKey}`}
+                filterData={filterData}
+                showArchivedMessages={showArchivedMessages}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
@@ -575,6 +580,8 @@ function MessageCenterNotifications() {
             {activeTab === 2 && (
               <MessageCenterReadTab
                 key={`read-${tabKey}`}
+                filterData={filterData}
+                showArchivedMessages={showArchivedMessages}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
