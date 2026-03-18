@@ -97,6 +97,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { moduleData, fetchAllModulesData, getModuleData, isModuleLoaded } = useModuleData();
+  const showSettingsAndHelp = process.env.REACT_APP_SHOW_SETTINGS_HELP === 'true';
 
   const [listLegalStatus, setListLegalStatus] = useState({});
   const [loadingLegalStatus, setLoadingLegalStatus] = useState(true);
@@ -282,23 +283,25 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
             />
           ))}
 
-          <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Tooltip title={t('Settings')} placement="right">
-              <IconButton
-                sx={{
-                  color: 'icon.main',
-                  cursor: 'default'
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t('Help')} placement="right">
-              <IconButton sx={{ color: 'icon.main', mt: 1 }}>
-                <HelpOutlineIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          {showSettingsAndHelp && (
+            <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Tooltip title={t('Settings')} placement="right">
+                <IconButton
+                  sx={{
+                    color: 'icon.main',
+                    cursor: 'default'
+                  }}
+                >
+                  <SettingsIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t('Help')} placement="right">
+                <IconButton sx={{ color: 'icon.main', mt: 1 }}>
+                  <HelpOutlineIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
         </Box>
       </Box>
 
