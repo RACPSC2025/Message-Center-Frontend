@@ -10,6 +10,7 @@ import MessageCenterCarditemSkeleton from './MessageCenterCarditemSkeleton';
 const MessageCenterImportantTab = ({
   filterData = {},
   showArchivedMessages = false,
+  showSelectionCheckbox = false,
   selectedMessages,
   messageDetails,
   handleFetchMessagesDetails,
@@ -121,6 +122,7 @@ const MessageCenterImportantTab = ({
           {msgs.map((msg) => (
             <MessageCenterCardItem
               key={msg.id_message}
+              showSelectionCheckbox={showSelectionCheckbox}
               reviewer={msg[singleNotificationEmployeeKey]}
               message={msg[singleNotificationMessageKey]}
               desc={msg[singleNotificationDescriptionKey]}

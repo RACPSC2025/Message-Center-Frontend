@@ -22,6 +22,7 @@ function MessageCenterCardItem({
   onMarkAsRead,
   onMarkAsUnread,
   status,
+  showSelectionCheckbox = false,
   isSelected = false,
   isActive = false,
   isUnread = false,
@@ -119,28 +120,30 @@ function MessageCenterCardItem({
       )}
 
       {/* Checkbox */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 10,
-          top: 10,
-          height: '1.5rem',
-          width: '1.5rem'
-        }}
-      >
-        <Checkbox
+      {showSelectionCheckbox && (
+        <Box
           sx={{
-            p: 0
+            position: 'absolute',
+            left: 10,
+            top: 10,
+            height: '1.5rem',
+            width: '1.5rem'
           }}
-          checked={isSelected}
-          onChange={(event) => {
-            onCheckChanged(event.target.checked);
-          }}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-        />
-      </Box>
+        >
+          <Checkbox
+            sx={{
+              p: 0
+            }}
+            checked={isSelected}
+            onChange={(event) => {
+              onCheckChanged(event.target.checked);
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          />
+        </Box>
+      )}
 
       {/* Ícono de estado de lectura */}
       <Box

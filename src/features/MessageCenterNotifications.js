@@ -69,6 +69,7 @@ function MessageCenterNotifications() {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [tabKey, setTabKey] = useState(0); // Key para forzar remount de tabs
+  const [showSelectionCheckbox] = useState(false);
   const [showSidebar] = useState(false);
   const [showHeaderActions] = useState(false);
 
@@ -544,6 +545,7 @@ function MessageCenterNotifications() {
                 key={`important-${tabKey}`}
                 filterData={filterData}
                 showArchivedMessages={showArchivedMessages}
+                showSelectionCheckbox={showSelectionCheckbox}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
@@ -563,6 +565,7 @@ function MessageCenterNotifications() {
                 key={`unread-${tabKey}`}
                 filterData={filterData}
                 showArchivedMessages={showArchivedMessages}
+                showSelectionCheckbox={showSelectionCheckbox}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
@@ -582,6 +585,7 @@ function MessageCenterNotifications() {
                 key={`read-${tabKey}`}
                 filterData={filterData}
                 showArchivedMessages={showArchivedMessages}
+                showSelectionCheckbox={showSelectionCheckbox}
                 selectedMessages={selectedMessages}
                 messageDetails={messageDetails}
                 handleFetchMessagesDetails={handleFetchMessagesDetails}
