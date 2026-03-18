@@ -42,6 +42,12 @@ Endpoint usado:
 
 - GET /message_center_api/legal_api/get_configuration_amatia_express
 
+Uso adicional de apiUrl en frontend:
+
+- Redirecciones del dropdown de usuario se construyen desde getAPIUrl() (runtime config):
+  - {apiUrl}dashboard
+  - {apiUrl}login-express/
+
 ## Convencion de payload
 
 Muchos endpoints *_amatia_express trabajan con FormData para operaciones create/update con adjuntos o metadatos.

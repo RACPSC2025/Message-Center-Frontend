@@ -5,6 +5,7 @@ import { deepOrange } from '@mui/material/colors';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from 'react-i18next';
+import { getAPIUrl } from '../config/constants';
 import storage from '../utils/storage';
 
 const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
@@ -22,9 +23,16 @@ const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
   const handleSignOut = () => {
     storage.clearToken();
     storage.removeSystemToken();
-    // window.location.href = 'https://compliance.dev.sofacto.info/amatia/auth/';
-    window.location.href = `${process.env.REACT_APP_API_URL}`;
-  }
+    const apiUrl = getAPIUrl() || '';
+    const normalizedBase = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
+    window.location.href = `${normalizedBase}login-express/`;
+  };
+
+  const handleBackToDashboard = () => {
+    const apiUrl = getAPIUrl() || '';
+    const normalizedBase = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
+    window.location.href = `${normalizedBase}dashboard`;
+  };
   
   const truncateText = (text, maxLength = 8) => {
     //console.log("userDetails", userDetails);
@@ -72,7 +80,7 @@ const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
       </Box>
   
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-        <MenuItem>{t('BackToDashboard')}</MenuItem>
+        <MenuItem onClick={handleBackToDashboard}>{t('BackToDashboard')}</MenuItem>
         <MenuItem onClick={handleSignOut}>{t('SignOut')}</MenuItem>
       </Menu>
     </>

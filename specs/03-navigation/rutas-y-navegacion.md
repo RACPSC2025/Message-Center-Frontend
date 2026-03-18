@@ -47,6 +47,10 @@ Mapeo actual en RoutesFile:
   - legals -> /view/LegalMatriz
   - tasks -> /view/events
   - actions -> /view/actions
+- En el dropdown de usuario del header:
+  - BackToDashboard redirige a {apiUrl}dashboard
+  - SignOut redirige a {apiUrl}login-express/
+  - {apiUrl} se obtiene de runtime config (public/config.json -> window.__APP_CONFIG__.apiUrl)
 
 ## Constantes de layout
 
