@@ -33,11 +33,14 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import SpeedDialComponent from '../components/SpeedDialComponent';
 import TableComponent from '../components/TableComponent';
+import { useCascadingFilters } from '../hooks/useCascadingFilters';
+import { useHasPermission, useModuleFeature } from '../hooks/usePlatformConfig';
 import { fetchListLegals, fetchListLegalsComplete } from '../stores/legal/fetchListLegalsSlice';
 import DetallesDrawer from './MessageCenterLegalMatriz/DetallesDrawer';
 import LegalMatrizDrawer from './MessageCenterLegalMatriz/LegalMatrizDrawer';
 import ListView from './MessageCenterLegalMatriz/ListView';
 import OptionsDrawer from './MessageCenterLegalMatriz/OptionsDrawer';
+import { DEFAULT_LEGAL_MATRIX_TAB_ID, LEGAL_MATRIX_TAB_IDS } from './MessageCenterLegalMatriz/tabIds';
 import BaseFeaturePageLayout from '../components/BaseFeaturePageLayout';
 import ReactFlagsSelect from 'react-flags-select';
 import {
@@ -74,7 +77,7 @@ const useFilterItemValue = (module, fieldName) =>
 export function Component() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTabId, setActiveTabId] = useState(DEFAULT_LEGAL_MATRIX_TAB_ID);
   const [tabValue, setTabValue] = useState(0);
   const [idRequisito, setIdRequisito] = useState(0);
   const [optinDrawerData, setOptinDrawerData] = useState();
@@ -93,6 +96,8 @@ export function Component() {
   const [list_type_of_rule, setList_type_of_rule] = useState([]);
   const [level1, setLevel1] = useState('');
   const [test, setTest] = useState([]);
+  const canCreateRequirement = useHasPermission('legal_matrix', 'create_requirement');
+  const canViewAnalysisIa = Boolean(useModuleFeature('legal_matrix', 'analysis_ia'));
 
   const actionStatusItem = useFilterItemValue('LegalMatriz', 'filter_business');
   const actionKeyWords = useFilterItemValue('LegalMatriz', 'filter_keywords');
@@ -119,20 +124,13 @@ export function Component() {
   const newActionFormModel = useRef(null);
   const [actionFormModel, setActionFormModel] = useState({});
   const [selectedAction, setSelectedAction] = useState(null);
-  const [level1Options, setLevel1Options] = useState([]);
   const [level1Selected, setLevel1Selected] = useState('');
-  const [level2Options, setLevel2Options] = useState([]);
   const [level2Selected, setLevel2Selected] = useState('');
-  const [loadingLevel2, setLoadingLevel2] = useState(true);
-  const [level3Options, setLevel3Options] = useState([]);
   const [level3Selected, setLevel3Selected] = useState('');
-  const [loadingLevel3, setLoadingLevel3] = useState(true);
-  const [level4Options, setLevel4Options] = useState([]);
   const [level4Selected, setLevel4Selected] = useState('');
-  const [loadingLevel4, setLoadingLevel4] = useState(true);
-  const [level5ptions, setLevel5Options] = useState([]);
   const [level5Selected, setLevel5Selected] = useState('');
-  const [loadingLevel5, setLoadingLevel5] = useState(true);
+  const enableLevel5 = Boolean(useFilterItemValue('LegalMatriz', 'enable_level5'));
+  const [organizationFilterState, setOrganizationFilterState] = useState({});
 
   const shouldCreateNewAction = useSelector((state) => state?.globalData?.shouldCreateNewAction);
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
@@ -152,6 +150,7 @@ export function Component() {
     useSelector((state) => selectAppliedFilterModel(state, module));
 
   const filterData = useAppliedFilterModel('actions');
+  const legalFilterData = useAppliedFilterModel('LegalMatriz');
 
   const handleCountryChange = (event) => {
     setLegals([]);
@@ -465,10 +464,10 @@ export function Component() {
           handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
           handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
           
-          // Abrir el drawer en la pestaña de comunicaciones (índice 1)
+          // Abrir OptionsDrawer en LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS
           setOptinDrawerData(params?.data);
           setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-          setActiveTab(1); // Tab de regulatory_communications
+          setActiveTabId(LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS);
           handleOpenOptionsDrawer();
         };
         
@@ -514,8 +513,9 @@ export function Component() {
       }
     },
     {
-      field: '',
+      field: 'analysis_with_amatia',
       headerName: t('AMAT-IA'),
+      hide: !canViewAnalysisIa,
       headerComponent: () => (
         <div
           style={customHeaderStyle}>
@@ -532,7 +532,7 @@ export function Component() {
                 color="primary"
                 onClick={() => {
                   handleOpenOptionsDrawer();
-                  setActiveTab(2);
+                  setActiveTabId(LEGAL_MATRIX_TAB_IDS.ANALYSIS_OF_REGULATION);
                   handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
                   handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
                   handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
@@ -563,11 +563,11 @@ export function Component() {
                 size="small"
                 color="primary"
                 onClick={() => {
-                  handleOpenOptionsDrawer();
-                  setActiveTab(0);
-                  setOptinDrawerData(params?.data);
+                  //handleOpenOptionsDrawer();
+                  //setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+                  //setOptinDrawerData(params?.data);
                   //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                  setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+                  //setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
                 }}
               >
                 <MoreVertOutlined />
@@ -605,7 +605,7 @@ export function Component() {
               title={t('Add_articles')}
               onClick={() => {
                 handleOpenOptionsDrawer();
-                setActiveTab(3);
+                setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
                 setOptinDrawerData(params?.data);
                 //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
                 setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
@@ -766,9 +766,22 @@ export function Component() {
     }
   ]);
 
-  const speedDialActions = [
-    { icon: <AddCircleOutline />, name: t('create_legal_requirement') },
-  ];
+  useEffect(() => {
+    setColumnDefs((prev) =>
+      prev.map((column) =>
+        column.field === 'analysis_with_amatia'
+          ? {
+              ...column,
+              hide: !canViewAnalysisIa
+            }
+          : column
+      )
+    );
+  }, [canViewAnalysisIa]);
+
+  const speedDialActions = canCreateRequirement
+    ? [{ icon: <AddCircleOutline />, name: t('create_legal_requirement') }]
+    : [];
 
   const viewTab = [
     {
@@ -887,16 +900,166 @@ export function Component() {
   useEffect(() => {
     if (isSelected_articulo_id && selected_articulo_id && selected_requisito_id) {
       setOptinDrawerData({ id: selected_requisito_id });
-      setActiveTab(3); // Tab de artículos
+      setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
       handleOpenOptionsDrawer();
     }
   }, [isSelected_articulo_id, selected_articulo_id, selected_requisito_id]);
 
+  const getFormDataFromSelectedValues = (selectedValues) => {
+    const formData = new FormData();
+    Object.entries(selectedValues).forEach(([key, value]) => {
+      if (value) {
+        formData.append(`id_${key}`, value);
+      }
+    });
+    return formData;
+  };
+
+  const fetchLevelData = (level, formData = null) => {
+    return new Promise((resolve, reject) => {
+      const payload = formData ? { level, formData } : { level };
+
+      dispatch(fetchTaskListLevel(payload))
+        .then((response) => {
+          const apiResponse = response?.payload?.data;
+
+          if (apiResponse?.messages === 'Success' && Array.isArray(apiResponse?.data)) {
+            const levelOptions = apiResponse.data.map((item) => ({
+              value: item.value,
+              label: item.label
+            }));
+            resolve(levelOptions);
+          } else {
+            reject(new Error(`Failed to fetch level ${level} data`));
+          }
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  };
+
+  const filterDefinitions = useMemo(() => {
+    const definitions = [
+      {
+        id: 'level1',
+        label: 'Business',
+        fetchOptions: async () => fetchLevelData(1)
+      },
+      {
+        id: 'level2',
+        label: 'Company',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(2, formData);
+        }
+      },
+      {
+        id: 'level3',
+        label: 'Region',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(3, formData);
+        }
+      },
+      {
+        id: 'level4',
+        label: 'Location',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(4, formData);
+        }
+      }
+    ];
+
+    if (enableLevel5) {
+      definitions.push({
+        id: 'level5',
+        label: 'Level 5',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(5, formData);
+        }
+      });
+    }
+
+    return definitions;
+  }, [enableLevel5]);
+
+  const getInitialOrganizationValues = useMemo(() => {
+    const initialValues = {
+      level1: legalFilterData?.level1 || '',
+      level2: legalFilterData?.level2 || '',
+      level3: legalFilterData?.level3 || '',
+      level4: legalFilterData?.level4 || ''
+    };
+
+    if (enableLevel5) {
+      initialValues.level5 = legalFilterData?.level5 || '';
+    }
+
+    return initialValues;
+  }, [enableLevel5, legalFilterData]);
+
+  const handleOrganizationFilterChange = (values) => {
+    const previousValues = { ...organizationFilterState };
+    setOrganizationFilterState(values);
+
+    setLevel1Selected(values.level1 || '');
+    setLevel2Selected(values.level2 || '');
+    setLevel3Selected(values.level3 || '');
+    setLevel4Selected(values.level4 || '');
+    setLevel5Selected(values.level5 || '');
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value && value !== previousValues[key]) {
+        dispatch(
+          setFilter({
+            module: 'LegalMatriz',
+            updatedFilter: { [key]: value }
+          })
+        );
+      }
+    });
+
+    Object.entries(previousValues).forEach(([key, prevValue]) => {
+      if (prevValue && (!values[key] || values[key] === '')) {
+        dispatch(
+          removeFilter({
+            module: 'LegalMatriz',
+            fieldID: key
+          })
+        );
+      }
+    });
+  };
+
+  const {
+    filters: cascadingFilters,
+    handleFilterChange: handleCascadingFilterChange,
+    resetFilters: resetCascadingFilters
+  } = useCascadingFilters({
+    filterDefinitions,
+    initialValues: getInitialOrganizationValues,
+    onFilterChange: handleOrganizationFilterChange
+  });
+
   function handleClearFilters() {
+    resetCascadingFilters();
+    ['level1', 'level2', 'level3', 'level4', 'level5'].forEach((key) => {
+      dispatch(
+        removeFilter({
+          module: 'LegalMatriz',
+          fieldID: key
+        })
+      );
+    });
+    setOrganizationFilterState({});
     setLevel1Selected('');
     setLevel2Selected('');
     setLevel3Selected('');
     setLevel4Selected('');
+    setLevel5Selected('');
   }
 
   const handleResetFilters = () => {
@@ -928,33 +1091,6 @@ export function Component() {
     }
   };
 
-  const handleFetchTaskListLevel = (level, formData) => {
-    const optionSetters = {
-      1: setLevel1Options,
-      2: setLevel2Options,
-      3: setLevel3Options,
-      4: setLevel4Options
-    };
-    const loadingSetter = {
-      2: setLoadingLevel2,
-      3: setLoadingLevel3,
-      4: setLoadingLevel4
-    };
-    loadingSetter[level]?.(true);
-    const data = { level, formData };
-    dispatch(fetchTaskListLevel(data)).then((data) => {
-      if (data?.payload?.messages === 'Success') {
-        const level1Options = data?.payload?.data.map((item) => ({
-          value: item.value,
-          label: item.label
-        }));
-
-        optionSetters[level]?.(level1Options);
-      }
-      loadingSetter[level]?.(false);
-    });
-  };
-
   const handleFetchActionList = () => {
     const formData = prepareAPIParams();
     dispatch(fetchActionList(formData));
@@ -982,40 +1118,13 @@ export function Component() {
     }
   };
 
-  const filterArray = [
-    {
-      id: 'level1',
-      label: 'Business',
-      value: level1Selected,
-      handleChange: setLevel1Selected,
-      options: level1Options,
-      isDisabled: false
-    },
-    {
-      id: 'level2',
-      label: 'Company',
-      value: level2Selected,
-      handleChange: setLevel2Selected,
-      options: level2Options,
-      isDisabled: loadingLevel2
-    },
-    {
-      id: 'level3',
-      label: 'Region',
-      value: level3Selected,
-      handleChange: setLevel3Selected,
-      options: level3Options,
-      isDisabled: loadingLevel3
-    },
-    {
-      id: 'level4',
-      label: 'Location',
-      value: level4Selected,
-      handleChange: setLevel4Selected,
-      options: level4Options,
-      isDisabled: loadingLevel4
-    }
-  ];
+  const filterArray = cascadingFilters.map((filter) => ({
+    id: filter.id,
+    label: filter.label,
+    value: filter.value,
+    options: filter.options,
+    isDisabled: filter.isDisabled || filter.isLoading
+  }));
 
   useEffect(() => {
     handleFetchActionList();
@@ -1036,37 +1145,6 @@ export function Component() {
     }
     setActionFormModel(clone(newActionFormModel.value));
   }, [shouldCreateNewAction]);
-
-  useEffect(() => {
-    handleFetchTaskListLevel(1);
-  }, []);
-
-  useEffect(() => {
-    if (level1Selected) {
-      setLoadingLevel2(true);
-      const level2FormData = new FormData();
-      level2FormData.append('id_level1', level1Selected);
-      handleFetchTaskListLevel(2, level2FormData);
-    }
-  }, [level1Selected]);
-
-  useEffect(() => {
-    if (level2Selected) {
-      setLoadingLevel3(true);
-      const level3FormData = new FormData();
-      level3FormData.append('id_level2', level2Selected);
-      handleFetchTaskListLevel(3, level3FormData);
-    }
-  }, [level2Selected]);
-
-  useEffect(() => {
-    if (level3Selected) {
-      setLoadingLevel4(true);
-      const level4FormData = new FormData();
-      level4FormData.append('id_level3', level3Selected);
-      handleFetchTaskListLevel(4, level4FormData);
-    }
-  }, [level3Selected]);
 
   const selectedColumns = useSelector((state) =>
     selectFilterItemValue(state, 'task', 'selectedColumns')
@@ -1124,7 +1202,7 @@ export function Component() {
                       id={filter?.id}
                       value={filter?.value}
                       disabled={filter?.isDisabled}
-                      onChange={(e) => filter?.handleChange(e.target.value)}
+                      onChange={(e) => handleCascadingFilterChange(filter?.id, e.target.value)}
                     >
                       {filter?.options.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
@@ -1233,24 +1311,26 @@ export function Component() {
           ) : null}
         </Box>
 
-        <SpeedDialComponent
-          openSpeedDial={openSpeedDial}
-          handleCloseSpeedDial={() => setOpenSpeedDial(false)}
-          handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-          speedDialActions={speedDialActions}
-          handleClick={() => {
-            handleOpenOptionsDrawer();
-            setActiveTab(0);
-            setOptinDrawerData(null);
-            setOptinDrawerTitle(t('create_legal_requirement'));
-          }}
-        />
+        {canCreateRequirement && (
+          <SpeedDialComponent
+            openSpeedDial={openSpeedDial}
+            handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+            handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+            speedDialActions={speedDialActions}
+            handleClick={() => {
+              handleOpenOptionsDrawer();
+              setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+              setOptinDrawerData(null);
+              setOptinDrawerTitle(t('create_legal_requirement'));
+            }}
+          />
+        )}
 
         <OptionsDrawer
           openOptionsDrawer={openOptionsDrawer}
           onCloseOptionsDrawer={handleCloseOptionsDrawer}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTabId={activeTabId}
+          setActiveTabId={setActiveTabId}
           optinDrawerData={optinDrawerData}
           Title={optinDrawerTitle}
         />

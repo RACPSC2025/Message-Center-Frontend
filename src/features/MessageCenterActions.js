@@ -18,13 +18,14 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../components/SpeedDialComponent';
+import { useCascadingFilters } from '../hooks/useCascadingFilters';
 import { fetchActionFormFields } from '../stores/actions/fetchActionFormFieldsSlice';
 import { fetchActionFormModel } from '../stores/actions/fetchActionFormModelSlice';
 import { fetchActionList } from '../stores/actions/fetchActionSlice';
 import { fetchTableColumns } from '../stores/actions/fetchTableColumnsSlice';
 import { getActionDetails } from '../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../stores/actions/submitActionFormSlice';
-import { selectAppliedFilterModel, selectListOptions } from '../stores/filterSlice';
+import { removeFilter, selectAppliedFilterModel, selectListOptions, setFilter } from '../stores/filterSlice';
 import { toggleShouldCreateNewAction } from '../stores/globalDataSlice';
 import { fetchTaskListLevel } from '../stores/tasks/fetchtaskListLevelSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../utils/others';
@@ -52,20 +53,11 @@ export function Component() {
   const [selectedAction, setSelectedAction] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewType, setViewType] = useState(null);
-  const [level1Options, setLevel1Options] = useState([]);
-  const [level1Selected, setLevel1Selected] = useState('');
-  const [level2Options, setLevel2Options] = useState([]);
-  const [level2Selected, setLevel2Selected] = useState('');
-  const [loadingLevel2, setLoadingLevel2] = useState(true);
-  const [level3Options, setLevel3Options] = useState([]);
-  const [level3Selected, setLevel3Selected] = useState('');
-  const [loadingLevel3, setLoadingLevel3] = useState(true);
-  const [level4Options, setLevel4Options] = useState([]);
-  const [level4Selected, setLevel4Selected] = useState('');
-  const [loadingLevel4, setLoadingLevel4] = useState(true);
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
+  const [organizationFilterState, setOrganizationFilterState] = useState({});
 
   const filterData = useAppliedFilterModel('actions');
+  const enableLevel5 = Boolean(filterData?.enable_level5);
 
   const shouldCreateNewAction = useSelector((state) => state?.globalData?.shouldCreateNewAction);
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
@@ -136,38 +128,150 @@ export function Component() {
   };
 
   function handleClearFilters() {
-    setLevel1Selected('');
-    setLevel2Selected('');
-    setLevel3Selected('');
-    setLevel4Selected('');
+    resetCascadingFilters();
+    ['id_level1', 'id_level2', 'id_level3', 'id_level4', 'id_level5'].forEach((key) => {
+      dispatch(
+        removeFilter({
+          module: 'actions',
+          fieldID: key
+        })
+      );
+    });
+    setOrganizationFilterState({});
   }
 
-  const handleFetchTaskListLevel = (level, formData) => {
-    const optionSetters = {
-      1: setLevel1Options,
-      2: setLevel2Options,
-      3: setLevel3Options,
-      4: setLevel4Options
-    };
-    const loadingSetter = {
-      2: setLoadingLevel2,
-      3: setLoadingLevel3,
-      4: setLoadingLevel4
-    };
-    loadingSetter[level]?.(true);
-    const data = { level, formData };
-    dispatch(fetchTaskListLevel(data)).then((data) => {
-      if (data?.payload?.messages === 'Success') {
-        const level1Options = data?.payload?.data.map((item) => ({
+  const getFormDataFromSelectedValues = (selectedValues) => {
+    const formData = new FormData();
+    Object.entries(selectedValues).forEach(([key, value]) => {
+      if (value) {
+        formData.append(`id_${key}`, value);
+      }
+    });
+    return formData;
+  };
+
+  const fetchLevelData = (level, formData = null) => {
+    return new Promise((resolve, reject) => {
+      const payload = formData ? { level, formData } : { level };
+
+      dispatch(fetchTaskListLevel(payload))
+        .then((response) => {
+          const apiResponse = response?.payload?.data;
+
+          if (apiResponse?.messages === 'Success' && Array.isArray(apiResponse?.data)) {
+            const levelOptions = apiResponse.data.map((item) => ({
           value: item.value,
           label: item.label
         }));
-
-        optionSetters[level]?.(level1Options);
-      }
-      loadingSetter[level]?.(false);
+            resolve(levelOptions);
+          } else {
+            reject(new Error(`Failed to fetch level ${level} data`));
+          }
+        })
+        .catch((error) => {
+          reject(error);
+        });
     });
   };
+
+  const filterDefinitions = useMemo(() => {
+    const definitions = [
+      {
+        id: 'level1',
+        label: 'Business',
+        fetchOptions: async () => fetchLevelData(1)
+      },
+      {
+        id: 'level2',
+        label: 'Company',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(2, formData);
+        }
+      },
+      {
+        id: 'level3',
+        label: 'Region',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(3, formData);
+        }
+      },
+      {
+        id: 'level4',
+        label: 'Location',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(4, formData);
+        }
+      }
+    ];
+
+    if (enableLevel5) {
+      definitions.push({
+        id: 'level5',
+        label: 'Level 5',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(5, formData);
+        }
+      });
+    }
+
+    return definitions;
+  }, [enableLevel5]);
+
+  const getInitialOrganizationValues = useMemo(() => {
+    const initialValues = {
+      level1: filterData?.id_level1 || '',
+      level2: filterData?.id_level2 || '',
+      level3: filterData?.id_level3 || '',
+      level4: filterData?.id_level4 || ''
+    };
+
+    if (enableLevel5) {
+      initialValues.level5 = filterData?.id_level5 || '';
+    }
+
+    return initialValues;
+  }, [enableLevel5, filterData]);
+
+  const handleOrganizationFilterChange = (values) => {
+    const previousValues = { ...organizationFilterState };
+    setOrganizationFilterState(values);
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value && value !== previousValues[key]) {
+        dispatch(
+          setFilter({
+            module: 'actions',
+            updatedFilter: { [`id_${key}`]: value }
+          })
+        );
+      }
+    });
+
+    Object.entries(previousValues).forEach(([key, prevValue]) => {
+      if (prevValue && (!values[key] || values[key] === '')) {
+        dispatch(
+          removeFilter({
+            module: 'actions',
+            fieldID: `id_${key}`
+          })
+        );
+      }
+    });
+  };
+
+  const {
+    filters: cascadingFilters,
+    handleFilterChange: handleCascadingFilterChange,
+    resetFilters: resetCascadingFilters
+  } = useCascadingFilters({
+    filterDefinitions,
+    initialValues: getInitialOrganizationValues,
+    onFilterChange: handleOrganizationFilterChange
+  });
 
   const handleFetchActionList = () => {
     const formData = prepareAPIParams();
@@ -307,40 +411,13 @@ export function Component() {
 
   const speedDialActions = [{ icon: <Add />, name: 'Crear Acción' }];
 
-  const filterArray = [
-    {
-      id: 'level1',
-      label: 'Business',
-      value: level1Selected,
-      handleChange: setLevel1Selected,
-      options: level1Options,
-      isDisabled: false
-    },
-    {
-      id: 'level2',
-      label: 'Company',
-      value: level2Selected,
-      handleChange: setLevel2Selected,
-      options: level2Options,
-      isDisabled: loadingLevel2
-    },
-    {
-      id: 'level3',
-      label: 'Region',
-      value: level3Selected,
-      handleChange: setLevel3Selected,
-      options: level3Options,
-      isDisabled: loadingLevel3
-    },
-    {
-      id: 'level4',
-      label: 'Location',
-      value: level4Selected,
-      handleChange: setLevel4Selected,
-      options: level4Options,
-      isDisabled: loadingLevel4
-    }
-  ];
+  const filterArray = cascadingFilters.map((filter) => ({
+    id: filter.id,
+    label: filter.label,
+    value: filter.value,
+    options: filter.options,
+    isDisabled: filter.isDisabled || filter.isLoading
+  }));
 
   const handleFetchTableColumns = () => {
     dispatch(fetchTableColumns()).then((data) => {
@@ -422,41 +499,6 @@ export function Component() {
     setActionFormModel(clone(newActionFormModel.value));
   }, [shouldCreateNewAction]);
 
-  useEffect(() => {
-    // Fetch level 1
-    handleFetchTaskListLevel(1);
-  }, []);
-
-  useEffect(() => {
-    // Fetch level 2 if level 1 is selected
-    if (level1Selected) {
-      setLoadingLevel2(true);
-      const level2FormData = new FormData();
-      level2FormData.append('id_level1', level1Selected);
-      handleFetchTaskListLevel(2, level2FormData);
-    }
-  }, [level1Selected]);
-
-  useEffect(() => {
-    // Fetch level 3 if level 2 is selected
-    if (level2Selected) {
-      setLoadingLevel3(true);
-      const level3FormData = new FormData();
-      level3FormData.append('id_level2', level2Selected);
-      handleFetchTaskListLevel(3, level3FormData);
-    }
-  }, [level2Selected]);
-
-  useEffect(() => {
-    // Fetch level 4 if level 3 is selected
-    if (level3Selected) {
-      setLoadingLevel4(true);
-      const level4FormData = new FormData();
-      level4FormData.append('id_level3', level3Selected);
-      handleFetchTaskListLevel(4, level4FormData);
-    }
-  }, [level3Selected]);
-
   return (
     <>
       <BaseFeaturePageLayout>
@@ -479,7 +521,7 @@ export function Component() {
                       id={filter?.id}
                       value={filter?.value}
                       disabled={filter?.isDisabled}
-                      onChange={(e) => filter?.handleChange(e.target.value)}
+                      onChange={(e) => handleCascadingFilterChange(filter?.id, e.target.value)}
                     >
                       {filter?.options.map((option) => (
                         <MenuItem key={option.value} value={option.value}>

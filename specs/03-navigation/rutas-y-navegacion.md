@@ -19,6 +19,12 @@ Mapeo actual en RoutesFile:
 - findings
 - LegalMatriz
 
+Componentes activos por ruta:
+
+- /view/events -> src/features/tasks/Tasks.js
+- /view/actions -> src/features/actions/Actions.js
+- /view/LegalMatriz -> src/features/MessageCenterLegalMatriz.js
+
 ## Origen de permisos y visibilidad
 
 - src/config/generalConfig.js construye modulePermissions con base en:
@@ -84,3 +90,61 @@ Mapeo actual en RoutesFile:
   - navbarWidth
   - navbarCollapsedWidth
   - backgroundColor
+
+## Navegacion interna de LegalMatriz (OptionsDrawer)
+
+Archivos:
+
+- src/features/MessageCenterLegalMatriz.js
+- src/features/MessageCenterLegalMatriz/OptionsDrawer.js
+- src/features/MessageCenterLegalMatriz/tabIds.js
+
+Regla principal:
+
+- La navegacion entre tabs del drawer usa identificadores estables (tabId), no indices numericos.
+- Esto evita redirecciones incorrectas cuando hay tabs ocultos por permisos/features.
+
+Tab IDs compartidos:
+
+- create_legal_requirement
+- regulatory_communications
+- analysis_of_regulation
+- articles
+- compliance
+
+Redirecciones desde la tabla de requerimientos:
+
+- Columna comunications -> regulatory_communications
+- Columna analysis_with_amatia -> analysis_of_regulation
+- Columna articles -> articles
+
+Reglas de visibilidad en UI (legal_matrix):
+
+- Boton create_legal_requirement (SpeedDial): visible solo si permissions.create_requirement = true
+- Tab create_legal_requirement: visible solo si permissions.create_article = true
+- Columna analysis_with_amatia y tab analysis_of_regulation: visibles solo si features.analysis_ia = true
+- Tab compliance: visible solo si features.compliance_view = true
+
+## Filtros jerarquicos en LegalMatriz, actions y events
+
+Regla general:
+
+- Los modulos LegalMatriz, actions y events (tasks) usan el patron de filtros en cascada con useCascadingFilters.
+- En ruteo real, este comportamiento vive en:
+  - src/features/MessageCenterLegalMatriz.js
+  - src/features/actions/Actions.js
+  - src/features/tasks/Tasks.js
+- El flujo de niveles es level1 -> level2 -> level3 -> level4 y level5 solo cuando enable_level5 es true.
+- Al cambiar un nivel, se limpian automaticamente los niveles dependientes.
+
+Persistencia en Redux:
+
+- LegalMatriz: level1..level5
+- events: level1..level5
+- actions: id_level1..id_level5
+
+Comportamiento de Clear Filters:
+
+- Limpia niveles en estado local del componente.
+- Limpia niveles en Redux (removeFilter por cada nivel).
+- Reinicia opciones dependientes en UI (resetFilters del hook).

@@ -1,11 +1,24 @@
 import { Add, Close, CheckCircle } from '@mui/icons-material';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { AppBar, Box, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
+import {
+  AppBar,
+  Box,
+  Button,
+  Drawer,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Toolbar,
+  Typography
+} from '@mui/material';
 import { clone, isEmpty, isObject } from 'radash';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
+import { useCascadingFilters } from '../../hooks/useCascadingFilters';
 import { useModuleData } from '../../hooks/useModuleData';
 import { fetchActionFormFields } from '../../stores/actions/fetchActionFormFieldsSlice';
 import { fetchActionFormModel } from '../../stores/actions/fetchActionFormModelSlice';
@@ -13,8 +26,9 @@ import { fetchActionList, fetchActionCount } from '../../stores/actions/fetchAct
 import { fetchTableColumns } from '../../stores/actions/fetchTableColumnsSlice';
 import { getActionDetails } from '../../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../../stores/actions/submitActionFormSlice';
-import { selectAppliedFilterModel, selectListOptions } from '../../stores/filterSlice';
+import { removeFilter, selectAppliedFilterModel, selectListOptions, setFilter } from '../../stores/filterSlice';
 import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
+import { fetchTaskListLevel } from '../../stores/tasks/fetchtaskListLevelSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
 
@@ -43,8 +57,10 @@ export function Component() {
   const [viewType, setViewType] = useState(null);
   const [initialCommentTab, setInitialCommentTab] = useState('list'); // Nuevo estado
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
+  const [organizationFilterState, setOrganizationFilterState] = useState({});
 
   const filterData = useAppliedFilterModel('actions');
+  const enableLevel5 = Boolean(filterData?.enable_level5);
 
   const shouldCreateNewAction = useSelector((state) => state?.globalData?.shouldCreateNewAction);
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
@@ -124,6 +140,160 @@ export function Component() {
       dispatch(toggleShouldCreateNewAction({ status: false }));
     }
   };
+
+  const handleClearFilters = () => {
+    resetCascadingFilters();
+    ['id_level1', 'id_level2', 'id_level3', 'id_level4', 'id_level5'].forEach((key) => {
+      dispatch(
+        removeFilter({
+          module: 'actions',
+          fieldID: key
+        })
+      );
+    });
+    setOrganizationFilterState({});
+  };
+
+  const getFormDataFromSelectedValues = (selectedValues) => {
+    const formData = new FormData();
+    Object.entries(selectedValues).forEach(([key, value]) => {
+      if (value) {
+        formData.append(`id_${key}`, value);
+      }
+    });
+    return formData;
+  };
+
+  const fetchLevelData = (level, formData = null) => {
+    return new Promise((resolve, reject) => {
+      const payload = formData ? { level, formData } : { level };
+
+      dispatch(fetchTaskListLevel(payload))
+        .then((response) => {
+          const apiResponse = response?.payload?.data;
+
+          if (apiResponse?.messages === 'Success' && Array.isArray(apiResponse?.data)) {
+            const levelOptions = apiResponse.data.map((item) => ({
+              value: item.value,
+              label: item.label
+            }));
+            resolve(levelOptions);
+          } else {
+            reject(new Error(`Failed to fetch level ${level} data`));
+          }
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  };
+
+  const filterDefinitions = useMemo(() => {
+    const definitions = [
+      {
+        id: 'level1',
+        label: 'Business',
+        fetchOptions: async () => fetchLevelData(1)
+      },
+      {
+        id: 'level2',
+        label: 'Company',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(2, formData);
+        }
+      },
+      {
+        id: 'level3',
+        label: 'Region',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(3, formData);
+        }
+      },
+      {
+        id: 'level4',
+        label: 'Location',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(4, formData);
+        }
+      }
+    ];
+
+    if (enableLevel5) {
+      definitions.push({
+        id: 'level5',
+        label: 'Level 5',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(5, formData);
+        }
+      });
+    }
+
+    return definitions;
+  }, [enableLevel5]);
+
+  const getInitialOrganizationValues = useMemo(() => {
+    const initialValues = {
+      level1: filterData?.id_level1 || '',
+      level2: filterData?.id_level2 || '',
+      level3: filterData?.id_level3 || '',
+      level4: filterData?.id_level4 || ''
+    };
+
+    if (enableLevel5) {
+      initialValues.level5 = filterData?.id_level5 || '';
+    }
+
+    return initialValues;
+  }, [enableLevel5, filterData]);
+
+  const handleOrganizationFilterChange = (values) => {
+    const previousValues = { ...organizationFilterState };
+    setOrganizationFilterState(values);
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value && value !== previousValues[key]) {
+        dispatch(
+          setFilter({
+            module: 'actions',
+            updatedFilter: { [`id_${key}`]: value }
+          })
+        );
+      }
+    });
+
+    Object.entries(previousValues).forEach(([key, prevValue]) => {
+      if (prevValue && (!values[key] || values[key] === '')) {
+        dispatch(
+          removeFilter({
+            module: 'actions',
+            fieldID: `id_${key}`
+          })
+        );
+      }
+    });
+  };
+
+  const {
+    filters: cascadingFilters,
+    handleFilterChange: handleCascadingFilterChange,
+    resetFilters: resetCascadingFilters
+  } = useCascadingFilters({
+    filterDefinitions,
+    initialValues: getInitialOrganizationValues,
+    onFilterChange: handleOrganizationFilterChange
+  });
+
+  const filterArray = cascadingFilters.map((filter) => ({
+    id: filter.id,
+    label: filter.label,
+    value: filter.value,
+    options: filter.options,
+    isDisabled: filter.isDisabled || filter.isLoading
+  }));
 
   const handleFetchActionList = () => {
     const formData = prepareAPIParams();
@@ -441,6 +611,32 @@ export function Component() {
       >
         
         <Box sx={{ pt: 2, px: 4, display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Box display="flex" justifyContent="start" gap={1} alignItems="center" flexGrow={1}>
+            {filterArray?.map((filter, filterIndex) => {
+              return (
+                <FormControl sx={{ minWidth: 100 }} size="small" key={filterIndex}>
+                  <InputLabel id={filter?.id}>{t(filter?.label)}</InputLabel>
+                  <Select
+                    labelId={filter?.id}
+                    id={filter?.id}
+                    value={filter?.value}
+                    disabled={filter?.isDisabled}
+                    onChange={(e) => handleCascadingFilterChange(filter?.id, e.target.value)}
+                  >
+                    {filter?.options.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              );
+            })}
+
+            <Button variant="outlined" color="primary" onClick={handleClearFilters}>
+              {t('clear_filters')}
+            </Button>
+          </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle sx={{ fontSize: '1.2rem', color: 'text.secondary' }} />
             <Typography 

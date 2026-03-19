@@ -31,7 +31,7 @@ import {
 //import { Menu, MenuItem } from '@mui/material';
 
 import dayjs from 'dayjs';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import ReactCountryFlag from 'react-country-flag';
 import ReactFlagsSelect from "react-flags-select";
@@ -41,9 +41,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
 import SpeedDialComponent from '../../components/SpeedDialComponent';
+import { useCascadingFilters } from '../../hooks/useCascadingFilters';
 import { STATUS } from '../../config/constants';
 import { useLanguage } from '../../providers/languageProvider';
 import { fetchEventsList } from '../../stores/events/fetchEventsListSlice';
+import { fetchTaskListLevel } from '../../stores/tasks/fetchtaskListLevelSlice';
 
 import AIActionButton from '../../components/AIActionButton';
 
@@ -175,6 +177,8 @@ export default function Component() {
   const [level5ptions, setLevel5Options] = useState([]);
   const [level5Selected, setLevel5Selected] = useState('');
   const [loadingLevel5, setLoadingLevel5] = useState(true);
+  const [organizationFilterState, setOrganizationFilterState] = useState({});
+  const enableLevel5 = Boolean(filterData?.enable_level5);
 
   /*
   const mutateEventList = (event) => {
@@ -319,40 +323,152 @@ export default function Component() {
     }
   } , [listTaskStatus, taskListStatusLoading]);
    
-  const filterArray = [
-    {
-      id: 'level1',
-      label: 'Business',
-      value: level1Selected,
-      handleChange: setLevel1Selected,
-      options: level1Options,
-      isDisabled: false
-    },
-    {
-      id: 'level2',
-      label: 'Company',
-      value: level2Selected,
-      handleChange: setLevel2Selected,
-      options: level2Options,
-      isDisabled: loadingLevel2
-    },
-    {
-      id: 'level3',
-      label: 'Region',
-      value: level3Selected,
-      handleChange: setLevel3Selected,
-      options: level3Options,
-      isDisabled: loadingLevel3
-    },
-    {
-      id: 'level4',
-      label: 'Location',
-      value: level4Selected,
-      handleChange: setLevel4Selected,
-      options: level4Options,
-      isDisabled: loadingLevel4
+  const getFormDataFromSelectedValues = (selectedValues) => {
+    const formData = new FormData();
+    Object.entries(selectedValues).forEach(([key, value]) => {
+      if (value) {
+        formData.append(`id_${key}`, value);
+      }
+    });
+    return formData;
+  };
+
+  const fetchLevelData = (level, formData = null) => {
+    return new Promise((resolve, reject) => {
+      const payload = formData ? { level, formData } : { level };
+
+      dispatch(fetchTaskListLevel(payload))
+        .then((response) => {
+          const apiResponse = response?.payload?.data;
+
+          if (apiResponse?.messages === 'Success' && Array.isArray(apiResponse?.data)) {
+            const levelOptions = apiResponse.data.map((item) => ({
+              value: item.value,
+              label: item.label
+            }));
+            resolve(levelOptions);
+          } else {
+            reject(new Error(`Failed to fetch level ${level} data`));
+          }
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  };
+
+  const filterDefinitions = useMemo(() => {
+    const definitions = [
+      {
+        id: 'level1',
+        label: 'Business',
+        fetchOptions: async () => fetchLevelData(1)
+      },
+      {
+        id: 'level2',
+        label: 'Company',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(2, formData);
+        }
+      },
+      {
+        id: 'level3',
+        label: 'Region',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(3, formData);
+        }
+      },
+      {
+        id: 'level4',
+        label: 'Location',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(4, formData);
+        }
+      }
+    ];
+
+    if (enableLevel5) {
+      definitions.push({
+        id: 'level5',
+        label: 'Level 5',
+        fetchOptions: async (parentValues) => {
+          const formData = getFormDataFromSelectedValues(parentValues);
+          return fetchLevelData(5, formData);
+        }
+      });
     }
-  ];
+
+    return definitions;
+  }, [enableLevel5]);
+
+  const getInitialOrganizationValues = useMemo(() => {
+    const initialValues = {
+      level1: filterData?.level1 || '',
+      level2: filterData?.level2 || '',
+      level3: filterData?.level3 || '',
+      level4: filterData?.level4 || ''
+    };
+
+    if (enableLevel5) {
+      initialValues.level5 = filterData?.level5 || '';
+    }
+
+    return initialValues;
+  }, [enableLevel5, filterData]);
+
+  const handleOrganizationFilterChange = (values) => {
+    const previousValues = { ...organizationFilterState };
+    setOrganizationFilterState(values);
+
+    setLevel1Selected(values.level1 || '');
+    setLevel2Selected(values.level2 || '');
+    setLevel3Selected(values.level3 || '');
+    setLevel4Selected(values.level4 || '');
+    setLevel5Selected(values.level5 || '');
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value && value !== previousValues[key]) {
+        dispatch(
+          setFilter({
+            module: 'events',
+            updatedFilter: { [key]: value }
+          })
+        );
+      }
+    });
+
+    Object.entries(previousValues).forEach(([key, prevValue]) => {
+      if (prevValue && (!values[key] || values[key] === '')) {
+        dispatch(
+          removeFilter({
+            module: 'events',
+            fieldID: key
+          })
+        );
+      }
+    });
+  };
+
+  const {
+    filters: cascadingFilters,
+    handleFilterChange: handleCascadingFilterChange,
+    resetFilters: resetCascadingFilters
+  } = useCascadingFilters({
+    filterDefinitions,
+    initialValues: getInitialOrganizationValues,
+    onFilterChange: handleOrganizationFilterChange
+  });
+
+  const filterArray = cascadingFilters.map((filter) => ({
+    id: filter.id,
+    label: filter.label,
+    value: filter.value,
+    options: filter.options,
+    isDisabled: filter.isDisabled || filter.isLoading
+  }));
 
   const [currentStatus, setCurrentStatus] = useState(-1);
 
@@ -367,8 +483,34 @@ export default function Component() {
     setCurrentStatus(event.target.value);
   };
 
+  const prepareAPIParams = () => {
+    const formData = new FormData();
+
+    if (Object.keys(filterData).length > 0) {
+      Object.keys(filterData).forEach((filterKey) => {
+        formData.append(filterKey, filterData[filterKey]);
+      });
+    }
+
+    if (level1Selected) {
+      formData.append('filter_region', level1Selected);
+    }
+    if (level2Selected) {
+      formData.append('filter_country', level2Selected);
+    }
+    if (level3Selected) {
+      formData.append('filter_business', level3Selected);
+    }
+    if (level4Selected) {
+      formData.append('filter_plant', level4Selected);
+    }
+
+    return formData;
+  };
+
   const handleFetchEventList = () => {
-    dispatch(fetchEventsList()).then((data) => {
+    const formData = prepareAPIParams();
+    dispatch(fetchEventsList(formData)).then((data) => {
       if (data?.payload?.messages === 'Success') {
         const eventData = data?.payload?.data ?? [];
         setEvents(mutateEventList(eventData));
@@ -437,10 +579,21 @@ export default function Component() {
   };
   
   function handleClearFilters() {
+    resetCascadingFilters();
+    ['level1', 'level2', 'level3', 'level4', 'level5'].forEach((key) => {
+      dispatch(
+        removeFilter({
+          module: 'events',
+          fieldID: key
+        })
+      );
+    });
+    setOrganizationFilterState({});
     setLevel1Selected('');
     setLevel2Selected('');
     setLevel3Selected('');
     setLevel4Selected('');
+    setLevel5Selected('');
   }
   
   const selectedColumns = useSelector((state) => 
@@ -534,7 +687,7 @@ export default function Component() {
                 value={filter.value}
                 displayEmpty
                 disabled={filter.isDisabled}
-                onChange={(e) => filter.handleChange(e.target.value)}
+                onChange={(e) => handleCascadingFilterChange(filter.id, e.target.value)}
                 sx={{ 
                   height: '40px', 
                   borderRadius: '6px',

@@ -59,3 +59,40 @@ Tras ciertas operaciones de escritura, se dispara:
 - window.dispatchEvent(new CustomEvent('dashboard-message-created'))
 
 Esto permite refrescar contadores sin acoplar componentes.
+
+## Endpoint de niveles para filtros en cascada
+
+Endpoint usado por LegalMatriz, actions y events:
+
+- fetchTaskListLevel (slice: src/stores/tasks/fetchtaskListLevelSlice.js)
+
+Componentes que consumen este endpoint en UI activa:
+
+- src/features/MessageCenterLegalMatriz.js
+- src/features/actions/Actions.js
+- src/features/tasks/Tasks.js
+
+Patron de request:
+
+- payload base: { level }
+- payload con dependencia: { level, formData }
+- formData incluye IDs de niveles previos (ej: id_level1, id_level2, ...)
+
+Patron de response esperado:
+
+- response.payload.data.messages = 'Success'
+- response.payload.data.data = array de opciones
+
+Mapeo de opciones en frontend:
+
+- { value: item.value, label: item.label }
+
+Nota:
+
+- En actions se persisten filtros como id_levelN.
+- En LegalMatriz y events se persisten como levelN y se usan para construir filtros API del modulo.
+- En events (Tasks.js), los niveles seleccionados se mapean adicionalmente a filtros del endpoint de tareas:
+  - level1 -> filter_region
+  - level2 -> filter_country
+  - level3 -> filter_business
+  - level4 -> filter_plant

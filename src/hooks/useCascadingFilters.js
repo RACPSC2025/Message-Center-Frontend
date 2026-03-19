@@ -21,6 +21,35 @@ export const useCascadingFilters = ({ filterDefinitions, onFilterChange, initial
     }))
   );
 
+  // Keep internal filter structure synchronized when filterDefinitions change dynamically.
+  useEffect(() => {
+    setFilters((prevFilters) => {
+      const previousById = new Map(prevFilters.map((filter) => [filter.id, filter]));
+
+      return filterDefinitions.map((definition, index) => {
+        const previous = previousById.get(definition.id);
+
+        if (previous) {
+          return {
+            ...previous,
+            id: definition.id,
+            label: definition.label,
+            isDisabled: index === 0 ? false : previous.isDisabled
+          };
+        }
+
+        return {
+          id: definition.id,
+          label: definition.label,
+          value: '',
+          options: [],
+          isLoading: false,
+          isDisabled: index !== 0
+        };
+      });
+    });
+  }, [filterDefinitions]);
+
   // Helper to update a specific filter
   const updateFilter = (filterId, updates) => {
     setFilters((prevFilters) =>
@@ -41,28 +70,36 @@ export const useCascadingFilters = ({ filterDefinitions, onFilterChange, initial
   const handleFilterChange = async (filterId, newValue) => {
     const filterIndex = filters.findIndex((f) => f.id === filterId);
 
+    if (filterIndex < 0) {
+      return;
+    }
+
+    // Build a consistent snapshot including cleared dependent levels.
+    const currentValues = {};
+    filters.forEach((f, index) => {
+      if (index < filterIndex) {
+        currentValues[f.id] = f.value;
+      } else if (index === filterIndex) {
+        currentValues[f.id] = newValue;
+      } else {
+        currentValues[f.id] = '';
+      }
+    });
+
     // Update the current filter value
     updateFilter(filterId, { value: newValue });
 
     // Reset all dependent filters (filters that come after this one)
-    if (filterIndex >= 0) {
-      for (let i = filterIndex + 1; i < filters.length; i++) {
-        updateFilter(filters[i].id, {
-          value: '',
-          options: [],
-          isDisabled: true
-        });
-      }
+    for (let i = filterIndex + 1; i < filters.length; i++) {
+      updateFilter(filters[i].id, {
+        value: '',
+        options: [],
+        isDisabled: true
+      });
     }
 
     // If a filter is reset or changed, load its dependent filter's options
-    if (filterIndex < filters.length - 1) {
-      // Create current values including the new value that was just set
-      const currentValues = {};
-      filters.forEach((f) => {
-        currentValues[f.id] = f.id === filterId ? newValue : f.value;
-      });
-
+    if (newValue && filterIndex < filters.length - 1) {
       // Use the next filter id and current values (including the new one)
       const nextFilterId = filters[filterIndex + 1].id;
       await loadFilterOptions(nextFilterId, currentValues);
@@ -70,9 +107,6 @@ export const useCascadingFilters = ({ filterDefinitions, onFilterChange, initial
 
     // Call the external change handler if provided
     if (onFilterChange) {
-      // Create a new values object with the updated value
-      const currentValues = getSelectedValues();
-      currentValues[filterId] = newValue;
       onFilterChange(currentValues);
     }
   };
@@ -138,7 +172,7 @@ export const useCascadingFilters = ({ filterDefinitions, onFilterChange, initial
         }
       });
     }
-  }, []);
+  }, [filterDefinitions]);
 
   // Set filters with pre-selected values (useful for restoring state)
   const setSelectedValues = useCallback(
