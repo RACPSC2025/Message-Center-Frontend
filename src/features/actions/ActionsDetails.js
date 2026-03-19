@@ -79,7 +79,9 @@ export default function ActionsDetails({
 
   return (
     <>
+      {/* Contenedor principal del formulario de detalles */}
       <Box sx={containerProps}>
+        {/* Navegación por pestañas del formulario */}
         <BaseTab
           items={tabItems}
           activeTab={activeTab}
@@ -92,21 +94,26 @@ export default function ActionsDetails({
           }}
           valueKey="key"
         />
+        
+        {/* Área de contenido del formulario con scroll */}
         <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: 'auto', p: 1, mt: 2 }}>
           {isFetching ? (
             <Box>{t('loading')}</Box>
           ) : (
+            /* Constructor dinámico del formulario */
             <FormBuilder
-              inputFields={tabSpecificInputFields}
-              initialValues={formModel}
-              showActionButton={false}
-              controlled={true}
-              onChange={onUpdateModel}
-              enhancedFields={ENHANCED_FIELDS}
-              EnhancedFieldComponent={TextFieldWithActions}
+              inputFields={tabSpecificInputFields}  // Campos configurados para la pestaña actual
+              initialValues={formModel}              // Valores actuales del formulario
+              showActionButton={false}               // No mostrar botón por defecto
+              controlled={true}                       // Modo controlado
+              onChange={onUpdateModel}                 // Manejador de cambios
+              enhancedFields={ENHANCED_FIELDS}         // Campos con funcionalidad IA
+              EnhancedFieldComponent={TextFieldWithActions} // Componente mejorado para campos específicos
             />
           )}
         </Box>
+        
+        {/* Botones de acción del formulario */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, borderTop: 1 }}>
           <Button
             variant="contained"
@@ -114,7 +121,7 @@ export default function ActionsDetails({
             color="primary"
             sx={{ mx: 1 }}
             onClick={() => {
-              onSubmit(showAlert);
+              onSubmit(showAlert);  // Ejecuta callback de submit y muestra alerta
             }}
           >
             {t('Save')}
@@ -130,6 +137,8 @@ export default function ActionsDetails({
           </Button>
         </Box>
       </Box>
+      
+      {/* Notificación de éxito al guardar */}
       <Snackbar
         anchorOrigin={{ vertical, horizontal }}
         open={openAlert}

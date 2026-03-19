@@ -426,17 +426,18 @@ export function Component() {
         </Box>
       </Box>
 
-      {  //SpeedDial for create action
+      {/* SpeedDial para crear acción */}
       <SpeedDialComponent
         openSpeedDial={openSpeedDial}
         handleCloseSpeedDial={() => setOpenSpeedDial(false)}
         handleOpenSpeedDial={() => setOpenSpeedDial(true)}
         speedDialActions={speedDialActions}
+        // Al hacer click, activa el estado para crear nueva acción
         handleClick={() => dispatch(toggleShouldCreateNewAction({ status: true }))}
       />
-      }
 
       {/* Drawer para detalles de la acción */}
+      {/* Drawer para detalles de la acción - Compartido entre creación, edición y comentarios */}
       {drawerOpen && (
         <Drawer
           anchor="right"
@@ -444,9 +445,8 @@ export function Component() {
           onClose={handleCloseDrawer}
           PaperProps={drawerStyleAttrs[viewType] || {}}
         >
-
+          {/* Header del Drawer con AppBar */}
           <AppBar position="static">
-            {/* Header */}
             <Toolbar>
               <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
                 {`${t('CreateAction')}`}
@@ -458,15 +458,18 @@ export function Component() {
             </Toolbar>
           </AppBar>
 
-          {/* Contenido del drawer */}
+          {/* Contenido dinámico del drawer según viewType */}
           <Suspense fallback={<div>{t('loading')}</div>}>
+            {/* Vista de comentarios de la acción */}
             {viewType === 'view_comment' ? (
               <ActionsComments 
                 actionDetails={selectedAction} 
                 defaultTab={initialCommentTab}
                 onRefreshTable={handleFetchActionList}
               />
-            ) : viewType === 'view_action' ? (
+            ) : 
+            viewType === 'view_action' ? (
+              /* Vista de formulario de acción (creación o edición) */
               <ActionsDetails
                 isFetching={actionDetailsLoading}
                 formFields={formFields}
