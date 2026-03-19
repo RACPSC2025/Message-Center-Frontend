@@ -101,10 +101,17 @@ export function Component() {
   const prepareAPIParams = () => {
     const formData = new FormData();
 
+    console.log('🔍 [DEBUG] Filtros a enviar al backend:', filterData);
+    console.log('🔍 [DEBUG] Keys de filtros:', Object.keys(filterData));
+
     if (Object.keys(filterData).length > 0) {
       Object.keys(filterData).forEach((filterKey) => {
-        formData.append(filterKey, filterData[filterKey]);
+        const filterValue = filterData[filterKey];
+        formData.append(filterKey, filterValue);
+        console.log(`🔍 [DEBUG] Enviando: ${filterKey} = ${filterValue} (tipo: ${typeof filterValue})`);
       });
+    } else {
+      console.log('🔍 [DEBUG] No hay filtros configurados');
     }
 
     return formData;
@@ -120,6 +127,13 @@ export function Component() {
 
   const handleFetchActionList = () => {
     const formData = prepareAPIParams();
+    console.log('🔍 [DEBUG] Llamando a fetchActionList con FormData:');
+    
+    // Mostrar contenido del FormData para depuración
+    for (let [key, value] of formData.entries()) {
+      console.log(`🔍 [DEBUG] FormData entry: ${key} = ${value}`);
+    }
+    
     dispatch(fetchActionList(formData));
   };
 
@@ -384,6 +398,29 @@ export function Component() {
     setActionFormModel(clone(newActionFormModel.value));
   }, [shouldCreateNewAction]);
   
+  // ✅ WORKAROUND TEMPORAL: Filtrado cliente-side para filtros que no funcionan en backend
+  // filter_executor y filter_reviewer son filtrados aquí porque el backend no los procesa
+  const filteredActions = useMemo(() => {
+    let result = actionList; // ← Viene del backend (ya filtrado por status, keywords, etc.)
+
+    // Solo aplicar filtrado cliente-side para los filtros que NO funcionan en backend
+    if (filterData.filter_executor && filterData.filter_executor.trim() !== '') {
+      result = result.filter(action => {
+        // Filtrar por ID (responsible_person), no por nombre
+        return action.responsible_person === filterData.filter_executor;
+      });
+    }
+
+    if (filterData.filter_reviewer && filterData.filter_reviewer.trim() !== '') {
+      result = result.filter(action => {
+        // Filtrar por ID (reviewer_person), no por nombre
+        return action.reviewer_person === filterData.filter_reviewer;
+      });
+    }
+
+    return result;
+  }, [actionList, filterData.filter_executor, filterData.filter_reviewer]);
+
   const [newActionByDescription, setNewActionByDescription] = useState('');
   const createNewAction= (newDescription) => {
     if(newDescription !== '') {
@@ -415,13 +452,17 @@ export function Component() {
                 fontStyle: 'italic'
               }}
             >
-              {actionCountLoading ? 'Cargando...' : `${actionCount} acciones encontradas`}
+              {actionCountLoading ? 'Cargando...' : (
+                filteredActions.length !== actionList.length 
+                  ? `${filteredActions.length} de ${actionCount} acciones (filtrado)`
+                  : `${actionCount} acciones encontradas`
+              )}
             </Typography>
           </Box>
         </Box>
         <Box sx={{ flexGrow: 1, minHeight: 0, px: 1 }}>
           <ActionTable
-            actions={actionList}
+            actions={filteredActions}
             actionStatus={actionStatus}
             columnConfig={tableColumnConfig}
             isFetching={actionListLoading}
