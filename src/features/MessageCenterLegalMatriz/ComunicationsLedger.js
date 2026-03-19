@@ -13,6 +13,7 @@ import {
   KeyboardArrowRight,
   Notifications,
   PictureAsPdf,
+  Refresh,
   Visibility
 } from '@mui/icons-material';
 import {
@@ -62,6 +63,8 @@ export default function ComunicationsLedger() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [selectedParentForNew, setSelectedParentForNew] = useState(null);
+  const [autoRefreshingUrls, setAutoRefreshingUrls] = useState(false);
+  const [lastSignedUrlRefreshAt, setLastSignedUrlRefreshAt] = useState(0);
   
   // Filtros
   const [filters, setFilters] = useState({
@@ -221,6 +224,124 @@ export default function ComunicationsLedger() {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  };
+
+  const getPreviewUrl = (file) => file?.preview_url || file?.url || '';
+
+  const getDownloadUrl = (file) => file?.download_url || file?.preview_url || file?.url || '';
+
+  const parseSignedUrlExpiryDate = (url) => {
+    if (!url) return null;
+
+    try {
+      const parsed = new URL(url);
+      const amzDate = parsed.searchParams.get('X-Amz-Date');
+      const amzExpires = parsed.searchParams.get('X-Amz-Expires');
+
+      if (!amzDate || !amzExpires || amzDate.length < 16) {
+        return null;
+      }
+
+      const year = amzDate.slice(0, 4);
+      const month = amzDate.slice(4, 6);
+      const day = amzDate.slice(6, 8);
+      const hour = amzDate.slice(9, 11);
+      const minute = amzDate.slice(11, 13);
+      const second = amzDate.slice(13, 15);
+      const issuedAt = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+      const expiresInSeconds = Number(amzExpires);
+
+      if (Number.isNaN(issuedAt.getTime()) || Number.isNaN(expiresInSeconds)) {
+        return null;
+      }
+
+      return new Date(issuedAt.getTime() + expiresInSeconds * 1000);
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const getFileUrlExpiryDate = (file) => {
+    return (
+      parseSignedUrlExpiryDate(file?.download_url) ||
+      parseSignedUrlExpiryDate(file?.preview_url) ||
+      parseSignedUrlExpiryDate(file?.url)
+    );
+  };
+
+  const isFileUrlExpired = (file) => {
+    const expiryDate = getFileUrlExpiryDate(file);
+    return expiryDate ? Date.now() >= expiryDate.getTime() : false;
+  };
+
+  const refreshSignedUrls = async () => {
+    if (loading || autoRefreshingUrls) return;
+
+    setAutoRefreshingUrls(true);
+    try {
+      await fetchRequests();
+      setLastSignedUrlRefreshAt(Date.now());
+    } finally {
+      setAutoRefreshingUrls(false);
+    }
+  };
+
+  useEffect(() => {
+    if (loading || autoRefreshingUrls || requests.length === 0) return;
+
+    const hasExpiredFiles = requests.some((request) =>
+      request.archivos?.some((file) => isFileUrlExpired(file))
+    );
+
+    if (!hasExpiredFiles) return;
+
+    const now = Date.now();
+    const cooldownMs = 60 * 1000;
+    if (now - lastSignedUrlRefreshAt < cooldownMs) return;
+
+    refreshSignedUrls();
+  }, [requests, loading, autoRefreshingUrls, lastSignedUrlRefreshAt]);
+
+  const handlePreviewFile = (file) => {
+    if (isFileUrlExpired(file)) {
+      showErrorMsg(t('signed_url_expired'));
+      refreshSignedUrls();
+      return;
+    }
+
+    const previewUrl = getPreviewUrl(file);
+    if (!previewUrl) {
+      showErrorMsg(t('error_loading_requests'));
+      return;
+    }
+    window.open(previewUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadFile = (file, fileName) => {
+    try {
+      if (isFileUrlExpired(file)) {
+        showErrorMsg(t('signed_url_expired'));
+        refreshSignedUrls();
+        return;
+      }
+
+      const downloadUrl = getDownloadUrl(file);
+      if (!downloadUrl) {
+        showErrorMsg(t('error_downloading_file'));
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName || 'attachment';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      showErrorMsg(t('error_downloading_file'));
+    }
   };
 
   // Aplicar filtros y paginación
@@ -615,9 +736,23 @@ export default function ComunicationsLedger() {
                                 {/* Archivos Adjuntos de la solicitud principal */}
                                 {request.archivos?.length > 0 && (
                                   <Grid item xs={12}>
-                                    <Typography variant="caption" color="textSecondary" fontWeight="bold" gutterBottom>
-                                      {t('attachments')}:
-                                    </Typography>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <Typography variant="caption" color="textSecondary" fontWeight="bold" gutterBottom>
+                                        {t('attachments')}:
+                                      </Typography>
+                                      <Tooltip title={t('refresh')}>
+                                        <span>
+                                          <IconButton
+                                            size="small"
+                                            color="primary"
+                                            onClick={refreshSignedUrls}
+                                            disabled={loading || autoRefreshingUrls}
+                                          >
+                                            {autoRefreshingUrls ? <CircularProgress size={14} /> : <Refresh fontSize="small" />}
+                                          </IconButton>
+                                        </span>
+                                      </Tooltip>
+                                    </Box>
                                     <Box display="flex" flexDirection="column" gap={1} mt={1}>
                                       {request.archivos.map((file) => {
                                         const isPDF = file.file_name?.toLowerCase().endsWith('.pdf');
@@ -650,7 +785,7 @@ export default function ComunicationsLedger() {
                                             >
                                               {isImage ? (
                                                 <img 
-                                                  src={file.url} 
+                                                  src={getPreviewUrl(file)} 
                                                   alt={file.file_name}
                                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                 />
@@ -663,9 +798,19 @@ export default function ComunicationsLedger() {
                                             
                                             {/* Información del archivo */}
                                             <Box flex={1}>
-                                              <Typography variant="body2" fontWeight="bold" noWrap>
-                                                {file.file_name}
-                                              </Typography>
+                                              <Box display="flex" alignItems="center" gap={1}>
+                                                <Typography variant="body2" fontWeight="bold" noWrap>
+                                                  {file.file_name}
+                                                </Typography>
+                                                {isFileUrlExpired(file) && (
+                                                  <Chip
+                                                    label={t('link_expired')}
+                                                    size="small"
+                                                    color="warning"
+                                                    sx={{ height: 20 }}
+                                                  />
+                                                )}
+                                              </Box>
                                               <Typography variant="caption" color="textSecondary">
                                                 {new Date(file.created_at).toLocaleString()}
                                               </Typography>
@@ -677,7 +822,7 @@ export default function ComunicationsLedger() {
                                                 <IconButton 
                                                   size="small" 
                                                   color="primary"
-                                                  onClick={() => window.open(file.url, '_blank')}
+                                                  onClick={() => handlePreviewFile(file)}
                                                 >
                                                   <Visibility fontSize="small" />
                                                 </IconButton>
@@ -686,10 +831,7 @@ export default function ComunicationsLedger() {
                                                 <IconButton 
                                                   size="small" 
                                                   color="primary"
-                                                  component="a"
-                                                  href={file.url}
-                                                  download={file.file_name}
-                                                  target="_blank"
+                                                  onClick={() => handleDownloadFile(file, file.file_name)}
                                                 >
                                                   <Download fontSize="small" />
                                                 </IconButton>
@@ -922,9 +1064,23 @@ export default function ComunicationsLedger() {
                                               {/* Archivos Adjuntos */}
                                               {nested.archivos?.length > 0 && (
                                                 <Box mb={2}>
-                                                  <Typography variant="caption" color="textSecondary" fontWeight="bold" gutterBottom>
-                                                    {t('attachments')}:
-                                                  </Typography>
+                                                  <Box display="flex" alignItems="center" gap={1}>
+                                                    <Typography variant="caption" color="textSecondary" fontWeight="bold" gutterBottom>
+                                                      {t('attachments')}:
+                                                    </Typography>
+                                                    <Tooltip title={t('refresh')}>
+                                                      <span>
+                                                        <IconButton
+                                                          size="small"
+                                                          color="primary"
+                                                          onClick={refreshSignedUrls}
+                                                          disabled={loading || autoRefreshingUrls}
+                                                        >
+                                                          {autoRefreshingUrls ? <CircularProgress size={14} /> : <Refresh fontSize="small" />}
+                                                        </IconButton>
+                                                      </span>
+                                                    </Tooltip>
+                                                  </Box>
                                                   <Box display="flex" flexDirection="column" gap={1} mt={1}>
                                                     {nested.archivos.map((file) => {
                                                       const isPDF = file.file_name?.toLowerCase().endsWith('.pdf');
@@ -957,7 +1113,7 @@ export default function ComunicationsLedger() {
                                                           >
                                                             {isImage ? (
                                                               <img 
-                                                                src={file.url} 
+                                                                src={getPreviewUrl(file)} 
                                                                 alt={file.file_name}
                                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                               />
@@ -970,9 +1126,19 @@ export default function ComunicationsLedger() {
                                                           
                                                           {/* Información del archivo */}
                                                           <Box flex={1}>
-                                                            <Typography variant="body2" fontWeight="bold" noWrap>
-                                                              {file.file_name}
-                                                            </Typography>
+                                                            <Box display="flex" alignItems="center" gap={1}>
+                                                              <Typography variant="body2" fontWeight="bold" noWrap>
+                                                                {file.file_name}
+                                                              </Typography>
+                                                              {isFileUrlExpired(file) && (
+                                                                <Chip
+                                                                  label={t('link_expired')}
+                                                                  size="small"
+                                                                  color="warning"
+                                                                  sx={{ height: 20 }}
+                                                                />
+                                                              )}
+                                                            </Box>
                                                             <Typography variant="caption" color="textSecondary">
                                                               {new Date(file.created_at).toLocaleString()}
                                                             </Typography>
@@ -984,7 +1150,7 @@ export default function ComunicationsLedger() {
                                                               <IconButton 
                                                                 size="small" 
                                                                 color="primary"
-                                                                onClick={() => window.open(file.url, '_blank')}
+                                                                onClick={() => handlePreviewFile(file)}
                                                               >
                                                                 <Visibility fontSize="small" />
                                                               </IconButton>
@@ -993,10 +1159,7 @@ export default function ComunicationsLedger() {
                                                               <IconButton 
                                                                 size="small" 
                                                                 color="primary"
-                                                                component="a"
-                                                                href={file.url}
-                                                                download={file.file_name}
-                                                                target="_blank"
+                                                                onClick={() => handleDownloadFile(file, file.file_name)}
                                                               >
                                                                 <Download fontSize="small" />
                                                               </IconButton>
@@ -1065,7 +1228,7 @@ export default function ComunicationsLedger() {
                                                       borderColor: 'primary.main',
                                                       '&:hover': { bgcolor: 'grey.100' }
                                                     }}
-                                                    onClick={() => window.open(file.url, '_blank')}
+                                                    onClick={() => handlePreviewFile(file)}
                                                   >
                                                     <PictureAsPdf color="error" />
                                                   </Paper>
