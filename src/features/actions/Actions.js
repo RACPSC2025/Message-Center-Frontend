@@ -148,6 +148,12 @@ export function Component() {
     if (isObject(selectedAction) || shouldCreateNewAction) {
       const { action_id = '', action_table: module_string_id = 'hs_action' } = selectedAction || {};
       const formData = { ...actionFormModel, action_id, module_string_id };
+      
+      // Debug: Verificar formato de hs_causes para selección múltiple
+      if (formData.hs_causes && Array.isArray(formData.hs_causes)) {
+        console.log('[DEBUG] hs_causes (array) enviado al endpoint:', formData.hs_causes);
+      }
+      
       handleActionForm(formData);
     }
   };

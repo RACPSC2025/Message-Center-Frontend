@@ -215,6 +215,7 @@ const provisionalResponse = {
         "name": "hs_causes",
         "default_value": "",
         "gridSize": "12",
+        "multiple": true,
         "options": [
           {
             "value": "1126",
