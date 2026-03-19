@@ -44,7 +44,8 @@ const FormBuilder = ({
   isLoading = false,
   // Nuevos props para campos mejorados
   enhancedFields = [], // Array o Set de IDs que deben usar componente mejorado
-  EnhancedFieldComponent = null // Componente personalizado para campos mejorados
+  EnhancedFieldComponent = null, // Componente personalizado para campos mejorados
+  externalErrors = {} // Errores de validación externos
 }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
@@ -149,6 +150,9 @@ const FormBuilder = ({
     // Verificar si este campo debe usar el componente mejorado
     const isEnhanced = enhancedFieldsSet.has(field.id);
     
+    // Combinar errores internos con errores externos
+    const fieldError = errors[field.id] || externalErrors[field.id] || field.error;
+    
     if (isEnhanced && EnhancedFieldComponent) {
       // Usar componente mejorado
       return (
@@ -160,7 +164,7 @@ const FormBuilder = ({
             disabled={field.disabled}
             required={field.required || false}
             placeholder={field.placeholder || ''}
-            error={errors[field.id] || field.error}
+            error={fieldError}
           />
         </Suspense>
       );
@@ -180,7 +184,7 @@ const FormBuilder = ({
                 field={field}
                 value={field.type === 'checkbox' ? getFieldValue(field) : Boolean(getFieldValue(field))}
                 size={formFieldSize}
-                error={errors[field.id] || field.error}
+                error={fieldError}
                 onChange={handleChange}
                 disabled={field.disabled}
               />
@@ -193,7 +197,7 @@ const FormBuilder = ({
             field={field}
             value={getFieldValue(field)}
             size={formFieldSize}
-            error={errors[field.id] || field.error}
+            error={fieldError}
             onChange={handleChange}
             disabled={field.disabled}
           />

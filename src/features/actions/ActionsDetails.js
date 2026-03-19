@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import BaseTab from '../../components/BaseTab';
 import FormBuilder from '../../components/FormBuilder';
 import TextFieldWithActions from './TextFieldWithActions';
+import { isFieldRequired } from '../../config/validationConfig';
 
 export default function ActionsDetails({
   isFetching,
@@ -17,6 +18,7 @@ export default function ActionsDetails({
 }) {
   const [activeTab, setActiveTab] = useState(null);
   const [openAlert, setOpenAlert] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -25,6 +27,67 @@ export default function ActionsDetails({
       setActiveTab(firstItem.key);
     }
   }, [tabItems]);
+
+  // Función de validación completa para todos los campos de todas las pestañas
+  const validateAllFields = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Iterar sobre todas las pestañas y sus campos
+    Object.keys(formFields).forEach(tabKey => {
+      const tabFields = formFields[tabKey];
+      
+      Object.keys(tabFields).forEach(fieldKey => {
+        const field = tabFields[fieldKey];
+        const fieldValue = formModel[field.name];
+        
+        // Validar campos requeridos usando configuración centralizada
+        const isRequired = isFieldRequired(field.name);
+        
+        if (isRequired && (!fieldValue || fieldValue === '' || fieldValue === null)) {
+          errors[field.name] = `${field.label} es obligatorio`;
+          isValid = false;
+        }
+        
+        // Validación específica para diferentes tipos de campos
+        if (fieldValue && fieldValue !== '') {
+          // Validación para campos de tipo fecha
+          if (field.type === 'date' || field.type === 'datetime') {
+            const dateValue = new Date(fieldValue);
+            if (isNaN(dateValue.getTime())) {
+              errors[field.name] = `${field.label} debe ser una fecha válida`;
+              isValid = false;
+            }
+          }
+          
+          // Validación para campos autocomplete/dropdown
+          if ((field.type === 'autocomplete' || field.type === 'dropdown') && 
+              typeof fieldValue === 'string' && fieldValue.trim() === '') {
+            errors[field.name] = `${field.label} requiere una selección válida`;
+            isValid = false;
+          }
+        }
+      });
+    });
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+  // Función para obtener el primer campo con error y cambiar a esa pestaña
+  const navigateToFirstError = (errors) => {
+    const firstErrorField = Object.keys(errors)[0];
+    if (firstErrorField) {
+      // Encontrar en qué pestaña está el campo con error
+      Object.keys(formFields).forEach(tabKey => {
+        const tabFields = formFields[tabKey];
+        if (Object.keys(tabFields).includes(firstErrorField)) {
+          setActiveTab(tabKey);
+          return;
+        }
+      });
+    }
+  };
 
   // IDs de los campos que deben usar TextFieldWithActions
   const ENHANCED_FIELDS = [
@@ -67,12 +130,40 @@ export default function ActionsDetails({
     setOpenAlert(true);
   };
 
+  const showErrorAlert = (message) => {
+    // Creamos un estado temporal para mostrar errores de validación
+    setValidationErrors(prev => ({ ...prev, _formError: message }));
+    setTimeout(() => {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors._formError;
+        return newErrors;
+      });
+    }, 5000);
+  };
+
   const hideAlert = (_, reason) => {
     if (reason === 'clickaway') {
       return;
     }
 
     setOpenAlert(false);
+  };
+
+  // Manejador de submit con validación completa
+  const handleSubmit = () => {
+    const isValid = validateAllFields();
+    
+    if (isValid) {
+      onSubmit(showAlert);
+    } else {
+      // Navegar a la primera pestaña con error
+      navigateToFirstError(validationErrors);
+      
+      // Mostrar mensaje de error general
+      const errorCount = Object.keys(validationErrors).length;
+      showErrorAlert(`Por favor complete los ${errorCount} campos obligatorios antes de guardar.`);
+    }
   };
 
   if (!activeTab) return null;
@@ -109,6 +200,7 @@ export default function ActionsDetails({
               onChange={onUpdateModel}                 // Manejador de cambios
               enhancedFields={ENHANCED_FIELDS}         // Campos con funcionalidad IA
               EnhancedFieldComponent={TextFieldWithActions} // Componente mejorado para campos específicos
+              externalErrors={validationErrors}        // Errores de validación externos
             />
           )}
         </Box>
@@ -120,9 +212,7 @@ export default function ActionsDetails({
             size="small"
             color="primary"
             sx={{ mx: 1 }}
-            onClick={() => {
-              onSubmit(showAlert);  // Ejecuta callback de submit y muestra alerta
-            }}
+            onClick={handleSubmit}
           >
             {t('Save')}
           </Button>
@@ -147,6 +237,22 @@ export default function ActionsDetails({
       >
         <Alert onClose={hideAlert} severity="success" sx={{ width: '100%' }}>
           {t('FormSavedMessage')}
+        </Alert>
+      </Snackbar>
+      
+      {/* Notificación de error de validación */}
+      <Snackbar
+        anchorOrigin={{ vertical, horizontal }}
+        open={!!validationErrors._formError}
+        autoHideDuration={5000}
+        onClose={() => setValidationErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors._formError;
+          return newErrors;
+        })}
+      >
+        <Alert severity="error" sx={{ width: '100%' }}>
+          {validationErrors._formError}
         </Alert>
       </Snackbar>
     </>
