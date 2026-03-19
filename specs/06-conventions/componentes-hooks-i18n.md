@@ -105,3 +105,28 @@ Reglas aplicadas:
 - permissions.create_article: boton Add_articles en SpeedDial del componente Articles
 - features.analysis_ia: columna analysis_with_amatia y tab analysis_of_regulation
 - features.compliance_view: tab compliance
+
+## Convencion de filtros jerarquicos en cascada
+
+Patron recomendado para filtros de organizacion por niveles:
+
+- Hook base: useCascadingFilters
+- Carga de opciones por nivel: fetchTaskListLevel
+- Fallback de niveles visibles: level1..level4 y level5 solo cuando el flag enable_level5 sea true
+- Limpieza total: resetFilters() + removeFilter en Redux para cada nivel
+
+Modulos que usan este patron:
+
+- src/features/MessageCenterLegalMatriz.js
+- src/features/MessageCenterActions.js
+- src/features/MessageCenterEvents.js
+
+Reglas de persistencia por modulo:
+
+- LegalMatriz: guarda level1..level5 en filter.modules.LegalMatriz.filterData
+- events (tasks): guarda level1..level5 en filter.modules.events.filterData
+- actions: guarda id_level1..id_level5 en filter.modules.actions.filterData
+
+Nota de implementacion:
+
+- La respuesta de niveles se valida con response.payload.data.messages === 'Success' y opciones en response.payload.data.data.

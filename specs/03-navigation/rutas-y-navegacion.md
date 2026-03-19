@@ -118,3 +118,23 @@ Reglas de visibilidad en UI (legal_matrix):
 - Tab create_legal_requirement: visible solo si permissions.create_article = true
 - Columna analysis_with_amatia y tab analysis_of_regulation: visibles solo si features.analysis_ia = true
 - Tab compliance: visible solo si features.compliance_view = true
+
+## Filtros jerarquicos en LegalMatriz, actions y events
+
+Regla general:
+
+- Los modulos LegalMatriz, actions y events (tasks) usan el patron de filtros en cascada con useCascadingFilters.
+- El flujo de niveles es level1 -> level2 -> level3 -> level4 y level5 solo cuando enable_level5 es true.
+- Al cambiar un nivel, se limpian automaticamente los niveles dependientes.
+
+Persistencia en Redux:
+
+- LegalMatriz: level1..level5
+- events: level1..level5
+- actions: id_level1..id_level5
+
+Comportamiento de Clear Filters:
+
+- Limpia niveles en estado local del componente.
+- Limpia niveles en Redux (removeFilter por cada nivel).
+- Reinicia opciones dependientes en UI (resetFilters del hook).
