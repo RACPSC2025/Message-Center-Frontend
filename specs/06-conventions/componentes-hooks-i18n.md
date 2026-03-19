@@ -118,8 +118,13 @@ Patron recomendado para filtros de organizacion por niveles:
 Modulos que usan este patron:
 
 - src/features/MessageCenterLegalMatriz.js
-- src/features/MessageCenterActions.js
-- src/features/MessageCenterEvents.js
+- src/features/actions/Actions.js
+- src/features/tasks/Tasks.js
+
+Nota de ruteo:
+
+- /view/actions renderiza src/features/actions/Actions.js
+- /view/events renderiza src/features/tasks/Tasks.js
 
 Reglas de persistencia por modulo:
 

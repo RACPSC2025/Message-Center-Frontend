@@ -19,6 +19,12 @@ Mapeo actual en RoutesFile:
 - findings
 - LegalMatriz
 
+Componentes activos por ruta:
+
+- /view/events -> src/features/tasks/Tasks.js
+- /view/actions -> src/features/actions/Actions.js
+- /view/LegalMatriz -> src/features/MessageCenterLegalMatriz.js
+
 ## Origen de permisos y visibilidad
 
 - src/config/generalConfig.js construye modulePermissions con base en:
@@ -124,6 +130,10 @@ Reglas de visibilidad en UI (legal_matrix):
 Regla general:
 
 - Los modulos LegalMatriz, actions y events (tasks) usan el patron de filtros en cascada con useCascadingFilters.
+- En ruteo real, este comportamiento vive en:
+  - src/features/MessageCenterLegalMatriz.js
+  - src/features/actions/Actions.js
+  - src/features/tasks/Tasks.js
 - El flujo de niveles es level1 -> level2 -> level3 -> level4 y level5 solo cuando enable_level5 es true.
 - Al cambiar un nivel, se limpian automaticamente los niveles dependientes.
 
