@@ -934,6 +934,8 @@ const es = {
   "expired_status": "Vencido",
   "preview": "Vista previa",
   "download": "Descargar",
+  "link_expired": "Enlace vencido",
+  "signed_url_expired": "El enlace del archivo ha expirado. Recargando enlaces...",
   "error_downloading_file": "Error al descargar el archivo",
   "resolved": "Resuelto",
 };

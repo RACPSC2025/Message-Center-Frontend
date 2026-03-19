@@ -905,6 +905,8 @@ const en = {
   "expired_status": "Expired",
   "preview": "Preview",
   "download": "Download",
+  "link_expired": "Link expired",
+  "signed_url_expired": "The file link has expired. Refreshing links...",
   "error_downloading_file": "Error downloading file"
 };
 
