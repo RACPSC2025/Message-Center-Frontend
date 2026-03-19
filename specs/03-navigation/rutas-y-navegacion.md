@@ -142,6 +142,7 @@ Origen de APIs por modulo:
 - LegalMatriz y events (tasks): niveles desde tasklist_api (fetchTaskListLevel).
 - actions: niveles desde Action_api/list_level1..list_level4.
 - Este cambio de niveles aplica solo a actions; los otros modulos se mantienen igual.
+- En actions, la aplicacion del filtro por nivel es en frontend sobre la tabla renderizada.
 
 Persistencia en Redux:
 

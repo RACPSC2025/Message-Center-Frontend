@@ -110,6 +110,8 @@ Reglas:
 - Este ajuste aplica solo al modulo actions.
 - LegalMatriz y events mantienen su flujo actual de niveles.
 - Los filtros en actions se persisten como id_level1..id_level4 (id_level5 si aplica por configuracion futura).
+- En actions, los filtros de nivel se aplican en frontend sobre la data ya cargada en tabla.
+- Por esta razon, id_level1..id_level4 no se envian en el request de get_actions_amatia_express.
 
 ## Contrato de tabla de actions (actualizado)
 
@@ -124,5 +126,6 @@ Consulta de encabezados dinamicos:
 Consideraciones funcionales:
 
 - Los datos de actions ya incluyen campos de nivel (level_1..level_4 y nombres de nivel) segun contrato.
-- Al seleccionar filtros por nivel en actions, esos filtros deben impactar la consulta de tabla (get_actions_amatia_express).
+- Al seleccionar filtros por nivel en actions, esos filtros impactan el render de la tabla por filtrado cliente-side.
+- get_actions_amatia_express sigue siendo la fuente de datos base para la tabla.
 - Referencia de contrato: contracts.md (documento adjunto de Action_api).
