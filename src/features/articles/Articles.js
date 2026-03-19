@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Fragment, useEffect, useState, useRef, useCallback } from 'react';
 
 import { fetchArticles } from '../../stores/legal/fetchArticlesSlice';
+import { useHasPermission } from '../../hooks/usePlatformConfig';
 import legalService from '../../services/legalService';
 
 import {
@@ -26,6 +27,7 @@ export default function Articles({ optinDrawerData }) {
   const dispatch = useDispatch();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
+  const canCreateArticle = useHasPermission('legal_matrix', 'create_article');
 
   const { loading, data: articles, error } = useSelector((state) => state.fetchArticles);
   const [rowData, setRowData] = useState([]);
@@ -425,12 +427,14 @@ export default function Articles({ optinDrawerData }) {
     }
   };
 
-  const speedDialActions = [
-    {
-      icon: <Add />,
-      name: 'Add_articles'
-    }
-  ];
+  const speedDialActions = canCreateArticle
+    ? [
+        {
+          icon: <Add />,
+          name: 'Add_articles'
+        }
+      ]
+    : [];
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -447,14 +451,16 @@ export default function Articles({ optinDrawerData }) {
         requisitoId={optinDrawerData?.id}
         onSuccess={handleArticleCreated}
       />
-      <SpeedDialComponent
-        openSpeedDial={openSpeedDial}
-        handleCloseSpeedDial={() => setOpenSpeedDial(false)}
-        handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-        speedDialActions={speedDialActions}
-        handleClick={() => setOpenSpeedDial(false)}
-        handleActionClick={() => setIsDrawerOpen(true)}
-      />
+      {canCreateArticle && (
+        <SpeedDialComponent
+          openSpeedDial={openSpeedDial}
+          handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+          handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+          speedDialActions={speedDialActions}
+          handleClick={() => setOpenSpeedDial(false)}
+          handleActionClick={() => setIsDrawerOpen(true)}
+        />
+      )}
     </Box>
   );
 }

@@ -79,3 +79,29 @@ Implementacion:
 4. Agregar ruta en src/routes/RoutesFile.js (idealmente lazy).
 5. Si aplica, integrar filtros en src/config/filterConfig.js y filterSlice.
 6. Documentar comportamiento en specs.
+
+## Convencion de tabs dinamicos por configuracion
+
+Cuando un drawer o vista tenga tabs condicionados por permisos/features:
+
+- Definir IDs en un archivo compartido de constantes.
+	- Ejemplo: src/features/MessageCenterLegalMatriz/tabIds.js
+- Usar esos IDs para redireccionar vistas (setActiveTabId('...')) en vez de indices numericos.
+- Resolver el tab activo visible con fallback al primer tab disponible.
+- Leer permisos/features con hooks de plataforma:
+	- useHasPermission(module, permission)
+	- useModuleFeature(module, featurePath)
+
+Caso implementado:
+
+- src/features/MessageCenterLegalMatriz.js
+- src/features/MessageCenterLegalMatriz/OptionsDrawer.js
+- src/features/articles/Articles.js
+
+Reglas aplicadas:
+
+- permissions.create_requirement: boton create_legal_requirement en SpeedDial
+- permissions.create_article: tab create_legal_requirement en OptionsDrawer
+- permissions.create_article: boton Add_articles en SpeedDial del componente Articles
+- features.analysis_ia: columna analysis_with_amatia y tab analysis_of_regulation
+- features.compliance_view: tab compliance

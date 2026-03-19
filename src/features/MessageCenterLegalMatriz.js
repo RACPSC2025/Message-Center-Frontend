@@ -33,11 +33,13 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import SpeedDialComponent from '../components/SpeedDialComponent';
 import TableComponent from '../components/TableComponent';
+import { useHasPermission, useModuleFeature } from '../hooks/usePlatformConfig';
 import { fetchListLegals, fetchListLegalsComplete } from '../stores/legal/fetchListLegalsSlice';
 import DetallesDrawer from './MessageCenterLegalMatriz/DetallesDrawer';
 import LegalMatrizDrawer from './MessageCenterLegalMatriz/LegalMatrizDrawer';
 import ListView from './MessageCenterLegalMatriz/ListView';
 import OptionsDrawer from './MessageCenterLegalMatriz/OptionsDrawer';
+import { DEFAULT_LEGAL_MATRIX_TAB_ID, LEGAL_MATRIX_TAB_IDS } from './MessageCenterLegalMatriz/tabIds';
 import BaseFeaturePageLayout from '../components/BaseFeaturePageLayout';
 import ReactFlagsSelect from 'react-flags-select';
 import {
@@ -74,7 +76,7 @@ const useFilterItemValue = (module, fieldName) =>
 export function Component() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTabId, setActiveTabId] = useState(DEFAULT_LEGAL_MATRIX_TAB_ID);
   const [tabValue, setTabValue] = useState(0);
   const [idRequisito, setIdRequisito] = useState(0);
   const [optinDrawerData, setOptinDrawerData] = useState();
@@ -93,6 +95,8 @@ export function Component() {
   const [list_type_of_rule, setList_type_of_rule] = useState([]);
   const [level1, setLevel1] = useState('');
   const [test, setTest] = useState([]);
+  const canCreateRequirement = useHasPermission('legal_matrix', 'create_requirement');
+  const canViewAnalysisIa = Boolean(useModuleFeature('legal_matrix', 'analysis_ia'));
 
   const actionStatusItem = useFilterItemValue('LegalMatriz', 'filter_business');
   const actionKeyWords = useFilterItemValue('LegalMatriz', 'filter_keywords');
@@ -465,10 +469,10 @@ export function Component() {
           handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
           handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
           
-          // Abrir el drawer en la pestaña de comunicaciones (índice 1)
+          // Abrir OptionsDrawer en LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS
           setOptinDrawerData(params?.data);
           setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-          setActiveTab(1); // Tab de regulatory_communications
+          setActiveTabId(LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS);
           handleOpenOptionsDrawer();
         };
         
@@ -514,8 +518,9 @@ export function Component() {
       }
     },
     {
-      field: '',
+      field: 'analysis_with_amatia',
       headerName: t('AMAT-IA'),
+      hide: !canViewAnalysisIa,
       headerComponent: () => (
         <div
           style={customHeaderStyle}>
@@ -532,7 +537,7 @@ export function Component() {
                 color="primary"
                 onClick={() => {
                   handleOpenOptionsDrawer();
-                  setActiveTab(2);
+                  setActiveTabId(LEGAL_MATRIX_TAB_IDS.ANALYSIS_OF_REGULATION);
                   handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
                   handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
                   handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
@@ -564,7 +569,7 @@ export function Component() {
                 color="primary"
                 onClick={() => {
                   handleOpenOptionsDrawer();
-                  setActiveTab(0);
+                  setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
                   setOptinDrawerData(params?.data);
                   //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
                   setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
@@ -605,7 +610,7 @@ export function Component() {
               title={t('Add_articles')}
               onClick={() => {
                 handleOpenOptionsDrawer();
-                setActiveTab(3);
+                setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
                 setOptinDrawerData(params?.data);
                 //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
                 setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
@@ -766,9 +771,22 @@ export function Component() {
     }
   ]);
 
-  const speedDialActions = [
-    { icon: <AddCircleOutline />, name: t('create_legal_requirement') },
-  ];
+  useEffect(() => {
+    setColumnDefs((prev) =>
+      prev.map((column) =>
+        column.field === 'analysis_with_amatia'
+          ? {
+              ...column,
+              hide: !canViewAnalysisIa
+            }
+          : column
+      )
+    );
+  }, [canViewAnalysisIa]);
+
+  const speedDialActions = canCreateRequirement
+    ? [{ icon: <AddCircleOutline />, name: t('create_legal_requirement') }]
+    : [];
 
   const viewTab = [
     {
@@ -887,7 +905,7 @@ export function Component() {
   useEffect(() => {
     if (isSelected_articulo_id && selected_articulo_id && selected_requisito_id) {
       setOptinDrawerData({ id: selected_requisito_id });
-      setActiveTab(3); // Tab de artículos
+      setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
       handleOpenOptionsDrawer();
     }
   }, [isSelected_articulo_id, selected_articulo_id, selected_requisito_id]);
@@ -1233,24 +1251,26 @@ export function Component() {
           ) : null}
         </Box>
 
-        <SpeedDialComponent
-          openSpeedDial={openSpeedDial}
-          handleCloseSpeedDial={() => setOpenSpeedDial(false)}
-          handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-          speedDialActions={speedDialActions}
-          handleClick={() => {
-            handleOpenOptionsDrawer();
-            setActiveTab(0);
-            setOptinDrawerData(null);
-            setOptinDrawerTitle(t('create_legal_requirement'));
-          }}
-        />
+        {canCreateRequirement && (
+          <SpeedDialComponent
+            openSpeedDial={openSpeedDial}
+            handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+            handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+            speedDialActions={speedDialActions}
+            handleClick={() => {
+              handleOpenOptionsDrawer();
+              setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+              setOptinDrawerData(null);
+              setOptinDrawerTitle(t('create_legal_requirement'));
+            }}
+          />
+        )}
 
         <OptionsDrawer
           openOptionsDrawer={openOptionsDrawer}
           onCloseOptionsDrawer={handleCloseOptionsDrawer}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTabId={activeTabId}
+          setActiveTabId={setActiveTabId}
           optinDrawerData={optinDrawerData}
           Title={optinDrawerTitle}
         />

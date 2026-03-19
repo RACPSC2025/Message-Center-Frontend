@@ -113,6 +113,36 @@ Validar si modulo esta habilitado:
 
 useIsModuleEnabled('legal_matrix')
 
+## Reglas de UI para legal_matrix (MessageCenterLegalMatriz)
+
+Archivos frontend relacionados:
+
+- src/features/MessageCenterLegalMatriz.js
+- src/features/MessageCenterLegalMatriz/OptionsDrawer.js
+- src/features/MessageCenterLegalMatriz/tabIds.js
+- src/features/articles/Articles.js
+
+Permisos usados desde modules.legal_matrix.permissions:
+
+- create_requirement
+	- controla visibilidad del boton SpeedDial create_legal_requirement en la grilla principal.
+- create_article
+	- controla visibilidad del tab create_legal_requirement dentro de OptionsDrawer.
+	- controla visibilidad del boton Add_articles (SpeedDial) dentro del tab articles.
+
+Features usadas desde modules.legal_matrix.features:
+
+- analysis_ia
+	- controla visibilidad de la columna analysis_with_amatia en la tabla.
+	- controla visibilidad del tab analysis_of_regulation en OptionsDrawer.
+- compliance_view
+	- controla visibilidad del tab compliance en OptionsDrawer.
+
+Nota de navegacion:
+
+- La redireccion interna de OptionsDrawer se hace con tabId (string) centralizado en src/features/MessageCenterLegalMatriz/tabIds.js.
+- No se deben usar indices numericos para abrir tabs, porque los tabs visibles cambian segun permisos/features.
+
 ## Nota de compilado
 
 La carpeta specs esta en la raiz del workspace y no hace parte del bundle de React (pnpm build), ya que el compilado toma codigo desde src y activos desde public.

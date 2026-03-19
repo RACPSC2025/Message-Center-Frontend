@@ -84,3 +84,37 @@ Mapeo actual en RoutesFile:
   - navbarWidth
   - navbarCollapsedWidth
   - backgroundColor
+
+## Navegacion interna de LegalMatriz (OptionsDrawer)
+
+Archivos:
+
+- src/features/MessageCenterLegalMatriz.js
+- src/features/MessageCenterLegalMatriz/OptionsDrawer.js
+- src/features/MessageCenterLegalMatriz/tabIds.js
+
+Regla principal:
+
+- La navegacion entre tabs del drawer usa identificadores estables (tabId), no indices numericos.
+- Esto evita redirecciones incorrectas cuando hay tabs ocultos por permisos/features.
+
+Tab IDs compartidos:
+
+- create_legal_requirement
+- regulatory_communications
+- analysis_of_regulation
+- articles
+- compliance
+
+Redirecciones desde la tabla de requerimientos:
+
+- Columna comunications -> regulatory_communications
+- Columna analysis_with_amatia -> analysis_of_regulation
+- Columna articles -> articles
+
+Reglas de visibilidad en UI (legal_matrix):
+
+- Boton create_legal_requirement (SpeedDial): visible solo si permissions.create_requirement = true
+- Tab create_legal_requirement: visible solo si permissions.create_article = true
+- Columna analysis_with_amatia y tab analysis_of_regulation: visibles solo si features.analysis_ia = true
+- Tab compliance: visible solo si features.compliance_view = true

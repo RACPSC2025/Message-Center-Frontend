@@ -21,6 +21,19 @@ Aplica al consumo frontend de las APIs del modulo:
 - Cliente frontend: axiosInstance (src/lib/axios.js)
 - Vista principal frontend: src/features/MessageCenterLegalMatriz/ComunicationsLedger.js
 
+## Entrada desde tabla LegalMatriz
+
+Integracion de navegacion frontend:
+
+- Archivo origen: src/features/MessageCenterLegalMatriz.js (columna comunications)
+- Destino: src/features/MessageCenterLegalMatriz/OptionsDrawer.js
+- Tab destino: regulatory_communications
+
+Regla de implementacion:
+
+- La apertura del drawer usa tabId (regulatory_communications), no indice numerico.
+- El tabId esta centralizado en src/features/MessageCenterLegalMatriz/tabIds.js.
+
 ## Modelo de datos funcional
 Una solicitud legal vive dentro de una cadena de relacion:
 - request (principal)
