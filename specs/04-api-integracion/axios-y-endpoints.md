@@ -62,14 +62,15 @@ Esto permite refrescar contadores sin acoplar componentes.
 
 ## Endpoint de niveles para filtros en cascada
 
-Endpoint usado por LegalMatriz, actions y events:
+### LegalMatriz y events (tasks)
+
+Endpoint usado:
 
 - fetchTaskListLevel (slice: src/stores/tasks/fetchtaskListLevelSlice.js)
 
 Componentes que consumen este endpoint en UI activa:
 
 - src/features/MessageCenterLegalMatriz.js
-- src/features/actions/Actions.js
 - src/features/tasks/Tasks.js
 
 Patron de request:
@@ -87,12 +88,41 @@ Mapeo de opciones en frontend:
 
 - { value: item.value, label: item.label }
 
-Nota:
+Nota events (Tasks.js):
 
-- En actions se persisten filtros como id_levelN.
-- En LegalMatriz y events se persisten como levelN y se usan para construir filtros API del modulo.
-- En events (Tasks.js), los niveles seleccionados se mapean adicionalmente a filtros del endpoint de tareas:
+- Los niveles seleccionados se mapean adicionalmente a filtros del endpoint de tareas:
   - level1 -> filter_region
   - level2 -> filter_country
   - level3 -> filter_business
   - level4 -> filter_plant
+
+### Actions (ajuste por contrato API)
+
+Base path de niveles (Action_api):
+
+- POST /message_center_api/Action_api/list_level1
+- POST /message_center_api/Action_api/list_level2
+- POST /message_center_api/Action_api/list_level3
+- POST /message_center_api/Action_api/list_level4
+
+Reglas:
+
+- Este ajuste aplica solo al modulo actions.
+- LegalMatriz y events mantienen su flujo actual de niveles.
+- Los filtros en actions se persisten como id_level1..id_level4 (id_level5 si aplica por configuracion futura).
+
+## Contrato de tabla de actions (actualizado)
+
+Consulta de informacion de tabla:
+
+- POST /message_center_api/Action_api/get_actions_amatia_express
+
+Consulta de encabezados dinamicos:
+
+- POST /message_center_api/Action_api/dashboard_actions_table_headers_amatia_express
+
+Consideraciones funcionales:
+
+- Los datos de actions ya incluyen campos de nivel (level_1..level_4 y nombres de nivel) segun contrato.
+- Al seleccionar filtros por nivel en actions, esos filtros deben impactar la consulta de tabla (get_actions_amatia_express).
+- Referencia de contrato: contracts.md (documento adjunto de Action_api).

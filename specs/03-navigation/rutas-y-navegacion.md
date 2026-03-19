@@ -137,11 +137,17 @@ Regla general:
 - El flujo de niveles es level1 -> level2 -> level3 -> level4 y level5 solo cuando enable_level5 es true.
 - Al cambiar un nivel, se limpian automaticamente los niveles dependientes.
 
+Origen de APIs por modulo:
+
+- LegalMatriz y events (tasks): niveles desde tasklist_api (fetchTaskListLevel).
+- actions: niveles desde Action_api/list_level1..list_level4.
+- Este cambio de niveles aplica solo a actions; los otros modulos se mantienen igual.
+
 Persistencia en Redux:
 
 - LegalMatriz: level1..level5
 - events: level1..level5
-- actions: id_level1..id_level5
+- actions: id_level1..id_level4 (id_level5 reservado para compatibilidad futura)
 
 Comportamiento de Clear Filters:
 

@@ -83,6 +83,12 @@ Nota: tambien existen archivos en src/stores/legal no registrados directamente e
 - getActionLogtask
 - uploadCommentAttachments
 
+Notas funcionales de filtros por nivel en actions:
+
+- El estado de niveles vive en filter.modules.actions.filterData (id_level1..id_level4).
+- Las opciones de niveles para actions se consultan contra Action_api/list_level1..list_level4.
+- La tabla de actions se consulta con Action_api/get_actions_amatia_express y headers con Action_api/dashboard_actions_table_headers_amatia_express.
+
 ## Findings
 
 - findings

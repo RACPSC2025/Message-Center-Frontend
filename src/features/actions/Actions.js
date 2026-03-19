@@ -24,11 +24,11 @@ import { fetchActionFormFields } from '../../stores/actions/fetchActionFormField
 import { fetchActionFormModel } from '../../stores/actions/fetchActionFormModelSlice';
 import { fetchActionList, fetchActionCount } from '../../stores/actions/fetchActionSlice';
 import { fetchTableColumns } from '../../stores/actions/fetchTableColumnsSlice';
+import { fetchActionListLevel } from '../../stores/actions/fetchActionListLevelSlice';
 import { getActionDetails } from '../../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../../stores/actions/submitActionFormSlice';
 import { removeFilter, selectAppliedFilterModel, selectListOptions, setFilter } from '../../stores/filterSlice';
 import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
-import { fetchTaskListLevel } from '../../stores/tasks/fetchtaskListLevelSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
 
@@ -60,7 +60,6 @@ export function Component() {
   const [organizationFilterState, setOrganizationFilterState] = useState({});
 
   const filterData = useAppliedFilterModel('actions');
-  const enableLevel5 = Boolean(filterData?.enable_level5);
 
   const shouldCreateNewAction = useSelector((state) => state?.globalData?.shouldCreateNewAction);
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
@@ -143,7 +142,7 @@ export function Component() {
 
   const handleClearFilters = () => {
     resetCascadingFilters();
-    ['id_level1', 'id_level2', 'id_level3', 'id_level4', 'id_level5'].forEach((key) => {
+    ['id_level1', 'id_level2', 'id_level3', 'id_level4'].forEach((key) => {
       dispatch(
         removeFilter({
           module: 'actions',
@@ -168,7 +167,7 @@ export function Component() {
     return new Promise((resolve, reject) => {
       const payload = formData ? { level, formData } : { level };
 
-      dispatch(fetchTaskListLevel(payload))
+      dispatch(fetchActionListLevel(payload))
         .then((response) => {
           const apiResponse = response?.payload?.data;
 
@@ -189,7 +188,7 @@ export function Component() {
   };
 
   const filterDefinitions = useMemo(() => {
-    const definitions = [
+    return [
       {
         id: 'level1',
         label: 'Business',
@@ -220,35 +219,16 @@ export function Component() {
         }
       }
     ];
-
-    if (enableLevel5) {
-      definitions.push({
-        id: 'level5',
-        label: 'Level 5',
-        fetchOptions: async (parentValues) => {
-          const formData = getFormDataFromSelectedValues(parentValues);
-          return fetchLevelData(5, formData);
-        }
-      });
-    }
-
-    return definitions;
-  }, [enableLevel5]);
+  }, []);
 
   const getInitialOrganizationValues = useMemo(() => {
-    const initialValues = {
+    return {
       level1: filterData?.id_level1 || '',
       level2: filterData?.id_level2 || '',
       level3: filterData?.id_level3 || '',
       level4: filterData?.id_level4 || ''
     };
-
-    if (enableLevel5) {
-      initialValues.level5 = filterData?.id_level5 || '';
-    }
-
-    return initialValues;
-  }, [enableLevel5, filterData]);
+  }, [filterData]);
 
   const handleOrganizationFilterChange = (values) => {
     const previousValues = { ...organizationFilterState };

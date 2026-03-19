@@ -43,6 +43,19 @@ Cada carpeta contiene slices y thunks del dominio.
 
 Al iniciar rutas se dispara fetchPlatformConfig (src/stores/platformConfigSlice.js), y ese estado alimenta la navegacion de modulos en src/config/generalConfig.js.
 
+## Nota de contrato para actions
+
+Para el modulo actions (ruta /view/actions):
+
+- La consulta de tabla se basa en Action_api/get_actions_amatia_express.
+- Los encabezados dinamicos se consultan con Action_api/dashboard_actions_table_headers_amatia_express.
+- Los filtros por niveles se persisten en filter.modules.actions.filterData como id_level1..id_level4.
+
+Importante:
+
+- Este ajuste aplica solo a actions.
+- LegalMatriz y events mantienen su flujo de niveles actual.
+
 ## Referencias
 
 - src/store.js
