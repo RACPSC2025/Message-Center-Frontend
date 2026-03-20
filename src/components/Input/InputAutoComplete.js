@@ -300,26 +300,17 @@ const InputAutoComplete = ({
         disabled={!isEnabled}
         size={size}
         open={open}
-        onOpen={() => {
-          if (inputValue.length >= minSearchLength && !justSelected) {
-            setOpen(true);
-          }
-        }}
+        onOpen={() => setOpen(true)}
         onClose={() => {
           setOpen(false);
         }}
         onInputChange={(event, newInputValue) => {
           setInputValue(newInputValue);
-          if (newInputValue.length >= minSearchLength && !open && !justSelected) {
-            setOpen(true);
-          }
-          setJustSelected(false);
         }}
         getOptionKey={(option) => option.value}
         value={internalValue}
         onChange={(e, newValue) => {
           handleChangeSelection(e, newValue);
-          setJustSelected(true);
           setOpen(false);
         }}
         options={filteredOptions}

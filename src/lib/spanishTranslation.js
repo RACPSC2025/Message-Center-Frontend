@@ -34,6 +34,7 @@ const es = {
   Save: 'Guardar',
   Cancel: 'Cancelar',
   Cancel_edit: 'Cancelar edición',
+  save_changes: 'Guardar cambios',
   Accept: 'Aceptar',
   Reset: 'Reiniciar',
   FormSavedMessage: 'Formulario guardado exitosamente',

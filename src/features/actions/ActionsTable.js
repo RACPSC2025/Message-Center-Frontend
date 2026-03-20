@@ -5,7 +5,9 @@ import {
   Close as CloseIcon,
   Comment as CommentIcon,
   Forum as CommentForumIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  Check as CheckIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { debounce } from 'radash';
@@ -53,6 +55,9 @@ export default function ActionTable({
 
   // Estado para acumular cambios pendientes por acción
   const [pendingChanges, setPendingChanges] = useState({});
+
+  // Estado para guardar los datos originales antes de entrar en modo edición
+  const [originalData, setOriginalData] = useState({});
 
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -104,16 +109,41 @@ export default function ActionTable({
         const isCurrentlyEditing = globalEditMode.enabled && globalEditMode.actionId === params.data.action_id;
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.2, width: '100%' }}>             
-            <IconButton
-              size="small"
-              onClick={() => toggleGlobalEditMode(params.data.action_id)}
-              sx={{
-                color: isCurrentlyEditing ? 'primary.main' : 'default'
-              }}
-              title={isCurrentlyEditing ? t('Cancel_edit') : t('edit_row')}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
+            {isCurrentlyEditing ? (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={() => toggleGlobalEditMode(params.data.action_id)}
+                  sx={{
+                    color: 'success.main'
+                  }}
+                  title={t('save_changes')}
+                >
+                  <CheckIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => cancelGlobalEditMode(params.data.action_id)}
+                  sx={{
+                    color: 'error.main'
+                  }}
+                  title={t('Cancel_edit')}
+                >
+                  <CancelIcon fontSize="small" />
+                </IconButton>
+              </>
+            ) : (
+              <IconButton
+                size="small"
+                onClick={() => toggleGlobalEditMode(params.data.action_id)}
+                sx={{
+                  color: 'default'
+                }}
+                title={t('edit_row')}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            )}
 
             <IconButton size="small" title={t('close_action')}
               onClick={(event) => {
@@ -373,8 +403,25 @@ export default function ActionTable({
   const toggleGlobalEditMode = (actionId) => {
     const wasEditing = globalEditMode.enabled && globalEditMode.actionId === actionId;
     
-    // Si estaba editando, procesar los cambios pendientes antes de desactivar
-    if (wasEditing) processPendingChanges(actionId);
+    if (wasEditing) {
+      // Si estaba editando, procesar los cambios pendientes antes de desactivar
+      processPendingChanges(actionId);
+      // Limpiar datos originales guardados
+      setOriginalData(prev => {
+        const newOriginal = { ...prev };
+        delete newOriginal[actionId];
+        return newOriginal;
+      });
+    } else {
+      // Si va a entrar en modo edición, guardar los datos originales
+      const currentAction = editableActions.find(action => action.action_id === actionId);
+      if (currentAction) {
+        setOriginalData(prev => ({
+          ...prev,
+          [actionId]: { ...currentAction }
+        }));
+      }
+    }
     
     setGlobalEditMode(prev => ({
       enabled: !prev.enabled,
@@ -383,6 +430,45 @@ export default function ActionTable({
     }));
     
     // Limpiar estados de edición individuales al cambiar modo global
+    setEditingStatusCell(null);
+    setEditingAdminCell(null);
+    setEditingDateCell(null);
+  };
+
+  // FUNCIÓN PARA CANCELAR EDICIÓN GLOBAL - Nueva funcionalidad
+  const cancelGlobalEditMode = (actionId) => {
+    // Restaurar los datos originales
+    const original = originalData[actionId];
+    if (original) {
+      setEditableActions(prev => 
+        prev.map(action => 
+          action.action_id === actionId ? { ...original } : action
+        )
+      );
+    }
+    
+    // Limpiar cambios pendientes sin procesarlos
+    setPendingChanges(prev => {
+      const newPending = { ...prev };
+      delete newPending[actionId];
+      return newPending;
+    });
+    
+    // Limpiar datos originales guardados
+    setOriginalData(prev => {
+      const newOriginal = { ...prev };
+      delete newOriginal[actionId];
+      return newOriginal;
+    });
+    
+    // Desactivar modo edición
+    setGlobalEditMode(prev => ({
+      enabled: false,
+      actionId: null,
+      editableFields: prev.editableFields
+    }));
+    
+    // Limpiar estados de edición individuales
     setEditingStatusCell(null);
     setEditingAdminCell(null);
     setEditingDateCell(null);

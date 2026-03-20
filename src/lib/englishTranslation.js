@@ -29,6 +29,7 @@ const en = {
   Save: 'Save',
   Cancel: 'Cancel',
   Cancel_edit: 'Cancel edit',
+  save_changes: 'Save changes',
   Accept: 'Accept',
   Reset: 'Reset',
   FormSavedMessage: 'Form Saved successfully',

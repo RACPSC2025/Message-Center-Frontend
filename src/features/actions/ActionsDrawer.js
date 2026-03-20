@@ -1,12 +1,13 @@
 import { Close } from '@mui/icons-material';
 import { AppBar, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
 import { isEmpty, isObject } from 'radash';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { getActionDetails } from '../../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../../stores/actions/submitActionFormSlice';
 import { showErrorMsg, showSuccessMsg } from '../../utils/others';
+import UnsavedChangesDialog from '../../components/UnsavedChangesDialog';
 
 const ActionsDetails = lazy(() => import('./ActionsDetails'));
 const ActionsComments = lazy(() => import('./ActionsComments'));
@@ -25,6 +26,36 @@ export default function ActionsDrawer({
 }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  
+  // Estados para el diálogo de confirmación de cambios sin guardar
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingCloseAction, setPendingCloseAction] = useState(null);
+
+  // Manejadores para el diálogo de cambios sin guardar
+  const handleConfirmExitWithoutSave = () => {
+    if (pendingCloseAction) {
+      pendingCloseAction();
+      setPendingCloseAction(null);
+    }
+    setShowUnsavedChangesDialog(false);
+  };
+
+  const handleCancelExit = () => {
+    setPendingCloseAction(null);
+    setShowUnsavedChangesDialog(false);
+  };
+
+  // Manejador de cierre con detección de cambios
+  const handleCloseDrawerWithConfirmation = (hasUnsavedChanges = false) => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedChangesDialog(true);
+      setPendingCloseAction(() => () => {
+        handleCloseDrawer();
+      });
+    } else {
+      handleCloseDrawer();
+    }
+  };
 
   const drawerStyleAttrs = {
     view_action: {
@@ -191,7 +222,7 @@ export default function ActionsDrawer({
     <Drawer
       anchor="right"
       open={drawerOpen}
-      onClose={handleCloseDrawer}
+      onClose={handleCloseDrawerWithConfirmation}
       PaperProps={drawerStyleAttrs[viewType] || {}}
     >
       <AppBar position="static">
@@ -199,7 +230,7 @@ export default function ActionsDrawer({
           <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
             {t(drawerTitle)}
           </Typography>
-          <IconButton edge="end" onClick={handleCloseDrawer} aria-label="close">
+          <IconButton edge="end" onClick={handleCloseDrawerWithConfirmation} aria-label="close">
             <Close sx={{ color: 'white' }} />
           </IconButton>
         </Toolbar>
@@ -215,12 +246,20 @@ export default function ActionsDrawer({
             formModel={actionFormModel}
             onUpdateModel={handleUpdateModel}
             onSubmit={handleSubmitActionData}
-            onCancel={handleCloseDrawer}
+            onCancel={handleCloseDrawerWithConfirmation}
           />
         ) : (
           ''
         )}
       </Suspense>
+      
+      {/* Diálogo de confirmación para cambios sin guardar */}
+      <UnsavedChangesDialog
+        open={showUnsavedChangesDialog}
+        onClose={handleCancelExit}
+        onConfirm={handleConfirmExitWithoutSave}
+        onCancel={handleCancelExit}
+      />
     </Drawer>
   );
 }

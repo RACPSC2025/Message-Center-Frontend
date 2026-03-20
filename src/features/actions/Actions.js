@@ -4,7 +4,6 @@ import {
   AppBar,
   Box,
   Button,
-  Drawer,
   FormControl,
   IconButton,
   InputLabel,
@@ -18,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
+import ActionsDrawer from './ActionsDrawer';
 import { useCascadingFilters } from '../../hooks/useCascadingFilters';
 import { useModuleData } from '../../hooks/useModuleData';
 import { fetchActionFormFields } from '../../stores/actions/fetchActionFormFieldsSlice';
@@ -679,55 +679,19 @@ export function Component() {
         handleClick={() => dispatch(toggleShouldCreateNewAction({ status: true }))}
       />
 
-      {/* Drawer para detalles de la acción */}
       {/* Drawer para detalles de la acción - Compartido entre creación, edición y comentarios */}
-      {drawerOpen && (
-        <Drawer
-          anchor="right"
-          open={drawerOpen}
-          onClose={handleCloseDrawer}
-          PaperProps={drawerStyleAttrs[viewType] || {}}
-        >
-          {/* Header del Drawer con AppBar */}
-          <AppBar position="static">
-            <Toolbar>
-              <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
-                {`${t('CreateAction')}`}
-              </Typography>
-
-              <IconButton edge="end" onClick={handleCloseDrawer} aria-label="close">
-                <Close sx={{ color: 'white' }} />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-
-          {/* Contenido dinámico del drawer según viewType */}
-          <Suspense fallback={<div>{t('loading')}</div>}>
-            {/* Vista de comentarios de la acción */}
-            {viewType === 'view_comment' ? (
-              <ActionsComments 
-                actionDetails={selectedAction} 
-                defaultTab={initialCommentTab}
-                onRefreshTable={handleFetchActionList}
-              />
-            ) : 
-            viewType === 'view_action' ? (
-              /* Vista de formulario de acción (creación o edición) */
-              <ActionsDetails
-                isFetching={actionDetailsLoading}
-                formFields={formFields}
-                formTabItems={formTabItems}
-                formModel={actionFormModel}
-                onUpdateModel={handleUpdateModel}
-                onSubmit={handleSubmitActionData}
-                onCancel={handleCloseDrawer}
-              />
-            ) : (
-              ''
-            )}
-          </Suspense>
-        </Drawer>
-      )}
+      <ActionsDrawer
+        drawerOpen={drawerOpen}
+        handleCloseDrawer={handleCloseDrawer}
+        viewType={viewType}
+        handleFetchActionList={handleFetchActionList}
+        selectedAction={selectedAction}
+        formFields={formFields}
+        formTabItems={formTabItems}
+        actionFormModel={actionFormModel}
+        setActionFormModel={setActionFormModel}
+        setFormFields={setFormFields}
+      />
     </BaseFeaturePageLayout>
   );
 }

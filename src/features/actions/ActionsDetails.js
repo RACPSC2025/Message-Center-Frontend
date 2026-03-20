@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Snackbar } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import BaseTab from '../../components/BaseTab';
 import FormBuilder from '../../components/FormBuilder';
@@ -21,12 +21,93 @@ export default function ActionsDetails({
   const [validationErrors, setValidationErrors] = useState({});
   const { t } = useTranslation();
 
+  // Estados para detectar cambios no guardados
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialFormModel, setInitialFormModel] = useState({});
+  const isInitialLoad = useRef(true);
+
   useEffect(() => {
     const [firstItem] = tabItems;
     if (firstItem) {
       setActiveTab(firstItem.key);
     }
   }, [tabItems]);
+
+  // Guardar estado inicial del formulario
+  useEffect(() => {
+    if (isInitialLoad.current && Object.keys(formModel).length > 0) {
+      setInitialFormModel(JSON.parse(JSON.stringify(formModel)));
+      isInitialLoad.current = false;
+    }
+  }, []);
+
+  // Detectar cambios en el formulario
+  useEffect(() => {
+    if (!isInitialLoad.current && Object.keys(initialFormModel).length > 0) {
+      const hasChanges = !deepEqual(initialFormModel, formModel);
+      setHasUnsavedChanges(hasChanges);
+    }
+  }, [formModel, initialFormModel]);
+
+  // Función para comparar objetos profundamente (ignorando valores vacíos y por defecto)
+  const deepEqual = (obj1, obj2) => {
+    // Función para verificar si un valor es "significativo" (no vacío)
+    const isSignificantValue = (value) => {
+      if (value === null || value === undefined || value === '') {
+        return false;
+      }
+      if (typeof value === 'string' && value.trim() === '') {
+        return false;
+      }
+      return true;
+    };
+
+    // Si ambos objetos son iguales por referencia
+    if (obj1 === obj2) return true;
+    
+    // Si alguno es nulo
+    if (obj1 == null || obj2 == null) return false;
+    
+    // Si tienen tipos diferentes
+    if (typeof obj1 !== typeof obj2) return false;
+
+    // Si no son objetos
+    if (typeof obj1 !== 'object') {
+      // Normalizar valores vacíos
+      const norm1 = isSignificantValue(obj1) ? obj1 : null;
+      const norm2 = isSignificantValue(obj2) ? obj2 : null;
+      return norm1 === norm2;
+    }
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) return false;
+
+    for (let key of keys1) {
+      if (!keys2.includes(key)) return false;
+      
+      const val1 = obj1[key];
+      const val2 = obj2[key];
+      
+      // Si ambos valores no son significativos, considerarlos iguales
+      if (!isSignificantValue(val1) && !isSignificantValue(val2)) {
+        continue;
+      }
+      
+      // Si uno es significativo y el otro no, hay diferencia
+      if (!isSignificantValue(val1) || !isSignificantValue(val2)) {
+        return false;
+      }
+      
+      // Comparación recursiva para valores significativos
+      if (!deepEqual(val1, val2)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   // Función de validación completa para todos los campos de todas las pestañas
   const validateAllFields = () => {
@@ -166,6 +247,17 @@ export default function ActionsDetails({
     }
   };
 
+  // Manejador de cancelación con detección de cambios
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      // Pasar true indicando que hay cambios sin guardar
+      onCancel(true);
+    } else {
+      // Pasar false (por defecto) si no hay cambios
+      onCancel(false);
+    }
+  };
+
   if (!activeTab) return null;
 
   return (
@@ -221,7 +313,7 @@ export default function ActionsDetails({
             size="small"
             color="secondary"
             sx={{ mx: 1 }}
-            onClick={onCancel}
+            onClick={handleCancel}
           >
             {t('Cancel')}
           </Button>
