@@ -129,3 +129,25 @@ Consideraciones funcionales:
 - Al seleccionar filtros por nivel en actions, esos filtros impactan el render de la tabla por filtrado cliente-side.
 - get_actions_amatia_express sigue siendo la fuente de datos base para la tabla.
 - Referencia de contrato: contracts.md (documento adjunto de Action_api).
+
+## Contrato de creacion de actions
+
+Endpoint:
+
+- POST /message_center_api/Action_api/action_form_submit_amatia_express
+
+Reglas de action_source:
+
+- Campo principal: action_source
+- Valores: hs_action | all_action_plan
+- Si no llega action_source, se usa hs_action por defecto
+- module_string_id no se usa para decidir tabla destino en este endpoint
+
+Implementacion frontend:
+
+- src/features/actions/Actions.js envia action_source con default hs_action
+- src/stores/actions/submitActionFormSlice.js refuerza action_source=hs_action cuando el payload no lo trae
+
+Referencia completa del contrato:
+
+- specs/04-api-integracion/actions-module/contracts.md

@@ -303,8 +303,12 @@ export function Component() {
 
   const handleSubmitActionData = () => {
     if (isObject(selectedAction) || shouldCreateNewAction) {
-      const { action_id = '', action_table: module_string_id = 'hs_action' } = selectedAction || {};
-      const formData = { ...actionFormModel, action_id, module_string_id };
+      const { action_id = '' } = selectedAction || {};
+      const formData = {
+        ...actionFormModel,
+        action_id,
+        action_source: actionFormModel?.action_source || 'hs_action'
+      };
 
       handleActionForm(formData);
     }

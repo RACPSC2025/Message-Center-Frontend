@@ -51,6 +51,7 @@ Para el modulo actions (ruta /view/actions):
 - Los encabezados dinamicos se consultan con Action_api/dashboard_actions_table_headers_amatia_express.
 - Los filtros por niveles se persisten en filter.modules.actions.filterData como id_level1..id_level4.
 - Los niveles seleccionados se aplican como filtro cliente-side sobre actionList en frontend.
+- En el submit de creacion/edicion, action_source se normaliza en el thunk (default hs_action) para garantizar consistencia de fuente.
 
 Importante:
 

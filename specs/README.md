@@ -23,6 +23,7 @@ Objetivos:
 - 04-api-integracion/
   - axios-y-endpoints.md
   - get_configuration_amatia_express.md
+  - actions-module/contracts.md
   - legal-requests-module/README.md
 - 05-dev/
   - ejecucion-build-deploy.md
