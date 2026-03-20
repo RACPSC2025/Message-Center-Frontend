@@ -146,3 +146,18 @@ Nota de navegacion:
 ## Nota de compilado
 
 La carpeta specs esta en la raiz del workspace y no hace parte del bundle de React (pnpm build), ya que el compilado toma codigo desde src y activos desde public.
+
+## Nota de contrato API para actions
+
+Este documento describe configuracion de plataforma (permisos/features), no contratos de datos.
+
+Para el modulo actions, el contrato de datos y filtros por nivel queda asi:
+
+- Niveles: Action_api/list_level1..list_level4
+- Tabla: Action_api/get_actions_amatia_express
+- Encabezados: Action_api/dashboard_actions_table_headers_amatia_express
+
+Alcance:
+
+- Este ajuste aplica solo al modulo actions.
+- LegalMatriz y events mantienen su flujo actual de niveles.

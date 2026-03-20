@@ -24,11 +24,11 @@ import { fetchActionFormFields } from '../../stores/actions/fetchActionFormField
 import { fetchActionFormModel } from '../../stores/actions/fetchActionFormModelSlice';
 import { fetchActionList, fetchActionCount } from '../../stores/actions/fetchActionSlice';
 import { fetchTableColumns } from '../../stores/actions/fetchTableColumnsSlice';
+import { fetchActionListLevel } from '../../stores/actions/fetchActionListLevelSlice';
 import { getActionDetails } from '../../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../../stores/actions/submitActionFormSlice';
 import { removeFilter, selectAppliedFilterModel, selectListOptions, setFilter } from '../../stores/filterSlice';
 import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
-import { fetchTaskListLevel } from '../../stores/tasks/fetchtaskListLevelSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
 
@@ -60,7 +60,6 @@ export function Component() {
   const [organizationFilterState, setOrganizationFilterState] = useState({});
 
   const filterData = useAppliedFilterModel('actions');
-  const enableLevel5 = Boolean(filterData?.enable_level5);
 
   const shouldCreateNewAction = useSelector((state) => state?.globalData?.shouldCreateNewAction);
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
@@ -117,17 +116,17 @@ export function Component() {
   const prepareAPIParams = () => {
     const formData = new FormData();
 
-    console.log('🔍 [DEBUG] Filtros a enviar al backend:', filterData);
-    console.log('🔍 [DEBUG] Keys de filtros:', Object.keys(filterData));
-
     if (Object.keys(filterData).length > 0) {
       Object.keys(filterData).forEach((filterKey) => {
         const filterValue = filterData[filterKey];
+
+        // Level filters are applied client-side in Actions table.
+        if (['id_level1', 'id_level2', 'id_level3', 'id_level4'].includes(filterKey)) {
+          return;
+        }
+
         formData.append(filterKey, filterValue);
-        console.log(`🔍 [DEBUG] Enviando: ${filterKey} = ${filterValue} (tipo: ${typeof filterValue})`);
       });
-    } else {
-      console.log('🔍 [DEBUG] No hay filtros configurados');
     }
 
     return formData;
@@ -143,7 +142,7 @@ export function Component() {
 
   const handleClearFilters = () => {
     resetCascadingFilters();
-    ['id_level1', 'id_level2', 'id_level3', 'id_level4', 'id_level5'].forEach((key) => {
+    ['id_level1', 'id_level2', 'id_level3', 'id_level4'].forEach((key) => {
       dispatch(
         removeFilter({
           module: 'actions',
@@ -168,7 +167,7 @@ export function Component() {
     return new Promise((resolve, reject) => {
       const payload = formData ? { level, formData } : { level };
 
-      dispatch(fetchTaskListLevel(payload))
+      dispatch(fetchActionListLevel(payload))
         .then((response) => {
           const apiResponse = response?.payload?.data;
 
@@ -189,7 +188,7 @@ export function Component() {
   };
 
   const filterDefinitions = useMemo(() => {
-    const definitions = [
+    return [
       {
         id: 'level1',
         label: 'Business',
@@ -220,35 +219,16 @@ export function Component() {
         }
       }
     ];
-
-    if (enableLevel5) {
-      definitions.push({
-        id: 'level5',
-        label: 'Level 5',
-        fetchOptions: async (parentValues) => {
-          const formData = getFormDataFromSelectedValues(parentValues);
-          return fetchLevelData(5, formData);
-        }
-      });
-    }
-
-    return definitions;
-  }, [enableLevel5]);
+  }, []);
 
   const getInitialOrganizationValues = useMemo(() => {
-    const initialValues = {
+    return {
       level1: filterData?.id_level1 || '',
       level2: filterData?.id_level2 || '',
       level3: filterData?.id_level3 || '',
       level4: filterData?.id_level4 || ''
     };
-
-    if (enableLevel5) {
-      initialValues.level5 = filterData?.id_level5 || '';
-    }
-
-    return initialValues;
-  }, [enableLevel5, filterData]);
+  }, [filterData]);
 
   const handleOrganizationFilterChange = (values) => {
     const previousValues = { ...organizationFilterState };
@@ -297,13 +277,6 @@ export function Component() {
 
   const handleFetchActionList = () => {
     const formData = prepareAPIParams();
-    console.log('🔍 [DEBUG] Llamando a fetchActionList con FormData:');
-    
-    // Mostrar contenido del FormData para depuración
-    for (let [key, value] of formData.entries()) {
-      console.log(`🔍 [DEBUG] FormData entry: ${key} = ${value}`);
-    }
-    
     dispatch(fetchActionList(formData));
   };
 
@@ -330,14 +303,13 @@ export function Component() {
 
   const handleSubmitActionData = () => {
     if (isObject(selectedAction) || shouldCreateNewAction) {
-      const { action_id = '', action_table: module_string_id = 'hs_action' } = selectedAction || {};
-      const formData = { ...actionFormModel, action_id, module_string_id };
-      
-      // Debug: Verificar formato de hs_causes para selección múltiple
-      if (formData.hs_causes && Array.isArray(formData.hs_causes)) {
-        console.log('[DEBUG] hs_causes (array) enviado al endpoint:', formData.hs_causes);
-      }
-      
+      const { action_id = '' } = selectedAction || {};
+      const formData = {
+        ...actionFormModel,
+        action_id,
+        action_source: actionFormModel?.action_source || 'hs_action'
+      };
+
       handleActionForm(formData);
     }
   };
@@ -569,27 +541,54 @@ export function Component() {
   }, [shouldCreateNewAction]);
   
   // ✅ WORKAROUND TEMPORAL: Filtrado cliente-side para filtros que no funcionan en backend
-  // filter_executor y filter_reviewer son filtrados aquí porque el backend no los procesa
+  // filter_executor, filter_reviewer y niveles organizacionales son filtrados aquí.
   const filteredActions = useMemo(() => {
     let result = actionList; // ← Viene del backend (ya filtrado por status, keywords, etc.)
 
+    const isSameValue = (a, b) => String(a ?? '').trim() === String(b ?? '').trim();
+
+    const levelFieldCandidates = {
+      id_level1: ['level_1', 'level1', 'id_level1'],
+      id_level2: ['level_2', 'level2', 'id_level2'],
+      id_level3: ['level_3', 'level3', 'id_level3'],
+      id_level4: ['level_4', 'level4', 'id_level4']
+    };
+
+    ['id_level1', 'id_level2', 'id_level3', 'id_level4'].forEach((levelFilterKey) => {
+      const selectedValue = filterData?.[levelFilterKey];
+      if (!selectedValue) return;
+
+      const candidates = levelFieldCandidates[levelFilterKey];
+      result = result.filter((action) =>
+        candidates.some((fieldName) => isSameValue(action?.[fieldName], selectedValue))
+      );
+    });
+
     // Solo aplicar filtrado cliente-side para los filtros que NO funcionan en backend
     if (filterData.filter_executor && filterData.filter_executor.trim() !== '') {
-      result = result.filter(action => {
+      result = result.filter((action) => {
         // Filtrar por ID (responsible_person), no por nombre
-        return action.responsible_person === filterData.filter_executor;
+        return isSameValue(action.responsible_person, filterData.filter_executor);
       });
     }
 
     if (filterData.filter_reviewer && filterData.filter_reviewer.trim() !== '') {
-      result = result.filter(action => {
+      result = result.filter((action) => {
         // Filtrar por ID (reviewer_person), no por nombre
-        return action.reviewer_person === filterData.filter_reviewer;
+        return isSameValue(action.reviewer_person, filterData.filter_reviewer);
       });
     }
 
     return result;
-  }, [actionList, filterData.filter_executor, filterData.filter_reviewer]);
+  }, [
+    actionList,
+    filterData?.id_level1,
+    filterData?.id_level2,
+    filterData?.id_level3,
+    filterData?.id_level4,
+    filterData?.filter_executor,
+    filterData?.filter_reviewer
+  ]);
 
   const [newActionByDescription, setNewActionByDescription] = useState('');
   const createNewAction= (newDescription) => {

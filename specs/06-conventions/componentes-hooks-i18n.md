@@ -111,9 +111,12 @@ Reglas aplicadas:
 Patron recomendado para filtros de organizacion por niveles:
 
 - Hook base: useCascadingFilters
-- Carga de opciones por nivel: fetchTaskListLevel
+- Carga de opciones por nivel por modulo:
+	- LegalMatriz y events (tasks): fetchTaskListLevel
+	- actions: Action_api/list_level1..list_level4
 - Fallback de niveles visibles: level1..level4 y level5 solo cuando el flag enable_level5 sea true
 - Limpieza total: resetFilters() + removeFilter en Redux para cada nivel
+- En actions, el efecto del filtro por nivel es cliente-side sobre la tabla ya cargada.
 
 Modulos que usan este patron:
 
@@ -130,8 +133,12 @@ Reglas de persistencia por modulo:
 
 - LegalMatriz: guarda level1..level5 en filter.modules.LegalMatriz.filterData
 - events (tasks): guarda level1..level5 en filter.modules.events.filterData
-- actions: guarda id_level1..id_level5 en filter.modules.actions.filterData
+- actions: guarda id_level1..id_level4 en filter.modules.actions.filterData (id_level5 reservado para compatibilidad futura)
 
 Nota de implementacion:
 
 - La respuesta de niveles se valida con response.payload.data.messages === 'Success' y opciones en response.payload.data.data.
+- En actions, la tabla y encabezados se consultan con Action_api:
+	- get_actions_amatia_express (datos)
+	- dashboard_actions_table_headers_amatia_express (headers)
+- En actions, id_level1..id_level4 se usan para filtrar filas en frontend (no como filtros enviados al endpoint de tabla).

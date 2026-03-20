@@ -30,18 +30,18 @@ export const submitActionForm = createAsyncThunk(
   'actions/action_form_submit',
   async (data = {}, { rejectWithValue }) => {
     try {
-      console.log('[DEBUG] API submitActionForm data', data);
+      const payload = {
+        ...data,
+        action_source: data?.action_source || 'hs_action'
+      };
+
       const response = await axiosInstance.post(
         '/message_center_api/action_api/action_form_submit_amatia_express',
-        data
+        payload
       );
-
-      console.log('[DEBUG] API submitActionForm response', response);
-      console.log('[DEBUG] API submitActionForm datos response', response?.data);
 
       return response?.data;
     } catch (error) {
-      console.log('[DEBUG] API submitActionForm error', error);
       return rejectWithValue(error.message);
     }
   }
