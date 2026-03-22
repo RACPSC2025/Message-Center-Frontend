@@ -326,7 +326,7 @@ function MessageCenterCardDetails({ messageDetails, toggleImportant, markAsRead 
                 sx={{ mt: 2 }}
                 onClick={handleNavigateToModule}
               >
-                {t('show_activity')}
+                {t('show_element')}
               </Button>
             )}
 
@@ -534,7 +534,7 @@ function MessageCenterCardDetails({ messageDetails, toggleImportant, markAsRead 
                                   });
                                 }}
                               >
-                                {t('show_activity')}
+                                {t('show_element')}
                               </Button>
                             )}
                           </Box>

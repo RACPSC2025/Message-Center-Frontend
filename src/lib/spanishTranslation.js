@@ -102,6 +102,7 @@ const es = {
   important: 'Importante',
   read: 'Leídos',
   show_activity: 'Ver Actividad',
+  show_element: 'Ver Elemento',
   show_more: "Ver más",
   show_less: "Ver menos",
   related_messages: 'Mensajes Relacionados',

@@ -97,6 +97,7 @@ const en = {
   important: 'Important',
   read: 'Read',
   show_activity: 'Show Activity',
+  show_element: 'Show Element',
   show_more: "Show more",
   show_less: "Show less",
   related_messages: 'Related Messages',
