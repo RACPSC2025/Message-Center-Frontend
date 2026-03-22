@@ -9,6 +9,7 @@ import MessageCenterCarditemSkeleton from './MessageCenterCarditemSkeleton';
 
 const MessageCenterUnreadTab = ({
   filterData = {},
+  moduleStringFilter = '',
   showArchivedMessages = false,
   showSelectionCheckbox = false,
   focusedMessageId = null,
@@ -23,6 +24,7 @@ const MessageCenterUnreadTab = ({
   singleNotificationEmployeeKey,
   singleNotificationMessageKey,
   singleNotificationDescriptionKey,
+  getModuleStringLabel,
   onMessagesLoaded
 }) => {
   const dispatch = useDispatch();
@@ -56,7 +58,7 @@ const MessageCenterUnreadTab = ({
     setHasReachedEnd(false);
     setPageNum(1);
     fetchMessages(1, true);
-  }, [filterData, showArchivedMessages]);
+  }, [filterData, moduleStringFilter, showArchivedMessages]);
 
   const fetchMessages = (nextPage = pageNum, replaceData = false) => {
     setIsLoading(true);
@@ -83,21 +85,26 @@ const MessageCenterUnreadTab = ({
       const dataObj = res?.payload;
       if (dataObj?.messages === 'Success') {
         const data = dataObj?.data || [];
+        const filteredData = moduleStringFilter
+          ? data.filter(
+              (msg) => String(msg?.module_string || '').trim().toLowerCase() === moduleStringFilter
+            )
+          : data;
         const next = dataObj?.next;
 
         if (replaceData || nextPage === 1) {
-          setMessages(data);
+          setMessages(filteredData);
           const hasSelectedMessageInCurrentTab =
-            focusedMessageId && data.some((msg) => msg.id_message === focusedMessageId);
+            focusedMessageId && filteredData.some((msg) => msg.id_message === focusedMessageId);
 
           // Seleccionar el primer mensaje por defecto cuando no hay selección válida en este tab
-          if (data.length > 0 && onMessagesLoaded && !hasSelectedMessageInCurrentTab) {
-            onMessagesLoaded(data[0]);
+          if (filteredData.length > 0 && onMessagesLoaded && !hasSelectedMessageInCurrentTab) {
+            onMessagesLoaded(filteredData[0]);
           }
         } else {
           setMessages((prevMessages) => {
             const existingIds = new Set(prevMessages.map((m) => m.id_message));
-            const newMessages = data.filter((m) => !existingIds.has(m.id_message));
+            const newMessages = filteredData.filter((m) => !existingIds.has(m.id_message));
             return [...prevMessages, ...newMessages];
           });
         }
@@ -129,6 +136,7 @@ const MessageCenterUnreadTab = ({
               key={msg.id_message}
               showSelectionCheckbox={showSelectionCheckbox}
               reviewer={msg[singleNotificationEmployeeKey]}
+              moduleLabel={getModuleStringLabel?.(msg.module_string)}
               message={msg[singleNotificationMessageKey]}
               desc={msg[singleNotificationDescriptionKey]}
               date={msg.date_message}
@@ -139,7 +147,7 @@ const MessageCenterUnreadTab = ({
               targetDate={msg.due_date}
               status={msg.status}
               onClick={() => {
-                handleSelectMessage(msg?.id_message);
+                handleSelectMessage(msg?.id_message, msg);
               }}
               onCheckChanged={(isChecked) =>
                 handleChangeMessageSelection(isChecked, msg.id_message)

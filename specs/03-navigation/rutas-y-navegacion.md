@@ -67,12 +67,29 @@ Componentes activos por ruta:
 - El modulo notifications usa el filtro definido en src/config/filterConfig.js > notifications.
 - Filtros activos:
   - filter_keywords
+  - filter_module_string
   - filter_start_date
   - filter_end_date
 - Estos valores se leen desde Redux (filter.modules.notifications.filterData) y se envian por POST en los tabs:
   - importantes
   - no leidos
   - leidos
+- `filter_module_string` se renderiza como dropdown en el panel izquierdo y sus opciones se generan en frontend segun modulos habilitados en `platformConfig.modules.*.enabled`:
+  - legal_matrix.enabled = true -> LegalMatriz (Matriz legal)
+  - task.enabled = true -> tasks (Tareas)
+  - actions.enabled = true -> actions (Acciones)
+- Este filtro es frontend-only: no se envia al backend en la consulta de listas.
+- La visibilidad de `filter_module_string` se controla por variable de estado local (default `false`).
+- La separacion de filtros se hace en `MessageCenterNotifications`:
+  - filtros API (keywords/fecha) para payload backend.
+  - `filter_module_string` como selector frontend-only.
+- El filtrado se aplica localmente sobre los resultados cargados de cada tab (Important/Unread/Read).
+- La comparacion de `filter_module_string` contra `message.module_string` se hace normalizada (`trim` + `toLowerCase`).
+- La persistencia visual de seleccion del dropdown se resuelve en frontend con comparacion por `value` en el componente de autocomplete.
+- Etiquetas del dropdown de modulo son bilingues y dependen del idioma activo:
+  - es: Matriz legal, Tareas, Acciones
+  - en: Legal Matrix, Tasks, Actions
+- Si un modulo esta deshabilitado (`enabled = false`), no aparece como opcion en el filtro.
 - Si se pulsa ClearFilters en BaseFilter para notifications:
   - se limpia filterData del modulo
   - los tabs resetean paginacion y vuelven a consultar pagina 1
@@ -82,6 +99,15 @@ Componentes activos por ruta:
   - filter_start_date
   - filter_end_date
 - El boton ClearFilters de BaseFilter ejecuta removeAllFilters({ module: 'notifications' }) y dispara recarga de tabs por cambio de filterData.
+
+Resumen rapido de destino de filtros en notifications:
+
+| Filtro | Backend | Frontend |
+|---|---|---|
+| `filter_keywords` | Si | No |
+| `filter_start_date` | Si | No |
+| `filter_end_date` | Si | No |
+| `filter_module_string` | No | Si |
 
 ## Constantes de layout
 

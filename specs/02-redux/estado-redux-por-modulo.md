@@ -70,6 +70,15 @@ Nota: tambien existen archivos en src/stores/legal no registrados directamente e
 - updateMessageFlag
 - moduleNavigation
 
+Notas funcionales de filtros en notifications:
+
+- El selector `filter_module_string` vive en Redux dentro de `filter.modules.notifications.filterData`.
+- Valores validos del selector: `LegalMatriz`, `tasks`, `actions`.
+- Este filtro es frontend-only para las listas de mensajes:
+	- no se envia en `FormData` al backend.
+	- se aplica localmente en tabs Important/Unread/Read comparando con `message.module_string`.
+- La comparacion se normaliza en frontend (`trim` + `toLowerCase`) para evitar fallas por espacios o variaciones de mayusculas/minusculas.
+
 ## Actions
 
 - fetchTableColumns

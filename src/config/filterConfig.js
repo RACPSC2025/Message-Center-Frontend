@@ -118,36 +118,15 @@ export const filterConfigs = {
   ],
   notifications: [
     textSearchField,
-    /*
-    {
-      labelKey: 'Status',
-      type: 'autocomplete',
-      name: 'filter_status',
-      default_value: '',
-      options: [],
-      api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_dashboard_message_status'
-      },
-      group_by_key: 'filter_by',
-      group_by_label: 'FilterBy'
-    },
-    {
-      ...dropdownAdminList,
-      labelKey: 'Sender'
-    },
     {
       labelKey: 'Category',
       type: 'autocomplete',
       name: 'filter_module_string',
       default_value: '',
       options: [],
-      api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_message_category_modules'
-      },
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
     },
-    */
     dateRangeField
   ],
   events: [

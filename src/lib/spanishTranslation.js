@@ -334,7 +334,7 @@ const es = {
   excel_export: 'Exportar a Excel',
   csv_export: 'Exportar a CSV',
   archive_message: 'Mensaje de archivo',
-  subscribers: 'Suscriptores',
+  subscribers: 'Usuarios',
   microsoft_teams_meeting: 'Reunión de Microsoft Teams',
   invited_you: 'te invitó.',
   tasks_for_the_day: 'Tareas del día',

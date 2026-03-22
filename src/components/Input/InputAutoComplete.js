@@ -180,10 +180,10 @@ const InputAutoComplete = ({
   }, [field.api_details]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open && checkAPICallRequirements(field.api_details)) {
       setOptions([]);
     }
-  }, [open]);
+  }, [open, field.api_details]);
 
   // Efecto para sincronizar inputValue cuando la prop value cambia (especialmente cuando se limpian filtros)
   useEffect(() => {
@@ -314,7 +314,12 @@ const InputAutoComplete = ({
           setOpen(false);
         }}
         options={filteredOptions}
-        getOptionLabel={(option) => t(option.label)} // Aquí se traduce el label
+        isOptionEqualToValue={(option, selectedValue) => {
+          const normalizedSelectedValue =
+            typeof selectedValue === 'object' ? selectedValue?.value : selectedValue;
+          return option?.value === normalizedSelectedValue;
+        }}
+        getOptionLabel={(option) => t(option?.label || option || '')}
         loading={loading}
         renderInput={(params) => (
           <TextField

@@ -2,7 +2,7 @@ import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, IconButton, InputAdornment, Typography } from '@mui/material';
 import { isEmpty } from 'radash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { filterConfigs } from '../config/filterConfig';
@@ -45,14 +45,73 @@ useEffect(() => {
 */
 
 function BaseFilter({ component = '' }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
+  const [showModuleStringFilter] = useState(false);
+  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? {});
 
   const selectedTaskView = useSelector((state) =>
     selectFilterItemValue(state, 'task', 'selectedTaskView')
   );
 
-  const config = filterConfigs[component];
+  const notificationModuleOptions = useMemo(() => {
+    const isEnglish = (i18n?.resolvedLanguage || i18n?.language || 'es')
+      .toLowerCase()
+      .startsWith('en');
+
+    const moduleOptionsConfig = [
+      {
+        platformKey: 'legal_matrix',
+        value: 'LegalMatriz',
+        labelEs: 'Matriz legal',
+        labelEn: 'Legal Matrix'
+      },
+      {
+        platformKey: 'task',
+        value: 'tasks',
+        labelEs: 'Tareas',
+        labelEn: 'Tasks'
+      },
+      {
+        platformKey: 'actions',
+        value: 'actions',
+        labelEs: 'Acciones',
+        labelEn: 'Actions'
+      }
+    ];
+
+    return moduleOptionsConfig
+      .filter(({ platformKey }) => platformModules?.[platformKey]?.enabled)
+      .map(({ value, labelEs, labelEn }) => ({
+        value,
+        label: isEnglish ? labelEn : labelEs
+      }));
+  }, [platformModules, i18n?.language, i18n?.resolvedLanguage]);
+
+  const config = useMemo(() => {
+    const baseConfig = filterConfigs[component] ?? [];
+
+    if (component !== 'notifications') {
+      return baseConfig;
+    }
+
+    const notificationsConfig = baseConfig.map((item) => {
+      if (item.name !== 'filter_module_string') {
+        return item;
+      }
+
+      return {
+        ...item,
+        options: notificationModuleOptions
+      };
+    });
+
+    if (!showModuleStringFilter) {
+      return notificationsConfig.filter((item) => item.name !== 'filter_module_string');
+    }
+
+    return notificationsConfig;
+  }, [component, notificationModuleOptions, showModuleStringFilter]);
 
   const groupedFilterItems = useMemo(() => {
     if (!config) return {};
@@ -88,7 +147,7 @@ function BaseFilter({ component = '' }) {
     }, {});
 
     return updatedConfig;
-  }, [component, selectedTaskView, t]);
+  }, [component, selectedTaskView, t, config]);
 
   /*
   const groupedFilterItems = useMemo(() => {
@@ -214,7 +273,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
     } else {
       updatedOptions = useListOptions(module, id);
       if (updatedOptions.length === 0) {
-        shouldFetchList.current = true;
+        shouldFetchList.current = Boolean(api_details?.api_url);
       }
     }
   }
@@ -227,7 +286,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
     } else {
       updatedOptions = useListOptions(module, id);
       if (updatedOptions.length === 0) {
-        shouldFetchList.current = true;
+        shouldFetchList.current = Boolean(api_details?.api_url);
       }
     }
   }

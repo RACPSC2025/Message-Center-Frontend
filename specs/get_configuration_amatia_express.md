@@ -72,6 +72,11 @@ Reglas aplicadas:
 - notifications se mantiene como modulo de navegacion del sistema
 - enviroment se usa para renderizar la etiqueta de ambiente en el sidebar izquierdo
 
+Uso adicional en filtros de notifications:
+
+- `modules.legal_matrix.enabled`, `modules.task.enabled` y `modules.actions.enabled` controlan que opciones se muestran en el filtro `filter_module_string` del panel izquierdo de notifications.
+- Si `enabled = false`, la categoria no se ofrece en el filtro.
+
 ## Idioma de los titulos
 
 El idioma activo se toma del provider de lenguaje y se pasa a getGlobalConfiguration.

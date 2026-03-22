@@ -13,6 +13,7 @@ import { backgroundColor, STATUS_TO_COLOR_MAPPING } from '../config/constants';
 
 function MessageCenterCardItem({
   reviewer,
+  moduleLabel,
   date,
   message,
   desc,
@@ -179,7 +180,7 @@ function MessageCenterCardItem({
 
       {/* Container for reviewer and date */}
       <Box sx={{ width: '100%', pr: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
           <Box sx={{ flex: '1 0 50%', minWidth: 0 }}>
             <Typography 
               className="mc-text-overflow" 
@@ -193,6 +194,25 @@ function MessageCenterCardItem({
               {reviewer}
             </Typography>
           </Box>
+
+          {moduleLabel && (
+            <Typography
+              variant="caption"
+              sx={{
+                px: 0.75,
+                py: 0.125,
+                borderRadius: '10px',
+                border: `1px solid ${blue[300]}`,
+                backgroundColor: blue[50],
+                color: blue[800],
+                fontWeight: 600,
+                lineHeight: 1.4,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {moduleLabel}
+            </Typography>
+          )}
 
           {targetDate && (
             <Typography variant="caption" fontWeight="bold" sx={{ color: 'orange' }}>

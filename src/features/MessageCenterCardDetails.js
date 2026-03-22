@@ -22,7 +22,12 @@ import { fetchMessageFormFields } from '../stores/messages/fetchMessageFormField
 import { submitMessageData } from '../stores/messages/submitMessageDataSlice';
 import { isBase64ImageData, stringAvatar } from '../utils/others';
 
-function MessageCenterCardDetails({ messageDetails, toggleImportant, markAsRead }) {
+function MessageCenterCardDetails({
+  messageDetails,
+  focusedMessageIsImportant,
+  toggleImportant,
+  markAsRead
+}) {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const dispatch = useDispatch();
@@ -35,7 +40,8 @@ function MessageCenterCardDetails({ messageDetails, toggleImportant, markAsRead 
 
   const isMenuOpen = Boolean(anchorEl);
 
-  const { form_code = null, form_title = null, is_important, extra_params = {} } = messageDetails;
+  const { form_code = null, form_title = null, extra_params = {} } = messageDetails;
+  const isMessageImportant = String(focusedMessageIsImportant) === '1';
 
   const user = useSelector((state) => state.globalData.userDetails);
 
@@ -254,8 +260,8 @@ function MessageCenterCardDetails({ messageDetails, toggleImportant, markAsRead 
             {/* Botón de marcar como importante */}
             <IconButton
               size="small"
-              color={is_important === '0' ? 'default' : 'primary'}
-              onClick={() => toggleImportant(messageDetails.id_message, is_important === '0')}
+              color={isMessageImportant ? 'primary' : 'default'}
+              onClick={() => toggleImportant(messageDetails.id_message, !isMessageImportant)}
             >
               <FlagIcon />
             </IconButton>
