@@ -31,6 +31,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import SpeedDialComponent from '../components/SpeedDialComponent';
 import TableComponent from '../components/TableComponent';
 import { useCascadingFilters } from '../hooks/useCascadingFilters';
@@ -77,6 +78,7 @@ const useFilterItemValue = (module, fieldName) =>
 export function Component() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [activeTabId, setActiveTabId] = useState(DEFAULT_LEGAL_MATRIX_TAB_ID);
   const [tabValue, setTabValue] = useState(0);
   const [idRequisito, setIdRequisito] = useState(0);
@@ -259,36 +261,62 @@ export function Component() {
   const handleFetchLegals = () => {
     dispatch(fetchListLegals()).then((data) => {
       if (data?.payload?.messages === 'Success') {
-        const legals = data?.payload?.data.map((item) => ({
-          id: item.id_requisito,
-          type: item.requisito_general_tipo,
-          articles: item.total_articulos,
-          tasks: item.total_tareas,
-          type_of_rule: item.tipo_de_norma,
-          number: item.id_tipo_de_norma,
-          requirement_name: item.nombre,
-          date_of_issue_notification: item.fecha_expedicion,
-          effective_date: item.fecha_ejecutoria,
-          renovation_date: item.fecha_renovation,
-          modified_date: item.modified,
-          requirement_description: item.descripcion,
-          progress: {
-            progress: getLegalState(item.estado, item.percentage),
-            percentage: getPercentage(parseFloat(item.percentage).toFixed(2))
-          },
-          status: item.estado,
-          comunications_files: item.comunications_files || 0,
-          comunications_count: item.comunications_count || 0,
-          comunications_flag: item.comunications_flag || 'in_progress',
-        }));
-        setLegals(legals);
-        setLegalsFilters(legals);
+        const mappedLegals = data?.payload?.data.map((item) => {
+          const normalizedTaskList = Array.isArray(item.task_list) ? item.task_list : [];
+          return {
+            id: item.id_requisito,
+            type: item.requisito_general_tipo,
+            articles: item.total_articulos,
+            tasks:
+              item.total_tareas != null && item.total_tareas !== ''
+                ? Number(item.total_tareas)
+                : normalizedTaskList.length,
+            task_list: normalizedTaskList,
+            type_of_rule: item.tipo_de_norma,
+            number: item.id_tipo_de_norma,
+            requirement_name: item.nombre,
+            date_of_issue_notification: item.fecha_expedicion,
+            effective_date: item.fecha_ejecutoria,
+            renovation_date: item.fecha_renovation,
+            modified_date: item.modified,
+            requirement_description: item.descripcion,
+            progress: {
+              progress: getLegalState(item.estado, item.percentage),
+              percentage: getPercentage(parseFloat(item.percentage).toFixed(2))
+            },
+            status: item.estado,
+            comunications_files: item.comunications_files || 0,
+            comunications_count: item.comunications_count || 0,
+            comunications_flag: item.comunications_flag || 'in_progress'
+          };
+        });
+        setLegals(mappedLegals);
+        setLegalsFilters(mappedLegals);
         console.log('legals', data?.payload);
 
-        const uniqueTypeOfRules = [...new Set(legals.map((item) => item.type_of_rule))];
+        const uniqueTypeOfRules = [...new Set(mappedLegals.map((item) => item.type_of_rule))];
         setList_type_of_rule(uniqueTypeOfRules);
       }
     });
+  };
+
+  const handleNavigateToRelatedTasks = (taskList = [], requirementMeta = {}) => {
+    const relatedTaskIds = Array.from(
+      new Set(
+        (Array.isArray(taskList) ? taskList : [])
+          .map((taskItem) => String(taskItem?.id_task || '').trim())
+          .filter(Boolean)
+      )
+    );
+
+    const requirementId = requirementMeta?.id ?? null;
+    const requirementTitle = requirementMeta?.title ?? '';
+
+    handleSetFilterItemValue('task', 'selectedTaskView', 'list');
+    handleSetFilterItemValue('task', 'selected_legal_task_ids', relatedTaskIds);
+    handleSetFilterItemValue('task', 'selected_legal_requirement_id', requirementId);
+    handleSetFilterItemValue('task', 'selected_legal_requirement_title', requirementTitle);
+    navigate('/view/events');
   };
 
   const customHeaderStyle = {
@@ -680,6 +708,33 @@ export function Component() {
       filter: 'agTextColumnFilter',
       filterParams: {
         values: null
+      },
+      cellRenderer: (params) => {
+        const rowTaskList = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
+        const hasRelatedTasks = rowTaskList.length > 0;
+        const tasksCount = Number(params?.value || 0);
+
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+            <Typography variant="body2">{tasksCount}</Typography>
+            {hasRelatedTasks && (
+              <Tooltip title={`${t('show_element')} ${t('tasks')}`}>
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleNavigateToRelatedTasks(rowTaskList, {
+                      id: params?.data?.id,
+                      title: params?.data?.requirement_name
+                    });
+                  }}
+                >
+                  <ListAlt fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        );
       }
     },
     {

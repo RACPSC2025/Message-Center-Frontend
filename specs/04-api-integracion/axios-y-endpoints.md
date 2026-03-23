@@ -52,6 +52,30 @@ Uso adicional de apiUrl en frontend:
 
 Muchos endpoints *_amatia_express trabajan con FormData para operaciones create/update con adjuntos o metadatos.
 
+## Contrato actualizado: list_legals_amatia_express
+
+Endpoint:
+
+- GET /message_center_api/legal_api/list_legals_amatia_express
+
+Cambio de contrato (2026-03):
+
+- Cada elemento de `data[]` puede incluir `task_list`.
+- `task_list` es un array (puede venir vacio).
+- Cuando tiene datos, cada item de `task_list` contiene al menos:
+  - `id`
+  - `id_requisito`
+  - `id_tipo_requisito`
+  - `id_task`
+  - `created`
+  - `modified`
+  - `deleted`
+
+Regla de frontend implementada:
+
+- Normalizar `task_list` como array en el thunk (`fetchListLegals`), incluso si el backend no lo envia o lo envia nulo.
+- En `MessageCenterLegalMatriz`, mantener `tasks` desde `total_tareas` cuando exista; usar fallback `task_list.length` si `total_tareas` no llega.
+
 ## Eventos custom para sincronizacion UI
 
 Tras ciertas operaciones de escritura, se dispara:

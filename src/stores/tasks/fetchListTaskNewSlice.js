@@ -24,10 +24,10 @@ export const fetchGetCountries = createAsyncThunk(
 );
 
 export const fetchListTaskNew = createAsyncThunk(
-  'task/list_tasks_new_complete',
+  'task/list_tasks_new_complete_amatia_express',
   async (formData = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/list_tasks_new_complete', formData);
+      const response = await axiosInstance.post('/tasklist_api/list_tasks_new_complete_amatia_express', formData);
       
       console.log("responseTask");
       console.log(response);

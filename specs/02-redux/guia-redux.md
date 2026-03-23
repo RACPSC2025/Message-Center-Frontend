@@ -58,6 +58,29 @@ Importante:
 - Este ajuste aplica solo a actions.
 - LegalMatriz y events mantienen su flujo de niveles actual.
 
+## Nota de contrato LegalMatriz -> Tasks (task_list)
+
+- Cuando `list_legals_amatia_express` devuelve `task_list` con datos, LegalMatriz habilita accion en columna `tasks` para navegar a tareas asociadas.
+- La navegacion configura en Redux:
+  - `filter.modules.task.filterData.selectedTaskView = 'list'`
+  - `filter.modules.task.filterData.selected_legal_task_ids = [id_task, ...]`
+  - `filter.modules.task.filterData.selected_legal_requirement_id = <id_requisito>`
+  - `filter.modules.task.filterData.selected_legal_requirement_title = <nombre_requisito>`
+- `selected_legal_task_ids` es frontend-only:
+  - no se envia al backend de tasks;
+  - se aplica en `TasksListView`, `TaskTableList` y calendario de `Tasks` para filtrar localmente los registros cargados.
+
+Banner de contexto en tasks:
+
+- Cuando el filtro por requisito esta activo, `Tasks` muestra una etiqueta superior con:
+  - cantidad de tareas filtradas;
+  - texto "Tareas del requisito";
+  - ID y titulo del requisito.
+- La etiqueta incluye boton `X` para limpiar:
+  - `selected_legal_task_ids`
+  - `selected_legal_requirement_id`
+  - `selected_legal_requirement_title`
+
 ## Referencias
 
 - src/store.js

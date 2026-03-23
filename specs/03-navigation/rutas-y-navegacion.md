@@ -143,6 +143,21 @@ Redirecciones desde la tabla de requerimientos:
 - Columna comunications -> regulatory_communications
 - Columna analysis_with_amatia -> analysis_of_regulation
 - Columna articles -> articles
+- Columna tasks:
+  - Si `task_list` tiene elementos, se habilita boton para abrir tareas asociadas.
+  - Navega a `/view/events` y establece `selectedTaskView = 'list'`.
+  - Guarda en Redux:
+    - `selected_legal_task_ids` con los `id_task` provenientes de `task_list`.
+    - `selected_legal_requirement_id`.
+    - `selected_legal_requirement_title`.
+  - El filtro frontend por IDs aplica a vistas de tasks: lista, tabla y calendario.
+  - En la parte superior de tasks se muestra etiqueta de contexto con cantidad + requisito (ID + titulo) y boton `X` para deshacer el filtro.
+
+Notas de filtro frontend en tasks:
+
+- `selected_legal_task_ids` es frontend-only.
+- No se envia al backend de tasks.
+- El backend sigue entregando la lista base y el recorte se realiza en cliente (`task.id` vs `selected_legal_task_ids`).
 
 Reglas de visibilidad en UI (legal_matrix):
 

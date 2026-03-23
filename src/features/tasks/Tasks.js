@@ -62,6 +62,7 @@ import {
   selectListOptions,
   setFilter
 } from '../../stores/filterSlice';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { areDatesSame, formatDayjs, getCurrentDate } from '../../utils/dateTimeFunctions';
 import CreateTask from './CreateTaskDrawer';
@@ -117,6 +118,26 @@ export default function Component() {
   const selectedTaskView = useSelector((state) => 
     selectFilterItemValue(state, 'task', 'selectedTaskView')
   );
+  const selectedLegalTaskIds =
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
+  const selectedLegalRequirementId =
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_requirement_id'));
+  const selectedLegalRequirementTitle =
+    useSelector((state) =>
+      selectFilterItemValue(state, 'task', 'selected_legal_requirement_title')
+    ) || '';
+
+  const selectedLegalTaskIdSet = useMemo(
+    () =>
+      new Set(
+        (Array.isArray(selectedLegalTaskIds) ? selectedLegalTaskIds : [])
+          .map((id) => String(id).trim())
+          .filter(Boolean)
+      ),
+    [selectedLegalTaskIds]
+  );
+
+  const isLegalTaskFilterActive = selectedLegalTaskIdSet.size > 0;
 
   const listTaskStatus = useFilterItemValue('task', 'task_list_status') || [];
   const [taskListStatusLoading, settaskListStatusLoading] = useState(true);
@@ -231,6 +252,7 @@ export default function Component() {
       }
       return {
         id: item.id_event,
+        task_id: item.task_id || item.id_task || item.id_event,
         date: item.date_of_reminder,
         // Swap description and title, to show description in the calendar
         description: description,
@@ -520,13 +542,30 @@ export default function Component() {
 
   const allEventsForSelectedDate = () => {
     const formattedDate = formatDayjs(selectedDate, dateFormat);
-    return events.filter((event) => areDatesSame(event.date, formattedDate));
+    return filteredEvents.filter((event) => areDatesSame(event.date, formattedDate));
   };
 
   const handleEventClick = ({ event }) => {
-    const eventDetails = events.find((e) => e.id === event.id);
+    const eventDetails = filteredEvents.find((e) => e.id === event.id);
     setSeletedEvent(eventDetails);
     setDrawerOpen(true);
+  };
+
+  const filteredEvents = useMemo(() => {
+    if (!isLegalTaskFilterActive) {
+      return events;
+    }
+
+    return events.filter((eventItem) => {
+      const taskIdCandidate = String(eventItem?.task_id ?? eventItem?.id ?? '').trim();
+      return selectedLegalTaskIdSet.has(taskIdCandidate);
+    });
+  }, [events, isLegalTaskFilterActive, selectedLegalTaskIdSet]);
+
+  const handleClearLegalTaskFilter = () => {
+    handleSetFilterItemValue('task', 'selected_legal_task_ids', []);
+    handleSetFilterItemValue('task', 'selected_legal_requirement_id', null);
+    handleSetFilterItemValue('task', 'selected_legal_requirement_title', '');
   };
 
   // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
@@ -761,6 +800,32 @@ export default function Component() {
         </Box>
       </Box>
 
+      {isLegalTaskFilterActive && (
+        <Box
+          sx={{
+            mx: 3,
+            mt: 1,
+            mb: 0.5,
+            px: 1.5,
+            py: 0.75,
+            borderRadius: '8px',
+            border: '1px solid #d3e6f3',
+            bgcolor: '#f3f9fe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1
+          }}
+        >
+          <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#2b4c65' }}>
+            {`${selectedLegalTaskIdSet.size} ${t('tasks_of_requirement')} ${selectedLegalRequirementId || '-'} - ${selectedLegalRequirementTitle || '-'}`}
+          </Typography>
+          <IconButton size="small" onClick={handleClearLegalTaskFilter}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+
       <Box sx={{ flex: 1, minHeight: 0 }}>
         {selectedView === 'report' ? (
           <TaskReport />
@@ -769,7 +834,7 @@ export default function Component() {
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="w-full lg:w-1/2">
                 <TaskCalender
-                  events={events}
+                  events={filteredEvents}
                   language={language}
                   handleDateClick={(arg) => setSelectedDate(dayjs(arg.dateStr))}
                   handleEventClick={handleEventClick}
@@ -813,7 +878,7 @@ export default function Component() {
                   <TaskTableList />
                 ) : (
                   <TaskCalender
-                    events={events}
+                    events={filteredEvents}
                     language={language}
                     handleDateClick={(arg) => setSelectedDate(dayjs(arg.dateStr))}
                     handleEventClick={handleEventClick}

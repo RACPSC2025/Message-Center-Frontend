@@ -404,6 +404,7 @@ const en = {
   findings: 'Findings',
   requirements: 'Requirements',
   requirement: 'Requirement',
+  tasks_of_requirement: 'Requirement tasks',
   issuance_date: 'Issuance date',
   efective_date: 'Efective date',
   renovation_date: 'Renovation date',
@@ -909,7 +910,11 @@ const en = {
   "download": "Download",
   "link_expired": "Link expired",
   "signed_url_expired": "The file link has expired. Refreshing links...",
-  "error_downloading_file": "Error downloading file"
+
+  "error_downloading_file": "Error downloading file",
+  "add_tag": "Add tag",
+  "select_tag": "Select tag",
+  "error_adding_tag": "Error adding tag"
 };
 
 export default en;

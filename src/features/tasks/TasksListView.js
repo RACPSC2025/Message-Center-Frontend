@@ -32,6 +32,7 @@ import {
   ChevronRight as ChevronRightIcon,
   DownloadDone,
   Loop,
+  Add as AddIcon,
   AssignmentReturned,
   MoreVert as MoreVertIcon,
   DeleteOutline,
@@ -40,6 +41,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import TaskCycleRow from './TaskCycleRow';
+import AddTagDialog from './AddTagDialog';
 import TaskCyclesTable from './TaskCyclesTable';
 import TaskDetailsSidebar from './TaskDetailsSidebar';
 import UnsavedChangesDialog from '../../components/UnsavedChangesDialog';
@@ -83,6 +85,13 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [taskMenuAnchor, setTaskMenuAnchor] = useState(null);
   const [selectedTaskForMenu, setSelectedTaskForMenu] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [addTagDialogOpen, setAddTagDialogOpen] = useState(false);
+  const [taskIdForTag, setTaskIdForTag] = useState(null);
+  const handleAddTag = () => {
+    setAddTagDialogOpen(true);
+    setTaskIdForTag(selectedTaskForMenu?.id);
+    handleTaskMenuClose();
+  };
 
   // Manejadores para el diálogo de cambios sin guardar
   const handleConfirmExitWithoutSave = () => {
@@ -143,7 +152,19 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
 
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
+  const selectedLegalTaskIds =
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
   console.log('TasksListView - Estados de tareas:', listTaskStatus);
+
+  const selectedLegalTaskIdSet = useMemo(
+    () =>
+      new Set(
+        (Array.isArray(selectedLegalTaskIds) ? selectedLegalTaskIds : [])
+          .map((id) => String(id).trim())
+          .filter(Boolean)
+      ),
+    [selectedLegalTaskIds]
+  );
 
   //  Redux Selectors Filters 
   const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
@@ -153,8 +174,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const endDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_end_date'));
   const executorFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_executor'));
   const reviewerFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_reviewer'));
-  console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
-  console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
+  //console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
+  //console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
 
   // ✅ COLORES DINÁMICOS DESDE REDUX
   const TASK_STATUS_COLORS = useMemo(() => {
@@ -238,6 +259,10 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   // ✅ Filtro de tareas por palabras clave, estado y fechas
   const filteredTasks = useMemo(() => {
     let result = tasks.filter(task => {
+      if (selectedLegalTaskIdSet.size > 0 && !selectedLegalTaskIdSet.has(String(task?.id))) {
+        return false;
+      }
+
       // 1. Filtro por Palabras Clave
       if (keywordsFilter && keywordsFilter.trim() !== '') {
         const searchTerm = keywordsFilter.toLowerCase().trim();
@@ -313,54 +338,107 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     }
 
     return result;
-  }, [tasks, keywordsFilter, statusFilter, sortBy, startDateFilter, endDateFilter, executorFilter, reviewerFilter]);
+  }, [
+    tasks,
+    selectedLegalTaskIdSet,
+    keywordsFilter,
+    statusFilter,
+    sortBy,
+    startDateFilter,
+    endDateFilter,
+    executorFilter,
+    reviewerFilter
+  ]);
 
 
   // ✅ LAZY LOADING DE TAREAS
-  // 1. Resetear página cuando cambian las tareas filtradas
-  useEffect(() => {
-    setCurrentPage(1);
-    setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
-    setIsLoadingMoreTasks(false);
-    if (listRef.current) {
-      listRef.current.scrollTop = 0;
-    }
-  }, [filteredTasks]);
 
-  // 2. Cargar más tareas cuando cambia la página
+
+  // 1. Resetear página y scroll SOLO cuando cambian los filtros principales (NO cuando cambia visibleTasks por lazy load)
+  const lastMainFilters = useRef({
+    keywordsFilter: null,
+    statusFilter: null,
+    startDateFilter: null,
+    endDateFilter: null,
+    executorFilter: null,
+    reviewerFilter: null,
+    selectedLegalTaskIds: null
+  });
+
   useEffect(() => {
-    if (currentPage === 1) return; // Ya manejado arriba
+    const mainFilters = {
+      keywordsFilter,
+      statusFilter,
+      startDateFilter,
+      endDateFilter,
+      executorFilter,
+      reviewerFilter,
+      selectedLegalTaskIds: JSON.stringify(selectedLegalTaskIds)
+    };
+    const filtersChanged = Object.keys(mainFilters).some(
+      key => lastMainFilters.current[key] !== mainFilters[key]
+    );
+    if (filtersChanged) {
+      setCurrentPage(1);
+      setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
+      setIsLoadingMoreTasks(false);
+      if (listRef.current) {
+        listRef.current.scrollTop = 0;
+      }
+    }
+    lastMainFilters.current = mainFilters;
+  }, [keywordsFilter, statusFilter, startDateFilter, endDateFilter, executorFilter, reviewerFilter, selectedLegalTaskIds, filteredTasks]);
+
+  // 2. Cuando cambia la página, cargar más tareas (lazy load) solo en frontend
+  useEffect(() => {
+    if (currentPage === 1) return;
     setIsLoadingMoreTasks(true);
-    
     const startIndex = (currentPage - 1) * TASKS_PER_PAGE;
     const endIndex = startIndex + TASKS_PER_PAGE;
     const nextBatch = filteredTasks.slice(startIndex, endIndex);
-
     const timer = setTimeout(() => {
-      if (nextBatch.length > 0) {
-        setVisibleTasks(prev => [...prev, ...nextBatch]);
-      }
+      setVisibleTasks(prev => {
+        // Evitar duplicados si el usuario hace scroll muy rápido
+        const ids = new Set(prev.map(t => t.id));
+        const uniqueBatch = nextBatch.filter(t => !ids.has(t.id));
+        return [...prev, ...uniqueBatch];
+      });
       setIsLoadingMoreTasks(false);
     }, 500);
-
     return () => clearTimeout(timer);
-  }, [currentPage, filteredTasks]);
+  }, [currentPage]);
+
+  // 3. Cuando cambian los datos filtrados (por ejemplo, al cargar la primera vez o cambiar la API),
+  // solo resetear visibleTasks si currentPage === 1 (es decir, tras un reset de filtros o carga inicial)
+  useEffect(() => {
+    if (currentPage === 1) {
+      setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
+    }
+    // Si currentPage > 1, NO sobrescribas visibleTasks (deja que el lazy load acumule)
+    // Esto previene que el loader se quede atascado y la lista no crezca
+  }, [filteredTasks, currentPage]);
+
+
 
   // 3. Intersection Observer para cargar más tareas
   useEffect(() => {
+    if (isLoadingMoreTasks) return; // No observar si ya está cargando
+    if (visibleTasks.length >= filteredTasks.length) return; // No observar si ya se cargaron todas
+
     const observer = new IntersectionObserver(entries => {
-      // Si es visible Y aún hay tareas por mostrar
-      if (entries[0].isIntersecting && visibleTasks.length < filteredTasks.length) {
+      if (entries[0].isIntersecting && !isLoadingMoreTasks && visibleTasks.length < filteredTasks.length) {
         setCurrentPage(prev => prev + 1);
       }
     }, { threshold: 0.1 });
-    
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    
+
+    const loader = loaderRef.current;
+    if (loader) observer.observe(loader);
+
     return () => {
-      observer.disconnect(); 
+      if (loader) observer.unobserve(loader);
+      observer.disconnect();
     };
-  }, [visibleTasks, filteredTasks]);
+  }, [visibleTasks.length, filteredTasks.length, isLoadingMoreTasks]);
 
   /*
     Selecciona una tarea y gestiona la carga de sus seguimientos (logtasks).
@@ -548,14 +626,16 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       {/* Sidebar Izquierda - Tareas (Mini Sidebar) */}
       <Box
         sx={{
-          width: isCollapsed ? 70 : 340,  
+          width: isCollapsed ? 70 : 340,
           borderRight: '1px solid #e0e0e0',
           bgcolor: 'white',
           display: 'flex',
           flexDirection: 'column',
           transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
-          flexShrink: 0
+          flexShrink: 0,
+          height: '100%', // Ensure sidebar fills parent height
+          minHeight: 0 // Prevent overflow issues
         }}
       >
         <Box sx={{ p: '12px 0 8px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
@@ -587,7 +667,17 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         </Box>
 
         {/* Lista de tareas */}
-        <List ref={listRef} sx={{ p: 0, flex: 1, overflowY: 'auto' }}>
+        <List
+          ref={listRef}
+          sx={{
+            p: 0,
+            flex: 1,
+            overflowY: 'auto',
+            minHeight: 0, // Ensure List can shrink
+            maxHeight: '100%', // Prevent List from overflowing sidebar
+            height: '100%', // Fill sidebar height for proper scrolling
+          }}
+        >
           {(!isInitialized || taskListLoading) ? (
             <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={20} /></Box>
           ) : filteredTasks.length === 0 ? (
@@ -688,6 +778,17 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                                   <EditIcon fontSize="small" sx={{ mr: 1 }} />
                                   {t('edit_task')}
                                 </MenuItem>
+
+                                <MenuItem onClick={handleAddTag}>
+                                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
+                                  {t('add_tag')}
+                                </MenuItem>
+                                      {/* Modal para agregar etiqueta (fuera del Menu para evitar errores de onClose) */}
+                                      <AddTagDialog
+                                        open={addTagDialogOpen}
+                                        setIsOpen={setAddTagDialogOpen}
+                                        taskId={taskIdForTag}
+                                      />
                                 <MenuItem onClick={handleDeleteTask} sx={{ '&:hover': { color: '#d32f2f', bgcolor: 'rgba(211, 47, 47, 0.04)' } }}>
                                   <DeleteOutline fontSize="small" sx={{ mr: 1, '&:hover': { color: '#d32f2f' } }} />
                                   {t('delete_task')}
@@ -696,35 +797,63 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                             </Box>
                           }
                           secondary={
-                            <Chip 
-                              icon={getTaskIcon(task.task_type, isSelected)}
-                              label={task.task_type || 'CÍCLICA'}
-                              size="small"
-                              sx={{
-                                height: 'auto',
-                                mt: 0.5,
-                                mb: 0.5,
-                                mx: 0.5,
-                                p: 0.3,
-                                backgroundColor: isSelected ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.03)',
-                                border: '1px solid rgba(0,0,0,0.08)',
-                                borderRadius: '12px',
-                                '& .MuiChip-label': {
-                                  textTransform: 'uppercase',
-                                  fontSize: '0.6rem',
-                                  fontWeight: 500,
-                                  color: isSelected ? '#4a4a4a' : '#6a6a6a',
-                                  px: 0.5
-                                },
-                                '& .MuiChip-icon': {
-                                  marginLeft: 0.5,
-                                  marginRight: -0.2,
-                                  color: isSelected ? '#6a6a6a' : '#8a8a8a',
-                                  fontSize: '1.27em !important',
-                                  transform: 'translateY(-1px)'
-                                }
-                              }}
-                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                              <Chip 
+                                icon={getTaskIcon(task.task_type, isSelected)}
+                                label={task.task_type || 'CÍCLICA'}
+                                size="small"
+                                sx={{
+                                  height: 'auto',
+                                  mb: 0.5,
+                                  mr: 0.5,
+                                  p: 0.3,
+                                  backgroundColor: isSelected ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.03)',
+                                  border: '1px solid rgba(0,0,0,0.08)',
+                                  borderRadius: '12px',
+                                  '& .MuiChip-label': {
+                                    textTransform: 'uppercase',
+                                    fontSize: '0.6rem',
+                                    fontWeight: 500,
+                                    color: isSelected ? '#4a4a4a' : '#6a6a6a',
+                                    px: 0.5
+                                  },
+                                  '& .MuiChip-icon': {
+                                    marginLeft: 0.5,
+                                    marginRight: -0.2,
+                                    color: isSelected ? '#6a6a6a' : '#8a8a8a',
+                                    fontSize: '1.27em !important',
+                                    transform: 'translateY(-1px)'
+                                  }
+                                }}
+                              />
+                              {/* Etiquetas de la tarea */}
+                              {task.tags && Object.values(task.tags).map((tag) => (
+                                <Chip
+                                  key={tag.id}
+                                  label={tag.tag_name}
+                                  size="small"
+                                  sx={{
+                                    height: 'auto',
+                                    mb: 0.5,
+                                    mr: 0.5,
+                                    p: 0.3,
+                                    backgroundColor: `#${tag.tag_color}`,
+                                    color: '#222',
+                                    fontWeight: 600,
+                                    fontSize: '0.65rem',
+                                    borderRadius: '8px',
+                                    textTransform: 'capitalize',
+                                    letterSpacing: 0.2,
+                                    boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
+                                    border: '1px solid #e0e0e0',
+                                    '& .MuiChip-label': {
+                                      px: 0.7,
+                                      py: 0.2,
+                                    }
+                                  }}
+                                />
+                              ))}
+                            </Box>
                           }
                         />
                       )}
@@ -1021,6 +1150,13 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         onClose={handleCancelExit}
         onConfirm={handleConfirmExitWithoutSave}
         onCancel={handleCancelExit}
+      />
+
+      {/* Modal para agregar etiqueta: debe ir fuera de cualquier Menu o Drawer para evitar cierre inmediato y problemas de stacking */}
+      <AddTagDialog
+        open={addTagDialogOpen}
+        setIsOpen={setAddTagDialogOpen}
+        taskId={taskIdForTag}
       />
     </Box>
   );

@@ -1,5 +1,5 @@
 import { AttachFile, Forum, Visibility } from '@mui/icons-material';
-import { Avatar, AvatarGroup, Box, Tooltip, Typography } from '@mui/material';
+import { Avatar, AvatarGroup, Box, Tooltip, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,6 +19,7 @@ import {
   setFilter
 } from '../../stores/filterSlice';
 
+
 // Custom hook to get list options
 const useListOptions = (module, fieldName) =>
   useSelector((state) => selectListOptions(state, module, fieldName));
@@ -31,20 +32,34 @@ const useFilterItemValue = (module, fieldName) =>
 
 export default function TaskTableList({ refreshTrigger }) {
   const dispatch = useDispatch();
+  // Año seleccionado para filtrar ciclos
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  // Calcular años disponibles a partir de las tareas
   const [tasks, setTasks] = useState([]);
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    tasks.forEach((task) => {
+      if (task.task_start_date) years.add(new Date(task.task_start_date).getFullYear());
+      if (task.task_end_date) years.add(new Date(task.task_end_date).getFullYear());
+      if (Array.isArray(task.logtask_list)) {
+        task.logtask_list.forEach((log) => {
+          if (log.end_date) years.add(new Date(log.end_date).getFullYear());
+        });
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [tasks]);
   const [numberOfPages, setNumberOfPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(2);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
   const [countries, setCountries] = useState([]);
-
   let [tasksFilters, setTasksFilters] = useState([]);
   const [loadTasks, setLoadTasks] = useState(true);
   const [list_type_of_rule, setList_type_of_rule] = useState([]);
   const [level1, setLevel1] = useState("");
   const [test, setTest] = useState([]);
-
   const actionStatusItem = useFilterItemValue('events', 'filter_business');
   const actionKeyWords = useFilterItemValue('events', 'filter_keywords');
   const actionCategory = useFilterItemValue('events', 'filter_category');
@@ -52,7 +67,6 @@ export default function TaskTableList({ refreshTrigger }) {
   const actionStartDate = useFilterItemValue('events', 'filter_start_date');
   const actionEndDate = useFilterItemValue('events', 'filter_end_date');
   const actionStatusTypeOfRule = useFilterItemValue('events', 'filter_type_rule');
-
   const newActionFormModel = useRef(null);
   const [actionFormModel, setActionFormModel] = useState({});
   const [selectedAction, setSelectedAction] = useState(null);
@@ -70,9 +84,19 @@ export default function TaskTableList({ refreshTrigger }) {
   const [level5ptions, setLevel5Options] = useState([]);
   const [level5Selected, setLevel5Selected] = useState('');
   const [loadingLevel5, setLoadingLevel5] = useState(true);
-    
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
   const listTaskStatus = useFilterItemValue('task', 'task_list_status');
+  const selectedLegalTaskIds =
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
+  const selectedLegalTaskIdSet = useMemo(
+    () =>
+      new Set(
+        (Array.isArray(selectedLegalTaskIds) ? selectedLegalTaskIds : [])
+          .map((id) => String(id).trim())
+          .filter(Boolean)
+      ),
+    [selectedLegalTaskIds]
+  );
 
 
   const handleFetchListTaskNew = () => {
@@ -239,7 +263,6 @@ export default function TaskTableList({ refreshTrigger }) {
   const CircleCellRenderer = (params, month) => {
     const logTasks = params?.data?.logtask_list;
     if (!Array.isArray(logTasks)) return null;
-  
     return (
       <div
         className="overflow-x-auto"
@@ -256,30 +279,28 @@ export default function TaskTableList({ refreshTrigger }) {
           const colorStatus = getColorStatus(Number(logTask.logtask_status));
           const tempDate = new Date(logTask.end_date);
           const monthDate = tempDate.getMonth() + 1;
-          const isCurrentYear = tempDate.getFullYear() === new Date().getFullYear();
-  
-          if (monthDate === month && isCurrentYear) {
+          const isSelectedYear = tempDate.getFullYear() === selectedYear;
+          if (monthDate === month && isSelectedYear) {
             return (
-              <div key={index} 
-              className="cursor-pointer"
-              onClick={() => goToTaskList(logTask)} // <--- aquí
-              style={{
-                minWidth: "24px",
-                height: "24px",
-                borderRadius: "50%",
-                backgroundColor: colorStatus,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "11px",
-                textAlign: "center"
-              }}>
+              <div key={index}
+                className="cursor-pointer"
+                onClick={() => goToTaskList(logTask)}
+                style={{
+                  minWidth: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  backgroundColor: colorStatus,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: "11px",
+                  textAlign: "center"
+                }}>
                 {parseInt(logTask.percentage)}
               </div>
             );
           }
-  
           return null;
         })}
       </div>
@@ -629,23 +650,63 @@ export default function TaskTableList({ refreshTrigger }) {
 
   useEffect(() => {
     let tasksFiltersTemp = tasks;
-    //console.log("tasksFiltersTemp");
-    //console.log(tasksFiltersTemp);
+    // Filtro por tareas asociadas a requisito legal
+    if (selectedLegalTaskIdSet.size > 0) {
+      tasksFiltersTemp = tasksFiltersTemp.filter((item) =>
+        selectedLegalTaskIdSet.has(String(item?.id))
+      );
+    }
+    // Filtro por año: solo mostrar tareas que tengan al menos un ciclo (logtask_list) en el año seleccionado
+    if (selectedYear && !isNaN(selectedYear)) {
+      tasksFiltersTemp = tasksFiltersTemp.filter((item) => {
+        if (!Array.isArray(item.logtask_list) || item.logtask_list.length === 0) return false;
+        return item.logtask_list.some((log) => {
+          if (!log.end_date) return false;
+          return new Date(log.end_date).getFullYear() === selectedYear;
+        });
+      });
+    }
+    // Filtro por palabras clave
     if (actionKeyWords && actionKeyWords.trim() !== "" && tasks.length > 0) {
-      tasksFiltersTemp = (
-        tasksFiltersTemp.filter((item) =>
-          item.task_title.match(new RegExp(actionKeyWords, "i"))
-        )
+      tasksFiltersTemp = tasksFiltersTemp.filter((item) =>
+        item.task_title.match(new RegExp(actionKeyWords, "i"))
       );
       getTypeFilterTasksByCurrentStatus(tasksFiltersTemp, currentStatus, actionStartDate, actionEndDate, actionNameDateField, actionCategory);
-    }
-    else{
+    } else {
       getTypeFilterTasksByCurrentStatus(tasksFiltersTemp, currentStatus, actionStartDate, actionEndDate);
-    }    
-  }, [actionKeyWords, tasksFilters, tasks, currentStatus, actionStartDate, actionEndDate, actionNameDateField, actionCategory]); // Se ejecuta cuando cambian las variables de los filtros
+    }
+  }, [
+    actionKeyWords,
+    tasks,
+    selectedLegalTaskIdSet,
+    currentStatus,
+    actionStartDate,
+    actionEndDate,
+    actionNameDateField,
+    actionCategory,
+    selectedYear
+  ]); // Se ejecuta cuando cambian las variables de los filtros
   
   return (
-    <Box sx={{ height: 'calc(100vh - 300px)' }}>
+    <Box sx={{ height: 'calc(100vh - 300px)', pl: 3 }}>
+      {/* Selector de año para ciclos */}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel id="year-select-label">Año</InputLabel>
+          <Select
+            labelId="year-select-label"
+            id="year-select"
+            value={selectedYear}
+            label="Año"
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+          >
+            {availableYears.map((year) => (
+              <MenuItem key={year} value={year}>{year}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Typography sx={{ ml: 2, color: '#888' }}>Filtra los ciclos de tarea por año</Typography>
+      </Box>
       {taskListLoading ? (
         <Box
           sx={{

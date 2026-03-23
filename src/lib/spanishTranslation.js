@@ -423,6 +423,7 @@ const es = {
   findings: 'Hallazgos',
   requirements: 'Requisitos',
   requirement: 'Requerimiento',
+  tasks_of_requirement: 'Tareas del requisito',
   issuance_date: 'Fecha Expedición',
   efective_date: 'Fecha de vencimiento',
   renovation_date: 'Fecha de renovación',
@@ -940,6 +941,10 @@ const es = {
   "signed_url_expired": "El enlace del archivo ha expirado. Recargando enlaces...",
   "error_downloading_file": "Error al descargar el archivo",
   "resolved": "Resuelto",
+
+  "add_tag": "Agregar etiqueta",
+  "select_tag": "Seleccionar etiqueta",
+  "error_adding_tag": "Error al agregar la etiqueta"
 };
 
 export default es;

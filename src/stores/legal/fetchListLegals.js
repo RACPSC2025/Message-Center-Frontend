@@ -12,9 +12,18 @@ export const fetchListLegals = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`/message_center_api/legal_api/list_legals_amatia_express`);
-      //console.log("ResponseLegals");
-      //console.log(response?.data);
-      return response?.data;
+      const payload = response?.data || {};
+      const normalizedData = Array.isArray(payload?.data)
+        ? payload.data.map((item) => ({
+            ...item,
+            task_list: Array.isArray(item?.task_list) ? item.task_list : []
+          }))
+        : [];
+
+      return {
+        ...payload,
+        data: normalizedData
+      };
     } catch (error) {
       if (error.response && error.response.data.message) {
         return rejectWithValue(error.response.data.message);
