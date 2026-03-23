@@ -170,7 +170,7 @@ function EditEventDetailsDrawer({
   //const [userData, setUserData] = useState(null);
   const userData = useSelector((state) => state.globalData.userDetails);
 
-  console.log('logTaskDetails TTTTTKKKKKKKKKKKKKKKKKKKKKKKKKK', logTaskDetails);
+  //console.log('logTaskDetails TTTTTKKKKKKKKKKKKKKKKKKKKKKKKKK', logTaskDetails);
 
 
   const UPLOADS_URL = `${API_URL}uploads/registros/tasklegal/`;
@@ -1247,7 +1247,6 @@ function EditEventDetailsDrawer({
           <Typography variant="h6" sx={{ marginBottom: '40px' }}>
             {t('are_you_sure_to_add_this_comment')}
           </Typography>
-          { console.log("MOSTRANDO DETALLESSS DE MODAL",logTaskDetails) }
           <Typography>
             <strong>{t('title')}:</strong> {logTaskDetails.title}
           </Typography>

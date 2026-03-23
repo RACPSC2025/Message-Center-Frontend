@@ -53,10 +53,48 @@ const canCreateTags = useHasPermission('task', 'create_tags');
   - Morados, naranjas, marrones, grises, rosas, neutros, etc.
 - El usuario selecciona el color visualmente, nunca se muestra el código hexadecimal en la UI.
 
+
 ### Visualización de Etiquetas
 - Las etiquetas asociadas a una tarea se muestran como chips de color en la lista y detalles de la tarea.
 - El color del chip corresponde al color seleccionado/definido para la etiqueta.
 - El nombre de la etiqueta se muestra en el chip, con estilo legible sobre el fondo de color.
+
+## 3. Visualización y lógica de tipo de tarea (task_type)
+
+- El tipo de tarea mostrado en la UI se determina a partir del campo `activity_type` de cada tarea y el catálogo `task_type` definido en la configuración de plataforma (API `/message_center_api/legal_api/get_configuration_amatia_express`).
+- El catálogo `task_type` contiene los posibles tipos de tarea, cada uno con:
+   - `code` (string, ej: "unique", "cyclic", "permanent")
+   - `numeric_code` (número, ej: 1, 3, 5)
+   - `label_es` (nombre en español)
+   - `label_en` (nombre en inglés)
+- El label mostrado en la UI depende del idioma activo (i18n):
+   - Si el idioma es español (`es`), se usa `label_es`.
+   - Si el idioma es inglés (`en`), se usa `label_en`.
+- Si no se encuentra coincidencia, se muestra el valor por defecto "CÍCLICA".
+
+**Ejemplo de mapeo en código:**
+```js
+const platformConfig = window.store?.getState()?.platformConfig?.data;
+const taskTypeCatalog = platformConfig?.modules?.task?.catalogs?.task_type || [];
+const currentLang = (window.i18next && window.i18next.language) || 'es';
+
+let typeLabel = '';
+if (task.activity_type) {
+   const foundType = taskTypeCatalog.find(
+      (item) => item.code === task.activity_type || item.numeric_code === Number(task.activity_type)
+   );
+   if (foundType) {
+      typeLabel = currentLang === 'en' ? foundType.label_en : foundType.label_es;
+   }
+}
+// ...
+task_type: typeLabel || 'CÍCLICA',
+```
+
+**Notas:**
+- El catálogo de tipos de tarea puede ser actualizado desde backend y soporta nuevos tipos.
+- El mapeo es robusto ante valores numéricos o string en `activity_type`.
+- El label es siempre consistente con el idioma de la UI.
 
 ### Consideraciones de UX
 - El modal de etiquetas es accesible solo si el permiso `create_tags` está activo.

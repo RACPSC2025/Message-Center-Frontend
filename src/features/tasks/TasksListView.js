@@ -85,6 +85,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [pendingCloseAction, setPendingCloseAction] = useState(null);
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  // Nueva variable de estado para mostrar el tooltip del título
+  const [showTaskTitleTooltip, setShowTaskTitleTooltip] = useState(false);
 
   // Menú de opciones de tarea
   const [taskMenuAnchor, setTaskMenuAnchor] = useState(null);
@@ -150,7 +152,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [visibleTasks, setVisibleTasks] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  console.log("SELECTED_LOG_TASK:", selectedLogtask)
+  //console.log("SELECTED_LOG_TASK:", selectedLogtask)
   // Redux Selectors
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
   const logtaskListLoading = useSelector((state) => state?.fetchLogtaskList?.loading ?? false);
@@ -159,7 +161,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
   const selectedLegalTaskIds =
     useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
-  console.log('TasksListView - Estados de tareas:', listTaskStatus);
+  //console.log('TasksListView - Estados de tareas:', listTaskStatus);
 
   const selectedLegalTaskIdSet = useMemo(
     () =>
@@ -726,21 +728,41 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 1 }}>
-                              <Typography 
-                                sx={{ 
-                                  fontWeight: isSelected ? 600 : 500, 
-                                  color: isSelected ? '#263238' : '#5b5b5b', 
-                                  fontSize: '0.8rem', 
-                                  lineHeight: 1.1, 
-                                  whiteSpace: 'nowrap', 
-                                  overflow: 'hidden', 
-                                  textOverflow: 'ellipsis',
-                                  letterSpacing: isSelected ? 1 : 0,
-                                  flex: 1
-                                }}
-                              >
-                                {task.task_title}
-                              </Typography>
+                                {showTaskTitleTooltip ? (
+                                  <Tooltip title={task.task_title} placement="right">
+                                    <Typography 
+                                      sx={{ 
+                                        fontWeight: isSelected ? 600 : 500, 
+                                        color: isSelected ? '#263238' : '#5b5b5b', 
+                                        fontSize: '0.8rem', 
+                                        lineHeight: 1.1, 
+                                        whiteSpace: 'nowrap', 
+                                        overflow: 'hidden', 
+                                        textOverflow: 'ellipsis',
+                                        letterSpacing: isSelected ? 1 : 0,
+                                        flex: 1
+                                      }}
+                                    >
+                                      {task.task_title}
+                                    </Typography>
+                                  </Tooltip>
+                                ) : (
+                                  <Typography 
+                                    sx={{ 
+                                      fontWeight: isSelected ? 600 : 500, 
+                                      color: isSelected ? '#263238' : '#5b5b5b', 
+                                      fontSize: '0.8rem', 
+                                      lineHeight: 1.1, 
+                                      whiteSpace: 'nowrap', 
+                                      overflow: 'hidden', 
+                                      textOverflow: 'ellipsis',
+                                      letterSpacing: isSelected ? 1 : 0,
+                                      flex: 1
+                                    }}
+                                  >
+                                    {task.task_title}
+                                  </Typography>
+                                )}
 
                               <Typography 
                                 sx={{ 
@@ -1201,15 +1223,39 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           // fetchListTaskNew es async thunk, así que podemos esperar a que termine
           dispatch(fetchListTaskNew()).then((data) => {
             const tasksData = data?.payload?.data || [];
-            const mappedTasks = tasksData.map(task => ({
-              ...task,
-              start_date: task.task_start_date || task.start_date,
-              end_date: task.task_end_date || task.end_date,
-              task_type: task.task_type || 'CÍCLICA',
-              task_title: task.task_title?.trim() || 'Sin título',
-              tags: task.tags ? Object.values(task.tags) : [],
-              progress: parseFloat(task.progress) || 0
-            }));
+            // Obtener catálogo de tipos de tarea desde la configuración de plataforma
+            const platformConfig = window.store?.getState()?.platformConfig?.data;
+            const taskTypeCatalog = platformConfig?.modules?.task?.catalogs?.task_type || [];
+            const currentLang = (window.i18next && window.i18next.language) || 'es';
+
+            const mappedTasks = tasksData.map(task => {
+              // Buscar el tipo de tarea por activity_type (robusto ante string, numérico o vacío)
+              let typeLabel = '';
+              console.log('Mapping task type for task ID', task.id, 'original activity_type:', task.activity_type);
+              const activityTypeStr = (task.activity_type !== undefined && task.activity_type !== null) ? String(task.activity_type).trim() : '';
+              console.log('Processing task ID', task.id, 'with activity_type:', task.activity_type, 'normalized to:', activityTypeStr);
+              if (activityTypeStr !== '') {
+                const activityTypeNum = Number(activityTypeStr);
+                const foundType = taskTypeCatalog.find((item) => {
+                  // Comparar por code (string) o numeric_code (número)
+                  return String(item.code) === activityTypeStr || item.numeric_code === activityTypeNum;
+                });
+                console.log('Mapping task type for task ID', task.id, 'activity_type:', activityTypeStr, 'found type:', foundType);
+                if (foundType) {
+                  typeLabel = currentLang === 'en' ? foundType.label_en : foundType.label_es;
+                }
+              }
+              // Si no hay coincidencia, por defecto 'CÍCLICA'
+              return {
+                ...task,
+                start_date: task.task_start_date || task.start_date,
+                end_date: task.task_end_date || task.end_date,
+                task_type: typeLabel || 'CÍCLICA',
+                task_title: task.task_title?.trim() || 'Sin título',
+                tags: task.tags ? Object.values(task.tags) : [],
+                progress: parseFloat(task.progress) || 0
+              };
+            });
             const found = mappedTasks.find(t => String(t.id) === String(updatedTaskId));
             if (found) {
               setSelectedTask(found);

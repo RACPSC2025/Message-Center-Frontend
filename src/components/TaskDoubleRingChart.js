@@ -69,7 +69,7 @@ export const TaskDoubleRingChart = ({
     // LIMPIEZA: Evita que se solapen animaciones si percentage cambia rápido
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [percentage]);
-console.log('porcentaje', percentage);
+  //console.log('porcentaje', percentage);
   // --- 3. Preparación de Colores ---
   // Mapa base (defaults)
   const defaultColors = {
@@ -143,9 +143,9 @@ console.log('porcentaje', percentage);
   const center = size / 2;
   const transitionStyle = { transition: 'stroke-dasharray 2s ease-out, stroke-dashoffset 2s ease-out' };
 
-  console.log("Mostrando estadísticas de la tarea", stats);
-  console.log("Mostrando estado de la tarea", taskState);
-  console.log("Color seleccionado para estado", taskState, ":", innerRingColor);
+  //console.log("Mostrando estadísticas de la tarea", stats);
+  //console.log("Mostrando estado de la tarea", taskState);
+  //console.log("Color seleccionado para estado", taskState, ":", innerRingColor);
   const finalValueToShow = displayPercentage > 0 ? displayPercentage : percentage;
   return (
     

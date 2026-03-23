@@ -58,13 +58,6 @@ import { fetchTaskListLevel } from '../stores/tasks/fetchtaskListLevelSlice';
 import { fetchActionList } from '../stores/actions/fetchActionSlice';
 import { clone, isEmpty, isObject } from 'radash';
 
-import { ApolloClient, InMemoryCache, ApolloProvider, gql, useQuery } from '@apollo/client';
-
-const myClient = new ApolloClient({
-  uri: 'https://api.spacex.land/graphql',
-  cache: new InMemoryCache()
-});
-
 // Custom hook to get list options
 const useListOptions = (module, fieldName) =>
   useSelector((state) => selectListOptions(state, module, fieldName));
