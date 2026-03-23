@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useHasPermission } from '../../hooks/usePlatformConfig';
 import {
   Box,
   Typography,
@@ -60,6 +61,10 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
+  // Permisos de plataforma para el módulo de tareas
+  const canEditTask = useHasPermission('task', 'edit_task');
+  const canDeleteTask = useHasPermission('task', 'delete_task');
+  const canCreateTags = useHasPermission('task', 'create_tags');
 
   // Ref para centinela de la lista de tareas
   const loaderRef = useRef(null);
@@ -774,25 +779,59 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                                   }
                                 }}
                               >
-                                <MenuItem onClick={handleEditTask}>
-                                  <EditIcon fontSize="small" sx={{ mr: 1 }} />
-                                  {t('edit_task')}
-                                </MenuItem>
-
-                                <MenuItem onClick={handleAddTag}>
-                                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
-                                  {t('add_tag')}
-                                </MenuItem>
-                                      {/* Modal para agregar etiqueta (fuera del Menu para evitar errores de onClose) */}
-                                      <AddTagDialog
-                                        open={addTagDialogOpen}
-                                        setIsOpen={setAddTagDialogOpen}
-                                        taskId={taskIdForTag}
-                                      />
-                                <MenuItem onClick={handleDeleteTask} sx={{ '&:hover': { color: '#d32f2f', bgcolor: 'rgba(211, 47, 47, 0.04)' } }}>
-                                  <DeleteOutline fontSize="small" sx={{ mr: 1, '&:hover': { color: '#d32f2f' } }} />
-                                  {t('delete_task')}
-                                </MenuItem>
+                                {canEditTask && (
+                                  <MenuItem onClick={handleEditTask}>
+                                    <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                                    {t('edit_task')}
+                                  </MenuItem>
+                                )}
+                                {canCreateTags && (
+                                  <MenuItem onClick={handleAddTag}>
+                                    <AddIcon fontSize="small" sx={{ mr: 1 }} />
+                                    {t('add_tag')}
+                                  </MenuItem>
+                                )}
+                                {/* Modal para agregar etiqueta (fuera del Menu para evitar errores de onClose) */}
+                                <AddTagDialog
+                                  open={addTagDialogOpen}
+                                  setIsOpen={setAddTagDialogOpen}
+                                  taskId={taskIdForTag}
+                                  onTagsSaved={(updatedTaskId) => {
+                                    dispatch(fetchListTaskNew()).then((data) => {
+                                      const tasksData = data?.payload?.data || [];
+                                      const mappedTasks = tasksData.map(task => ({
+                                        ...task,
+                                        start_date: task.task_start_date || task.start_date,
+                                        end_date: task.task_end_date || task.end_date,
+                                        task_type: task.task_type || 'CÍCLICA',
+                                        task_title: task.task_title?.trim() || 'Sin título',
+                                        tags: task.tags ? Object.values(task.tags) : [],
+                                        progress: parseFloat(task.progress) || 0
+                                      }));
+                                      const found = mappedTasks.find(t => String(t.id) === String(updatedTaskId));
+                                      if (found) {
+                                        setSelectedTask(found);
+                                        setTimeout(() => {
+                                          if (listRef.current) {
+                                            const listItems = listRef.current.querySelectorAll('.MuiListItemButton-root');
+                                            for (let item of listItems) {
+                                              if (item.textContent.includes(`# ${updatedTaskId}`)) {
+                                                item.focus();
+                                                break;
+                                              }
+                                            }
+                                          }
+                                        }, 200);
+                                      }
+                                    });
+                                  }}
+                                />
+                                {canDeleteTask && (
+                                  <MenuItem onClick={handleDeleteTask} sx={{ '&:hover': { color: '#d32f2f', bgcolor: 'rgba(211, 47, 47, 0.04)' } }}>
+                                    <DeleteOutline fontSize="small" sx={{ mr: 1, '&:hover': { color: '#d32f2f' } }} />
+                                    {t('delete_task')}
+                                  </MenuItem>
+                                )}
                               </Menu>
                             </Box>
                           }
@@ -1157,6 +1196,38 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         open={addTagDialogOpen}
         setIsOpen={setAddTagDialogOpen}
         taskId={taskIdForTag}
+        onTagsSaved={(updatedTaskId) => {
+          // Esperar a que fetchListTaskNew termine y luego seleccionar la tarea
+          // fetchListTaskNew es async thunk, así que podemos esperar a que termine
+          dispatch(fetchListTaskNew()).then((data) => {
+            const tasksData = data?.payload?.data || [];
+            const mappedTasks = tasksData.map(task => ({
+              ...task,
+              start_date: task.task_start_date || task.start_date,
+              end_date: task.task_end_date || task.end_date,
+              task_type: task.task_type || 'CÍCLICA',
+              task_title: task.task_title?.trim() || 'Sin título',
+              tags: task.tags ? Object.values(task.tags) : [],
+              progress: parseFloat(task.progress) || 0
+            }));
+            const found = mappedTasks.find(t => String(t.id) === String(updatedTaskId));
+            if (found) {
+              setSelectedTask(found);
+              // Scroll al elemento si es necesario
+              setTimeout(() => {
+                if (listRef.current) {
+                  const listItems = listRef.current.querySelectorAll('.MuiListItemButton-root');
+                  for (let item of listItems) {
+                    if (item.textContent.includes(`# ${updatedTaskId}`)) {
+                      item.focus();
+                      break;
+                    }
+                  }
+                }
+              }, 200);
+            }
+          });
+        }}
       />
     </Box>
   );

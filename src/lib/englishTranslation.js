@@ -914,7 +914,13 @@ const en = {
   "error_downloading_file": "Error downloading file",
   "add_tag": "Add tag",
   "select_tag": "Select tag",
-  "error_adding_tag": "Error adding tag"
+  "error_adding_tag": "Error adding tag",
+  "create_new_tag": "Create new tag",
+  "organize_with_tags": "Organize your task with custom tags.",
+  "new_tag_details": "New tag details",
+  "tag_name": "Tag name",
+  "select_color_palette": "Select color",
+  "create_tag": "Create tag",
 };
 
 export default en;

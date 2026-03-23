@@ -944,7 +944,13 @@ const es = {
 
   "add_tag": "Agregar etiqueta",
   "select_tag": "Seleccionar etiqueta",
-  "error_adding_tag": "Error al agregar la etiqueta"
+  "error_adding_tag": "Error al agregar la etiqueta",
+  organize_with_tags: 'Organiza tu tarea con etiquetas personalizadas.',
+  create_new_tag: 'Crear nueva etiqueta',
+  new_tag_details: 'Detalles de la nueva etiqueta',
+  tag_name: 'Nombre de la etiqueta',
+  select_color_palette: 'Seleccionar color',
+  create_tag: 'Crear etiqueta',
 };
 
 export default es;
