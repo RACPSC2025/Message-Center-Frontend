@@ -41,7 +41,8 @@ function BaseFeaturePageLayout({ children, showFooter = true, statsConfig = null
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            pr: 2
+            pr: 2,
+            backgroundColor: 'transparent'
           }}
         >
           {isStatsAvailable && (
@@ -55,14 +56,15 @@ function BaseFeaturePageLayout({ children, showFooter = true, statsConfig = null
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                pl: 1
+                pl: 1,
+                backgroundColor: '#f1f1f1'
               }}
             >
               {statsConfig.map((config, idx) => {
                 const Icon = config.icon;
                 return (
                   <Tooltip key={idx} title={config.name}>
-                    <IconButton>
+                    <IconButton sx={{ backgroundColor: 'transparent' }}>
                       <Icon />
                       <Typography variant="body2" sx={{ ml: 0.5 }}>
                         {config.count}

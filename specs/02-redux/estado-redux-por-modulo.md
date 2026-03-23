@@ -78,6 +78,7 @@ Notas funcionales de filtros en notifications:
 	- no se envia en `FormData` al backend.
 	- se aplica localmente en tabs Important/Unread/Read comparando con `message.module_string`.
 - La comparacion se normaliza en frontend (`trim` + `toLowerCase`) para evitar fallas por espacios o variaciones de mayusculas/minusculas.
+- La reconsulta de estadisticas (`fetchDashboardMessageStatistics`) se centraliza en `handleUpdateMessageInfo` cuando cambia `is_read` o `is_important`.
 
 ## Actions
 

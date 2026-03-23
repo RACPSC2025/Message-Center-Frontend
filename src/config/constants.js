@@ -55,6 +55,18 @@ export const SYSTEM_TOKEN = COMPANY_GROUP || 'ocsamb';
 
 export const APP_SUBDOMAIN = process.env.REACT_APP_SUBDOMAIN;
 
+/**
+ * Feature flag to show/hide BackToDashboard action in header dropdown.
+ * Priority: runtime config -> .env -> default false.
+ */
+export const shouldShowBackToDashboard = () => {
+  const runtimeValue = window.__APP_CONFIG__?.showBackToDashboard;
+  if (typeof runtimeValue === 'boolean') return runtimeValue;
+  if (typeof runtimeValue === 'string') return runtimeValue.toLowerCase() === 'true';
+
+  return String(process.env.REACT_APP_SHOW_BACK_TO_DASHBOARD).toLowerCase() === 'true';
+};
+
 // ============================================================================
 // STATUS CONSTANTS
 // ============================================================================

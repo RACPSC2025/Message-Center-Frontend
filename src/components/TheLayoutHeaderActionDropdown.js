@@ -5,12 +5,13 @@ import { deepOrange } from '@mui/material/colors';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTranslation } from 'react-i18next';
-import { getAPIUrl } from '../config/constants';
+import { getAPIUrl, shouldShowBackToDashboard } from '../config/constants';
 import storage from '../utils/storage';
 
 const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const { t } = useTranslation();
+  const showBackToDashboard = shouldShowBackToDashboard();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -80,7 +81,9 @@ const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
       </Box>
   
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-        <MenuItem onClick={handleBackToDashboard}>{t('BackToDashboard')}</MenuItem>
+        {showBackToDashboard && (
+          <MenuItem onClick={handleBackToDashboard}>{t('BackToDashboard')}</MenuItem>
+        )}
         <MenuItem onClick={handleSignOut}>{t('SignOut')}</MenuItem>
       </Menu>
     </>

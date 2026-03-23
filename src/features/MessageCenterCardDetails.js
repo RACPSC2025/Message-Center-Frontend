@@ -10,6 +10,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Tooltip,
   Typography
 } from '@mui/material';
 import { Fragment, useEffect, useRef, useState } from 'react';
@@ -306,11 +307,16 @@ function MessageCenterCardDetails({
               </Typography>
               <AvatarGroup max={4}>
                 {messageDetails.user_names.split(',').map((userName, idx) => {
-                  const avatarProps = stringAvatar(userName.trim(), {
+                  const normalizedUserName = userName.trim();
+                  const avatarProps = stringAvatar(normalizedUserName, {
                     ...avatarCommonStyle,
                     fontSize: '0.8rem'
                   });
-                  return <Avatar key={idx} {...avatarProps} />;
+                  return (
+                    <Tooltip key={idx} title={normalizedUserName}>
+                      <Avatar {...avatarProps} />
+                    </Tooltip>
+                  );
                 })}
               </AvatarGroup>
             </Box>
@@ -508,11 +514,16 @@ function MessageCenterCardDetails({
                               </Typography>
                               <AvatarGroup max={4}>
                                 {relatedMsg.user_names.split(',').map((userName, idx) => {
-                                  const avatarProps = stringAvatar(userName.trim(), {
+                                  const normalizedUserName = userName.trim();
+                                  const avatarProps = stringAvatar(normalizedUserName, {
                                     ...avatarCommonStyle,
                                     fontSize: '0.8rem'
                                   });
-                                  return <Avatar key={idx} {...avatarProps} />;
+                                  return (
+                                    <Tooltip key={idx} title={normalizedUserName}>
+                                      <Avatar {...avatarProps} />
+                                    </Tooltip>
+                                  );
                                 })}
                               </AvatarGroup>
                             </Box>

@@ -61,8 +61,13 @@ Todas las acciones pasan por `handleUpdateMessageInfo(messageID, updatedInfo)`:
 
 Si la operacion es exitosa:
 - actualiza estado local del mensaje activo.
-- refresca estadisticas.
+- refresca estadisticas cuando cambia `is_read` o `is_important`.
 - incrementa `tabKey` para forzar remount y recarga visual en listas.
+
+Regla de refresco de estadisticas (fuente unica):
+- `handleUpdateMessageInfo` centraliza la reconsulta de `fetchDashboardMessageStatistics`.
+- Se dispara cuando el payload de actualizacion incluye `is_read` o `is_important`.
+- Esto cubre todos los flujos: marcar leido, marcar no leido, marcar importante y desmarcar importante.
 
 ### Marcar leido/no leido
 - `markMessageAsRead(messageID)` envia `is_read: 1`.

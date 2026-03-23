@@ -220,6 +220,14 @@ function MessageCenterNotifications() {
     return dispatch(updateMessageFlag(formData)).then((data) => {
       if (data.payload.messages === 'Success') {
         const { is_read, is_important, is_archived } = data.payload.data;
+
+        // Reconsultar estadisticas cuando cambia estado de lectura o importante.
+        if (
+          updatedInfo.hasOwnProperty('is_read') ||
+          updatedInfo.hasOwnProperty('is_important')
+        ) {
+          handleFetchMessageStatistics();
+        }
         
         // 🔹 Disparar evento SIEMPRE que cambie is_read (tanto a 0 como a 1)
         if (updatedInfo.hasOwnProperty('is_read')) {
@@ -247,7 +255,6 @@ function MessageCenterNotifications() {
       const response = await handleUpdateMessageInfo(messageID, { is_read: 1 });
       if (response) {
         updateMessageInListOfMessages(messageID, response);
-        handleFetchMessageStatistics();
       }
     } catch (error) {
       console.error('Error marking message as read:', error);
@@ -261,7 +268,6 @@ function MessageCenterNotifications() {
       });
       if (response) {
         updateMessageInListOfMessages(messageID, response);
-        handleFetchMessageStatistics();
       }
     } catch (error) {
       console.error('Error marking message as important:', error);
@@ -273,7 +279,6 @@ function MessageCenterNotifications() {
       const response = await handleUpdateMessageInfo(messageID, { is_read: 0 });
       if (response) {
         updateMessageInListOfMessages(messageID, response);
-        handleFetchMessageStatistics();
       }
     } catch (error) {
       console.error('Error marking message as unread:', error);
