@@ -41,6 +41,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 // SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente
 import SpeedDialComponent from '../../components/SpeedDialComponent';
+import { useHasPermission } from '../../hooks/usePlatformConfig';
 import { useCascadingFilters } from '../../hooks/useCascadingFilters';
 import { STATUS } from '../../config/constants';
 import { useLanguage } from '../../providers/languageProvider';
@@ -890,19 +891,29 @@ export default function Component() {
 
             {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
             
-            <SpeedDialComponent
-              openSpeedDial={openSpeedDial}
-              handleCloseSpeedDial={() => setOpenSpeedDial(false)}
-              handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-              speedDialActions={speedDialActions}
-              handleActionClick={(action) => {
-                // Abrir el drawer correspondiente según el tipo
-                switch (action.type) {
-                  case 'tarea': setOpenCreateTask(true); break;
-                  case 'ciclo': setOpenCreateCycleDrawer(true); break;
-                }
-              }}
-            />
+            {/* Botones flotantes según permisos */}
+            {useHasPermission('task', 'create_task') && (
+              <SpeedDialComponent
+                openSpeedDial={openSpeedDial}
+                handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+                handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+                speedDialActions={speedDialActions.filter(a => a.type === 'tarea')}
+                handleActionClick={(action) => {
+                  if (action.type === 'tarea') setOpenCreateTask(true);
+                }}
+              />
+            )}
+            {useHasPermission('task', 'create_cycle') && (
+              <SpeedDialComponent
+                openSpeedDial={openSpeedDial}
+                handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+                handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+                speedDialActions={speedDialActions.filter(a => a.type === 'ciclo')}
+                handleActionClick={(action) => {
+                  if (action.type === 'ciclo') setOpenCreateCycleDrawer(true);
+                }}
+              />
+            )}
           
           </BaseFeaturePageLayout>
         )}

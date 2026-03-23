@@ -248,7 +248,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
         // Auto-seleccionar primera tarea si existe
         if (mappedTasks.length > 0 && !selectedTask) {
-          console.log("🎯 Seleccionando primera tarea:", mappedTasks[0].task_title);
+          //console.log("🎯 Seleccionando primera tarea:", mappedTasks[0].task_title);
           handleSelectTask(mappedTasks[0]);
         }
       } else {

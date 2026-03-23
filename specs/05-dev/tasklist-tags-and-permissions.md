@@ -1,22 +1,30 @@
 # Documentación de Cambios y Funcionalidad: TaskListView y Etiquetas
 
-## 1. Botones de Opciones en la Lista de Tareas
+
+## 1. Botones de Opciones y Flotantes en la Lista de Tareas
 
 ### Permisos Utilizados
+- **create_task**: Permite mostrar el botón flotante para crear tareas (SpeedDial) en el módulo de tareas. Solo visible si el permiso es true en la configuración del módulo (API get_configuration_amatia_express).
+- **create_cycle**: Permite mostrar el botón flotante para crear ciclos (SpeedDial) en el módulo de tareas. Solo visible si el permiso es true en la configuración del módulo.
 - **edit_task**: Permite mostrar el botón "Editar tarea" en el menú de opciones de cada tarea.
 - **delete_task**: Permite mostrar el botón "Eliminar tarea" en el menú de opciones de cada tarea.
 - **create_tags**: Permite mostrar el botón "Agregar etiqueta" en el menú de opciones de cada tarea.
 
 **Fuente de permisos:**
 - Los permisos se obtienen mediante el hook `useHasPermission('task', '<permiso>')`.
-- Los botones solo se renderizan si el permiso correspondiente es `true` en la configuración del módulo.
+- Los botones solo se renderizan si el permiso correspondiente es `true` en la configuración del módulo (obtenida vía API `/message_center_api/legal_api/get_configuration_amatia_express`).
 
 **Ejemplo de uso en código:**
 ```js
+const canCreateTask = useHasPermission('task', 'create_task');
+const canCreateCycle = useHasPermission('task', 'create_cycle');
 const canEditTask = useHasPermission('task', 'edit_task');
 const canDeleteTask = useHasPermission('task', 'delete_task');
 const canCreateTags = useHasPermission('task', 'create_tags');
 ```
+
+- El botón flotante para crear tareas solo es visible si `canCreateTask` es true.
+- El botón flotante para crear ciclos solo es visible si `canCreateCycle` es true.
 
 ## 2. Documentación de Etiquetas (Tags)
 
