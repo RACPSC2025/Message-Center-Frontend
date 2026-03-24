@@ -677,12 +677,13 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         <List
           ref={listRef}
           sx={{
-            p: 0,
+            p: 1,
             flex: 1,
             overflowY: 'auto',
             minHeight: 0, // Ensure List can shrink
             maxHeight: '100%', // Prevent List from overflowing sidebar
             height: '100%', // Fill sidebar height for proper scrolling
+            bgcolor: '#f8f9fa'
           }}
         >
           {(!isInitialized || taskListLoading) ? (
@@ -713,15 +714,46 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                       selected={isSelected}
                       onClick={() => handleSelectTask(task)}
                       sx={{
-                        py: 0.5,
-                        px: 0,
+                        py: 1,
+                        px: 1,
                         justifyContent: 'center',
                         borderLeft: `4px solid ${itemStatusColor}`,
-                        bgcolor: isSelected ? `${selectedBgColor} !important` : 'transparent',
-                        '&:hover': { bgcolor: hoverBgColor },
-                        minHeight: '36px'
+                        borderRadius: '0 8px 8px 0',
+                        mb: 1,
+                        bgcolor: isSelected ? `${selectedBgColor} !important` : '#ffffff',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                        '&:hover': { 
+                          bgcolor: hoverBgColor,
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                          transform: 'translateY(-1px)'
+                        },
+                        minHeight: '48px',
+                        transition: 'all 0.2s ease-in-out'
                       }}
                     >
+
+                      {/* Vista colapsada */}
+                      {isCollapsed && (
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          width: '100%',
+                          height: '100%'
+                        }}>
+                          <Typography 
+                            sx={{ 
+                              fontWeight: 600, 
+                              color: isSelected ? '#263238' : '#5b5b5b', 
+                              fontSize: '0.7rem', 
+                              textTransform: 'uppercase',
+                              letterSpacing: 0.5
+                            }}
+                          >
+                            {task.id || '?'}
+                          </Typography>
+                        </Box>
+                      )}
 
                       {/* Título de la tarea */}
                       {!isCollapsed && (
@@ -887,32 +919,27 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                                   }
                                 }}
                               />
-                              {/* Etiquetas de la tarea */}
+                              {/* Etiquetas de la tarea - Indicadores circulares */}
                               {task.tags && Object.values(task.tags).map((tag) => (
-                                <Chip
-                                  key={tag.id}
-                                  label={tag.tag_name}
-                                  size="small"
-                                  sx={{
-                                    height: 'auto',
-                                    mb: 0.5,
-                                    mr: 0.5,
-                                    p: 0.3,
-                                    backgroundColor: `#${tag.tag_color}`,
-                                    color: '#222',
-                                    fontWeight: 600,
-                                    fontSize: '0.65rem',
-                                    borderRadius: '8px',
-                                    textTransform: 'capitalize',
-                                    letterSpacing: 0.2,
-                                    boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
-                                    border: '1px solid #e0e0e0',
-                                    '& .MuiChip-label': {
-                                      px: 0.7,
-                                      py: 0.2,
-                                    }
-                                  }}
-                                />
+                                <Tooltip key={tag.id} title={tag.tag_name} placement="bottom-start" arrow>
+                                  <Box
+                                    sx={{
+                                      width: 12,
+                                      height: 12,
+                                      borderRadius: '50%',
+                                      backgroundColor: `#${tag.tag_color}`,
+                                      mb: 0.5,
+                                      mr: 0.5,
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                      border: '1px solid rgba(255,255,255,0.3)',
+                                      cursor: 'pointer',
+                                      transition: 'transform 0.2s ease',
+                                      '&:hover': {
+                                        transform: 'scale(1.2)'
+                                      }
+                                    }}
+                                  />
+                                </Tooltip>
                               ))}
                             </Box>
                           }
