@@ -1258,16 +1258,16 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
             const mappedTasks = tasksData.map(task => {
               // Buscar el tipo de tarea por activity_type (robusto ante string, numérico o vacío)
               let typeLabel = '';
-              console.log('Mapping task type for task ID', task.id, 'original activity_type:', task.activity_type);
+              //console.log('Mapping task type for task ID', task.id, 'original activity_type:', task.activity_type);
               const activityTypeStr = (task.activity_type !== undefined && task.activity_type !== null) ? String(task.activity_type).trim() : '';
-              console.log('Processing task ID', task.id, 'with activity_type:', task.activity_type, 'normalized to:', activityTypeStr);
+              //console.log('Processing task ID', task.id, 'with activity_type:', task.activity_type, 'normalized to:', activityTypeStr);
               if (activityTypeStr !== '') {
                 const activityTypeNum = Number(activityTypeStr);
                 const foundType = taskTypeCatalog.find((item) => {
                   // Comparar por code (string) o numeric_code (número)
                   return String(item.code) === activityTypeStr || item.numeric_code === activityTypeNum;
                 });
-                console.log('Mapping task type for task ID', task.id, 'activity_type:', activityTypeStr, 'found type:', foundType);
+                //console.log('Mapping task type for task ID', task.id, 'activity_type:', activityTypeStr, 'found type:', foundType);
                 if (foundType) {
                   typeLabel = currentLang === 'en' ? foundType.label_en : foundType.label_es;
                 }
