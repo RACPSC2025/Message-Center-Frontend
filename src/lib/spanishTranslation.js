@@ -623,6 +623,7 @@ const es = {
   'Clasificación de la acción': 'Clasificación De La Acción',
   'Acción Propuesta': 'Acción Propuesta',
   to: 'a',
+  Page: 'Página',
   page: 'Página',
   'Page Size': 'Filas por página',
   Cancelled: 'Cancelado',

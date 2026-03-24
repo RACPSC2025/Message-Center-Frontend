@@ -80,8 +80,7 @@ export default function ActionsDrawer({
     }
   };
 
-  //const drawerTitle = viewType === 'view_action' ? 'Action Details' : 'Action Comment(s)';
-  const drawerTitle = viewType === 'view_action' ? 'Action Details' : 'Comentarios de la acción';
+  const drawerTitle = viewType === 'view_action' ? 'CreateAction' : 'action_comments';
 
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
 
