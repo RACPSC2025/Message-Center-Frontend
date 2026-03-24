@@ -919,32 +919,27 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                                   }
                                 }}
                               />
-                              {/* Etiquetas de la tarea */}
+                              {/* Etiquetas de la tarea - Indicadores circulares */}
                               {task.tags && Object.values(task.tags).map((tag) => (
-                                <Chip
-                                  key={tag.id}
-                                  label={tag.tag_name}
-                                  size="small"
-                                  sx={{
-                                    height: 'auto',
-                                    mb: 0.5,
-                                    mr: 0.5,
-                                    p: 0.3,
-                                    backgroundColor: `#${tag.tag_color}`,
-                                    color: '#222',
-                                    fontWeight: 600,
-                                    fontSize: '0.65rem',
-                                    borderRadius: '8px',
-                                    textTransform: 'capitalize',
-                                    letterSpacing: 0.2,
-                                    boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
-                                    border: '1px solid #e0e0e0',
-                                    '& .MuiChip-label': {
-                                      px: 0.7,
-                                      py: 0.2,
-                                    }
-                                  }}
-                                />
+                                <Tooltip key={tag.id} title={tag.tag_name} placement="bottom-start" arrow>
+                                  <Box
+                                    sx={{
+                                      width: 12,
+                                      height: 12,
+                                      borderRadius: '50%',
+                                      backgroundColor: `#${tag.tag_color}`,
+                                      mb: 0.5,
+                                      mr: 0.5,
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                      border: '1px solid rgba(255,255,255,0.3)',
+                                      cursor: 'pointer',
+                                      transition: 'transform 0.2s ease',
+                                      '&:hover': {
+                                        transform: 'scale(1.2)'
+                                      }
+                                    }}
+                                  />
+                                </Tooltip>
                               ))}
                             </Box>
                           }
