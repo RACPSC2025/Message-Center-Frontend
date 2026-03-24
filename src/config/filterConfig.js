@@ -161,13 +161,10 @@ export const filterConfigs = {
       name: 'Etiquetas',
       default_value: '',
       //options: [],
-      options: [
-        { value: '1', label: 'Gestión ambiental' },
-        { value: '2', label: 'Gestión de permisos' },
-        { value: '3', label: 'Gestión social' },
-        { value: '4', label: 'Gestión PMA' }
-      ],
-      api_details: {},
+      options: [],
+      api_details: {
+        api_url: '/tasklist_api/list_tags'
+      },
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
     },
