@@ -106,7 +106,9 @@ const initialState = {
       listData: {} // dropdown lists for task
     }
     // more modules can be added here
-  }
+  },
+  // Cache global para labels de filtros
+  labelsCache: {}
 };
 
 // Create a stable empty array reference
@@ -128,6 +130,12 @@ export const selectFilterItemValue = createSelector(
     const data = modules[module]?.filterData[filterItem];
     return data ?? null; // Returns stable null reference when undefined
   }
+);
+
+// Selector para obtener el caché
+export const selectLabelsCache = createSelector(
+  [(state) => state.filter.labelsCache],
+  (labelsCache) => labelsCache
 );
 
 export const updateFilterValue = (module, filterItem, value) => ({
@@ -203,6 +211,11 @@ const filterSlice = createSlice({
       if (state.modules[module]) {
         state.modules[module].filterData[fieldID] = value;
       }
+    },
+    // Reducer para actualizar labels cache
+    updateLabelsCache: (state, action) => {
+      const { labels } = action.payload;
+      state.labelsCache = { ...state.labelsCache, ...labels };
     }
     // Other reducers...
   },
@@ -218,7 +231,7 @@ const filterSlice = createSlice({
   }
 });
 
-export const { setFilter, removeFilter, removeAllFilters, setListData, addFilter } =
+export const { setFilter, removeFilter, removeAllFilters, setListData, addFilter, updateLabelsCache } =
   filterSlice.actions;
 
 export default filterSlice.reducer;

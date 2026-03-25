@@ -5,8 +5,10 @@ import Clear from '@mui/icons-material/Clear';
 import { isEmpty, isEqual, isObject, isString } from 'radash';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 import axiosInstance from '../../lib/axios';
 import BaseFormControl from '../BaseFormControl';
+import { selectLabelsCache, updateLabelsCache } from '../../stores/filterSlice';
 
 const InputAutoComplete = ({ 
   field, 
@@ -20,6 +22,8 @@ const InputAutoComplete = ({
 }) => {
   
   const { t } = useTranslation();
+  const dispatch = useDispatch();
+  const labelsCache = useSelector(selectLabelsCache);
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,7 +58,16 @@ const InputAutoComplete = ({
       if (param_key && param_value) formData.append(param_key, param_value);
 
       const response = await axiosInstance.post(api_url, formData);
-      if (!(isEmpty(options) && isEmpty(response.data.data))) setOptions(response.data.data);
+      if (!(isEmpty(options) && isEmpty(response.data.data))) {
+        setOptions(response.data.data);
+        
+        // Guardar labels en cache global de Redux
+        const newCachedLabels = {};
+        response.data.data.forEach(option => {
+          newCachedLabels[option.value] = option.label;
+        });
+        dispatch(updateLabelsCache({ labels: newCachedLabels }));
+      }
     } catch (error) {
       console.error('[Error] fetching options from API', error);
     } finally {
@@ -153,6 +166,13 @@ const InputAutoComplete = ({
         getOptionsList(api_details);
       } else if (fieldOptions.length) {
         setOptions(fieldOptions);
+        
+        // Guardar opciones estáticas en cache global de Redux también
+        const newCachedLabels = {};
+        fieldOptions.forEach(option => {
+          newCachedLabels[option.value] = option.label;
+        });
+        dispatch(updateLabelsCache({ labels: newCachedLabels }));
       }
     }
 
@@ -205,13 +225,16 @@ const InputAutoComplete = ({
       if (selectedOption) {
         setInputValue(t(selectedOption.label));
       } else {
-        setInputValue(value);
+        // Si no encuentra en options, buscar en cache
+        const cachedLabel = labelsCache[value];
+        if (cachedLabel) setInputValue(t(cachedLabel));
+        else setInputValue(''); // Solo limpiar si no hay nada en cache
       }
     } else if (isObject(value) && value.label) {
       // Si el value es un objeto con label
       setInputValue(t(value.label));
     }
-  }, [value, options, isString, isObject, t, isInitialRender, showDropdown]);
+  }, [value, options, labelsCache, isString, isObject, t, isInitialRender, showDropdown]);
 
   const isEnabled = useMemo(() => {
     const { api_details = {}, options: fieldOptions } = field;
