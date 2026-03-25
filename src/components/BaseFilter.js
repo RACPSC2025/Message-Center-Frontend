@@ -435,6 +435,17 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
   };
 
   const value = useFilterItemValue(module, id) || getDefaultFilterItemValue(type);
+  
+  // Para date-range, construir el valor desde los dos campos separados
+  let dateRangeValue = value;
+  if (type === 'date-range') {
+    const [startDateKey, endDateKey] = id.split('#');
+    const startDate = useFilterItemValue(module, startDateKey);
+    const endDate = useFilterItemValue(module, endDateKey);
+    
+    // Si tenemos valores en Redux, usarlos en lugar del value por defecto
+    if (startDate || endDate) dateRangeValue = [startDate, endDate];
+  }
 
   switch (type) {
     case 'text-search-field':
@@ -486,7 +497,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
       filterItem = (
         <InputDateRangePicker
           field={{ id }}
-          value={value}
+          value={dateRangeValue}
           {...fieldAttrs}
           onChange={(_, value) => handleSetFilterItemValue(value)}
         />
