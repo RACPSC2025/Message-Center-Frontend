@@ -181,8 +181,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const endDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_end_date'));
   const executorFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_executor'));
   const reviewerFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_reviewer'));
-  //console.log("AAAAAAAAAAAAAAAAAAAAAAASTATUSSSSSSSSSS", statusFilter)
-  //console.log("HHHHHHHHHHHHHHHHHHHHHHHHSORTSSSSSSSSSS", sortBy)
+  const etiquetasFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'Etiquetas'));
+
 
   // ✅ COLORES DINÁMICOS DESDE REDUX
   const TASK_STATUS_COLORS = useMemo(() => {
@@ -309,7 +309,6 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       // 4. Filtro por Executor(responsibles)
       if (executorFilter && executorFilter.trim() !== '') {
         const executors = task.responsibles || {};
-        // busca en las claves numéricas de la API
         const hasExecutor = executors.hasOwnProperty(executorFilter.trim());
         
         if (!hasExecutor) return false;
@@ -318,11 +317,19 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       // 5. Filtro por Revisor
       if (reviewerFilter && reviewerFilter.trim() !== '') {
         const reviewers = task.reviewers || {};
-        // buscar directamente en las claves numéricas de la API
         const hasReviewer = reviewers.hasOwnProperty(reviewerFilter.trim());
         
         if (!hasReviewer) return false;
       }
+
+      // 6. Filtro por Etiquetas
+      if (etiquetasFilter && etiquetasFilter.trim() !== '') {
+        const tags = task.tags || [];
+        const hasTag = tags.some(tag => String(tag.id) === etiquetasFilter.trim());
+        
+        if (!hasTag) return false;
+      }
+
       return true; 
     });
 
@@ -354,21 +361,22 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     startDateFilter,
     endDateFilter,
     executorFilter,
-    reviewerFilter
+    reviewerFilter,
+    etiquetasFilter
   ]);
 
 
   // ✅ LAZY LOADING DE TAREAS
-
-
   // 1. Resetear página y scroll SOLO cuando cambian los filtros principales (NO cuando cambia visibleTasks por lazy load)
   const lastMainFilters = useRef({
     keywordsFilter: null,
     statusFilter: null,
+    sortBy: null,
     startDateFilter: null,
     endDateFilter: null,
     executorFilter: null,
     reviewerFilter: null,
+    etiquetasFilter: null,
     selectedLegalTaskIds: null
   });
 
@@ -380,6 +388,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       endDateFilter,
       executorFilter,
       reviewerFilter,
+      etiquetasFilter,
       selectedLegalTaskIds: JSON.stringify(selectedLegalTaskIds)
     };
     const filtersChanged = Object.keys(mainFilters).some(
@@ -394,7 +403,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       }
     }
     lastMainFilters.current = mainFilters;
-  }, [keywordsFilter, statusFilter, startDateFilter, endDateFilter, executorFilter, reviewerFilter, selectedLegalTaskIds, filteredTasks]);
+  }, [keywordsFilter, statusFilter, startDateFilter, endDateFilter, executorFilter, reviewerFilter, etiquetasFilter, selectedLegalTaskIds, filteredTasks]);
 
   // 2. Cuando cambia la página, cargar más tareas (lazy load) solo en frontend
   useEffect(() => {
