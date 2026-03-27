@@ -1,11 +1,12 @@
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { MoreVertOutlined, Add } from '@mui/icons-material';
+import { MoreVertOutlined, Add, ListAlt } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import TableComponent from '../../components/TableComponent';
 import ArticleFormModal from './ArticleFormModal';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
 
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Fragment, useEffect, useState, useRef, useCallback } from 'react';
 
 import { fetchArticles } from '../../stores/legal/fetchArticlesSlice';
@@ -217,6 +218,50 @@ export default function Articles({ optinDrawerData }) {
 
 
   
+  const navigate = useNavigate();
+  const handleNavigateToRelatedTasks = (taskList = [], articleMeta = {}) => {
+    // Limpiar valores previos de filtro de tasks
+    dispatch({
+      type: 'filter/setFilter',
+      payload: {
+        module: 'task',
+        updatedFilter: {
+          selectedTaskView: null,
+          selected_legal_task_ids: [],
+          selected_legal_requirement_id: null,
+          selected_legal_requirement_title: '',
+          isLegalTaskFilterActive: false
+        }
+      }
+    });
+
+    // Construir los nuevos valores
+    const relatedTaskIds = Array.from(
+      new Set(
+        (Array.isArray(taskList) ? taskList : [])
+          .map((taskItem) => String(taskItem?.id_task || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const articleId = articleMeta?.id ?? null;
+    const articleTitle = articleMeta?.title ?? '';
+
+    dispatch({
+      type: 'filter/setFilter',
+      payload: {
+        module: 'task',
+        updatedFilter: {
+          selectedTaskView: 'list',
+          selected_legal_task_ids: relatedTaskIds,
+          selected_legal_requirement_id: articleId,
+          selected_legal_requirement_title: articleTitle,
+          isLegalTaskFilterActive: true
+        }
+      }
+    });
+    navigate('/view/events');
+  };
+
   const columnDefs = [
     {
       field: 'options',
@@ -268,7 +313,7 @@ export default function Articles({ optinDrawerData }) {
     },
     {
       field: 'id_articulo',
-      headerName: t('article_id'),
+      headerName: t('ID'),
       filter: 'agTextColumnFilter',
       cellStyle: { textAlign: 'right' }
     },
@@ -289,6 +334,100 @@ export default function Articles({ optinDrawerData }) {
       headerName: t('name'),
       largeText: true,
       filter: 'agTextColumnFilter'
+    },
+    // --- Nueva columna Tareas ---
+    {
+      field: 'tasks',
+      headerName: t('tasks'),
+      filter: 'agTextColumnFilter',
+      filterParams: {
+        values: null
+      },
+      cellRenderer: (params) => {
+        const rowTaskList = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
+        const hasRelatedTasks = rowTaskList.length > 0;
+        const tasksCount = rowTaskList.length;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+            <Typography variant="body2">{tasksCount}</Typography>
+            {hasRelatedTasks && (
+              <Tooltip title={`${t('show_element')} ${t('tasks')}`}>
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleNavigateToRelatedTasks(rowTaskList, {
+                      id: params?.data?.id_articulo,
+                      title: params?.data?.nombre
+                    });
+                  }}
+                >
+                  <ListAlt fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        );
+      }
+    },
+    // --- Fin columna Tareas ---
+    {
+      field: 'parent_article_id',
+      headerName: t('Artículo padre'),
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => getParentArticleName(params.value)
+    },
+    {
+      field: 'compensation',
+      headerName: t('compensation'),
+      filter: 'agTextColumnFilter'
+    },
+    {
+      field: 'percentage',
+      headerName: t('compliance_percentage'),
+      filter: 'agNumberColumnFilter',
+      cellRenderer: (params) => {
+        const cleanValue = String(params.value || '0').replace('%', '');
+        const numValue = parseFloat(cleanValue);
+        const badgeData = isNaN(numValue) ? '0%' : `${numValue}%`;
+
+        const tempStatus = String(params.data.estado).toLowerCase();
+        const matchedStatus = listLegalStatus?.find((status) => {
+          const statusNumber = String(status.value_number).toLowerCase();
+          const statusValue = String(status.value).toLowerCase();
+          const statusLabel = String(status.label).toLowerCase();
+          return statusNumber === tempStatus || statusValue === tempStatus || statusLabel === tempStatus;
+        });
+
+        const badgeColor = matchedStatus?.color_code || '#1976d2';
+
+        return (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Typography
+              sx={{
+                border: `4px solid ${badgeColor}`,
+                px: 1,
+                borderRadius: '4px',
+                color: 'black !important',
+                backgroundColor: '#fff',
+                maxWidth: '60px',
+                textAlign: 'center'
+              }}
+              className="badge"
+            >
+              {badgeData}
+            </Typography>
+          </Box>
+        );
+      }
     },
     {
       field: 'parent_article_id',

@@ -705,7 +705,7 @@ export function Component() {
       cellRenderer: (params) => {
         const rowTaskList = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
         const hasRelatedTasks = rowTaskList.length > 0;
-        const tasksCount = Number(params?.value || 0);
+        const tasksCount = rowTaskList.length;
 
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
@@ -716,6 +716,8 @@ export function Component() {
                   size="small"
                   onClick={(event) => {
                     event.stopPropagation();
+                    handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
+                    handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
                     handleNavigateToRelatedTasks(rowTaskList, {
                       id: params?.data?.id,
                       title: params?.data?.requirement_name
