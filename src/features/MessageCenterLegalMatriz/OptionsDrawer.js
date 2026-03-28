@@ -27,7 +27,8 @@ export default function OptionsDrawer({
   activeTabId = DEFAULT_LEGAL_MATRIX_TAB_ID,
   setActiveTabId = () => {},
   optinDrawerData = [],
-  Title = ''
+  Title = '',
+  onlyShowCreateRequirementTab = false
 }) {
   // const [activeTab, setActiveTab] = useState(0);
   const [loadingAI, setLoadingAI] = useState('not clicked');
@@ -53,7 +54,7 @@ export default function OptionsDrawer({
     setAnchorEl(null);
   };
 
-  const tabList = [
+  let tabList = [
     canCreateArticle
       ? {
           id: LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT,
@@ -121,6 +122,10 @@ export default function OptionsDrawer({
         }
       : null
   ].filter(Boolean);
+
+  if (onlyShowCreateRequirementTab) {
+    tabList = tabList.filter(tab => tab.id === LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+  }
 
   const fallbackTabId = tabList[0]?.id ?? null;
   const safeActiveTabId = tabList.some((tab) => tab.id === activeTabId) ? activeTabId : fallbackTabId;

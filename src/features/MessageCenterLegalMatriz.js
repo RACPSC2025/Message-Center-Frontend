@@ -625,13 +625,15 @@ export function Component() {
               color="primary"
               title={t('Add_articles')}
               onClick={() => {
+                handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
+                handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
+                handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
+                handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
                 handleOpenOptionsDrawer();
                 setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
                 setOptinDrawerData(params?.data);
                 //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
                 setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-                handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-                handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
               }}
             >
               <AddBoxOutlined />
@@ -1383,6 +1385,7 @@ export function Component() {
           setActiveTabId={setActiveTabId}
           optinDrawerData={optinDrawerData}
           Title={optinDrawerTitle}
+          onlyShowCreateRequirementTab={activeTabId === LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT && optinDrawerTitle === t('create_legal_requirement')}
         />
 
         <DetallesDrawer

@@ -81,6 +81,30 @@ Banner de contexto en tasks:
   - `selected_legal_requirement_id`
   - `selected_legal_requirement_title`
 
+## Cambios recientes (2026):
+
+### Lógica de tareas y banner contextual
+
+- La columna "Tareas" en matriz legal y artículos ahora muestra siempre la cantidad real de tareas asociadas (usando `task_list.length`).
+- Al hacer click en el botón de tareas, se navega a `/view/events` y se configuran en Redux los filtros:
+  - `selectedTaskView = 'list'`
+  - `selected_legal_task_ids = [id_task, ...]`
+  - `selected_legal_requirement_id` y `selected_legal_requirement_title` (o equivalentes para artículos)
+- El filtro de tareas asociadas es frontend-only: no se envía al backend, solo filtra la lista cargada en TasksListView y componentes relacionados.
+- En la parte superior de la vista de tareas, se muestra un banner contextual con la cantidad de tareas filtradas, el texto "Tareas del requisito" o "Tareas del artículo", el ID y el título, y un botón para limpiar el filtro.
+
+### Consistencia de filtros y navegación
+
+- Antes de aplicar un filtro de redirección desde matriz legal o artículos, se limpian los valores previos en Redux para evitar estados inconsistentes.
+- La lógica de navegación y filtrado es ahora idéntica entre matriz legal y artículos, diferenciando el origen para mostrar el banner correcto en tasks.
+
+### Tabs en OptionsDrawer
+
+- Cuando se selecciona el botón de crear requerimiento (SpeedDial), el OptionsDrawer solo muestra la pestaña de "crear requisito" y oculta las demás tabs, para evitar confusión y mantener el foco en la creación.
+- El resto de la navegación entre tabs sigue usando identificadores estables (`tabId`), nunca índices numéricos, para evitar errores si hay tabs ocultos por permisos o contexto.
+
+> Ver también: specs/03-navigation/rutas-y-navegacion.md para detalles de navegación y tabs.
+
 ## Referencias
 
 - src/store.js
