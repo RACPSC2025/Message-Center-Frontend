@@ -430,7 +430,7 @@ export function Component() {
   });
 
   return (
-    <Box sx={{ pl: 3 }}>
+    <Box sx={{ pl: 1 }}>
       {matchedStatus && (
         <Box
           sx={{
@@ -450,18 +450,76 @@ export function Component() {
 
   const [columnDefs, setColumnDefs] = useState([
     {
+      field: 'options',
+      headerName: t('options'),
+      width: 100,
+      cellRenderer: (params) => {
+        return (
+          <div>
+            <Tooltip title={t('options')}>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => {
+                  //handleOpenOptionsDrawer();
+                  //setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+                  //setOptinDrawerData(params?.data);
+                  //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
+                  //setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+                }}
+              >
+                <MoreVertOutlined />
+              </IconButton>
+            </Tooltip>
+            
+            {canViewAnalysisIa && ( 
+              <Tooltip title={t('analysis_with_amatia')}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    handleOpenOptionsDrawer();
+                    setActiveTabId(LEGAL_MATRIX_TAB_IDS.ANALYSIS_OF_REGULATION);
+                    handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
+                    handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
+                    handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
+                    handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
+                    //console.log('params data:', params?.data);
+                    //console.log('params data ID:', params?.data.id);
+                    
+                    setOptinDrawerData(params?.data);
+                    //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
+                    setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+                  }}
+                >
+                  <AutoAwesome />
+                </IconButton>
+              </Tooltip>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       field: 'ID',
       headerName: 'ID',
       type: 'string',
-      width: 100,
+      width: 60,
       cellRenderer: (params) => {
         return getSquareIcon(params);
       },
     },
     {
+      field: 'number',
+      headerName: t('number'),
+      filter: 'agNumberColumnFilter',
+      width: 100,
+      //maxWidth: 10000
+    },
+    {
       field: 'comunications',
       headerName: t('communications'),
-      width: 140,
+      width: 130,
       cellRenderer: (params) => {
         const filesCount = params?.data?.comunications_files || 0;
         const communicationsCount = params?.data?.comunications_count || 0;
@@ -534,118 +592,10 @@ export function Component() {
       }
     },
     {
-      field: 'analysis_with_amatia',
-      headerName: t('AMAT-IA'),
-      hide: !canViewAnalysisIa,
-      headerComponent: () => (
-        <div
-          style={customHeaderStyle}>
-          {t('AMAT-IA')}
-        </div>
-      ),
-      headerStyle: customHeaderStyle,
-      cellRenderer: (params) => {
-        return (
-          <div>
-            <Tooltip title={t('analysis_with_amatia')}>
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => {
-                  handleOpenOptionsDrawer();
-                  setActiveTabId(LEGAL_MATRIX_TAB_IDS.ANALYSIS_OF_REGULATION);
-                  handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
-                  handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
-                  handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-                  handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-                  //console.log('params data:', params?.data);
-                  //console.log('params data ID:', params?.data.id);
-                  
-                  setOptinDrawerData(params?.data);
-                  //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                  setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-                }}
-              >
-                <AutoAwesome />
-              </IconButton>
-            </Tooltip>
-          </div>
-        );
-      }
-    },
-    {
-      field: 'options',
-      headerName: t('options'),
-      cellRenderer: (params) => {
-        return (
-          <div>
-            <Tooltip title={t('options')}>
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => {
-                  //handleOpenOptionsDrawer();
-                  //setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
-                  //setOptinDrawerData(params?.data);
-                  //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                  //setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-                }}
-              >
-                <MoreVertOutlined />
-              </IconButton>
-            </Tooltip>
-          </div>
-        );
-      }
-    },
-    {
-      field: 'type',
-      headerName: t('type'),
-      filter: 'agSeColumnFilter',
-      filterParams: {
-        values: null
-      }
-    },
-    {
-      field: 'articles',
-      headerName: t('articles'),
-      filter: 'agSeColumnFilter',
-      filterParams: {
-        values: null
-      },
-
-      cellRenderer: (params) => {
-        return (
-          <Box
-            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
-          >
-            <Typography>{params?.value}</Typography>
-            <IconButton
-              size="small"
-              color="primary"
-              title={t('Add_articles')}
-              onClick={() => {
-                handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
-                handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
-                handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-                handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-                handleOpenOptionsDrawer();
-                setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
-                setOptinDrawerData(params?.data);
-                //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-              }}
-            >
-              <AddBoxOutlined />
-            </IconButton>
-          </Box>
-        );
-      }
-    },
-    {
     field: 'progress',
       headerName: t('progress'),
       filter: 'agTextColumnFilter',
+      width: 100,
       filterParams: {
         values: null
       },
@@ -698,9 +648,56 @@ export function Component() {
       } 
     },
     {
+      field: 'type',
+      headerName: t('type'),
+      filter: 'agSeColumnFilter',
+      width: 90,
+      filterParams: {
+        values: null
+      }
+    },
+    {
+      field: 'articles',
+      headerName: t('articles'),
+      filter: 'agSeColumnFilter',
+      width: 100,
+      filterParams: {
+        values: null
+      },
+
+      cellRenderer: (params) => {
+        return (
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
+          >
+            <Typography>{params?.value}</Typography>
+            <IconButton
+              size="small"
+              color="primary"
+              title={t('Add_articles')}
+              onClick={() => {
+                handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
+                handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
+                handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
+                handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
+                handleOpenOptionsDrawer();
+                setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
+                setOptinDrawerData(params?.data);
+                //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
+                setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+              }}
+            >
+              <AddBoxOutlined />
+            </IconButton>
+          </Box>
+        );
+      }
+    },
+    {
       field: 'tasks',
       headerName: t('tasks'),
       filter: 'agTextColumnFilter',
+      width: 90,
       filterParams: {
         values: null
       },
@@ -733,20 +730,6 @@ export function Component() {
           </Box>
         );
       }
-    },
-    {
-      field: 'type_of_rule',
-      headerName: t('type_of_rule'),
-      filter: 'agTextColumnFilter',
-      filterParams: {
-        values: null
-      }
-    },
-    {
-      field: 'number',
-      headerName: t('number'),
-      filter: 'agNumberColumnFilter',
-      maxWidth: 10000
     },
     {
       field: 'requirement_name',
@@ -790,6 +773,14 @@ export function Component() {
             </Typography>
           </Tooltip>
         );
+      }
+    },
+    {
+      field: 'type_of_rule',
+      headerName: t('type_of_rule'),
+      filter: 'agTextColumnFilter',
+      filterParams: {
+        values: null
       }
     },
     {
