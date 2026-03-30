@@ -95,8 +95,8 @@ const AttachmentViewer = ({ attachment }) => {
         </>
       ) : isPdf ? (
         <Box display="flex" alignItems="center" gap={1}>
-          <InsertDriveFile color="error" /> {/* PDF rojo */}
-          <Link href={fileUrl} target="_blank" color="error" rel="noreferrer">
+          <InsertDriveFile color="primary" /> {/* PDF azul */}
+          <Link href={fileUrl} target="_blank" color="primary" rel="noreferrer">
             {filename}
           </Link>
         </Box>
