@@ -22,10 +22,10 @@ export const uploadCommentAttachments = createAsyncThunk(
 */
 
 export const uploadCommentAttachments = createAsyncThunk(
-  'comments/upload_comment_attachments',
+  'comments/upload_comment_attachments_amatia_express',
   async (data = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('tasklist_api/upload_comment_attachments', data);
+      const response = await axiosInstance.post('tasklist_api/upload_comment_attachments_amatia_express', data);
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);
