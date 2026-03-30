@@ -235,10 +235,76 @@ const TaskCyclesTable = ({
   // ✅ DEFINIR COLUMNAS PARA AG GRID
   const columnDefs = useMemo(() => [
     {
+      field: 'actions',
+      headerName: 'ACCIONES',
+      flex: 1,
+      minWidth: 180,
+      cellRenderer: ActionsCellRenderer,
+      sortable: false,
+      filter: false,
+      cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+    },
+    {
+      field: 'progress',
+      headerName: t('progress'),
+      filter: 'agTextColumnFilter',
+      width: 100,
+      filterParams: {
+        values: null
+      },
+      cellRenderer: (params) => {
+        // El valor puede venir como número o string, o como objeto { percentage }
+        let percentage = 0;
+        if (typeof params.value === 'object' && params.value !== null && 'percentage' in params.value) {
+          percentage = params.value.percentage;
+        } else if (typeof params.value === 'number' || typeof params.value === 'string') {
+          percentage = params.value;
+        }
+        // Mostrar solo enteros
+        const percentageInt = Math.round(Number(percentage) || 0);
+        const badgeData = `${percentageInt}%`;
+        // Color según logtask_status
+        const badgeColor = getCycleStatusColor(params.data.logtask_status);
+        return (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Typography
+              sx={{
+                border: `4px solid ${badgeColor}`,
+                px: 1,
+                borderRadius: '4px',
+                color: 'black !important',
+                backgroundColor: '#fff'
+              }}
+              className="badge"
+            >
+              {badgeData}
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'opportunity_days',
+      headerName: 'OPORTUNIDAD',
+      flex: 0.8,
+      minWidth: 130,
+      cellRenderer: OpportunityCellRenderer,
+      filter: 'agNumberColumnFilter',
+      cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+    },
+    {
       field: 'start_date',
       headerName: 'INICIO',
       flex: 1,
-      minWidth: 180,
+      minWidth: 120,
       cellRenderer: DateCellRenderer,
       comparator: dateComparator,
       filter: 'agDateColumnFilter',
@@ -305,25 +371,6 @@ const TaskCyclesTable = ({
         browserDatePicker: true,
       },
       cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
-    },
-    {
-      field: 'opportunity_days',
-      headerName: 'OPORT.',
-      flex: 0.8,
-      minWidth: 130,
-      cellRenderer: OpportunityCellRenderer,
-      filter: 'agNumberColumnFilter',
-      cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
-    },
-    {
-      field: 'actions',
-      headerName: 'ACCIONES',
-      flex: 1,
-      minWidth: 180,
-      cellRenderer: ActionsCellRenderer,
-      sortable: false,
-      filter: false,
-      cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     }
   ], [theme, t]);
 
@@ -337,7 +384,7 @@ const TaskCyclesTable = ({
       const realClosingDate = logtask.real_closing_date 
         ? new Date(logtask.real_closing_date).toLocaleDateString() 
         : 'Pendiente';
-      
+
       return {
         id: logtask.id,
         task_id: logtask.task_id,
@@ -347,6 +394,7 @@ const TaskCyclesTable = ({
         real_closing_date: realClosingDate,
         opportunity_days: logtask.opportunity_days || 0,
         logtask_status: logtask.logtask_status,
+        progress: typeof logtask.percentage !== 'undefined' ? logtask.percentage : 0,
         comments: logtask.comments || [],
         // Mantener datos originales para otras operaciones
         ...logtask

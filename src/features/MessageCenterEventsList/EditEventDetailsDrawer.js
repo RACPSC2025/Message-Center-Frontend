@@ -227,39 +227,7 @@ function EditEventDetailsDrawer({
   }, [dispatch]);
   */
   
-  const attachImageToComment = async (logtaskId, commentId, file) => {
-    try {
-      const formData = new FormData();
-
-      // IDs obligatorios
-      formData.append("logtask_id", logtaskId);
-      formData.append("comment_id", commentId);
-
-      // Ruta donde se guardará
-      //formData.append("full_path", "uploads/registros/task");
-      //formData.append("full_path", "");
-      formData.append("full_path", `${logtaskId}/${commentId}`);
-
-      // Archivo: el backend espera un array "imagefiles[]"
-      formData.append("imagefiles[]", file);
-      
-      const response = await axiosInstance.post(
-        //"tasklist_api/add_comment_ajax",
-        "task/add_comment_ajax_messagecenter",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error("Error uploading attachment: ", error);
-      return [];
-    }
-  };
+  // attachImageToComment eliminado: ahora solo se usa upload_comment_attachments
 
   // 
   const handleSelectImage = (event) => {
@@ -298,15 +266,9 @@ function EditEventDetailsDrawer({
     }
   };
 
-  const handleUploadAttachment =  (selectedComment) => {
-    //console.log('Uploading attachment for comment ID:', selectedComment);
-    console.log('Uploading attachment for comment ID:');
-    console.log('comment ID:', selectedComment.comment_id);
-    //console.log('logTaskDetails:', logTaskDetails);
-    console.log('logtask HHHHHHAAAAAATTTTTTTT: ', logTaskDetails);
+  const handleUploadAttachment = (selectedComment) => {
     if (attachmentComment) {
-      //handleUploadComments(selectedComment, attachmentComment);
-      attachImageToComment(logTaskDetails.id, selectedComment.comment_id, attachmentComment);
+      handleUploadComments(selectedComment, attachmentComment);
       setOpenAttachmentModal(false);
       setPreviewUrl(null);
       // Actualiza la lista de comentarios después de la carga
@@ -336,7 +298,6 @@ function EditEventDetailsDrawer({
     const formData = new FormData();
     formData.append('comment_id', comment_id);
     formData.append('imagefiles[]', file);
-    /*
     dispatch(uploadCommentAttachments(formData)).then((data) => {
       if (data?.payload?.messages === 'Success') {
         showSuccessMsg(data?.payload?.messages);
@@ -344,7 +305,6 @@ function EditEventDetailsDrawer({
         showErrorMsg(data?.payload?.messages);
       }
     });
-    */
   };
 
   const handleCloseAttachmentModal = () => {
@@ -436,7 +396,7 @@ function EditEventDetailsDrawer({
       formData.append('comment_type', 'executed');
 
       const response = await axiosInstance.post(
-        `/tasklist_api/get_logtask_comments/${logtask_id}`,
+        `/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
         formData
       );
 
@@ -479,7 +439,7 @@ function EditEventDetailsDrawer({
       formData.append("comment_type", "revisor");
 
       const response = await axiosInstance.post(
-        `/tasklist_api/get_logtask_comments/${logtask_id}`,
+        `/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
         formData
       );
 
@@ -587,7 +547,7 @@ function EditEventDetailsDrawer({
     }
   };
 
-  // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments/{id}
+  // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments_amatia_express/{id}
 
   useEffect(() => {
     if (logTaskDetails && openEditDrawer) {
@@ -1004,7 +964,7 @@ function EditEventDetailsDrawer({
               {isLoading === 'loaded' ? (
                 hasExecutedComments ? (
                   logtaskExecutedComments.map((comment, index) => {
-                    console.log('Adjuntos del comentario:', comment.attachment); // <-- test
+                    //console.log('Adjuntos del comentario:', comment.attachment); // <-- test
                     return (
                       <CommentCard
                         key={index}
