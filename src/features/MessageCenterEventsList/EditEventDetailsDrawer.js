@@ -148,6 +148,7 @@ function EditEventDetailsDrawer({
   const [openModalCommentConfirmation, setOpenModalCommentConfirmation] = useState(false);
   const [isExecutor, setIsExecutor] = useState(true);
   const [errorCommentForm, setErrorCommentForm] = useState(false);
+  const [commentErrors, setCommentErrors] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [openEditCommentModal, setOpenEditCommentModal] = useState(false);
   const [openDeleteCommentDialog, setOpenDeleteCommentDialog] = useState(false);
@@ -615,15 +616,21 @@ function EditEventDetailsDrawer({
   const handleCommentConfirmation = (executor) => {
     addCommentForm.comment_type =
       addCommentForm.type === 1 ? setCommentType('executed') : setCommentType('revisor');
-    if (!!!addCommentForm?.comment?.trim() || !(addCommentForm?.type > 0)) {
+    
+    const errors = validateCommentForm();
+    
+    if (errors.length > 0) {
+      setCommentErrors(errors);
       setErrorCommentForm(true);
       return;
     }
+    
     setOpenModal(false);
     setOpenModalEjecutor(false);
     setIsExecutor(executor);
     setOpenModalConfirmation(true);
     setErrorCommentForm(false);
+    setCommentErrors([]);
   };
 
   const handleCloseModalConfirmation = () => {
@@ -766,19 +773,34 @@ function EditEventDetailsDrawer({
     }
   };
 
+  const validateCommentForm = () => {
+    const errors = [];
+    
+    if (!!!addCommentForm?.comment?.trim()) errors.push('comment');
+    if (!(addCommentForm?.type > 0)) errors.push('type');
+    
+    return errors;
+  };
+
   // crear nuevo comentario handleSubmitCommentFromTab
   const handleSubmitCommentFromTab = async () => {
-    if (!!!addCommentForm?.comment?.trim() || !(addCommentForm?.type > 0)) {
+    const errors = validateCommentForm();
+    
+    if (errors.length > 0) {
+      setCommentErrors(errors);
       setErrorCommentForm(true);
       return;
     }
     
+    setErrorCommentForm(false);
+    setCommentErrors([]);
+
     // TODO: VALIDAR MODAL
     const progreso = parseInt(addCommentForm.progress, 10) || 0
     const cantidadComentarios = parseInt(logTaskDetails.comments_logtask_count, 10) || 0
-    console.log('🤪 MOSTRANDO DATOS DE FORMULARIO', progreso);
-    console.log('🤪 PROGRESO ACTUAL', cantidadComentarios);
 
+
+    // ...
     if(progreso === 100 && cantidadComentarios <= 0) {
       setOpenFeedbackModal(true);
       return;
@@ -864,6 +886,7 @@ function EditEventDetailsDrawer({
   const handleCancelCommentFromTab = () => {
     setAddCommentForm({});
     setErrorCommentForm(false);
+    setCommentErrors([]);
     setTabValue('comentarios');
   };
 
@@ -1052,14 +1075,28 @@ function EditEventDetailsDrawer({
             {/* Nuevo Tab de Crear Comentario */}
             <CustomTabPanel value={tabValue} index="crear_comentario">
               <Box sx={{ px: 3, py: 1 }}>
+
+                {/* Título */}
                 <Typography variant="h6" sx={{ marginBottom: '20px' }}>
                   {t('add_comment')}
                 </Typography>
+
                 {errorCommentForm && (
-                  <Alert severity="error" sx={{ marginBottom: '20px' }}>
-                    {t('comment_field_mandatory')}
-                  </Alert>
+                  <>
+                    {commentErrors.includes('comment') && (
+                      <Alert severity="error" sx={{ marginBottom: '10px' }}>
+                        {t('comment_field_mandatory')}
+                      </Alert>
+                    )}
+                    {commentErrors.includes('type') && (
+                      <Alert severity="error" sx={{ marginBottom: '10px' }}>
+                        {t('comment_type_mandatory')}
+                      </Alert>
+                    )}
+                  </>
                 )}
+
+                {/* Formulario */}
                 <FormBuilder
                   inputFields={addCommentFormData}
                   showActionButton={false}
@@ -1074,7 +1111,10 @@ function EditEventDetailsDrawer({
                     setAddCommentForm((prevState) => ({ ...prevState, [id]: value }));
                   }}
                 />
+
+                {/* Botones */}
                 <Box display="flex" gap={2} sx={{ marginTop: '30px' }}>
+                  {/* Agregar comentario */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -1083,6 +1123,8 @@ function EditEventDetailsDrawer({
                   >
                     {t('add_comment')}
                   </Button>
+
+                  {/* Cancelar */}
                   <Button
                     variant="outlined"
                     size="large"
@@ -1144,7 +1186,20 @@ function EditEventDetailsDrawer({
           <Typography variant="h5" sx={{ marginBottom: '40px' }}>
             {t('add_comment_as_reviewer')}
           </Typography>
-          {errorCommentForm ? <Alert severity="error">{t('comment_field_mandatory')}</Alert> : ''}
+          {errorCommentForm && (
+            <>
+              {commentErrors.includes('comment') && (
+                <Alert severity="error" sx={{ marginBottom: '10px' }}>
+                  {t('comment_field_mandatory')}
+                </Alert>
+              )}
+              {commentErrors.includes('type') && (
+                <Alert severity="error" sx={{ marginBottom: '10px' }}>
+                  {t('comment_type_mandatory')}
+                </Alert>
+              )}
+            </>
+          )}
           <FormBuilder
             inputFields={addCommentFormData}
             showActionButton={false}

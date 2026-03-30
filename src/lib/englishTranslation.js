@@ -386,6 +386,7 @@ const en = {
   delete_comment_dialog_message: 'Are you sure you want to delete this comment?',
   enter_0_100_value: 'Please, enter a number between 0 and 100',
   comment_field_mandatory: 'The comment field is mandatory',
+  comment_type_mandatory: 'You must select a comment type',
   comments_executor: 'Comments Executor',
   followup_reviewer: 'Follow-up Reviewer',
   analysis_with_amatia: 'Analyze with Amat-ia',
