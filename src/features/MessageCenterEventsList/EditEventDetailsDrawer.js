@@ -295,8 +295,20 @@ function EditEventDetailsDrawer({
   };
 
   const handleUploadComments = (comment_id, file) => {
+    // Permitir recibir un objeto comentario o solo el id
+    let realCommentId = comment_id;
+    if (typeof comment_id === 'object' && comment_id !== null) {
+      realCommentId = comment_id.comment_id || comment_id.id;
+    }
+    const numericCommentId = Number(realCommentId);
+    if (!numericCommentId || isNaN(numericCommentId) || numericCommentId <= 0) {
+      console.error('comment_id inválido para upload:', comment_id);
+      showErrorMsg(t('El comentario no es válido. No se puede adjuntar archivo.'));
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('comment_id', comment_id);
+    formData.append('comment_id', numericCommentId);
     formData.append('imagefiles[]', file);
     dispatch(uploadCommentAttachments(formData)).then((data) => {
       if (data?.payload?.messages === 'Success') {
@@ -422,7 +434,7 @@ function EditEventDetailsDrawer({
 
       // 2. Esperamos a que TODOS los comentarios estén procesados
       const finalCommentsMap = await Promise.all(processedCommentsPromises);
-      console.log('finalCommentsMap GGGGGGGGGGGGGGGGGGGGGGGGGGGGG', finalCommentsMap);
+      //console.log('finalCommentsMap GGGGGGGGGGGGGGGGGGGGGGGGGGGGG', finalCommentsMap);
 
       // 3. Seteamos el estado UNA SOLA VEZ (y reemplazamos el array completo)
       setLogtaskExecutedComments(finalCommentsMap);
