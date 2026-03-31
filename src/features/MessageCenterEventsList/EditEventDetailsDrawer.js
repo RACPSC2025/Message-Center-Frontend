@@ -163,6 +163,12 @@ function EditEventDetailsDrawer({
   // Estados para detectar cambios no guardados
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialProgress, setInitialProgress] = useState(logTaskDetails.progress);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initialValues, setInitialValues] = useState({
+    progress: null,
+    comment: null,
+    timestamp: Date.now()
+  });
   
   // Modal de validacion de comentarios y porcentaje
   const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
@@ -190,28 +196,21 @@ function EditEventDetailsDrawer({
   const { language } = useLanguage();
   const locale = language === 'en' ? 'en-US' : 'es-ES';
 
-  // Efecto para actualizar estado inicial cuando cambia la tarea
-  useEffect(() => {
-    if (logTaskDetails) {
-      setInitialProgress(logTaskDetails.progress);
-      setHasUnsavedChanges(false);
-    }
-  }, [logTaskDetails]);
-
+  
   // Efecto para detectar cambios en el progreso y comentario
   useEffect(() => {
-    const currentProgress = addCommentForm.progress !== undefined 
-      ? addCommentForm.progress 
-      : Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)));
+    // NO detectar cambios durante inicialización
+    if (isInitializing) return;
     
-    const hasCommentText = addCommentForm.comment && addCommentForm.comment.trim().length > 0;
+    // Lógica simple: detectar si hay cambios reales del usuario
+    const hasProgressChange = addCommentForm.progress !== undefined && addCommentForm.progress !== initialValues.progress;
+    const hasCommentChange = addCommentForm.comment !== undefined && addCommentForm.comment !== initialValues.comment;
+    const hasNewComment = addCommentForm.comment && addCommentForm.comment.trim().length > 0;
     
-    if (currentProgress !== initialProgress || hasCommentText) {
-      setHasUnsavedChanges(true);
-    } else {
-      setHasUnsavedChanges(false);
-    }
-  }, [addCommentForm.progress, addCommentForm.comment, initialProgress, logTaskDetails.progress]);
+    const hasChanges = hasProgressChange || hasCommentChange || hasNewComment;
+    
+    setHasUnsavedChanges(hasChanges);
+  }, [addCommentForm.progress, addCommentForm.comment, initialValues, isInitializing]);
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -290,7 +289,6 @@ function EditEventDetailsDrawer({
   };
 
   const handleOpenAttachmentModal = (comment_id) => {
-    console.log('comment_id of handleOpenAttachmentModal', comment_id);
     setOpenAttachmentModal(true);
     setSelectedComment(comment_id);
   };
@@ -496,23 +494,39 @@ function EditEventDetailsDrawer({
 
   useEffect(() => {
     if (logTaskDetails && openEditDrawer) {
+      setIsInitializing(true);
       setIsLoading('loading');
-      fetchLogtaskComments(logTaskDetails.id).then(() => {
-        setIsLoading('loaded');
-      });
-    }
-
-    // Posicionar en el tab indicado al abrir el drawer
-    if (openEditDrawer) {
+      
+      // Posicionar en el tab indicado al abrir el drawer
       const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
       setTabValue(validTabs.includes(initialTab) ? initialTab : 'comentarios');
 
-      // Pre-poblar el campo comment si se recibe texto inicial
-      if (initialCommentText) {
-        setAddCommentForm((prev) => ({ ...prev, comment: initialCommentText, progress: 100 }));
-      } else {
-        setAddCommentForm({});
-      }
+      fetchLogtaskComments(logTaskDetails.id).then(() => {
+        setIsLoading('loaded');
+        
+        // Establecer valores iniciales basados en el estado actual
+        const initialProgressValue = initialCommentText ? 100 : 
+          Math.min(100, Math.max(0, parseInt(logTaskDetails.progress ?? 0, 10)));
+        
+        setInitialValues({
+          progress: initialProgressValue,
+          comment: '', // Siempre establecer como vacío inicialmente
+          timestamp: Date.now()
+        });
+        
+        // Pre-poblar el campo comment DESPUÉS de cargar los comentarios
+        if (initialCommentText) {
+          setAddCommentForm((prev) => ({ ...prev, comment: initialCommentText, progress: 100 }));
+        } else {
+          setAddCommentForm({});
+        }
+        
+        // Resetear explícitamente el estado de cambios sin guardar CON UN PEQUEÑO DELAY
+        setTimeout(() => {
+          setHasUnsavedChanges(false);
+          setIsInitializing(false); // Terminar inicialización después del pre-poblado
+        }, 50);
+      });
     }
   }, [logTaskDetails, openEditDrawer, initialTab, initialCommentText]);
 
