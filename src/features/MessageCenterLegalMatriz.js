@@ -954,6 +954,166 @@ export function Component() {
         );
       }
     },
+    // --- PROGRESS COLUMN (visual only, no edit) ---
+    {
+      field: 'progress',
+      headerName: t('progress'),
+      width: 120,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        // Restaurar estilo circular tipo badge
+        let progress = params.data?.progress || '';
+        let percentage = params.data?.percentage;
+        if (typeof params.value === 'object' && params.value !== null) {
+          progress = params.value.progress;
+          percentage = params.value.percentage;
+        } else if (typeof params.value === 'number') {
+          percentage = params.value;
+        }
+
+        // Colores personalizados
+        let color = '#bdbdbd';
+        let textColor = '#616161';
+        if (progress === 'completed') {
+          color = '#43a047'; // verde
+          textColor = '#388e3c';
+        } else if (progress === 'under_progress') {
+          color = '#ffa726'; // naranja
+          textColor = '#f57c00';
+        } else if (progress === 'open') {
+          color = '#1976d2'; // azul
+          textColor = '#1976d2';
+        } else if (progress === 'not_apply') {
+          color = '#bdbdbd'; // gris
+          textColor = '#616161';
+        }
+
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip title={percentage != null ? `${percentage}%` : '-'}>
+              <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                <svg width={32} height={32}>
+                  <circle
+                    cx={16}
+                    cy={16}
+                    r={14}
+                    stroke="#e0e0e0"
+                    strokeWidth={4}
+                    fill="none"
+                  />
+                  <circle
+                    cx={16}
+                    cy={16}
+                    r={14}
+                    stroke={color}
+                    strokeWidth={4}
+                    fill="none"
+                    strokeDasharray={2 * Math.PI * 14}
+                    strokeDashoffset={
+                      percentage != null
+                        ? 2 * Math.PI * 14 * (1 - Math.min(percentage, 100) / 100)
+                        : 2 * Math.PI * 14
+                    }
+                    style={{ transition: 'stroke-dashoffset 0.5s' }}
+                  />
+                </svg>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: 13,
+                    color: textColor
+                  }}
+                >
+                  {percentage != null ? `${percentage}%` : '-'}
+                </Box>
+              </Box>
+            </Tooltip>
+            <Typography variant="caption" sx={{ color: textColor, fontWeight: 500 }}>
+              {progress ? t(progress) : ''}
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    // --- TYPE COLUMN (visual only, no edit) ---
+    {
+      field: 'type',
+      headerName: t('type'),
+      width: 110,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => (
+        <Typography variant="body2">{params.value || '-'}</Typography>
+      )
+    },
+    // --- ARTICLES COLUMN (visual only, no edit) ---
+    {
+      field: 'articles',
+      headerName: t('articles'),
+      width: 110,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const count = params.value || 0;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip title={t('view_articles')}>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => {
+                  setOptinDrawerData(params.data);
+                  setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
+                  handleOpenOptionsDrawer();
+                }}
+              >
+                <ListAlt fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Typography variant="body2">{count}</Typography>
+          </Box>
+        );
+      }
+    },
+    // --- TASKS COLUMN (visual only, no edit) ---
+    {
+      field: 'tasks',
+      headerName: t('tasks'),
+      width: 110,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const count = params.value || 0;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip title={t('view_related_tasks')}>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => {
+                  handleNavigateToRelatedTasks(params.data.task_list, {
+                    id: params.data.id,
+                    title: params.data.requirement_name
+                  });
+                }}
+              >
+                <Apps fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Typography variant="body2">{count}</Typography>
+          </Box>
+        );
+      }
+    },
     {
       field: 'ID',
       headerName: 'ID',
