@@ -166,8 +166,7 @@ function EditEventDetailsDrawer({
   const [isInitializing, setIsInitializing] = useState(false);
   const [initialValues, setInitialValues] = useState({
     progress: null,
-    comment: null,
-    timestamp: Date.now()
+    comment: null
   });
   
   // Modal de validacion de comentarios y porcentaje
@@ -210,7 +209,7 @@ function EditEventDetailsDrawer({
     const hasChanges = hasProgressChange || hasCommentChange || hasNewComment;
     
     setHasUnsavedChanges(hasChanges);
-  }, [addCommentForm.progress, addCommentForm.comment, initialValues, isInitializing]);
+  }, [addCommentForm.progress, addCommentForm.comment, initialValues.progress, initialValues.comment, isInitializing]);
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -510,8 +509,7 @@ function EditEventDetailsDrawer({
         
         setInitialValues({
           progress: initialProgressValue,
-          comment: '', // Siempre establecer como vacío inicialmente
-          timestamp: Date.now()
+          comment: '' // Siempre establecer como vacío inicialmente
         });
         
         // Pre-poblar el campo comment DESPUÉS de cargar los comentarios
