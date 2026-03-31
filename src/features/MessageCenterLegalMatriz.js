@@ -7,10 +7,12 @@ import {
   AutoAwesome,
   CalendarMonth,
   Chat,
+  Edit,
   ImportExport,
   ListAlt,
   Tune,
-  MoreVertOutlined
+  Check as CheckIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import {
   Box,
@@ -25,7 +27,8 @@ import {
   MenuItem,
   Checkbox,
   Tooltip,
-  Typography
+  Typography,
+  TextField
 } from '@mui/material';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import ReactCountryFlag from 'react-country-flag';
@@ -126,6 +129,19 @@ export function Component() {
   const [level5Selected, setLevel5Selected] = useState('');
   const enableLevel5 = Boolean(useFilterItemValue('LegalMatriz', 'enable_level5'));
   const [organizationFilterState, setOrganizationFilterState] = useState({});
+
+  // ESTADO GLOBAL DE EDICIÓN POR FILA 
+  const [globalEditMode, setGlobalEditMode] = useState({
+    enabled: false,
+    legalId: null,
+    editableFields: ['requirement_name', 'requirement_description', 'number', 'type_of_rule', 'date_of_issue_notification', 'effective_date', 'renovation_date', 'modified_date']
+  });
+
+  // Estado para acumular cambios pendientes por requisito legal
+  const [pendingChanges, setPendingChanges] = useState({});
+
+  // Estado para guardar los datos originales antes de entrar en modo edición
+  const [originalData, setOriginalData] = useState({});
 
   const shouldCreateNewAction = useSelector((state) => state?.globalData?.shouldCreateNewAction);
   const actionDetailsLoading = useSelector((state) => state?.getActionDetails?.loading ?? false);
@@ -448,379 +464,7 @@ export function Component() {
   );
 };
 
-  const [columnDefs, setColumnDefs] = useState([
-    {
-      field: 'options',
-      headerName: t('options'),
-      width: 100,
-      cellRenderer: (params) => {
-        return (
-          <div>
-            <Tooltip title={t('options')}>
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => {
-                  //handleOpenOptionsDrawer();
-                  //setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
-                  //setOptinDrawerData(params?.data);
-                  //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                  //setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-                }}
-              >
-                <MoreVertOutlined />
-              </IconButton>
-            </Tooltip>
-            
-            {canViewAnalysisIa && ( 
-              <Tooltip title={t('analysis_with_amatia')}>
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => {
-                    handleOpenOptionsDrawer();
-                    setActiveTabId(LEGAL_MATRIX_TAB_IDS.ANALYSIS_OF_REGULATION);
-                    handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
-                    handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
-                    handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-                    handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-                    //console.log('params data:', params?.data);
-                    //console.log('params data ID:', params?.data.id);
-                    
-                    setOptinDrawerData(params?.data);
-                    //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                    setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-                  }}
-                >
-                  <AutoAwesome />
-                </IconButton>
-              </Tooltip>
-            )}
-          </div>
-        );
-      }
-    },
-    {
-      field: 'ID',
-      headerName: 'ID',
-      type: 'string',
-      width: 60,
-      cellRenderer: (params) => {
-        return getSquareIcon(params);
-      },
-    },
-    {
-      field: 'number',
-      headerName: t('number'),
-      filter: 'agNumberColumnFilter',
-      width: 100,
-      //maxWidth: 10000
-    },
-    {
-      field: 'comunications',
-      headerName: t('communications'),
-      width: 130,
-      cellRenderer: (params) => {
-        const filesCount = params?.data?.comunications_files || 0;
-        const communicationsCount = params?.data?.comunications_count || 0;
-        const flag = params?.data?.comunications_flag || 'in_progress';
-        
-        // Determinar color según el flag
-        const getColor = () => {
-          switch(flag) {
-            case 'resolved': return 'success.main';
-            case 'expired': return 'error.main';
-            case 'in_progress': return 'warning.main';
-            default: return 'action.active';
-          }
-        };
-        
-        // Handler para abrir el drawer de comunicaciones
-        const handleOpenCommunications = () => {
-          // Guardar el registro actual en Redux
-          handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
-          handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
-          handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-          handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-          
-          // Abrir OptionsDrawer en LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS
-          setOptinDrawerData(params?.data);
-          setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-          setActiveTabId(LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS);
-          handleOpenOptionsDrawer();
-        };
-        
-        return (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1.5,
-              height: '100%'
-            }}
-          >
-            {/* Ícono y contador de comunicaciones con color según flag - CLICKEABLE */}
-            <Tooltip title={t('view_communications')}>
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 0.5,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    opacity: 0.7
-                  }
-                }}
-                onClick={handleOpenCommunications}
-              >
-                <Chat fontSize="small" sx={{ color: getColor() }} />
-                <Typography variant="body2" fontWeight="bold">
-                  {communicationsCount}
-                </Typography>
-              </Box>
-            </Tooltip>
-            
-            {/* Ícono y contador de archivos adjuntos */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <AttachFile fontSize="small" sx={{ color: 'action.active' }} />
-              <Typography variant="body2" fontWeight="bold">
-                {filesCount}
-              </Typography>
-            </Box>
-          </Box>
-        );
-      }
-    },
-    {
-    field: 'progress',
-      headerName: t('progress'),
-      filter: 'agTextColumnFilter',
-      width: 100,
-      filterParams: {
-        values: null
-      },
-      cellRenderer: (params) => {
-        const badgeData = params?.value?.percentage ? `${params?.value?.percentage}%` : '0%';
-
-        const tempStatus = String(params.data.status).toLowerCase();
-
-        // 🔹 Asegurar que listLegalStatus sea un array
-        const statusList = Array.isArray(listLegalStatus) ? listLegalStatus : [];
-
-        const matchedStatus = statusList.find((status) => {
-          const statusNumber = String(status.value_number).toLowerCase();
-          const statusValue = String(status.value).toLowerCase();
-          const statusLabel = String(status.label).toLowerCase();
-
-          return (
-            statusNumber === tempStatus ||
-            statusValue === tempStatus ||
-            statusLabel === tempStatus
-          );
-        });
-
-        const badgeColor = matchedStatus?.color_code || '#1976d2';
-
-        return (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Typography
-              sx={{
-                border: `4px solid ${badgeColor}`,
-                px: 1,
-                borderRadius: '4px',
-                color: 'black !important',
-                backgroundColor: '#fff'
-              }}
-              className="badge"
-            >
-              {badgeData}
-            </Typography>
-          </Box>
-        );
-      } 
-    },
-    {
-      field: 'type',
-      headerName: t('type'),
-      filter: 'agSeColumnFilter',
-      width: 90,
-      filterParams: {
-        values: null
-      }
-    },
-    {
-      field: 'articles',
-      headerName: t('articles'),
-      filter: 'agSeColumnFilter',
-      width: 100,
-      filterParams: {
-        values: null
-      },
-
-      cellRenderer: (params) => {
-        return (
-          <Box
-            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
-          >
-            <Typography>{params?.value}</Typography>
-            <IconButton
-              size="small"
-              color="primary"
-              title={t('Add_articles')}
-              onClick={() => {
-                handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
-                handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
-                handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-                handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-                handleOpenOptionsDrawer();
-                setActiveTabId(LEGAL_MATRIX_TAB_IDS.ARTICLES);
-                setOptinDrawerData(params?.data);
-                //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-              }}
-            >
-              <AddBoxOutlined />
-            </IconButton>
-          </Box>
-        );
-      }
-    },
-    {
-      field: 'tasks',
-      headerName: t('tasks'),
-      filter: 'agTextColumnFilter',
-      width: 90,
-      filterParams: {
-        values: null
-      },
-      cellRenderer: (params) => {
-        const rowTaskList = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
-        const hasRelatedTasks = rowTaskList.length > 0;
-        const tasksCount = rowTaskList.length;
-
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-            <Typography variant="body2">{tasksCount}</Typography>
-            {hasRelatedTasks && (
-              <Tooltip title={`${t('show_element')} ${t('tasks')}`}>
-                <IconButton
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
-                    handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-                    handleNavigateToRelatedTasks(rowTaskList, {
-                      id: params?.data?.id,
-                      title: params?.data?.requirement_name
-                    });
-                  }}
-                >
-                  <ListAlt fontSize="small" color="primary" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        );
-      }
-    },
-    {
-      field: 'requirement_name',
-      headerName: t('requirement_name'),
-      filter: 'agTextColumnFilter',
-      cellRenderer: (params) => {
-        return (
-          <Tooltip title={params?.value || ''} placement="top">
-            <Typography
-              variant="body2"
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'default'
-              }}
-            >
-              {params?.value}
-            </Typography>
-          </Tooltip>
-        );
-      }
-    },
-    {
-      field: 'requirement_description',
-      headerName: t('requirement_description'),
-      filter: 'agTextColumnFilter',
-      cellRenderer: (params) => {
-        return (
-          <Tooltip title={params?.value || ''} placement="top">
-            <Typography
-              variant="body2"
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'default'
-              }}
-            >
-              {params?.value}
-            </Typography>
-          </Tooltip>
-        );
-      }
-    },
-    {
-      field: 'type_of_rule',
-      headerName: t('type_of_rule'),
-      filter: 'agTextColumnFilter',
-      filterParams: {
-        values: null
-      }
-    },
-    {
-      field: 'date_of_issue_notification',
-      headerName: t('date_of_issue_notification'),
-      filter: 'agDateColumnFilter',
-      filterParams: dateFilterParams
-    },
-    {
-      field: 'effective_date',
-      headerName: t('effective_date'),
-      filter: 'agDateColumnFilter',
-      filterParams: dateFilterParams
-    },
-    {
-      field: 'renovation_date',
-      headerName: t('renovation_date'),
-      filter: 'agDateColumnFilter',
-      filterParams: dateFilterParams
-    },
-    {
-      field: 'modified_date',
-      headerName: t('modified_date'),
-      filter: 'agDateColumnFilter',
-      filterParams: dateFilterParams
-    }
-  ]);
-
-  useEffect(() => {
-    setColumnDefs((prev) =>
-      prev.map((column) =>
-        column.field === 'analysis_with_amatia'
-          ? {
-              ...column,
-              hide: !canViewAnalysisIa
-            }
-          : column
-      )
-    );
-  }, [canViewAnalysisIa]);
+  // Las columnas se definirán con useMemo despues de las funciones de edicion
 
   const speedDialActions = canCreateRequirement
     ? [{ icon: <AddCircleOutline />, name: t('create_legal_requirement') }]
@@ -1133,6 +777,489 @@ export function Component() {
       setLegalsFilters(legals);
     }
   };
+
+  // FUNCIÓN GLOBAL DE EDICIÓN 
+  const toggleGlobalEditMode = (legalId) => {
+    const wasEditing = globalEditMode.enabled && globalEditMode.legalId === legalId;
+    
+    if (wasEditing) {
+      // Si estaba editando, procesar los cambios pendientes antes de desactivar
+      processPendingChanges(legalId);
+      // Limpiar datos originales guardados
+      setOriginalData(prev => {
+        const newOriginal = { ...prev };
+        delete newOriginal[legalId];
+        return newOriginal;
+      });
+    } else {
+      // Si va a entrar en modo edición, guardar los datos originales
+      const currentLegal = legalsFilters.find(legal => legal.id === legalId);
+      if (currentLegal) {
+        setOriginalData(prev => ({
+          ...prev,
+          [legalId]: { ...currentLegal }
+        }));
+      }
+    }
+    
+    setGlobalEditMode(prev => ({
+      enabled: !prev.enabled,
+      legalId: prev.enabled ? null : legalId,
+      editableFields: prev.editableFields
+    }));
+  };
+
+  // FUNCIÓN PARA CANCELAR EDICIÓN GLOBAL 
+  const cancelGlobalEditMode = (legalId) => {
+    // Restaurar los datos originales
+    const original = originalData[legalId];
+    if (original) {
+      setLegalsFilters(prev => 
+        prev.map(legal => 
+          legal.id === legalId ? { ...original } : legal
+        )
+      );
+    }
+    
+    // Limpiar cambios pendientes sin procesarlos
+    setPendingChanges(prev => {
+      const newPending = { ...prev };
+      delete newPending[legalId];
+      return newPending;
+    });
+    
+    // Limpiar datos originales guardados
+    setOriginalData(prev => {
+      const newOriginal = { ...prev };
+      delete newOriginal[legalId];
+      return newOriginal;
+    });
+    
+    // Desactivar modo edición
+    setGlobalEditMode(prev => ({
+      enabled: false,
+      legalId: null,
+      editableFields: prev.editableFields
+    }));
+  };
+
+  // FUNCIÓN PARA PROCESAR CAMBIOS PENDIENTES
+  const processPendingChanges = (legalId) => {
+    const changes = pendingChanges[legalId];
+    if (changes && Object.keys(changes).length > 0) {
+      // Aquí iría la lógica para guardar en backend
+      console.log('[API] Guardando cambios para legalId:', legalId, changes);
+      
+      // Actualizar los datos locales
+      setLegals(prev => 
+        prev.map(legal => 
+          legal.id === legalId ? { ...legal, ...changes } : legal
+        )
+      );
+      
+      // Limpiar cambios pendientes
+      setPendingChanges(prev => {
+        const newPending = { ...prev };
+        delete newPending[legalId];
+        return newPending;
+      });
+    }
+  };
+
+  // FUNCIÓN PARA MANEJAR CAMBIOS EN CELDAS
+  const handleCellValueChange = (legalId, field, value) => {
+    // Actualizar cambios pendientes
+    setPendingChanges(prev => ({
+      ...prev,
+      [legalId]: {
+        ...(prev[legalId] || {}),
+        [field]: value
+      }
+    }));
+    
+    // Actualizar datos visuales inmediatamente
+    setLegalsFilters(prev => 
+      prev.map(legal => 
+        legal.id === legalId ? { ...legal, [field]: value } : legal
+      )
+    );
+  };
+
+  // DEFINICIÓN DE COLUMNAS 
+  const columnDefs = useMemo(() => [
+    {
+      field: 'options',
+      headerName: t('options'),
+      width: 125,
+      pinned: 'left',
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const isCurrentlyEditing = globalEditMode.enabled && globalEditMode.legalId === params.data.id;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.2, width: '100%' }}>
+            {isCurrentlyEditing ? (
+              <>
+                <Tooltip title={t('save_changes')}>
+                  <IconButton
+                    size="small"
+                    onClick={() => toggleGlobalEditMode(params.data.id)}
+                    sx={{ color: 'success.main' }}
+                  >
+                    <CheckIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={t('cancel_edit')}>
+                  <IconButton
+                    size="small"
+                    onClick={() => cancelGlobalEditMode(params.data.id)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <CancelIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </>
+            ) : (
+              <Tooltip title={t('edit_row')}>
+                <IconButton
+                  size="small"
+                  onClick={() => toggleGlobalEditMode(params.data.id)}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            
+            {canViewAnalysisIa && ( 
+              <Tooltip title={t('analysis_with_amatia')}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    handleOpenOptionsDrawer();
+                    setActiveTabId(LEGAL_MATRIX_TAB_IDS.ANALYSIS_OF_REGULATION);
+                    handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
+                    handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
+                    handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
+                    handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
+                    setOptinDrawerData(params?.data);
+                    setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+                  }}
+                >
+                  <AutoAwesome fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'ID',
+      headerName: 'ID',
+      type: 'string',
+      width: 60,
+      cellRenderer: (params) => {
+        return getSquareIcon(params);
+      },
+    },
+    {
+      field: 'number',
+      headerName: t('number'),
+      filter: 'agNumberColumnFilter',
+      width: 100,
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('number');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              type="number"
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'number', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+            />
+          );
+        }
+        return params.value;
+      }
+    },
+    {
+      field: 'comunications',
+      headerName: t('communications'),
+      width: 130,
+      cellRenderer: (params) => {
+        const filesCount = params?.data?.comunications_files || 0;
+        const communicationsCount = params?.data?.comunications_count || 0;
+        const flag = params?.data?.comunications_flag || 'in_progress';
+        
+        // Determinar color según el flag
+        const getColor = () => {
+          switch(flag) {
+            case 'resolved': return 'success.main';
+            case 'expired': return 'error.main';
+            case 'in_progress': return 'warning.main';
+            default: return 'action.active';
+          }
+        };
+        
+        // Handler para abrir el drawer de comunicaciones
+        const handleOpenCommunications = () => {
+          // Guardar el registro actual en Redux
+          handleSetFilterItemValue('LegalMatriz', 'requisito_actual', params?.data);
+          handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
+          handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
+          handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
+          
+          // Abrir OptionsDrawer en LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS
+          setOptinDrawerData(params?.data);
+          setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+          setActiveTabId(LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS);
+          handleOpenOptionsDrawer();
+        };
+        
+        return (
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5,
+              height: '100%'
+            }}
+          >
+            {/* Ícono y contador de comunicaciones con color según flag - CLICKEABLE */}
+            <Tooltip title={t('view_communications')}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 0.5,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    opacity: 0.7
+                  }
+                }}
+                onClick={handleOpenCommunications}
+              >
+                <Chat fontSize="small" sx={{ color: getColor() }} />
+                <Typography variant="body2" fontWeight="bold">
+                  {communicationsCount}
+                </Typography>
+              </Box>
+            </Tooltip>
+            
+            {/* Ícono y contador de archivos adjuntos */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <AttachFile fontSize="small" sx={{ color: 'action.active' }} />
+              <Typography variant="body2" fontWeight="bold">
+                {filesCount}
+              </Typography>
+            </Box>
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'requirement_name',
+      headerName: t('requirement_name'),
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('requirement_name');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'requirement_name', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+            />
+          );
+        }
+        return (
+          <Tooltip title={params?.value || ''} placement="top">
+            <Typography
+              variant="body2"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                cursor: 'default'
+              }}
+            >
+              {params?.value}
+            </Typography>
+          </Tooltip>
+        );
+      }
+    },
+    {
+      field: 'requirement_description',
+      headerName: t('requirement_description'),
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('requirement_description');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'requirement_description', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+            />
+          );
+        }
+        return (
+          <Tooltip title={params?.value || ''} placement="top">
+            <Typography
+              variant="body2"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                cursor: 'default'
+              }}
+            >
+              {params?.value}
+            </Typography>
+          </Tooltip>
+        );
+      }
+    },
+    {
+      field: 'type_of_rule',
+      headerName: t('type_of_rule'),
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('type_of_rule');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'type_of_rule', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+            />
+          );
+        }
+        return params.value;
+      },
+      filterParams: {
+        values: null
+      }
+    },
+    {
+      field: 'date_of_issue_notification',
+      headerName: t('date_of_issue_notification'),
+      filter: 'agDateColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('date_of_issue_notification');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              type="date"
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'date_of_issue_notification', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+              InputLabelProps={{ shrink: true }}
+            />
+          );
+        }
+        return params.value;
+      },
+      filterParams: dateFilterParams
+    },
+    {
+      field: 'effective_date',
+      headerName: t('effective_date'),
+      filter: 'agDateColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('effective_date');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              type="date"
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'effective_date', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+              InputLabelProps={{ shrink: true }}
+            />
+          );
+        }
+        return params.value;
+      },
+      filterParams: dateFilterParams
+    },
+    {
+      field: 'renovation_date',
+      headerName: t('renovation_date'),
+      filter: 'agDateColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('renovation_date');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              type="date"
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'renovation_date', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+              InputLabelProps={{ shrink: true }}
+            />
+          );
+        }
+        return params.value;
+      },
+      filterParams: dateFilterParams
+    },
+    {
+      field: 'modified_date',
+      headerName: t('modified_date'),
+      filter: 'agDateColumnFilter',
+      cellRenderer: (params) => {
+        const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.legalId === params.data.id &&
+                                 globalEditMode.editableFields.includes('modified_date');
+        
+        if (isGloballyEditing) {
+          return (
+            <TextField
+              type="date"
+              value={params.value || ''}
+              onChange={(e) => handleCellValueChange(params.data.id, 'modified_date', e.target.value)}
+              size="small"
+              sx={{ width: '100%' }}
+              InputLabelProps={{ shrink: true }}
+            />
+          );
+        }
+        return params.value;
+      },
+      filterParams: dateFilterParams
+    }
+  ], [t, globalEditMode, canViewAnalysisIa, toggleGlobalEditMode, cancelGlobalEditMode, handleCellValueChange, handleOpenOptionsDrawer, setActiveTabId, handleSetFilterItemValue, setOptinDrawerData, setOptinDrawerTitle, getSquareIcon, dateFilterParams]);
 
   const handleFetchActionList = () => {
     const formData = prepareAPIParams();
