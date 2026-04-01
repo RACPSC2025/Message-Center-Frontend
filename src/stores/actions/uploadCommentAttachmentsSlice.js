@@ -4,7 +4,14 @@ import axiosInstance from '../../lib/axios';
 const initialState = {
   loading: false,
   data: [],
-  error: null
+  error: null,
+  lastUpload: {
+    status: null,
+    task_id: null,
+    logtask_id: null,
+    comment_id: null,
+    updated_at: null
+  }
 };
 
 /*
@@ -25,7 +32,8 @@ export const uploadCommentAttachments = createAsyncThunk(
   'comments/upload_comment_attachments_amatia_express',
   async (data = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('tasklist_api/upload_comment_attachments_amatia_express', data);
+      const payload = data?.formData ?? data;
+      const response = await axiosInstance.post('tasklist_api/upload_comment_attachments_amatia_express', payload);
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -37,7 +45,17 @@ export const uploadCommentAttachments = createAsyncThunk(
 const uploadCommentAttachmentsSlice = createSlice({
   name: 'uploadCommentAttachments',
   initialState,
-  reducers: {},
+  reducers: {
+    clearUploadAttachmentFocus: (state) => {
+      state.lastUpload = {
+        status: null,
+        task_id: null,
+        logtask_id: null,
+        comment_id: null,
+        updated_at: null
+      };
+    }
+  },
   extraReducers: (builder) => {
     builder.addCase(uploadCommentAttachments.pending, (state, action) => {
       state.loading = true;
@@ -51,8 +69,19 @@ const uploadCommentAttachmentsSlice = createSlice({
       state.loading = false;
       state.data = action.payload;
       state.error = null;
+
+      const status = Number(action?.payload?.status);
+      state.lastUpload = {
+        status: Number.isFinite(status) ? status : null,
+        task_id: action?.payload?.task_id ?? action?.meta?.arg?.task_id ?? null,
+        logtask_id: action?.payload?.logtask_id ?? null,
+        comment_id: action?.payload?.comment_id ?? null,
+        updated_at: new Date().toISOString()
+      };
     });
   }
 });
+
+export const { clearUploadAttachmentFocus } = uploadCommentAttachmentsSlice.actions;
 
 export default uploadCommentAttachmentsSlice.reducer;

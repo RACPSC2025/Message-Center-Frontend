@@ -93,6 +93,17 @@ Notas funcionales de filtros en notifications:
 - getActionLogtask
 - uploadCommentAttachments
 
+Notas funcionales de `uploadCommentAttachments`:
+
+- El slice mantiene `lastUpload` con metadata de enfoque:
+	- `status`
+	- `task_id`
+	- `logtask_id`
+	- `comment_id`
+	- `updated_at`
+- `status` 200 y 303 se tratan como resultados exitosos para flujo de UI.
+- Existe la accion `clearUploadAttachmentFocus` para limpiar el foco temporal luego de aplicarlo o al cerrar el drawer de detalle.
+
 Notas funcionales de filtros por nivel en actions:
 
 - El estado de niveles vive en filter.modules.actions.filterData (id_level1..id_level4).

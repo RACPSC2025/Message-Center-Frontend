@@ -50,6 +50,7 @@ import { fetchListTaskNew } from '../../stores/tasks/fetchListTaskNewSlice';
 import { fetchLogtaskList } from '../../stores/tasks/fetchLogtaskListSlice';
 import { deleteLogtask } from '../../stores/tasks/deleteLogtaskSlice'; // Importar la acción de eliminación
 import { selectFilterItemValue, setFilter } from '../../stores/filterSlice';
+import { clearUploadAttachmentFocus } from '../../stores/actions/uploadCommentAttachmentsSlice';
 import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
 import ExpandableText from '../../components/ExpandableText';
@@ -85,6 +86,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const [pendingCloseAction, setPendingCloseAction] = useState(null);
   const [isLoadingMoreTasks, setIsLoadingMoreTasks] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [focusedCommentId, setFocusedCommentId] = useState(null);
   // Nueva variable de estado para mostrar el tooltip del título
   const [showTaskTitleTooltip, setShowTaskTitleTooltip] = useState(false);
 
@@ -161,7 +163,19 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
   const selectedLegalTaskIds =
     useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
+  const uploadAttachmentFocus = useSelector(
+    (state) => state?.uploadCommentAttachments?.lastUpload ?? null
+  );
   //console.log('TasksListView - Estados de tareas:', listTaskStatus);
+
+  const lastAppliedAttachmentFocusRef = useRef(null);
+
+  const resetFocusedDrawerFilters = () => {
+    setSelectedLogtask(null);
+    setFocusedCommentId(null);
+    lastAppliedAttachmentFocusRef.current = null;
+    dispatch(clearUploadAttachmentFocus());
+  };
 
   const selectedLegalTaskIdSet = useMemo(
     () =>
@@ -248,8 +262,11 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         setTasks(mappedTasks);
         setIsInitialized(true);
 
-        // Auto-seleccionar primera tarea si existe
-        if (mappedTasks.length > 0 && !selectedTask) {
+        const hasPendingAttachmentFocus =
+          Number(uploadAttachmentFocus?.status) === 200 || Number(uploadAttachmentFocus?.status) === 303;
+
+        // Auto-seleccionar primera tarea si existe y no hay foco pendiente de adjunto
+        if (mappedTasks.length > 0 && !selectedTask && !hasPendingAttachmentFocus) {
           //console.log("🎯 Seleccionando primera tarea:", mappedTasks[0].task_title);
           handleSelectTask(mappedTasks[0]);
         }
@@ -262,6 +279,43 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       console.error("❌ Error al cargar tareas:", error);
     });
   }, [dispatch, refreshKey]);
+
+  useEffect(() => {
+    const status = Number(uploadAttachmentFocus?.status);
+    const logtaskId = Number(uploadAttachmentFocus?.logtask_id);
+    const commentId = Number(uploadAttachmentFocus?.comment_id);
+
+    if (!(status === 200 || status === 303) || !Number.isFinite(logtaskId) || logtaskId <= 0) {
+      return;
+    }
+
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      return;
+    }
+
+    const focusKey = `${logtaskId}:${Number.isFinite(commentId) ? commentId : ''}`;
+    if (lastAppliedAttachmentFocusRef.current === focusKey) {
+      return;
+    }
+
+    const targetTask = tasks.find(
+      (task) =>
+        Array.isArray(task?.logtask_list)
+        && task.logtask_list.some((logtask) => Number(logtask?.id) === logtaskId)
+    );
+
+    if (!targetTask) {
+      return;
+    }
+
+    lastAppliedAttachmentFocusRef.current = focusKey;
+    handleSelectTask(targetTask, {
+      preferredLogtaskId: logtaskId,
+      openDrawer: true,
+      focusedCommentId: Number.isFinite(commentId) ? commentId : null
+    });
+    dispatch(clearUploadAttachmentFocus());
+  }, [uploadAttachmentFocus, tasks, dispatch]);
 
   // ✅ Filtro de tareas por palabras clave, estado y fechas
   const filteredTasks = useMemo(() => {
@@ -460,21 +514,51 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     Selecciona una tarea y gestiona la carga de sus seguimientos (logtasks).
     Si la tarea ya tiene logs, los usa; de lo contrario, los solicita a la API.
    */
-  const handleSelectTask = (task) => {
+  const handleSelectTask = (task, options = {}) => {
+    const preferredLogtaskId = Number(options?.preferredLogtaskId);
+    const hasPreferredLogtask = Number.isFinite(preferredLogtaskId) && preferredLogtaskId > 0;
+    const openDrawer = Boolean(options?.openDrawer);
+
     setSelectedTask(task);
     setSelectedLogtask(null);
-    setIsEditDrawerOpen(false); // Close drawer when switching tasks
+    if (!openDrawer) {
+      setIsEditDrawerOpen(false); // Close drawer when switching tasks
+      setFocusedCommentId(null);
+    }
+
+    const applyDrawerFocus = (resolvedLogtask) => {
+      if (!openDrawer || !resolvedLogtask) return;
+
+      setInitialDrawerTab('comentarios');
+      setInitialCommentText('');
+      setFocusedCommentId(options?.focusedCommentId ?? null);
+      setIsEditDrawerOpen(true);
+    };
 
     if (task?.logtask_list && task.logtask_list.length > 0) {
       setLogtasks(task.logtask_list);
-      setSelectedLogtask(task.logtask_list[0]);
+
+      const nextLogtask = hasPreferredLogtask
+        ? task.logtask_list.find((logtask) => Number(logtask?.id) === preferredLogtaskId)
+        : null;
+      const resolvedLogtask = nextLogtask || task.logtask_list[0] || null;
+
+      setSelectedLogtask(resolvedLogtask);
+      applyDrawerFocus(resolvedLogtask);
     } else {
       dispatch(fetchLogtaskList({ task_id: task.id })).then((data) => {
         if (data?.payload?.messages === 'Success') {
           const logtaskData = data?.payload?.data || [];
           setLogtasks(logtaskData);
+
+          const nextLogtask = hasPreferredLogtask
+            ? logtaskData.find((logtask) => Number(logtask?.id) === preferredLogtaskId)
+            : null;
+          const resolvedLogtask = nextLogtask || logtaskData[0] || null;
+
           if (logtaskData.length > 0) {
-            setSelectedLogtask(logtaskData[0]);
+            setSelectedLogtask(resolvedLogtask);
+            applyDrawerFocus(resolvedLogtask);
           }
         }
       });
@@ -1150,17 +1234,20 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
             isLoading={logtaskListLoading}
             onSelectCycle={(cycle) => {
               setSelectedLogtask(cycle);
+              setFocusedCommentId(null);
             }}
             onOpenFollowup={(cycle) => {
               setSelectedLogtask(cycle);
               setInitialDrawerTab('comentarios');
               setInitialCommentText('');
+              setFocusedCommentId(null);
               setIsEditDrawerOpen(true);
             }}
             onCloseCycle={(cycle) => {
               setSelectedLogtask(cycle);
               setInitialDrawerTab('crear_comentario');
               setInitialCommentText(t('close_cycle'));
+              setFocusedCommentId(null);
               setIsEditDrawerOpen(true);
             }}
             selectedLogtaskId={selectedLogtask?.id}
@@ -1180,16 +1267,19 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
               setIsEditDrawerOpen(false);
               setInitialDrawerTab('comentarios');
               setInitialCommentText('');
+              resetFocusedDrawerFilters();
             });
           } else {
             setIsEditDrawerOpen(false);
             setInitialDrawerTab('comentarios');
             setInitialCommentText('');
+            resetFocusedDrawerFilters();
           }
         }}
         logTaskDetails={selectedLogtask || {}}
         initialTab={initialDrawerTab}
         initialCommentText={initialCommentText}
+        focusedCommentId={focusedCommentId}
         onDrawerOpened={() => {
           console.log('[DEBUG] Edición finalizada / Drawer cerrado completamente');
         }}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -36,6 +36,7 @@ const styles = {
 
 function CommentCard({ 
   comment, 
+  isFocused = false,
   role, // 'Ejecutor' o 'Revisor'
   onEdit, // Preguntar: Aun no se sabe si se podra editar un comentario
   onDelete, 
@@ -49,6 +50,15 @@ function CommentCard({
   const handleClose = () => setAnchorEl(null);
 
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!isFocused || !comment?.comment_id) return;
+
+    const el = document.getElementById(`comment-card-${comment.comment_id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isFocused, comment?.comment_id]);
 
   // Separar adjuntos en Archivos e Imágenes para mejor visualización
   const imageExtensions = ["png", "jpg", "jpeg", "gif", "webp"];
@@ -68,7 +78,15 @@ function CommentCard({
   });
 
   return (
-    <Box sx={styles.card}>
+    <Box
+      id={comment?.comment_id ? `comment-card-${comment.comment_id}` : undefined}
+      sx={{
+        ...styles.card,
+        borderRadius: 1,
+        px: 1,
+        bgcolor: isFocused ? 'rgba(0, 169, 180, 0.08)' : 'transparent'
+      }}
+    >
       {/* Avatar */}
       <Avatar sx={styles.avatar}>
         {comment.userName.slice(0, 2).toUpperCase()}

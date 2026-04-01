@@ -50,3 +50,82 @@
 ### Documentación actualizada: marzo 2026
 - El endpoint y su contrato están alineados con la implementación actual de frontend.
 - El filtro de año debe implementarse en la vista de tabla y reflejarse en la UI.
+
+## API: upload_comment_attachments_amatia_express
+
+### Endpoint
+
+- POST /tasklist_api/upload_comment_attachments_amatia_express
+
+### Request
+
+- multipart/form-data
+- Campos:
+  - `comment_id` (obligatorio)
+  - `imagefiles[]` (obligatorio, uno o varios)
+
+### Respuesta usada por frontend (2026-04)
+
+- `status`:
+  - `200` = exito
+  - `303` = exito parcial con warnings de carga
+  - otros codigos = error
+- `logtask_id` y `comment_id` se usan para reenfocar la UI luego de recarga.
+
+### Comportamiento frontend implementado
+
+- `EditEventDetailsDrawer` toma `status` para decidir mensajes de exito/error.
+- `TasksListView` usa `logtask_id` y `comment_id` del ultimo upload para:
+  - seleccionar la tarea que contiene ese ciclo (`logtask`),
+  - abrir el drawer en comentarios,
+  - enfocar el comentario objetivo.
+- Al cerrar el drawer de detalle se limpian los focos temporales de `logtask` y `comment` para evitar que el filtro de enfoque persista en interacciones posteriores.
+
+### Referencias de implementación
+
+- `src/stores/actions/uploadCommentAttachmentsSlice.js`
+- `src/features/tasks/TasksListView.js`
+- `src/features/MessageCenterEventsList/EditEventDetailsDrawer.js`
+- `src/features/MessageCenterEventsList/CommentCard.js`
+
+## API: add_comment_ajax_amatia_express
+
+### Endpoint
+
+- `POST /tasklist_api/add_comment_ajax_amatia_express/{logtask_id}/{comment_id}/{comment_type}`
+
+Donde:
+
+- `logtask_id`: id del ciclo
+- `comment_id`: `-` para crear, id numerico para editar
+- `comment_type`: `executed` o `revisor`
+
+### Request
+
+- `multipart/form-data`
+- Campos de comentario:
+  - `data[monitoring_date]` (`YYYY-MM-DD`)
+  - `data[comment]`
+  - `data[sharepoint_link]` (opcional)
+- Campos de logtask:
+  - `percentaje` (compatibilidad backend con `percentage`)
+  - `logtask_status`
+- Adjuntos opcionales:
+  - `imagefiles[]` (uno o varios archivos)
+
+### Respuesta usada por frontend
+
+- `status`:
+  - `200`: exito
+  - `303`: exito con warnings de adjuntos
+- `logtask_id` y `comment_id` se usan para refresco y foco de UI.
+
+### Comportamiento frontend implementado (2026-04)
+
+- En tab "crear comentario" (`EditEventDetailsDrawer`):
+  - se permite adjuntar multiples archivos antes de guardar;
+  - el control de progreso del formulario se envia como `percentaje`;
+  - el valor inicial de la barra de progreso se toma del porcentaje actual del `logtask`.
+- En creacion de comentario se llama:
+  - `tasklist_api/add_comment_ajax_amatia_express/${logtask_id}/-/${comment_type}`
+- El frontend trata `status` 200 y 303 como resultado exitoso.

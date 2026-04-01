@@ -83,6 +83,19 @@ Banner de contexto en tasks:
 
 ## Cambios recientes (2026):
 
+### Flujo adjuntos de comentarios en tasks (2026-04)
+
+- El thunk `uploadCommentAttachments` (slice `uploadCommentAttachments`) consume el endpoint `upload_comment_attachments_amatia_express`.
+- El frontend considera exito cuando `status` es `200` o `303`.
+- El slice guarda contexto en `lastUpload` (`task_id`, `logtask_id`, `comment_id`) para reenfocar la vista tras la recarga de tareas/ciclos.
+- `TasksListView` aplica ese enfoque para abrir ciclo y comentario objetivo.
+- Al cerrar `EditEventDetailsDrawer`, se limpia el foco temporal (`logtask/comment`) para evitar filtros persistentes no deseados.
+- En el tab de crear comentario, el flujo principal usa `add_comment_ajax_amatia_express` y envia:
+  - `data[comment]`, `data[monitoring_date]`, `data[sharepoint_link]`
+  - `percentaje` desde la barra de progreso del formulario
+  - `logtask_status`
+  - `imagefiles[]` para adjuntos opcionales en la misma solicitud
+
 ### Lógica de tareas y banner contextual
 
 - La columna "Tareas" en matriz legal y artículos ahora muestra siempre la cantidad real de tareas asociadas (usando `task_list.length`).

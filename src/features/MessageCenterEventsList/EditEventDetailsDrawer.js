@@ -121,7 +121,8 @@ function EditEventDetailsDrawer({
   onDrawerOpened,
   initialTab = 'comentarios',
   initialCommentText = '',
-  onCommentAdded
+  onCommentAdded,
+  focusedCommentId = null
 }) {
   const dispatch = useDispatch();
   const [selectedFile, setSezlectedFile] = useState(null);
@@ -159,6 +160,7 @@ function EditEventDetailsDrawer({
   const [openAttachmentModal, setOpenAttachmentModal] = useState(false);
   const [commentType, setCommentType] = useState('');
   const [attachmentComment, setAttachmentComment] = useState('');
+  const [createCommentAttachments, setCreateCommentAttachments] = useState([]);
   
   // Estados para detectar cambios no guardados
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -194,6 +196,17 @@ function EditEventDetailsDrawer({
 
   const { language } = useLanguage();
   const locale = language === 'en' ? 'en-US' : 'es-ES';
+
+  const ALLOWED_ATTACHMENT_TYPES = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
 
   
   // Efecto para detectar cambios en el progreso y comentario
@@ -235,17 +248,7 @@ function EditEventDetailsDrawer({
     if (!file) return;
 
     // Definir tipos permitidos (debe coincidir con el 'accept' del input)
-    const allowedTypes = [
-      'image/png', 
-      'image/jpeg', 
-      'image/jpg', 
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ];
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
       // Mostrar mensaje de error usando la utilidad existente
       showErrorMsg(t('Tipo de archivo no permitido.'));
 
@@ -265,10 +268,48 @@ function EditEventDetailsDrawer({
     }
   };
 
+  const handleSelectCreateCommentFiles = (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    if (!selectedFiles.length) return;
+
+    const invalidFile = selectedFiles.find((file) => !ALLOWED_ATTACHMENT_TYPES.includes(file.type));
+    if (invalidFile) {
+      showErrorMsg(t('Tipo de archivo no permitido.'));
+      event.target.value = '';
+      return;
+    }
+
+    setCreateCommentAttachments((prevFiles) => {
+      const nextFiles = [...prevFiles];
+
+      selectedFiles.forEach((newFile) => {
+        const alreadyAdded = nextFiles.some(
+          (existingFile) =>
+            existingFile.name === newFile.name
+            && existingFile.size === newFile.size
+            && existingFile.lastModified === newFile.lastModified
+        );
+
+        if (!alreadyAdded) {
+          nextFiles.push(newFile);
+        }
+      });
+
+      return nextFiles;
+    });
+
+    event.target.value = '';
+  };
+
+  const handleRemoveCreateCommentFile = (fileIndex) => {
+    setCreateCommentAttachments((prevFiles) => prevFiles.filter((_, index) => index !== fileIndex));
+  };
+
   const handleUploadAttachment = (selectedComment) => {
     if (attachmentComment) {
       handleUploadComments(selectedComment, attachmentComment);
       setOpenAttachmentModal(false);
+      setAttachmentComment('');
       setPreviewUrl(null);
       // Actualiza la lista de comentarios después de la carga
       setLogtaskExecutedComments([]);
@@ -290,6 +331,8 @@ function EditEventDetailsDrawer({
   const handleOpenAttachmentModal = (comment_id) => {
     setOpenAttachmentModal(true);
     setSelectedComment(comment_id);
+    setAttachmentComment('');
+    setPreviewUrl(null);
   };
 
   const handleUploadComments = (comment_id, file) => {
@@ -308,14 +351,55 @@ function EditEventDetailsDrawer({
     const formData = new FormData();
     formData.append('comment_id', numericCommentId);
     formData.append('imagefiles[]', file);
-    dispatch(uploadCommentAttachments(formData)).then((data) => {
-      if (data?.payload?.messages === 'Success') {
-        showSuccessMsg(data?.payload?.messages);
+    dispatch(
+      uploadCommentAttachments({
+        formData,
+        task_id: logTaskDetails?.task_id ?? null
+      })
+    ).then((data) => {
+      const status = Number(data?.payload?.status);
+      const isSuccess = status === 200 || status === 303;
+
+      if (isSuccess) {
+        showSuccessMsg(data?.payload?.messages || t('Success'));
+        fetchLogtaskComments(logTaskDetails.id);
+        if (onCommentAdded) {
+          onCommentAdded({
+            source: 'attachment_upload',
+            status,
+            logtask_id: data?.payload?.logtask_id,
+            comment_id: data?.payload?.comment_id
+          });
+        }
       } else {
-        showErrorMsg(data?.payload?.messages);
+        showErrorMsg(data?.payload?.messages || t('error_occurred'));
       }
     });
   };
+
+  useEffect(() => {
+    if (!openEditDrawer || !focusedCommentId || isLoading !== 'loaded') return;
+
+    const normalizedCommentId = Number(focusedCommentId);
+    const inExecuted = logtaskExecutedComments.some(
+      (comment) => Number(comment?.comment_id) === normalizedCommentId
+    );
+    const inRevisor = logtaskRevisorComments.some(
+      (comment) => Number(comment?.comment_id) === normalizedCommentId
+    );
+
+    if (inExecuted) {
+      setTabValue('comentarios');
+    } else if (inRevisor) {
+      setTabValue('seguimientos');
+    }
+  }, [
+    openEditDrawer,
+    focusedCommentId,
+    isLoading,
+    logtaskExecutedComments,
+    logtaskRevisorComments
+  ]);
 
   const handleCloseAttachmentModal = () => {
     setOpenAttachmentModal(false);
@@ -518,6 +602,8 @@ function EditEventDetailsDrawer({
         } else {
           setAddCommentForm({});
         }
+
+        setCreateCommentAttachments([]);
         
         // Resetear explícitamente el estado de cambios sin guardar CON UN PEQUEÑO DELAY
         setTimeout(() => {
@@ -726,6 +812,17 @@ function EditEventDetailsDrawer({
     return errors;
   };
 
+  const deriveLogtaskStatusFromProgress = (percentage) => {
+    const numericPercentage = Number(percentage);
+    const currentStatus = Number(logTaskDetails?.logtask_status);
+
+    if (numericPercentage >= 100) return '1';
+    if (numericPercentage > 0 && currentStatus !== 4) return '2';
+    if (Number.isFinite(currentStatus) && currentStatus > 0) return String(currentStatus);
+
+    return numericPercentage > 0 ? '2' : '3';
+  };
+
   // crear nuevo comentario handleSubmitCommentFromTab
   const handleSubmitCommentFromTab = async () => {
     const errors = validateCommentForm();
@@ -753,71 +850,48 @@ function EditEventDetailsDrawer({
     setErrorCommentForm(false);
 
     const comment_type = addCommentForm.type === 1 ? 'executed' : 'revisor';
+    const normalizedPercentage = Math.min(100, Math.max(0, progreso));
+    const nextLogtaskStatus = deriveLogtaskStatusFromProgress(normalizedPercentage);
 
     try {
       const formData = new FormData();
-      
-      // Datos del comentario
-      formData.append('comment', addCommentForm.comment);
-      formData.append('sharepoint_link', addCommentForm.sharepoint_link || '');
-      formData.append('logtask_id', logTaskDetails.id);
-      // formData.append('progress', addCommentForm.progress);
-      formData.append('comment_type', comment_type);
-      formData.append('user_id', userData.id_administradores);
-      formData.append('user_name', userData.fullname);
-      
-      // ========== Datos para dashboard_message ==========
-      formData.append('module_string', 'tasks');
-      formData.append('module_table', 'logtask_comments');
-      formData.append('date_message', new Date().toISOString().split('T')[0]);
-      formData.append('created', new Date().toISOString().slice(0, 19).replace('T', ' '));
-      
-      if (logTaskDetails?.end_date) {
-        formData.append('due_date', logTaskDetails.end_date);
-      }
-      
-      // Mensajes en español
-      formData.append('employee_message_es', `Nuevo comentario colocado para la tarea #${logTaskDetails.task_id || ''}`);
-      formData.append('subject_message_es', `${userData.fullname || 'Usuario'} ha puesto comentario para ${logTaskDetails.task_title || 'la tarea'} # ${logTaskDetails.task_id || ''}`);
-      formData.append('text_message_es', addCommentForm.comment.substring(0, 255));
-      formData.append('long_text_message_es', ` ${addCommentForm.comment}`);
-      
-      // Mensajes en inglés
-      formData.append('employee_message_en', `New comment placed for task #${logTaskDetails.task_id || ''}`);
-      formData.append('subject_message_en', `${userData.fullname || 'User'} has put comment for ${logTaskDetails.task_title || 'the task'} # ${logTaskDetails.task_id || ''}`);
-      formData.append('text_message_en', addCommentForm.comment.substring(0, 255));
-      formData.append('long_text_message_en', ` ${addCommentForm.comment}`);
-      
-      // 🔹 Solo enviar user_ids (los nombres se obtienen en el backend)
-      formData.append('user_ids', '1'); // Tus IDs hardcodeados
-      
-      // 🔹 Solo enviar who_sent_id (nombre y email se obtienen en el backend)
-      formData.append('who_sent_id', userData.id_administradores);
-      
-      // Estado y otros campos
-      formData.append('status', 'pending');
-      formData.append('created_by', userData.id_administradores);
-      
+
+      const monitoringDate = new Date().toISOString().split('T')[0];
+      formData.append('data[monitoring_date]', monitoringDate);
+      formData.append('data[comment]', addCommentForm.comment);
+      formData.append('data[sharepoint_link]', addCommentForm.sharepoint_link || '');
+      formData.append('percentaje', String(normalizedPercentage));
+      formData.append('logtask_status', nextLogtaskStatus);
+
+      createCommentAttachments.forEach((file) => {
+        formData.append('imagefiles[]', file);
+      });
+
       const response = await axiosInstance.post(
-        'tasklist_api/add_logtask_comments_amatia_express', 
+        `tasklist_api/add_comment_ajax_amatia_express/${logTaskDetails.id}/-/${comment_type}`,
         formData
       );
-      
-      if (response.data.status) {
+
+      const status = Number(response?.data?.status);
+      const isSuccess = status === 200 || status === 303;
+
+      if (isSuccess) {
         showSuccessMsg(t('comment_created_successfully'));
         setAddCommentForm({});
+        setCreateCommentAttachments([]);
         setLogtaskExecutedComments([]);
         setLogtaskRevisorComments([]);
         fetchLogtaskComments(logTaskDetails.id);
         setTabValue(addCommentForm.type === 1 ? 'comentarios' : 'seguimientos');
         
         if (onCommentAdded) {
-          onCommentAdded();
+          onCommentAdded({
+            source: 'comment_create',
+            status,
+            logtask_id: response?.data?.logtask_id,
+            comment_id: response?.data?.comment_id
+          });
         }
-
-        // 🔹 Disparar evento global para actualizar contador de mensajes no leídos
-        //window.dispatchEvent(new CustomEvent('dashboard-message-created'));
-        
       } else {
         showErrorMsg(t('could_not_create_comment'));
       }
@@ -829,6 +903,7 @@ function EditEventDetailsDrawer({
 
   const handleCancelCommentFromTab = () => {
     setAddCommentForm({});
+    setCreateCommentAttachments([]);
     setErrorCommentForm(false);
     setCommentErrors([]);
     setTabValue('comentarios');
@@ -948,6 +1023,7 @@ function EditEventDetailsDrawer({
                       <CommentCard
                         key={index}
                         comment={comment}
+                        isFocused={Number(comment?.comment_id) === Number(focusedCommentId)}
                         role={t('Executioner')}
                         onEdit={(c) => {
                           setSelectedComment(c); // Importante: actualiza el estado del comentario seleccionado
@@ -989,6 +1065,7 @@ function EditEventDetailsDrawer({
                       <CommentCard
                         key={index}
                         comment={comment}
+                        isFocused={Number(comment?.comment_id) === Number(focusedCommentId)}
                         role={t('Reviewer')}
                         onEdit={(c) => {
                           setSelectedComment(c);
@@ -1055,6 +1132,57 @@ function EditEventDetailsDrawer({
                     setAddCommentForm((prevState) => ({ ...prevState, [id]: value }));
                   }}
                 />
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    {t('up_attachment')}
+                  </Typography>
+
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    sx={{ textTransform: 'none', mb: 1.5 }}
+                  >
+                    {t('select_image')}
+                    <VisuallyHiddenInput
+                      type="file"
+                      multiple
+                      accept="image/png, image/jpg, image/jpeg, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                      onChange={handleSelectCreateCommentFiles}
+                    />
+                  </Button>
+
+                  {createCommentAttachments.length > 0 && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {createCommentAttachments.map((file, index) => (
+                        <Box
+                          key={`${file.name}-${file.size}-${file.lastModified}`}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            px: 1.5,
+                            py: 1,
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 1
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ pr: 2 }}>
+                            {file.name}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveCreateCommentFile(index)}
+                            aria-label="remove-file"
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
 
                 {/* Botones */}
                 <Box display="flex" gap={2} sx={{ marginTop: '30px' }}>
