@@ -30,6 +30,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import FormBuilder from '../../components/FormBuilder';
 import axiosInstance from '../../lib/axios';
+import { getAPIUrl } from '../../config/constants';
 import { useLanguage } from '../../providers/languageProvider';
 import { uploadCommentAttachments } from '../../stores/actions/uploadCommentAttachmentsSlice';
 import { showErrorMsg, showSuccessMsg } from '../../utils/others';
@@ -174,7 +175,7 @@ function EditEventDetailsDrawer({
   // Modal de validacion de comentarios y porcentaje
   const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
   const menuEditOpen = Boolean(anchorEl);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = getAPIUrl();
   //const [userData, setUserData] = useState(null);
   const userData = useSelector((state) => state.globalData.userDetails);
 

@@ -19,12 +19,6 @@ import client from './apolloClient';
 */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { HashRouter } from 'react-router-dom';
-import { ApolloProvider } from '@apollo/client';
-import App from './App';
-import client from './apolloClient';
-import store from './store';
 import { loadRuntimeConfig } from './config/runtimeConfig';
 import './lib/i18n';
 
@@ -64,11 +58,21 @@ root.render(
 
 // Load runtime config before rendering the app
 loadRuntimeConfig()
-  .then((config) => {
+  .then(async (config) => {
     console.log('✅ Configuración cargada exitosamente');
     console.log('📍 API URL:', config.apiUrl);
     console.log('🏠 Base Name:', config.baseName);
     console.log('🌍 Environment:', config.environment);
+
+    const [{ ApolloProvider }, { Provider }, { HashRouter }, { default: App }, { default: client }, { default: store }] =
+      await Promise.all([
+        import('@apollo/client'),
+        import('react-redux'),
+        import('react-router-dom'),
+        import('./App'),
+        import('./apolloClient'),
+        import('./store')
+      ]);
     
     // Render the actual app after config is loaded
     root.render(
@@ -83,17 +87,28 @@ loadRuntimeConfig()
   })
   .catch((error) => {
     console.error('❌ Error al cargar configuración:', error);
-    console.warn('⚠️ Usando configuración por defecto desde .env');
-    
-    // Render app anyway with fallback config from .env
+
+    // Keep a visible fatal error screen when config.json cannot be loaded.
     root.render(
-      <ApolloProvider client={client}>
-        <Provider store={store}>
-          <HashRouter>
-            <App />
-          </HashRouter>
-        </Provider>
-      </ApolloProvider>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          backgroundColor: '#f5f5f5',
+          padding: '24px'
+        }}
+      >
+        <div style={{ maxWidth: '700px', textAlign: 'center' }}>
+          <h2 style={{ margin: '0 0 8px', color: '#b00020' }}>No se pudo cargar config.json</h2>
+          <p style={{ margin: 0, color: '#444' }}>
+            La aplicación se detuvo para evitar usar configuración de entorno incorrecta. Verifica la ruta y el contenido de
+            config.json en el servidor.
+          </p>
+        </div>
+      </div>
     );
   });
 

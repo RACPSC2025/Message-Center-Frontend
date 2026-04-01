@@ -16,21 +16,21 @@ export const maxFileSizeAllowedInBytes = 5 * 1024 * 1024;
 
 /** API URL from window.__APP_CONFIG__.apiUrl */
 export const getAPIUrl = () => {
-  return window.__APP_CONFIG__?.apiUrl || process.env.REACT_APP_API_URL;
+  return getApiUrl();
 };
 
 /** Base name from window.__APP_CONFIG__.baseName */
 export const getBaseName = () => {
-  return window.__APP_CONFIG__?.baseName || process.env.REACT_APP_BASE_NAME || '/message-center';
+  return _getBaseName();
 };
 
 /** Environment from window.__APP_CONFIG__.environment */
 export const getEnvironmentName = () => {
-  return window.__APP_CONFIG__?.environment || process.env.NODE_ENV || 'development';
+  return getEnvironment();
 };
 
 /** Backwards-compatible static-like API_URL that reads from runtime config */
-export const API_URL = (() => window.__APP_CONFIG__?.apiUrl || process.env.REACT_APP_API_URL)();
+export const API_URL = getApiUrl();
 
 // Re-export for modules that import from constants
 export { getVersion };

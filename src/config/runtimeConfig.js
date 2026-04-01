@@ -7,10 +7,10 @@
 const REQUIRED_FIELDS = ['apiUrl', 'baseName', 'environment', 'version'];
 
 const DEFAULT_CONFIG = {
-  apiUrl: process.env.REACT_APP_API_URL || '',
-  baseName: process.env.REACT_APP_BASE_NAME || '/message-center',
-  environment: process.env.NODE_ENV || 'development',
-  version: process.env.REACT_APP_VERSION || '0.3.6'
+  apiUrl: '',
+  baseName: '/message-center',
+  environment: 'development',
+  version: '0.3.6'
 };
 
 /**
@@ -46,9 +46,8 @@ export const loadRuntimeConfig = async () => {
     console.log('✅ Runtime configuration loaded:', window.__APP_CONFIG__);
     return window.__APP_CONFIG__;
   } catch (error) {
-    console.error('❌ Error loading runtime config, using fallback:', error);
-    window.__APP_CONFIG__ = Object.freeze({ ...DEFAULT_CONFIG });
-    return window.__APP_CONFIG__;
+    console.error('❌ Error loading runtime config:', error);
+    throw error;
   }
 };
 
