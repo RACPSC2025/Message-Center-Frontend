@@ -1,53 +1,73 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { MoreVertOutlined, Add, ListAlt } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
-import TableComponent from '../../components/TableComponent';
-import ArticleFormModal from './ArticleFormModal';
-import SpeedDialComponent from '../../components/SpeedDialComponent';
-
+// ─── External libraries ───────────────────────────────────────────────────────
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Fragment, useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Add, ListAlt, MoreVertOutlined } from '@mui/icons-material';
 
+// ─── Own components ───────────────────────────────────────────────────────────
+import TableComponent from '../../components/TableComponent';
+import SpeedDialComponent from '../../components/SpeedDialComponent';
+import ArticleFormModal from './ArticleFormModal';
+
+// ─── Redux ────────────────────────────────────────────────────────────────────
 import { fetchArticles } from '../../stores/legal/fetchArticlesSlice';
+import {
+  removeAllFilters,
+  selectFilterItemValue,
+  setFilter
+} from '../../stores/filterSlice';
+
+// ─── Hooks & Services ─────────────────────────────────────────────────────────
 import { useHasPermission } from '../../hooks/usePlatformConfig';
 import legalService from '../../services/legalService';
 
-import {
-  selectFilterItemValue,
-  setFilter,
-  removeAllFilters
-} from '../../stores/filterSlice';
-
+// ─── Local selector hook ──────────────────────────────────────────────────────
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
 
+// ─── Translation maps (defined outside to avoid recreation on each render) ────
+const CRITICITY_KEYS = { Alta: 'high', Media: 'medium', Baja: 'low', Ninguna: 'none' };
+const STATUS_KEYS = { Continuo: 'Continuo', Abierto: 'Abierto', Cerrado: 'Cerrado', Vencido: 'Vencido' };
+const GAP_KEYS = { csin: 'csin', '1gap': '1gap', '2gap': '2gap', '3gap': '3gap' };
+const AUTHORITY_KEYS = { attended: 'attended', compliment: 'compliment' };
+
+// ─── Initial dropdown state ───────────────────────────────────────────────────
+const INITIAL_DROPDOWN_DATA = {
+  categories: [],
+  articleTypes: [],
+  temas: [],
+  parentArticles: []
+};
 
 export default function Articles({ optinDrawerData }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // ── Local state ─────────────────────────────────────────────────────────────
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
+  const [rowData, setRowData] = useState([]);
+  const [dropdownData, setDropdownData] = useState(INITIAL_DROPDOWN_DATA);
+
+  // ── Permissions ─────────────────────────────────────────────────────────────
   const canCreateArticle = useHasPermission('legal_matrix', 'create_article');
 
+  // ── Redux state ─────────────────────────────────────────────────────────────
   const { loading, data: articles, error } = useSelector((state) => state.fetchArticles);
-  const [rowData, setRowData] = useState([]);
-  const [dropdownData, setDropdownData] = useState({
-    categories: [],
-    articleTypes: [],
-    temas: [],
-    parentArticles: []
-  });
 
-  // Get organizational level filters from Redux
   const level1Selected = useFilterItemValue('LegalMatriz', 'level1');
   const level2Selected = useFilterItemValue('LegalMatriz', 'level2');
   const level3Selected = useFilterItemValue('LegalMatriz', 'level3');
   const level4Selected = useFilterItemValue('LegalMatriz', 'level4');
   const listLegalStatus = useFilterItemValue('LegalMatriz', 'legal_list_status');
   const id_requisito_actual = useFilterItemValue('LegalMatriz', 'id_requisito_actual');
+  const selected_articulo_id = useFilterItemValue('LegalMatriz', 'selected_articulo_id');
+  const isSelected_articulo_id = useFilterItemValue('LegalMatriz', 'isSelected_articulo_id');
 
-  // Load dropdown data on component mount
+  // ── Effects ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const loadDropdownData = async () => {
       try {
@@ -56,8 +76,8 @@ export default function Articles({ optinDrawerData }) {
           legalService.getArticleTypes(),
           legalService.getTemas()
         ]);
-        
-        setDropdownData(prev => ({
+
+        setDropdownData((prev) => ({
           ...prev,
           categories: categoriesRes.status === 1 ? categoriesRes.data : [],
           articleTypes: typesRes.status === 1 ? typesRes.data : [],
@@ -67,139 +87,42 @@ export default function Articles({ optinDrawerData }) {
         console.error('Error loading dropdown data:', error);
       }
     };
-    
+
     loadDropdownData();
   }, []);
 
   const refreshQuery = useCallback(() => {
-    if (optinDrawerData?.id) {
-      const loadParentData = async () => {
-        try {
-          const response = await legalService.getIdArticulo(optinDrawerData.id, '');
-          if (response.status === 1 && response.data) {
-            setDropdownData((prev) => ({
-              ...prev,
-              parentArticles: response.data
-            }));
-          }
-        } catch (error) {
-          console.error('Error loading parent articles:', error);
-        }
-      };
-      loadParentData();
+    if (!optinDrawerData?.id) return;
 
-      const node = level4Selected || level3Selected || level2Selected || level1Selected || '';
-      const params = {
-        node,
-        requisito: optinDrawerData.id,
-        page: 1,
-        rows: 100,
-        sidx: 'id_articulo',
-        sord: 'asc'
-      };
-      dispatch(fetchArticles(params));
-    }
+    const loadParentData = async () => {
+      try {
+        const response = await legalService.getIdArticulo(optinDrawerData.id, '');
+        if (response.status === 1 && response.data) {
+          setDropdownData((prev) => ({ ...prev, parentArticles: response.data }));
+        }
+      } catch (error) {
+        console.error('Error loading parent articles:', error);
+      }
+    };
+
+    loadParentData();
+
+    const node = level4Selected || level3Selected || level2Selected || level1Selected || '';
+    const params = {
+      node,
+      requisito: optinDrawerData.id,
+      page: 1,
+      rows: 100,
+      sidx: 'id_articulo',
+      sord: 'asc'
+    };
+
+    dispatch(fetchArticles(params));
   }, [optinDrawerData, level1Selected, level2Selected, level3Selected, level4Selected, dispatch]);
 
-  const handleResetFilters = () => {
-    // Guardar copia del id_requisito_actual antes de resetear
-    const savedRequisitoId = id_requisito_actual;
-    
-    // Resetear solo los filtros de nivel organizacional
-    dispatch(setFilter({ 
-      module: 'LegalMatriz', 
-      updatedFilter: { 
-        level1: null,
-        level2: null,
-        level3: null,
-        level4: null
-      } 
-    }));
-    
-    // Restaurar id_requisito_actual si existía
-    if (savedRequisitoId) {
-      dispatch(setFilter({
-        module: 'LegalMatriz',
-        updatedFilter: {
-          id_requisito_actual: savedRequisitoId
-        }
-      }));
-    }
-  };
-
-  // Load parent articles and fetch articles when requisito changes
   useEffect(() => {
     refreshQuery();
   }, [refreshQuery]);
-
-  // Helper functions to get display values
-  const getCategoryName = (categoryKey) => {
-    const category = dropdownData.categories.find(cat => cat.key === categoryKey);
-    return category ? category.label : categoryKey;
-  };
-
-  const getItemTypeName = (itemType) => {
-    const type = dropdownData.articleTypes.find(type => type.item_type === itemType);
-    return type ? type.item_type : itemType;
-  };
-
-  const getTemasNames = (temasIds) => {
-    if (!temasIds) return '';
-    const ids = temasIds.split(',');
-    return ids.map(id => {
-      const tema = dropdownData.temas.find(t => t.key === id.trim());
-      return tema ? tema.label : id;
-    }).join(', ');
-  };
-
-  const getCriticityName = (criticity) => {
-    const criticityMap = {
-      'Alta': t('high'),
-      'Media': t('medium'),
-      'Baja': t('low'),
-      'Ninguna': t('none')
-    };
-    return criticityMap[criticity] || criticity;
-  };
-
-  const getStatusName = (status) => {
-    const statusMap = {
-      'Continuo': t('Continuo'),
-      'Abierto': t('Abierto'),
-      'Cerrado': t('Cerrado'),
-      'Vencido': t('Vencido')
-    };
-    return statusMap[status] || status;
-  };
-
-  const getGapName = (gap) => {
-    const gapMap = {
-      'csin': t('csin'),
-      '1gap': t('1gap'),
-      '2gap': t('2gap'),
-      '3gap': t('3gap')
-    };
-    return gapMap[gap] || gap;
-  };
-
-  const getAuthorityStatusName = (status) => {
-    const statusMap = {
-      'attended': t('attended'),
-      'compliment': t('compliment')
-    };
-    return statusMap[status] || status;
-  };
-
-  const getParentArticleName = (parentId) => {
-    if (!parentId) return '';
-    const parent = dropdownData.parentArticles.find(article => 
-      String(article.key) === String(parentId)
-    );
-    return parent ? parent.label : parentId;
-  };
-
-  const selected_articulo_id = useFilterItemValue('LegalMatriz', 'selected_articulo_id');
-  const isSelected_articulo_id = useFilterItemValue('LegalMatriz', 'isSelected_articulo_id');
 
   useEffect(() => {
     if (articles && articles.length > 0) {
@@ -216,11 +139,24 @@ export default function Articles({ optinDrawerData }) {
     }
   }, [articles, dropdownData.parentArticles, isSelected_articulo_id, selected_articulo_id]);
 
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+  const handleResetFilters = () => {
+    const savedRequisitoId = id_requisito_actual;
 
-  
-  const navigate = useNavigate();
+    dispatch(setFilter({
+      module: 'LegalMatriz',
+      updatedFilter: { level1: null, level2: null, level3: null, level4: null }
+    }));
+
+    if (savedRequisitoId) {
+      dispatch(setFilter({
+        module: 'LegalMatriz',
+        updatedFilter: { id_requisito_actual: savedRequisitoId }
+      }));
+    }
+  };
+
   const handleNavigateToRelatedTasks = (taskList = [], articleMeta = {}) => {
-    // Limpiar valores previos de filtro de tasks
     dispatch({
       type: 'filter/setFilter',
       payload: {
@@ -235,7 +171,6 @@ export default function Articles({ optinDrawerData }) {
       }
     });
 
-    // Construir los nuevos valores
     const relatedTaskIds = Array.from(
       new Set(
         (Array.isArray(taskList) ? taskList : [])
@@ -243,8 +178,6 @@ export default function Articles({ optinDrawerData }) {
           .filter(Boolean)
       )
     );
-    const articleId = articleMeta?.id ?? null;
-    const articleTitle = articleMeta?.title ?? '';
 
     dispatch({
       type: 'filter/setFilter',
@@ -253,15 +186,68 @@ export default function Articles({ optinDrawerData }) {
         updatedFilter: {
           selectedTaskView: 'list',
           selected_legal_task_ids: relatedTaskIds,
-          selected_legal_requirement_id: articleId,
-          selected_legal_requirement_title: articleTitle,
+          selected_legal_requirement_id: articleMeta?.id ?? null,
+          selected_legal_requirement_title: articleMeta?.title ?? '',
           isLegalTaskFilterActive: true
         }
       }
     });
+
     navigate('/view/events');
   };
 
+  const handleArticleCreated = () => {
+    if (!optinDrawerData?.id) return;
+
+    const node = level4Selected || level3Selected || level2Selected || level1Selected || '';
+    const params = {
+      node,
+      requisito: optinDrawerData.id,
+      page: 1,
+      rows: 100,
+      sidx: 'id_articulo',
+      sord: 'asc'
+    };
+
+    dispatch(fetchArticles(params));
+  };
+
+  // ── Display helpers ───────────────────────────────────────────────────────────
+  const getCategoryName = (categoryKey) => {
+    const category = dropdownData.categories.find((cat) => cat.key === categoryKey);
+    return category ? category.label : categoryKey;
+  };
+
+  const getItemTypeName = (itemType) => {
+    const type = dropdownData.articleTypes.find((type) => type.item_type === itemType);
+    return type ? type.item_type : itemType;
+  };
+
+  const getTemasNames = (temasIds) => {
+    if (!temasIds) return '';
+    return temasIds
+      .split(',')
+      .map((id) => {
+        const tema = dropdownData.temas.find((t) => t.key === id.trim());
+        return tema ? tema.label : id;
+      })
+      .join(', ');
+  };
+
+  const getCriticityName = (criticity) => t(CRITICITY_KEYS[criticity] ?? criticity);
+  const getStatusName = (status) => t(STATUS_KEYS[status] ?? status);
+  const getGapName = (gap) => t(GAP_KEYS[gap] ?? gap);
+  const getAuthorityStatusName = (status) => t(AUTHORITY_KEYS[status] ?? status);
+
+  const getParentArticleName = (parentId) => {
+    if (!parentId) return '';
+    const parent = dropdownData.parentArticles.find(
+      (article) => String(article.key) === String(parentId)
+    );
+    return parent ? parent.label : parentId;
+  };
+
+  // ── Column definitions ────────────────────────────────────────────────────────
   const columnDefs = [
     {
       field: 'options',
@@ -281,11 +267,8 @@ export default function Articles({ optinDrawerData }) {
             {matchedStatus && (
               <Box
                 sx={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  height: '100%',
-                  width: '5px',
+                  position: 'absolute', left: 0, top: 0,
+                  height: '100%', width: '5px',
                   bgcolor: matchedStatus.color_code
                 }}
               />
@@ -293,11 +276,8 @@ export default function Articles({ optinDrawerData }) {
             {!matchedStatus && tempStatus && (
               <Box
                 sx={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  height: '100%',
-                  width: '5px',
+                  position: 'absolute', left: 0, top: 0,
+                  height: '100%', width: '5px',
                   bgcolor: '#1976d2'
                 }}
               />
@@ -335,18 +315,16 @@ export default function Articles({ optinDrawerData }) {
       largeText: true,
       filter: 'agTextColumnFilter'
     },
-    // --- Nueva columna Tareas ---
     {
       field: 'tasks',
       headerName: t('tasks'),
       filter: 'agTextColumnFilter',
-      filterParams: {
-        values: null
-      },
+      filterParams: { values: null },
       cellRenderer: (params) => {
-        const rowTaskList = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
+        const rowTaskList    = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
         const hasRelatedTasks = rowTaskList.length > 0;
-        const tasksCount = rowTaskList.length;
+        const tasksCount     = rowTaskList.length;
+
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
             <Typography variant="body2">{tasksCount}</Typography>
@@ -357,7 +335,7 @@ export default function Articles({ optinDrawerData }) {
                   onClick={(event) => {
                     event.stopPropagation();
                     handleNavigateToRelatedTasks(rowTaskList, {
-                      id: params?.data?.id_articulo,
+                      id:    params?.data?.id_articulo,
                       title: params?.data?.nombre
                     });
                   }}
@@ -370,7 +348,6 @@ export default function Articles({ optinDrawerData }) {
         );
       }
     },
-    // --- Fin columna Tareas ---
     {
       field: 'parent_article_id',
       headerName: t('Artículo padre'),
@@ -388,87 +365,21 @@ export default function Articles({ optinDrawerData }) {
       filter: 'agNumberColumnFilter',
       cellRenderer: (params) => {
         const cleanValue = String(params.value || '0').replace('%', '');
-        const numValue = parseFloat(cleanValue);
-        const badgeData = isNaN(numValue) ? '0%' : `${numValue}%`;
+        const numValue   = parseFloat(cleanValue);
+        const badgeData  = isNaN(numValue) ? '0%' : `${numValue}%`;
 
         const tempStatus = String(params.data.estado).toLowerCase();
         const matchedStatus = listLegalStatus?.find((status) => {
           const statusNumber = String(status.value_number).toLowerCase();
-          const statusValue = String(status.value).toLowerCase();
-          const statusLabel = String(status.label).toLowerCase();
+          const statusValue  = String(status.value).toLowerCase();
+          const statusLabel  = String(status.label).toLowerCase();
           return statusNumber === tempStatus || statusValue === tempStatus || statusLabel === tempStatus;
         });
 
         const badgeColor = matchedStatus?.color_code || '#1976d2';
 
         return (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Typography
-              sx={{
-                border: `4px solid ${badgeColor}`,
-                px: 1,
-                borderRadius: '4px',
-                color: 'black !important',
-                backgroundColor: '#fff',
-                maxWidth: '60px',
-                textAlign: 'center'
-              }}
-              className="badge"
-            >
-              {badgeData}
-            </Typography>
-          </Box>
-        );
-      }
-    },
-    {
-      field: 'parent_article_id',
-      headerName: t('Artículo padre'),
-      filter: 'agTextColumnFilter',
-      cellRenderer: (params) => getParentArticleName(params.value)
-    },
-    {
-      field: 'compensation',
-      headerName: t('compensation'),
-      filter: 'agTextColumnFilter'
-    },
-    {
-      field: 'percentage',
-      headerName: t('compliance_percentage'),
-      filter: 'agNumberColumnFilter',
-      cellRenderer: (params) => {
-        const cleanValue = String(params.value || '0').replace('%', '');
-        const numValue = parseFloat(cleanValue);
-        const badgeData = isNaN(numValue) ? '0%' : `${numValue}%`;
-
-        const tempStatus = String(params.data.estado).toLowerCase();
-        const matchedStatus = listLegalStatus?.find((status) => {
-          const statusNumber = String(status.value_number).toLowerCase();
-          const statusValue = String(status.value).toLowerCase();
-          const statusLabel = String(status.label).toLowerCase();
-          return statusNumber === tempStatus || statusValue === tempStatus || statusLabel === tempStatus;
-        });
-
-        const badgeColor = matchedStatus?.color_code || '#1976d2';
-
-        return (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
+          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography
               sx={{
                 border: `4px solid ${badgeColor}`,
@@ -510,19 +421,6 @@ export default function Articles({ optinDrawerData }) {
       filter: 'agTextColumnFilter',
       cellRenderer: (params) => getCriticityName(params.value)
     },
-    /*
-    {
-      field: 'risk_level',
-      headerName: t('evidence_level'),
-      filter: 'agTextColumnFilter'
-    },
-    {
-      field: 'category_name',
-      headerName: t('category'),
-      filter: 'agTextColumnFilter',
-      cellRenderer: (params) => getCategoryName(params.value)
-    },
-    */
     {
       field: 'estado',
       headerName: t('status'),
@@ -549,34 +447,15 @@ export default function Articles({ optinDrawerData }) {
     }
   ];
 
-
-
-  const handleArticleCreated = () => {
-    if (optinDrawerData?.id) {
-      const node = level4Selected || level3Selected || level2Selected || level1Selected || '';
-      const params = {
-        node,
-        requisito: optinDrawerData.id,
-        page: 1,
-        rows: 100,
-        sidx: 'id_articulo',
-        sord: 'asc'
-      };
-      dispatch(fetchArticles(params));
-    }
-  };
-
+  // ── Speed dial actions ────────────────────────────────────────────────────────
   const speedDialActions = canCreateArticle
-    ? [
-        {
-          icon: <Add />,
-          name: 'Add_articles'
-        }
-      ]
+    ? [{ icon: <Add />, name: 'Add_articles' }]
     : [];
 
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <Box sx={{ width: '100%' }}>
+      {/* Tabla */}
       <TableComponent
         rowData={rowData}
         columnDefs={columnDefs}
@@ -584,12 +463,8 @@ export default function Articles({ optinDrawerData }) {
         onRefresh={refreshQuery}
         onResetFilters={handleResetFilters}
       />
-      <ArticleFormModal
-        isOpen={isDrawerOpen}
-        setIsOpen={setIsDrawerOpen}
-        requisitoId={optinDrawerData?.id}
-        onSuccess={handleArticleCreated}
-      />
+      
+      {/* Botón + */}
       {canCreateArticle && (
         <SpeedDialComponent
           openSpeedDial={openSpeedDial}
@@ -600,6 +475,14 @@ export default function Articles({ optinDrawerData }) {
           handleActionClick={() => setIsDrawerOpen(true)}
         />
       )}
+
+      {/* Modal para artículos */}
+      <ArticleFormModal
+        isOpen={isDrawerOpen}
+        setIsOpen={setIsDrawerOpen}
+        requisitoId={optinDrawerData?.id}
+        onSuccess={handleArticleCreated}
+      />
     </Box>
   );
 }
