@@ -507,57 +507,6 @@ export default function Articles({ optinDrawerData }) {
       cellRenderer: (params) => getItemTypeName(params.value)
     },
     {
-      field: 'nombre',
-      headerName: t('name'),
-      largeText: true,
-      filter: 'agTextColumnFilter',
-      cellRenderer: (params) => renderEditableField(params)
-    },
-    {
-      field: 'tasks',
-      headerName: t('tasks'),
-      filter: 'agTextColumnFilter',
-      filterParams: { values: null },
-      cellRenderer: (params) => {
-        const rowTaskList    = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
-        const hasRelatedTasks = rowTaskList.length > 0;
-        const tasksCount     = rowTaskList.length;
-
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-            <Typography variant="body2">{tasksCount}</Typography>
-            {hasRelatedTasks && (
-              <Tooltip title={`${t('show_element')} ${t('tasks')}`}>
-                <IconButton
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleNavigateToRelatedTasks(rowTaskList, {
-                      id:    params?.data?.id_articulo,
-                      title: params?.data?.nombre
-                    });
-                  }}
-                >
-                  <ListAlt fontSize="small" color="primary" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        );
-      }
-    },
-    {
-      field: 'parent_article_id',
-      headerName: t('Artículo padre'),
-      filter: 'agTextColumnFilter',
-      cellRenderer: (params) => getParentArticleName(params.value)
-    },
-    {
-      field: 'compensation',
-      headerName: t('compensation'),
-      filter: 'agTextColumnFilter'
-    },
-    {
       field: 'percentage',
       headerName: t('compliance_percentage'),
       filter: 'agNumberColumnFilter',
@@ -597,16 +546,147 @@ export default function Articles({ optinDrawerData }) {
       }
     },
     {
-      field: 'numero_actividades',
-      headerName: t('number_activities'),
-      filter: 'agNumberColumnFilter'
+      field: 'tasks',
+      headerName: t('tasks'),
+      filter: 'agTextColumnFilter',
+      filterParams: { values: null },
+      cellRenderer: (params) => {
+        const rowTaskList    = Array.isArray(params?.data?.task_list) ? params.data.task_list : [];
+        const hasRelatedTasks = rowTaskList.length > 0;
+        const tasksCount     = rowTaskList.length;
+
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+            <Typography variant="body2">{tasksCount}</Typography>
+            {hasRelatedTasks && (
+              <Tooltip title={`${t('show_element')} ${t('tasks')}`}>
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleNavigateToRelatedTasks(rowTaskList, {
+                      id:    params?.data?.id_articulo,
+                      title: params?.data?.nombre
+                    });
+                  }}
+                >
+                  <ListAlt fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'nombre',
+      headerName: t('name'),
+      largeText: true,
+      filter: 'agTextColumnFilter',
+      //cellRenderer: (params) => renderEditableField(params),
+      cellRenderer: (params) => {
+        return (
+          <Tooltip 
+            title={
+              <span style={{ fontSize: '1rem', fontWeight: 500 }}>
+                {params?.value || ''}
+              </span>
+            }
+            placement="top"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  backgroundColor: 'rgba(97, 97, 97, 1)',
+                  borderRadius: 4,
+                  color: '#fff',
+                  fontFamily: 'Roboto, sans-serif',
+                  padding: '4px 8px',
+                  fontSize: '0.5rem',
+                  maxWidth: 300,
+                  margin: 2,
+                  wordWrap: 'break-word',
+                  fontWeight: 500
+                }
+              }
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                cursor: 'default'
+              }}
+            >
+              {params?.value}
+            </Typography>
+          </Tooltip>
+        );
+      }
     },
     {
       field: 'descripcion',
       headerName: t('description'),
       largeText: true,
       filter: 'agTextColumnFilter',
-      cellRenderer: (params) => renderEditableField(params)
+      //cellRenderer: (params) => renderEditableField(params),
+      cellRenderer: (params) => {
+        return (
+          <Tooltip 
+            title={
+              <span style={{ fontSize: '1rem', fontWeight: 500 }}>
+                {params?.value || ''}
+              </span>
+            }
+            placement="top"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  backgroundColor: 'rgba(97, 97, 97, 1)',
+                  borderRadius: 4,
+                  color: '#fff',
+                  fontFamily: 'Roboto, sans-serif',
+                  padding: '4px 8px',
+                  fontSize: '0.5rem',
+                  maxWidth: 300,
+                  margin: 2,
+                  wordWrap: 'break-word',
+                  fontWeight: 500
+                }
+              }
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                cursor: 'default'
+              }}
+            >
+              {params?.value}
+            </Typography>
+          </Tooltip>
+        );
+      }
+    },
+    {
+      field: 'parent_article_id',
+      headerName: t('Artículo padre'),
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => getParentArticleName(params.value)
+    },
+    {
+      field: 'compensation',
+      headerName: t('compensation'),
+      filter: 'agTextColumnFilter'
+    },
+    {
+      field: 'numero_actividades',
+      headerName: t('number_activities'),
+      filter: 'agNumberColumnFilter'
     },
     {
       field: 'id_tema_requisito',
