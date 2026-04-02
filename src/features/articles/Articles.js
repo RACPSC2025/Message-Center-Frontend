@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography, TextField } from '@mui/material';
 import { Add, Edit, Check, Cancel, ListAlt } from '@mui/icons-material';
 
 // ─── Own components ───────────────────────────────────────────────────────────
@@ -14,7 +14,6 @@ import ArticleFormModal from './ArticleFormModal';
 // ─── Redux ────────────────────────────────────────────────────────────────────
 import { fetchArticles } from '../../stores/legal/fetchArticlesSlice';
 import {
-  removeAllFilters,
   selectFilterItemValue,
   setFilter
 } from '../../stores/filterSlice';
@@ -32,6 +31,23 @@ const CRITICITY_KEYS = { Alta: 'high', Media: 'medium', Baja: 'low', Ninguna: 'n
 const STATUS_KEYS = { Continuo: 'Continuo', Abierto: 'Abierto', Cerrado: 'Cerrado', Vencido: 'Vencido' };
 const GAP_KEYS = { csin: 'csin', '1gap': '1gap', '2gap': '2gap', '3gap': '3gap' };
 const AUTHORITY_KEYS = { attended: 'attended', compliment: 'compliment' };
+
+// ─── Editable fields configuration ─────────────────────────────────
+const EDITABLE_FIELDS = {
+  nombre: {
+    type: 'text',
+    component: 'TextField',
+    props: { size: 'small', fullWidth: true }
+  },
+  descripcion: {
+    type: 'text',
+    component: 'TextField',
+    props: { size: 'small', fullWidth: true }
+  }
+};
+
+// Helper function to check if field is editable
+const isFieldEditable = (field) => Object.keys(EDITABLE_FIELDS).includes(field);
 
 // ─── Initial dropdown state ───────────────────────────────────────────────────
 const INITIAL_DROPDOWN_DATA = {
@@ -55,8 +71,15 @@ export default function Articles({ optinDrawerData }) {
   // Estado para el modo de edición global
   const [globalEditMode, setGlobalEditMode] = useState({
     enabled: false,
-    articleId: null
+    articleId: null,
+    editableFields: Object.keys(EDITABLE_FIELDS)
   });
+
+  // Estado para guardar los datos originales antes de entrar en modo edición
+  const [originalData, setOriginalData] = useState({});
+
+  // Estado para manejar los valores editables
+  const [editableValues, setEditableValues] = useState({});
 
   // ── Permissions ─────────────────────────────────────────────────────────────
   const canCreateArticle = useHasPermission('legal_matrix', 'create_article');
@@ -145,6 +168,98 @@ export default function Articles({ optinDrawerData }) {
     }
   }, [articles, dropdownData.parentArticles, isSelected_articulo_id, selected_articulo_id]);
 
+
+  // ── Edit mode functions ───────────────────────────────────────────────────────────
+
+  const toggleGlobalEditMode = (articleId) => {
+    const wasEditing = globalEditMode.enabled && globalEditMode.articleId === articleId;
+    
+    if (wasEditing) {
+      // Si estaba editando, limpiar datos originales y valores editables
+      setOriginalData(prev => {
+        const newOriginal = { ...prev };
+        delete newOriginal[articleId];
+        return newOriginal;
+      });
+      setEditableValues(prev => {
+        const newEditable = { ...prev };
+        delete newEditable[articleId];
+        return newEditable;
+      });
+    } 
+    else {
+      // Si va a entrar en modo edición, guardar los datos originales
+      const currentArticle = rowData.find(article => article.id_articulo === articleId);
+      if (currentArticle) {
+        setOriginalData(prev => ({
+          ...prev,
+          [articleId]: { ...currentArticle }
+        }));
+
+        // Inicializar valores editables con los valores actuales
+        setEditableValues(prev => ({
+          ...prev,
+          [articleId]: {}
+        }));
+      }
+    }
+    
+    setGlobalEditMode(prev => ({
+      enabled: !prev.enabled,
+      articleId: prev.enabled ? null : articleId,
+      editableFields: prev.editableFields
+    }));
+  };
+
+  // Función para manejar cambios en campos editables
+  const handleEditableChange = (articleId, field, value) => {
+    setEditableValues(prev => ({
+      ...prev,
+      [articleId]: {
+        ...prev[articleId],
+        [field]: value
+      }
+    }));
+  };
+
+  // Función para obtener el valor actual de un campo (editable u original)
+  const getFieldValue = (articleId, field, originalValue) => {
+    if (globalEditMode.enabled && globalEditMode.articleId === articleId && isFieldEditable(field)) {
+      return editableValues[articleId]?.[field] ?? originalValue;
+    }
+    return originalValue;
+  };
+
+  // Función para renderizar campo editable
+  const renderEditableField = (params) => {
+    const { data, value, colDef } = params;
+    const field = colDef.field;
+    const articleId = data.id_articulo;
+    
+    const isCurrentlyEditing = globalEditMode.enabled && 
+                             globalEditMode.articleId === articleId && 
+                             isFieldEditable(field);
+    
+    if (!isCurrentlyEditing) {
+      // Mostrar valor original cuando no está en modo edición
+      return value || '-';
+    }
+    
+    const fieldConfig = EDITABLE_FIELDS[field];
+    const currentValue = getFieldValue(articleId, field, value);
+    
+    return (
+      <Box sx={{ width: '100%', px: 1 }}>
+        <TextField
+          {...fieldConfig.props}
+          value={currentValue || ''}
+          onChange={(e) => handleEditableChange(articleId, field, e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </Box>
+    );
+  };
+
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleResetFilters = () => {
     const savedRequisitoId = id_requisito_actual;
@@ -218,16 +333,6 @@ export default function Articles({ optinDrawerData }) {
     dispatch(fetchArticles(params));
   };
 
-  // ── Edit mode functions ───────────────────────────────────────────────────────────
-
-  const toggleGlobalEditMode = (articleId) => {
-    setGlobalEditMode(prev => ({
-      enabled: !prev.enabled,
-      articleId: prev.enabled ? null : articleId
-    }));
-  };
-
-  // ── Display helpers ───────────────────────────────────────────────────────────
   const getCategoryName = (categoryKey) => {
     const category = dropdownData.categories.find((cat) => cat.key === categoryKey);
     return category ? category.label : categoryKey;
@@ -361,7 +466,8 @@ export default function Articles({ optinDrawerData }) {
       field: 'nombre',
       headerName: t('name'),
       largeText: true,
-      filter: 'agTextColumnFilter'
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => renderEditableField(params)
     },
     {
       field: 'tasks',
@@ -455,7 +561,8 @@ export default function Articles({ optinDrawerData }) {
       field: 'descripcion',
       headerName: t('description'),
       largeText: true,
-      filter: 'agTextColumnFilter'
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params) => renderEditableField(params)
     },
     {
       field: 'id_tema_requisito',
