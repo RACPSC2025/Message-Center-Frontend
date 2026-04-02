@@ -95,7 +95,7 @@ export default function ActionTable({
     let remainingWidth = width - actionColumnWidth;
     let isColumnWidthAcceptable = false;
 
-    // 🔄 COLUMNA DE EDICIÓN GLOBAL - Nueva funcionalidad
+    // 🔄 COLUMNA DE EDICIÓN GLOBAL
     // Se añade al inicio para que esté fija a la izquierda antes del ID
     finalColumms.push({
       field: 'global_edit',
@@ -217,7 +217,7 @@ export default function ActionTable({
 
       restColumnConfig.width = columnWidth;
 
-      // 🔥 Columnas de administradores - EDITABLES con renderer custom
+      // Columnas de administradores
       if (adminColumns.includes(restColumnConfig.field)) {
         finalColumms.push({
           ...restColumnConfig,
@@ -234,7 +234,7 @@ export default function ActionTable({
           },
         });
       } 
-      // 🔥 Columnas de fecha - EDITABLES con renderer custom y ancho fijo de 200px
+      // Columnas de fecha - EDITABLES con renderer custom y ancho fijo de 200px
       else if (dateColumns.includes(restColumnConfig.field)) {
         finalColumms.push({
           column_type: column_type,
@@ -246,7 +246,7 @@ export default function ActionTable({
           },
         });
       }
-      // 🔥 Columna action_status - EDITABLE con renderer custom y ancho fijo de 170px
+      // Columna action_status - EDITABLE con renderer custom y ancho fijo de 170px
       else if (restColumnConfig.field === 'action_status') {
         finalColumms.push({
           column_type: column_type,
