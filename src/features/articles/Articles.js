@@ -1,10 +1,10 @@
 // ─── External libraries ───────────────────────────────────────────────────────
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { Add, ListAlt, MoreVertOutlined } from '@mui/icons-material';
+import { Add, Edit, Check, Cancel, ListAlt } from '@mui/icons-material';
 
 // ─── Own components ───────────────────────────────────────────────────────────
 import TableComponent from '../../components/TableComponent';
@@ -51,6 +51,12 @@ export default function Articles({ optinDrawerData }) {
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [rowData, setRowData] = useState([]);
   const [dropdownData, setDropdownData] = useState(INITIAL_DROPDOWN_DATA);
+
+  // Estado para el modo de edición global
+  const [globalEditMode, setGlobalEditMode] = useState({
+    enabled: false,
+    articleId: null
+  });
 
   // ── Permissions ─────────────────────────────────────────────────────────────
   const canCreateArticle = useHasPermission('legal_matrix', 'create_article');
@@ -212,6 +218,15 @@ export default function Articles({ optinDrawerData }) {
     dispatch(fetchArticles(params));
   };
 
+  // ── Edit mode functions ───────────────────────────────────────────────────────────
+
+  const toggleGlobalEditMode = (articleId) => {
+    setGlobalEditMode(prev => ({
+      enabled: !prev.enabled,
+      articleId: prev.enabled ? null : articleId
+    }));
+  };
+
   // ── Display helpers ───────────────────────────────────────────────────────────
   const getCategoryName = (categoryKey) => {
     const category = dropdownData.categories.find((cat) => cat.key === categoryKey);
@@ -254,6 +269,8 @@ export default function Articles({ optinDrawerData }) {
       headerName: t('options'),
       width: 100,
       cellRenderer: (params) => {
+        const isCurrentlyEditing = globalEditMode.enabled && globalEditMode.articleId === params.data.id_articulo;
+        
         const tempStatus = String(params.data.estado || '').toLowerCase();
         const matchedStatus = listLegalStatus?.find((status) => {
           const statusNumber = String(status.value_number || '').toLowerCase();
@@ -263,7 +280,7 @@ export default function Articles({ optinDrawerData }) {
         });
 
         return (
-          <Box sx={{ pl: 3 }}>
+          <Box sx={{ pl: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, width: '100%', height: '100%' }}>
             {matchedStatus && (
               <Box
                 sx={{
@@ -282,11 +299,42 @@ export default function Articles({ optinDrawerData }) {
                 }}
               />
             )}
-            <Tooltip title={t('options')}>
-              <IconButton size="small" color="primary">
-                <MoreVertOutlined />
-              </IconButton>
-            </Tooltip>
+            
+            {isCurrentlyEditing ? (
+              <>
+                {/* ✅ */}
+                <IconButton
+                  size="small"
+                  onClick={() => toggleGlobalEditMode(params.data.id_articulo)}
+                  sx={{ color: 'success.main' }}
+                  title={t('save_changes')}
+                >
+                  <Check fontSize="small" />
+                </IconButton>
+
+                {/* ❌ */}
+                <IconButton
+                  size="small"
+                  onClick={() => toggleGlobalEditMode(params.data.id_articulo)}
+                  sx={{ color: 'error.main' }}
+                  title={t('Cancel_edit')}
+                >
+                  <Cancel fontSize="small" />
+                </IconButton>
+              </>
+            ) : (
+              <>
+                {/* ✏️ */}
+                <IconButton
+                  size="small"
+                  onClick={() => toggleGlobalEditMode(params.data.id_articulo)}
+                  sx={{ color: 'default' }}
+                  title={t('edit_row')}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </>
+            )}
           </Box>
         );
       }
