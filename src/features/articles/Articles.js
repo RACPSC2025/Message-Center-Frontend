@@ -159,23 +159,51 @@ export default function Articles({ optinDrawerData }) {
         const filtered = articles.filter(
           (a) => a.id_articulo.toString() === selected_articulo_id.toString()
         );
-        setRowData(filtered);
+        // Hacer una copia mutable para AG-Grid
+        setRowData(filtered.map(article => ({ ...article })));
       } else {
-        setRowData(articles);
+        // Hacer una copia mutable para AG-Grid
+        setRowData(articles.map(article => ({ ...article })));
       }
     } else {
       setRowData([]);
     }
   }, [articles, dropdownData.parentArticles, isSelected_articulo_id, selected_articulo_id]);
 
-
   // ── Edit mode functions ───────────────────────────────────────────────────────────
 
   const toggleGlobalEditMode = (articleId) => {
+    console.log('[DEBUG] toggleGlobalEditMode llamado con articleId:', articleId);
+    
     const wasEditing = globalEditMode.enabled && globalEditMode.articleId === articleId;
+    console.log('[DEBUG] Estado anterior de edición:', wasEditing);
     
     if (wasEditing) {
       // Si estaba editando, limpiar datos originales y valores editables
+      console.log('[DEBUG] Saliendo del modo edición - limpiando datos');
+      console.log('[DEBUG] Datos editables antes de limpiar:', editableValues[articleId]);
+      
+      // MOSTRAR DATOS QUE SE ENVIARÍAN A LA API
+      if (Object.keys(editableValues[articleId] || {}).length > 0) {
+        console.log('[DEBUG] === DATOS PARA ENVIAR A LA API ===');
+        console.log('[DEBUG] Article ID:', articleId);
+        console.log('[DEBUG] Datos originales:', originalData[articleId]);
+        console.log('[DEBUG] Campos modificados:', editableValues[articleId]);
+        
+        // Construir payload para API
+        const apiPayload = {
+          id_articulo: articleId,
+          ...editableValues[articleId]
+        };
+        console.log('[DEBUG] Payload completo para API:', JSON.stringify(apiPayload, null, 2));
+        console.log('[DEBUG] ======================================');
+        
+        // AQUÍ SE DEBERÍA HACER LA LLAMADA A LA API
+        // Ejemplo: legalService.updateArticle(articleId, apiPayload)
+      } else {
+        console.log('[DEBUG] No hay cambios para guardar');
+      }
+      
       setOriginalData(prev => {
         const newOriginal = { ...prev };
         delete newOriginal[articleId];
@@ -189,18 +217,22 @@ export default function Articles({ optinDrawerData }) {
     } 
     else {
       // Si va a entrar en modo edición, guardar los datos originales
+      console.log('[DEBUG] Entrando al modo edición - guardando datos originales');
       const currentArticle = rowData.find(article => article.id_articulo === articleId);
       if (currentArticle) {
+        console.log('[DEBUG] Artículo encontrado para editar:', currentArticle);
         setOriginalData(prev => ({
           ...prev,
           [articleId]: { ...currentArticle }
         }));
-
         // Inicializar valores editables con los valores actuales
         setEditableValues(prev => ({
           ...prev,
           [articleId]: {}
         }));
+        console.log('[DEBUG] Datos originales guardados, valores editables inicializados');
+      } else {
+        console.log('[DEBUG] No se encontró el artículo con ID:', articleId);
       }
     }
     
@@ -209,17 +241,29 @@ export default function Articles({ optinDrawerData }) {
       articleId: prev.enabled ? null : articleId,
       editableFields: prev.editableFields
     }));
+    
+    console.log('[DEBUG] Nuevo estado de globalEditMode:', {
+      enabled: !globalEditMode.enabled,
+      articleId: globalEditMode.enabled ? null : articleId
+    });
   };
 
   // Función para manejar cambios en campos editables
   const handleEditableChange = (articleId, field, value) => {
-    setEditableValues(prev => ({
-      ...prev,
-      [articleId]: {
-        ...prev[articleId],
-        [field]: value
-      }
-    }));
+    console.log('[DEBUG] handleEditableChange llamado con articleId:', articleId, 'field:', field, 'value:', value);
+    console.log('[DEBUG] Valor anterior:', editableValues[articleId]?.[field]);
+    
+    setEditableValues(prev => {
+      const newState = {
+        ...prev,
+        [articleId]: {
+          ...prev[articleId],
+          [field]: value
+        }
+      };
+      console.log('[DEBUG] Nuevo estado de editableValues:', newState[articleId]);
+      return newState;
+    });
   };
 
   // Función para obtener el valor actual de un campo (editable u original)
