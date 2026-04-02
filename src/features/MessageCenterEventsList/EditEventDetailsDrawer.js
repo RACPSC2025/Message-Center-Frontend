@@ -162,6 +162,7 @@ function EditEventDetailsDrawer({
   const [commentType, setCommentType] = useState('');
   const [attachmentComment, setAttachmentComment] = useState('');
   const [createCommentAttachments, setCreateCommentAttachments] = useState([]);
+  const [localFocusedCommentId, setLocalFocusedCommentId] = useState(null);
   
   // Estados para detectar cambios no guardados
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -379,9 +380,12 @@ function EditEventDetailsDrawer({
   };
 
   useEffect(() => {
-    if (!openEditDrawer || !focusedCommentId || isLoading !== 'loaded') return;
+    if (!openEditDrawer || isLoading !== 'loaded') return;
 
-    const normalizedCommentId = Number(focusedCommentId);
+    const effectiveFocusedCommentId = localFocusedCommentId ?? focusedCommentId;
+    if (!effectiveFocusedCommentId) return;
+
+    const normalizedCommentId = Number(effectiveFocusedCommentId);
     const inExecuted = logtaskExecutedComments.some(
       (comment) => Number(comment?.comment_id) === normalizedCommentId
     );
@@ -396,6 +400,7 @@ function EditEventDetailsDrawer({
     }
   }, [
     openEditDrawer,
+    localFocusedCommentId,
     focusedCommentId,
     isLoading,
     logtaskExecutedComments,
@@ -577,7 +582,8 @@ function EditEventDetailsDrawer({
   // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments_amatia_express/{id}
 
   useEffect(() => {
-    if (logTaskDetails && openEditDrawer) {
+    const currentLogTaskId = logTaskDetails?.id;
+    if (currentLogTaskId && openEditDrawer) {
       setIsInitializing(true);
       setIsLoading('loading');
       
@@ -585,7 +591,7 @@ function EditEventDetailsDrawer({
       const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
       setTabValue(validTabs.includes(initialTab) ? initialTab : 'comentarios');
 
-      fetchLogtaskComments(logTaskDetails.id).then(() => {
+      fetchLogtaskComments(currentLogTaskId).then(() => {
         setIsLoading('loaded');
         
         // Establecer valores iniciales basados en el estado actual
@@ -613,7 +619,7 @@ function EditEventDetailsDrawer({
         }, 50);
       });
     }
-  }, [logTaskDetails, openEditDrawer, initialTab, initialCommentText]);
+  }, [logTaskDetails?.id, openEditDrawer, initialTab, initialCommentText]);
 
   const handleTabChange = (event, newValue) => {
     const validTabs = ['comentarios', 'seguimientos', 'crear_comentario'];
@@ -768,6 +774,7 @@ function EditEventDetailsDrawer({
     } else {
       // Cerrar directamente si no hay cambios
       onCloseEditDrawer();
+      setLocalFocusedCommentId(null);
       setUpdateProgressErrors(false);
       setProgressUpdated(false);
       setLogtaskExecutedComments([]);
@@ -877,13 +884,18 @@ function EditEventDetailsDrawer({
       const isSuccess = status === 200 || status === 303;
 
       if (isSuccess) {
+        const createdCommentId = Number(response?.data?.comment_id);
+        const createdCommentType = addCommentForm.type === 1 ? 'comentarios' : 'seguimientos';
+
         showSuccessMsg(t('comment_created_successfully'));
+        setLocalFocusedCommentId(Number.isFinite(createdCommentId) ? createdCommentId : null);
+        setTabValue(createdCommentType);
         setAddCommentForm({});
         setCreateCommentAttachments([]);
         setLogtaskExecutedComments([]);
         setLogtaskRevisorComments([]);
-        fetchLogtaskComments(logTaskDetails.id);
-        setTabValue(addCommentForm.type === 1 ? 'comentarios' : 'seguimientos');
+        await fetchLogtaskComments(logTaskDetails.id);
+        window.dispatchEvent(new CustomEvent('dashboard-message-created'));
         
         if (onCommentAdded) {
           onCommentAdded({
@@ -1024,7 +1036,10 @@ function EditEventDetailsDrawer({
                       <CommentCard
                         key={index}
                         comment={comment}
-                        isFocused={Number(comment?.comment_id) === Number(focusedCommentId)}
+                        isFocused={
+                          Number(comment?.comment_id)
+                          === Number(localFocusedCommentId ?? focusedCommentId)
+                        }
                         role={t('Executioner')}
                         onEdit={(c) => {
                           setSelectedComment(c); // Importante: actualiza el estado del comentario seleccionado
@@ -1066,7 +1081,10 @@ function EditEventDetailsDrawer({
                       <CommentCard
                         key={index}
                         comment={comment}
-                        isFocused={Number(comment?.comment_id) === Number(focusedCommentId)}
+                        isFocused={
+                          Number(comment?.comment_id)
+                          === Number(localFocusedCommentId ?? focusedCommentId)
+                        }
                         role={t('Reviewer')}
                         onEdit={(c) => {
                           setSelectedComment(c);
