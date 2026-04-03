@@ -1018,8 +1018,14 @@ function EditEventDetailsDrawer({
                 textColor="inherit"
                 variant="fullWidth"
               >
-                <Tab label={t('comments_executor')} value="comentarios" />
-                <Tab label={t('followup_reviewer')} value="seguimientos" />
+                <Tab
+                  label={`${t('comments_executor')} (${logtaskExecutedComments?.length || 0})`}
+                  value="comentarios"
+                />
+                <Tab
+                  label={`${t('followup_reviewer')} (${logtaskRevisorComments?.length || 0})`}
+                  value="seguimientos"
+                />
                 <Tab label={t('add_comment')} value="crear_comentario" />
               </Tabs>
             </Box>

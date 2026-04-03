@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { Box, Typography, Avatar, Button } from '@mui/material';
+import { Box, Typography, Avatar, Button, Tooltip } from '@mui/material';
 import AttachmentViewer from './AttachmentViewer'; 
 
 const styles = {
@@ -87,10 +87,12 @@ function CommentCard({
         bgcolor: isFocused ? 'rgba(0, 169, 180, 0.08)' : 'transparent'
       }}
     >
-      {/* Avatar */}
-      <Avatar sx={styles.avatar}>
-        {comment.userName.slice(0, 2).toUpperCase()}
-      </Avatar>
+      {/* Avatar con Tooltip */}
+      <Tooltip title={comment.userName} arrow>
+        <Avatar sx={styles.avatar}>
+          {comment.userName.slice(0, 2).toUpperCase()}
+        </Avatar>
+      </Tooltip>
 
       <Box sx={{ flex: 1 }}>
         {/* Meta Header */}
