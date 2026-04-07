@@ -29,6 +29,9 @@ Objetivos:
   - ejecucion-build-deploy.md
 - 06-conventions/
   - componentes-hooks-i18n.md
+- reports/
+  - tasks-report-dashboard.md
+  - actions-report-dashboard.md
 
 ## Documento clave de configuracion de plataforma
 
@@ -40,3 +43,8 @@ Describe como se consulta la configuracion backend, como se guarda en Redux y co
 ## Nota de compilado
 
 La carpeta specs no hace parte del bundle de React en produccion. El build toma codigo de src y assets de public.
+
+## Reportes funcionales
+
+- reports/tasks-report-dashboard.md: contrato funcional del dashboard de tareas (vista report).
+- reports/actions-report-dashboard.md: contrato funcional del dashboard de acciones (vista report), incluyendo fuente de datos y catalogo de estados.

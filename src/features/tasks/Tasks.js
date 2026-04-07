@@ -579,9 +579,12 @@ export default function Component() {
  
 
   const [countrySelected, setCountrySelected] = useState("CO");
+  const [showAdjustmentsTab, setShowAdjustmentsTab] = useState(false);
 
   //const viewTabArray = ['dashboard', 'calendar', 'list', 'table', 'report', 'adjustments'];
-  const viewTabArray = ['calendar', 'list', 'table', 'report', 'adjustments'];
+  const viewTabArray = showAdjustmentsTab
+    ? ['calendar', 'list', 'table', 'report', 'adjustments']
+    : ['calendar', 'list', 'table', 'report'];
 
   const iconMapping = (viewTab, selectedView) => {
     const iconProps = {

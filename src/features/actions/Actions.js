@@ -1,4 +1,4 @@
-import { Add, CheckCircle, Insights, TableRows } from '@mui/icons-material';
+import { Add, CheckCircle, Insights, TableChart } from '@mui/icons-material';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppBar,
@@ -60,6 +60,22 @@ export function Component() {
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [organizationFilterState, setOrganizationFilterState] = useState({});
   const [selectedView, setSelectedView] = useState('table');
+
+  const viewTabArray = ['table', 'report'];
+
+  const iconMapping = (viewTab, currentView) => {
+    const iconProps = {
+      color: currentView === viewTab ? 'warning' : 'action',
+      fontSize: 'medium'
+    };
+
+    const icons = {
+      table: <TableChart {...iconProps} />,
+      report: <Insights {...iconProps} />
+    };
+
+    return icons[viewTab] || null;
+  };
 
   const filterData = useAppliedFilterModel('actions');
 
@@ -611,7 +627,17 @@ export function Component() {
         }}
       >
         
-        <Box sx={{ pt: 2, px: 4, display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Box
+          sx={{
+            pt: 2,
+            px: 4,
+            mb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2
+          }}
+        >
           <Box display="flex" justifyContent="start" gap={1} alignItems="center" flexGrow={1}>
             {filterArray?.map((filter, filterIndex) => {
               return (
@@ -638,7 +664,7 @@ export function Component() {
               {t('clear_filters')}
             </Button>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
             <CheckCircle sx={{ fontSize: '1.2rem', color: 'text.secondary' }} />
             <Typography 
               variant="body1" 
@@ -656,29 +682,42 @@ export function Component() {
               )}
             </Typography>
           </Box>
+
+          <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-end', pb: 0.5 }}>
+            {viewTabArray.map((viewTab) => {
+              const isActive = selectedView === viewTab;
+              return (
+                <Box
+                  key={viewTab}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    '&:hover': { opacity: 1 }
+                  }}
+                  onClick={() => setSelectedView(viewTab)}
+                >
+                  <Box sx={{ color: isActive ? '#f57c00' : '#b0bec5', mb: 0.2 }}>
+                    {iconMapping(viewTab, selectedView)}
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      color: isActive ? '#263238' : '#b0bec5',
+                      textTransform: 'capitalize'
+                    }}
+                  >
+                    {t(viewTab)}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
         </Box>
         <Box sx={{ flexGrow: 1, minHeight: 0, px: 1 }}>
-          <Box sx={{ mb: 1, px: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-            <Button
-              variant={selectedView === 'table' ? 'contained' : 'outlined'}
-              size="small"
-              startIcon={<TableRows fontSize="small" />}
-              onClick={() => setSelectedView('table')}
-              sx={{ textTransform: 'none', borderRadius: '8px' }}
-            >
-              {t('table', { defaultValue: 'Tabla' })}
-            </Button>
-            <Button
-              variant={selectedView === 'report' ? 'contained' : 'outlined'}
-              size="small"
-              startIcon={<Insights fontSize="small" />}
-              onClick={() => setSelectedView('report')}
-              sx={{ textTransform: 'none', borderRadius: '8px' }}
-            >
-              {t('report', { defaultValue: 'Reporte' })}
-            </Button>
-          </Box>
-
           {selectedView === 'report' ? (
             <ActionsReportTremos actions={filteredActions} isLoading={actionListLoading} />
           ) : (
