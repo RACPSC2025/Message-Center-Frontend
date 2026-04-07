@@ -576,6 +576,12 @@ export default function Component() {
     { icon: <Checklist />, name: t('create_task'), type: 'tarea' },
     { icon: <Loop />, name: t('create_cycle'), type: 'ciclo' }
   ];
+
+  const visibleSpeedDialActions = speedDialActions.filter((action) => {
+    if (action.type === 'tarea') return canCreateTask;
+    if (action.type === 'ciclo') return canCreateCycle;
+    return false;
+  });
  
 
   const [countrySelected, setCountrySelected] = useState("CO");
@@ -896,25 +902,15 @@ export default function Component() {
 
             {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
             
-            {/* Botones flotantes según permisos */}
-            {canCreateTask && (
+            {/* Botón flotante único según permisos */}
+            {visibleSpeedDialActions.length > 0 && (
               <SpeedDialComponent
                 openSpeedDial={openSpeedDial}
                 handleCloseSpeedDial={() => setOpenSpeedDial(false)}
                 handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-                speedDialActions={speedDialActions.filter(a => a.type === 'tarea')}
+                speedDialActions={visibleSpeedDialActions}
                 handleActionClick={(action) => {
                   if (action.type === 'tarea') setOpenCreateTask(true);
-                }}
-              />
-            )}
-            {canCreateCycle && (
-              <SpeedDialComponent
-                openSpeedDial={openSpeedDial}
-                handleCloseSpeedDial={() => setOpenSpeedDial(false)}
-                handleOpenSpeedDial={() => setOpenSpeedDial(true)}
-                speedDialActions={speedDialActions.filter(a => a.type === 'ciclo')}
-                handleActionClick={(action) => {
                   if (action.type === 'ciclo') setOpenCreateCycleDrawer(true);
                 }}
               />
