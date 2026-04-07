@@ -37,6 +37,11 @@ function LayoutHeader() {
     (tabs) => tabs?.visibility !== false && tabs?.moduleName !== 'notifications'
   );
 
+  const normalizedActiveTab =
+    tabItems?.some((tab) => tab?.key === activeTab)
+      ? activeTab
+      : (tabItems?.[0]?.key ?? false);
+
   const permitTabs = modulePermissions?.filter((tabs) => tabs?.visibility !== false);
   const notificationTab = permitTabs.find((module) => {
     return module?.moduleName === 'notifications';
@@ -104,7 +109,7 @@ function LayoutHeader() {
       <Box sx={{ position: 'absolute', left: 0, bottom: 0, width: '50vw' }}>
         <BaseTab
           items={tabItems ?? []}
-          activeTab={activeTab}
+          activeTab={normalizedActiveTab}
           tabContainerProps={{
             variant: 'fullWidth',
             onChange: (_, value) => {

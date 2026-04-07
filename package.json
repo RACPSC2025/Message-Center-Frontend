@@ -29,6 +29,7 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@tremor/react": "^3.18.7",
     "ag-grid-community": "^33.0.3",
     "ag-grid-react": "^33.0.3",
     "axios": "^1.13.2",

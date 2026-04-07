@@ -1,1036 +1,565 @@
-import { AddToPhotos, Circle, FilterAlt, MoreVert } from '@mui/icons-material';
 import {
-  Box,
-  Button,
+  AreaChart,
+  Badge,
+  BarList,
   Card,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography
-} from '@mui/material';
-import ReactECharts from 'echarts-for-react';
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import CircularGaugePercentage from '../../components/CircularGaugePercentage';
-import FormBuilder from '../../components/FormBuilder';
-import TheFullPageLoader from '../../components/TheFullPageLoader';
-import { fetchTaskCounts } from '../../stores/tasks/fetchTaskCountsSlice';
+  DonutChart,
+  Flex,
+  Grid,
+  Metric,
+  ProgressBar,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Text,
+  Title
+} from '@tremor/react';
+import { Box } from '@mui/material';
+import dayjs from 'dayjs';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import TheFullPageLoader from '../../components/TheFullPageLoader';
+import { selectFilterItemValue } from '../../stores/filterSlice';
+import { fetchListTaskNew } from '../../stores/tasks/fetchListTaskNewSlice';
+import { normalizeStatusCode, stripHtmlTags } from '../../utils/others';
 
-import {
-  fetchAutocompleteOptions,
-  removeAllFilters,
-  removeFilter,
-  selectFilterItemValue,
-  selectListOptions,
-  setFilter
-} from '../../stores/filterSlice';
+const COLOR_BY_STATUS = {
+  '1': 'emerald',
+  '2': 'blue',
+  '3': 'amber',
+  '4': 'rose'
+};
 
-// Custom hook to get list options
-const useListOptions = (module, fieldName) =>
-  useSelector((state) => selectListOptions(state, module, fieldName));
+const FALLBACK_STATUS_META = {
+  '1': { key: 'closed', label: 'closed' },
+  '2': { key: 'In_Progress', label: 'In progress' },
+  '3': { key: 'task_open', label: 'Open' },
+  '4': { key: 'Expired', label: 'Expired' }
+};
 
-const useListOptionsGlobal = (fieldName) =>
-  useSelector((state) => state.globalData?.[fieldName] ?? []);
+const TASKS_PER_TABLE = 8;
 
-const useFilterItemValue = (module, fieldName) =>
-  useSelector((state) => selectFilterItemValue(state, module, fieldName));
+const toArray = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'object') return Object.values(value);
+  return [];
+};
 
+const toPeopleNames = (people) =>
+  toArray(people)
+    .map((entry) => {
+      if (typeof entry === 'string') return entry.trim();
+      if (typeof entry === 'object') {
+        return (
+          entry?.name
+          || entry?.full_name
+          || entry?.nb_user
+          || entry?.label
+          || ''
+        ).trim();
+      }
+      return '';
+    })
+    .filter(Boolean);
 
-function CustomTabPanel(props) {
-  const { children, value, index, ...other } = props;
+const normalizeTask = (task) => ({
+  ...task,
+  id: task?.id,
+  task_title: (task?.task_title || '').trim(),
+  task_description: stripHtmlTags(task?.task_description || ''),
+  start_date: task?.task_start_date || task?.start_date || null,
+  end_date: task?.task_end_date || task?.end_date || null,
+  task_status: normalizeStatusCode(task?.task_status || task?.status),
+  progress: Number.parseFloat(task?.progress || 0) || 0,
+  tags: toArray(task?.tags),
+  responsibles: toPeopleNames(task?.responsibles),
+  reviewers: toPeopleNames(task?.reviewers),
+  logtask_list: toArray(task?.logtask_list)
+});
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+const taskMatchesDateRange = (task, startDateFilter, endDateFilter) => {
+  if (!startDateFilter && !endDateFilter) return true;
+
+  const taskStartDate = task.start_date ? new Date(task.start_date) : null;
+  const taskEndDate = task.end_date ? new Date(task.end_date) : null;
+  const filterStartDate = startDateFilter ? new Date(startDateFilter) : null;
+  const filterEndDate = endDateFilter ? new Date(endDateFilter) : null;
+
+  if (filterStartDate) {
+    const taskDateToCheck = taskEndDate || taskStartDate;
+    if (!taskDateToCheck || taskDateToCheck < filterStartDate) return false;
+  }
+
+  if (filterEndDate) {
+    const taskDateToCheck = taskStartDate || taskEndDate;
+    if (!taskDateToCheck || taskDateToCheck > filterEndDate) return false;
+  }
+
+  return true;
+};
 
 export default function TaskReport() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [filterPressed, setFilterPressed] = useState(false);
-  const [tabValue, setTabValue] = useState('tareas');
-  const taskCounts = useSelector((state) => state?.fetchTaskCounts?.data?.data ?? {});
-  const taskCountLoading = useSelector((state) => state?.fetchTaskCounts?.loading ?? false);
+  const [tasks, setTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  const listTaskStatus = useFilterItemValue('task', 'task_list_status') || [];
-  const [taskListStatusLoading, settaskListStatusLoading] = useState(true);
+  const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
+  const selectedLegalTaskIds =
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
 
-  const handleFilterButton = () => {
-    setFilterPressed(!filterPressed);
-  };
-
-  const handleFetchCounts = () => {
-    dispatch(fetchTaskCounts()).then((data) => {});
-  };
-
-  const handleMenuOpen = (event, user) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedUser(user);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedUser(null);
-  };
-
-  const boxStyles = {
-    border: '1px solid rgba(224, 224, 224, 0.7)',
-    borderRadius: '8px',
-    // height: '200px',
-    padding: '30px'
-  };
-
-  const graphicBoxStyles = {
-    border: '1px solid rgba(224, 224, 224, 0.7)',
-    borderRadius: '8px',
-    width: '100%'
-  };
-
-  const barChartOptions = {
-    title: {
-      text: 'Índice de Cumplimiento',
-      left: 'center'
-    },
-    tooltip: {},
-    xAxis: {
-      data: ['% Índice de Cumplimiento']
-    },
-    yAxis: {
-      min: 0,
-      max: 100
-    },
-    series: [
-      {
-        // name: '% Índice de Cumplimiento',
-        type: 'bar',
-        data: [25],
-        label: {
-          show: true,
-          position: 'top',
-          fontSize: 16,
-          fontWeight: 'bold',
-          color: '#000'
-        }
-      }
-    ]
-  };
-
-  /*
-  const pieChart1 = {
-    title: {
-      text: t('Task_status'),
-      left: 'center'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'right',
-      top: 40,
-      // top: 'center',
-      data: ['task_open', 'Expired', 'In_Progress', 'closed'],
-      formatter: function (name) {
-        const data = pieChart1.series[0].data;
-        const item = data.find((item) => item.name === name);
-        return `${t(item.label)} ${item.value}`;
-      }
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
-    },
-
-    series: [
-      {
-        type: 'pie',
-        radius: '60%',
-        data: [
-          {
-            value: taskCounts?.tasks?.[3] ?? 0,
-            name: t('task_open'),
-            label: t('task_open')
-          },
-          {
-            value: taskCounts?.tasks?.[4] ?? 0,
-            name: t('Expired'),
-            label: 'expired'
-          },
-          {
-            value: taskCounts?.tasks?.[1] ?? 0,
-            name: t('In_Progress'),
-            label: 'In_Progress'
-          },
-          {
-            value: taskCounts?.tasks?.[2] ?? 0,
-            name: t('closed'),
-            label: 'closed'
-          }
-        ]
-      }
-    ]
-  };
-  */
-
-  const pieChart1 = listTaskStatus && taskCounts ? {
-    title: {
-      text: t('Task_status'),
-      left: 'center'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'right',
-      top: 40,
-      data: listTaskStatus.map((item) => t(item.label)),
-      formatter: function (name) {
-        const item = listTaskStatus.find((s) => t(s.label) === name);
-        const value = taskCounts?.tasks?.[Number(item.value_number)] ?? 0;
-        return `${t(item.label)} ${value}`;
-      }
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
-    },
-    series: [
-      {
-        type: 'pie',
-        radius: '60%',
-        data: listTaskStatus.map((status) => ({
-          value: taskCounts?.tasks?.[Number(status.value_number)] ?? 0,
-          name: t(status.label),
-          label: status.label,
-          itemStyle: {
-            color: status.color_code
-          }
-        }))
-      }
-    ]
-  } : null;
-
-  /*
-  const pieChart2 = {
-    title: {
-      text: t('Cycle_status'),
-      left: 'center'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'right',
-      top: 40,
-      // top: 'center',
-      data: ['task_open', 'Expired', 'In_Progress', 'closed'],
-      formatter: function (name) {
-        const data = pieChart1.series[0].data;
-        const item = data.find((item) => item.name === name);
-        //const label = 
-        return `${name} ${item.value}`;
-      }
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
-    },
-
-    series: [
-      {
-        type: 'pie',
-        radius: '60%',
-        data: [
-          {
-            value: taskCounts?.logtasks[3] ?? 0,
-            name: 'Abierto',
-            label: 'task_open'
-          },
-          {
-            value: taskCounts?.logtasks[4] ?? 0,
-            name: 'Vencido',
-            label: 'Open'
-          },
-          {
-            value: taskCounts?.logtasks[1] ?? 0,
-            name: 'En Progreso',
-            label: 'Open'
-          },
-          {
-            value: taskCounts?.logtasks[2] ?? 0,
-            name: 'Cerrado',
-            label: 'Open'
-          }
-        ]
-      }
-    ]
-  };
-  */
-
-  /*
-  const pieData2 = [
-    {
-      value: taskCounts?.logtasks?.[3] ?? 0,
-      name: 'Abierto',
-      label: 'task_open'
-    },
-    {
-      value: taskCounts?.logtasks?.[4] ?? 0,
-      name: 'Vencido',
-      label: 'Expired'
-    },
-    {
-      value: taskCounts?.logtasks?.[1] ?? 0,
-      name: 'En Progreso',
-      label: 'In_Progress'
-    },
-    {
-      value: taskCounts?.logtasks?.[2] ?? 0,
-      name: 'Cerrado',
-      label: 'closed'
-    }
-  ];
-
-  const pieChart2 = {
-    title: {
-      text: t('Cycle_status'),
-      left: 'center'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'right',
-      top: 40,
-      data: pieData2.map((item) => item.label), // ['task_open', 'Expired', ...]
-      formatter: function (label) {
-        const item = pieData2.find((d) => d.label === label);
-        return `${t(label)} ${item?.value ?? 0}`;
-      }
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
-    },
-    series: [
-      {
-        type: 'pie',
-        radius: '60%',
-        data: pieData2
-      }
-    ]
-  };
-  */
-
-  const pieData2 = listTaskStatus?.map((status) => ({
-    value: taskCounts?.logtasks?.[Number(status.value_number)] ?? 0,
-    name: t(status.label),
-    label: status.value, // Usamos el campo `value` como identificador
-    itemStyle: {
-      color: status.color_code
-    }
-  })) ?? [];
-
-  const pieChart2 = {
-    title: {
-      text: t('Cycle_status'),
-      left: 'center'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'right',
-      top: 40,
-      data: pieData2.map((item) => item.label),
-      formatter: function (label) {
-        const item = pieData2.find((d) => d.label === label);
-        return `${item?.name ?? label} ${item?.value ?? 0}`;
-      }
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
-    },
-    series: [
-      {
-        type: 'pie',
-        radius: '60%',
-        data: pieData2
-      }
-    ]
-  };
-
-  const stackedBarChart = {
-    title: {
-      text: t('Activities_by_tag'),
-      left: 'center'
-      // top: '10px'
-    },
-    // option = {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        // Use axis to trigger tooltip
-        type: 'shadow' // 'shadow' as default; can also be 'line' or 'shadow'
-      }
-    },
-    legend: {
-      top: 30
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value'
-    },
-    yAxis: {
-      type: 'category',
-      // data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-      data: ['Gestión Ambiental', 'Gestión Social', 'Gestión de Permisos', 'Gestión de PMA']
-    },
-    series: [
-      {
-        name: t('task_open'),
-        type: 'bar',
-        stack: 'total',
-        label: {
-          show: true
-        },
-        emphasis: {
-          focus: 'series'
-        },
-        // data: [320, 302, 301, 334, 390, 330, 320]
-        data: [20, 12, 11, 34]
-      },
-      {
-        name: t('closed'),
-        type: 'bar',
-        stack: 'total',
-        label: {
-          show: true
-        },
-        emphasis: {
-          focus: 'series'
-        },
-        // data: [120, 132, 101, 134, 90, 230, 210]
-        data: [20, 32, 11, 34]
-      },
-      {
-        name: t('Expired'),
-        type: 'bar',
-        stack: 'total',
-        label: {
-          show: true
-        },
-        emphasis: {
-          focus: 'series'
-        },
-        // data: [220, 182, 191, 234, 290, 330, 310]
-        data: [20, 82, 91, 34]
-      },
-      {
-        name: t('Permanent'),
-        type: 'bar',
-        stack: 'total',
-        label: {
-          show: true
-        },
-        emphasis: {
-          focus: 'series'
-        },
-        // data: [150, 212, 201, 154]
-        data: [50, 12, 11, 54]
-      }
-    ]
-    // }
-  };
-
-  const users = [
-    { name: 'Jonathan Morina', status: 'green' },
-    { name: 'Mason Yarnell', status: 'green' },
-    { name: 'Mike Mcalidek', status: 'red' },
-    { name: 'Cris Labiso', status: 'red' }
-  ];
-
-  const filtersFormData = [
-    {
-      id: 'tareas',
-      label: 'Tareas',
-      type: 'dropdown',
-      options: [
-        { value: '1', label: 'Tareas' },
-        { value: '2', label: 'Ciclos' }
-      ]
-    },
-    {
-      id: 'fecha_inicio',
-      label: 'Fecha de Inicio',
-      type: 'date'
-    },
-    {
-      id: 'fecha_fin',
-      label: 'Fecha de Fin',
-      type: 'date'
-    },
-    {
-      id: 'Portafolio',
-      label: 'Portafolio',
-      type: 'dropdown',
-      options: [
-        { value: '1', label: 'Opción 1' },
-        { value: '2', label: 'Opción 2' }
-      ]
-    },
-    {
-      id: 'repsonsable_revision',
-      label: 'Responsable de Revisión',
-      type: 'dropdown',
-      options: [
-        { value: '1', label: 'Opción 1' },
-        { value: '2', label: 'Opción 2' }
-      ]
-    },
-    {
-      id: 'repsonsable_ejecucion',
-      label: 'Responsable de Ejecución',
-      type: 'dropdown',
-      options: [
-        { value: '1', label: 'Opción 1' },
-        { value: '2', label: 'Opción 2' }
-      ]
-    },
-    {
-      id: 'Estructura Organizacional',
-      label: 'Estructura Organizacional (poner estructura completa)',
-      type: 'textarea'
-    }
-  ];
-
-  const statusColors = {
-    green: '#4caf50', // Color verde para "completado" o "en progreso"
-    red: '#f44336' // Color rojo para "pendiente"
-  };
-
-  const calculatePercentage = (total, value) => {
-    const result = (value / total) * 100;
-    return parseInt(result);
-  };
+  const keywordsFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_keywords'));
+  const statusFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_status'));
+  const sortBy = useSelector((state) => selectFilterItemValue(state, 'events', 'sort_by'));
+  const startDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_start_date'));
+  const endDateFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_end_date'));
+  const executorFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_executor'));
+  const reviewerFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'filter_reviewer'));
+  const etiquetasFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'Etiquetas'));
 
   useEffect(() => {
-    handleFetchCounts();
-  }, []);
+    setIsLoading(true);
+    setLoadError('');
+
+    dispatch(fetchListTaskNew({})).then((response) => {
+      const payload = response?.payload;
+      if (payload?.messages === 'Success') {
+        const data = payload?.data || [];
+        setTasks(data.map(normalizeTask));
+      } else {
+        setTasks([]);
+        setLoadError(t('task_report_error_loading', { defaultValue: 'Unable to load report data.' }));
+      }
+    }).catch(() => {
+      setTasks([]);
+      setLoadError(t('task_report_error_loading', { defaultValue: 'Unable to load report data.' }));
+    }).finally(() => {
+      setIsLoading(false);
+    });
+  }, [dispatch, t]);
+
+  const selectedLegalTaskIdSet = useMemo(
+    () =>
+      new Set(
+        (Array.isArray(selectedLegalTaskIds) ? selectedLegalTaskIds : [])
+          .map((id) => String(id).trim())
+          .filter(Boolean)
+      ),
+    [selectedLegalTaskIds]
+  );
+
+  const statusMeta = useMemo(() => {
+    const byCode = {};
+
+    listTaskStatus.forEach((item) => {
+      const code = normalizeStatusCode(item?.value_number || item?.value || item?.label);
+      if (!code) return;
+      byCode[code] = {
+        key: item?.label || FALLBACK_STATUS_META[code]?.key,
+        label: item?.label || FALLBACK_STATUS_META[code]?.label || code
+      };
+    });
+
+    Object.keys(FALLBACK_STATUS_META).forEach((code) => {
+      if (!byCode[code]) byCode[code] = FALLBACK_STATUS_META[code];
+    });
+
+    return byCode;
+  }, [listTaskStatus]);
+
+  const filteredTasks = useMemo(() => {
+    const normalizedStatusFilter = normalizeStatusCode(statusFilter);
+
+    const result = tasks.filter((task) => {
+      if (selectedLegalTaskIdSet.size > 0 && !selectedLegalTaskIdSet.has(String(task?.id))) {
+        return false;
+      }
+
+      if (keywordsFilter && keywordsFilter.trim() !== '') {
+        const searchTerm = keywordsFilter.toLowerCase().trim();
+        const titleMatch = task.task_title?.toLowerCase().includes(searchTerm);
+        if (!titleMatch) return false;
+      }
+
+      if (normalizedStatusFilter && task.task_status !== normalizedStatusFilter) {
+        return false;
+      }
+
+      if (!taskMatchesDateRange(task, startDateFilter, endDateFilter)) {
+        return false;
+      }
+
+      if (executorFilter && executorFilter.trim() !== '') {
+        const hasExecutor = task.responsibles.some((name) => name === executorFilter.trim());
+        if (!hasExecutor) return false;
+      }
+
+      if (reviewerFilter && reviewerFilter.trim() !== '') {
+        const hasReviewer = task.reviewers.some((name) => name === reviewerFilter.trim());
+        if (!hasReviewer) return false;
+      }
+
+      if (etiquetasFilter && etiquetasFilter.trim() !== '') {
+        const hasTag = task.tags.some((tag) => String(tag?.id) === etiquetasFilter.trim());
+        if (!hasTag) return false;
+      }
+
+      return true;
+    });
+
+    if (sortBy) {
+      result.sort((a, b) => {
+        switch (sortBy) {
+          case '1':
+            return (a.task_title || '').localeCompare(b.task_title || '');
+          case '2':
+            return (b.task_title || '').localeCompare(a.task_title || '');
+          case '3':
+            return new Date(b.start_date || 0) - new Date(a.start_date || 0);
+          case '4':
+            return new Date(a.start_date || 0) - new Date(b.start_date || 0);
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return result;
+  }, [
+    tasks,
+    selectedLegalTaskIdSet,
+    keywordsFilter,
+    statusFilter,
+    startDateFilter,
+    endDateFilter,
+    executorFilter,
+    reviewerFilter,
+    etiquetasFilter,
+    sortBy
+  ]);
+
+  const analytics = useMemo(() => {
+    const taskStatusCounters = { '1': 0, '2': 0, '3': 0, '4': 0 };
+    const cycleStatusCounters = { '1': 0, '2': 0, '3': 0, '4': 0 };
+    const ownerCounter = {};
+    const tagCounter = {};
+
+    let progressAccumulator = 0;
+    let cycleTotal = 0;
+
+    filteredTasks.forEach((task) => {
+      if (task.task_status && taskStatusCounters[task.task_status] !== undefined) {
+        taskStatusCounters[task.task_status] += 1;
+      }
+
+      progressAccumulator += task.progress;
+
+      task.responsibles.forEach((person) => {
+        ownerCounter[person] = (ownerCounter[person] || 0) + 1;
+      });
+
+      task.tags.forEach((tag) => {
+        const tagName = String(tag?.name || tag?.label || tag?.nb_tag || '').trim();
+        if (!tagName) return;
+        tagCounter[tagName] = (tagCounter[tagName] || 0) + 1;
+      });
+
+      task.logtask_list.forEach((cycle) => {
+        const statusCode = normalizeStatusCode(
+          cycle?.logtask_status || cycle?.task_status || cycle?.status
+        );
+        if (!statusCode || cycleStatusCounters[statusCode] === undefined) return;
+        cycleStatusCounters[statusCode] += 1;
+        cycleTotal += 1;
+      });
+    });
+
+    const taskStatusData = Object.keys(taskStatusCounters).map((code) => {
+      const item = statusMeta[code] || FALLBACK_STATUS_META[code];
+      return {
+        code,
+        name: t(item.key, { defaultValue: item.label }),
+        value: taskStatusCounters[code],
+        color: COLOR_BY_STATUS[code]
+      };
+    });
+
+    const cycleStatusData = Object.keys(cycleStatusCounters).map((code) => {
+      const item = statusMeta[code] || FALLBACK_STATUS_META[code];
+      return {
+        code,
+        name: t(item.key, { defaultValue: item.label }),
+        value: cycleStatusCounters[code],
+        color: COLOR_BY_STATUS[code]
+      };
+    });
+
+    const ownerRanking = Object.entries(ownerCounter)
+      .map(([name, value]) => ({ name, value, color: 'blue' }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    const tagRanking = Object.entries(tagCounter)
+      .map(([name, value]) => ({ name, value, color: 'cyan' }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+
+    const today = dayjs();
+    const trendData = Array.from({ length: 6 }).map((_, index) => {
+      const month = today.subtract(5 - index, 'month');
+      const monthLabel = month.locale(i18n.language).format('MMM YYYY');
+      const count = filteredTasks.filter((task) => {
+        if (!task.start_date) return false;
+        return dayjs(task.start_date).format('YYYY-MM') === month.format('YYYY-MM');
+      }).length;
+
+      return {
+        month: monthLabel,
+        tareas: count
+      };
+    });
+
+    const totalTasks = filteredTasks.length;
+    const delayedTasks = taskStatusCounters['4'];
+    const completionRate = totalTasks > 0
+      ? Math.round((taskStatusCounters['1'] / totalTasks) * 100)
+      : 0;
+
+    const activeCycles = cycleStatusCounters['2'] + cycleStatusCounters['3'];
+    const averageProgress = totalTasks > 0 ? Math.round(progressAccumulator / totalTasks) : 0;
+
+    return {
+      totalTasks,
+      delayedTasks,
+      completionRate,
+      activeCycles,
+      averageProgress,
+      taskStatusData,
+      cycleStatusData,
+      ownerRanking,
+      tagRanking,
+      trendData,
+      cycleTotal
+    };
+  }, [filteredTasks, i18n.language, statusMeta, t]);
+
+  const tableRows = useMemo(
+    () => filteredTasks.slice(0, TASKS_PER_TABLE),
+    [filteredTasks]
+  );
 
   return (
-    <Box>
-      {taskCountLoading ? (
+    <Box className="h-full overflow-auto bg-gradient-to-b from-slate-50 via-slate-100 to-cyan-50 px-4 py-4 lg:px-6">
+      {isLoading ? (
         <TheFullPageLoader />
-      ) : (
-        <>
-        {/*
-          <Box
-            display="flex"
-            paddingRight="50px"
-            paddingTop="30px"
-            marginBottom="20px"
-            justifyContent="flex-end"
-            alignItems="center"
-          >
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<FilterAlt />}
-              onClick={handleFilterButton}
-            >
-              FILTRAR
-            </Button>
-          </Box>
-          */}
-          {filterPressed && (
-            <Card sx={{ padding: '20px', margin: '0 50px' }}>
-              <Typography variant="h5" margin="15px 0">
-                Filtros
-              </Typography>
-              <FormBuilder
-                showActionButton={false}
-                inputFields={filtersFormData.slice(3, 4)}
-                controlled={false}
-                initialValues={{}}
-                onChange={(id, value) => {}}
-              />
-              <div style={{ height: '30px' }}></div>
-              <Box display="flex" gap={5}>
-                <Box>
-                  <FormBuilder
-                    showActionButton={false}
-                    inputFields={filtersFormData.slice(0, 1)}
-                    controlled={false}
-                    initialValues={{}}
-                    onChange={(id, value) => {}}
-                  />
-                  <div style={{ height: '30px' }}></div>
-                  <FormBuilder
-                    formDisplay="flex"
-                    showActionButton={false}
-                    inputFields={filtersFormData.slice(1, 3)}
-                    controlled={false}
-                    initialValues={{}}
-                    onChange={(id, value) => {}}
-                  />
-                </Box>
-                <Box flexGrow={1}>
-                  <FormBuilder
-                    showActionButton={false}
-                    inputFields={filtersFormData.slice(4, 6)}
-                    controlled={false}
-                    initialValues={{}}
-                    onChange={(id, value) => {}}
-                  />
-                </Box>
-              </Box>
-              <Box>
-                {/* <FormControl sx={{ minWidth: 120 }}>
-              <InputLabel id="dropdown1-label">Dropdown 1</InputLabel>
-              <Select
-                labelId="dropdown1-label"
-                // value={dropdown1}
-                // onChange={(e) => setDropdown1(e.target.value)}
-                label="Dropdown 1"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value={10}>Option 1</MenuItem>
-                <MenuItem value={20}>Option 2</MenuItem>
-                <MenuItem value={30}>Option 3</MenuItem>
-              </Select>
-            </FormControl>
+      ) : null}
+      <div className="mx-auto max-w-[1500px] space-y-5">
+        {loadError ? (
+          <Card className="border-0 bg-rose-50 shadow-sm">
+            <Title>{t('task_report_error_title', { defaultValue: 'Report unavailable' })}</Title>
+            <Text className="mt-2">{loadError}</Text>
+          </Card>
+        ) : null}
 
-            <FormControl sx={{ minWidth: 120 }}>
-              <InputLabel id="dropdown2-label">Dropdown 2</InputLabel>
-              <Select
-                labelId="dropdown2-label"
-                // value={dropdown2}
-                // onChange={(e) => setDropdown2(e.target.value)}
-                label="Dropdown 2"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value={10}>Option 1</MenuItem>
-                <MenuItem value={20}>Option 2</MenuItem>
-                <MenuItem value={30}>Option 3</MenuItem>
-              </Select>
-            </FormControl> */}
+        <Card className="border-0 bg-white/85 backdrop-blur-md shadow-sm">
+          <Flex alignItems="start" justifyContent="between" className="gap-4">
+            <div>
+              <Text>{t('report', { defaultValue: 'Report' })}</Text>
+              <Title>{t('task_report_title', { defaultValue: 'Task performance dashboard' })}</Title>
+              <Text className="mt-1">
+                {t('task_report_subtitle', {
+                  defaultValue: 'Built with list_tasks_new_complete_amatia_express and synced with current task filters.'
+                })}
+              </Text>
+            </div>
+            <Badge color="cyan">{t('task_report_live', { defaultValue: 'Live data' })}</Badge>
+          </Flex>
+        </Card>
 
-                {/* <DatePicker
-            label="Date 1"
-            // value={date1}
-            // onChange={(newValue) => setDate1(newValue)}
-            // renderInput={(params) => <TextField {...params} />}
-          /> */}
+        <Grid numItemsSm={2} numItemsLg={4} className="gap-4">
+          <Card decoration="top" decorationColor="blue" className="shadow-sm">
+            <Text>{t('tasks', { defaultValue: 'Tasks' })}</Text>
+            <Metric>{analytics.totalTasks}</Metric>
+            <Text>{t('task_report_filtered_count', { defaultValue: 'Tasks after active filters' })}</Text>
+          </Card>
 
-                {/* <DatePicker
-            label="Date 2"
-            // value={date2}
-            // onChange={(newValue) => setDate2(newValue)}
-            // renderInput={(params) => <TextField {...params} />}
-          /> */}
+          <Card decoration="top" decorationColor="cyan" className="shadow-sm">
+            <Text>{t('active_cycles', { defaultValue: 'Active cycles' })}</Text>
+            <Metric>{analytics.activeCycles}</Metric>
+            <Text>{t('task_report_cycle_total', { defaultValue: 'Total cycles' })}: {analytics.cycleTotal}</Text>
+          </Card>
 
-                {/* <TextField
-              label="Text Input 1"
-              // value={textInput1}
-              // onChange={(e) => setTextInput1(e.target.value)}
-            /> */}
+          <Card decoration="top" decorationColor="rose" className="shadow-sm">
+            <Text>{t('Expired', { defaultValue: 'Expired' })}</Text>
+            <Metric>{analytics.delayedTasks}</Metric>
+            <Text>{t('task_report_risk_label', { defaultValue: 'Tasks in risk status' })}</Text>
+          </Card>
 
-                {/* <TextField
-              label="Text Input 2"
-              // value={textInput2}
-              // onChange={(e) => setTextInput2(e.target.value)}
-            /> */}
+          <Card decoration="top" decorationColor="emerald" className="shadow-sm">
+            <Text>{t('progress', { defaultValue: 'Progress' })}</Text>
+            <Metric>{analytics.averageProgress}%</Metric>
+            <ProgressBar value={analytics.averageProgress} color="emerald" className="mt-3" />
+          </Card>
+        </Grid>
 
-                <div style={{ height: '30px' }}></div>
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<FilterAlt />}
-                  // onClick={handleFilter}
-                >
-                  APLICAR FILTRO
-                </Button>
-              </Box>
-            </Card>
-          )}
-          {taskCounts !== null && (
-            <>
-            {/* }
-              <Typography variant="h5" paddingLeft="50px" marginTop="30px">
-                Mostrando información de:
-              </Typography>
-              <Typography variant="h6" paddingLeft="50px">
-                Tareas
-              </Typography>
-              <Typography variant="h6" paddingLeft="50px">
-                Desde el 01/01/2024 hasta el 31/12/2024
-              </Typography>
-              <Box display="flex" gap={4} marginBottom="30px">
-                <Typography variant="h6" color="disabled" paddingLeft="50px">
-                  Portafolio ####
-                </Typography>
-                <Typography variant="h6" color="" paddingLeft="50px">
-                  Responsable de Revisión: ####
-                </Typography>
-                <Typography variant="h6" color="" paddingLeft="50px">
-                  Responsable de Ejecución: ####
-                </Typography>
-              </Box>
-              /*}
+        <Grid numItemsLg={2} className="gap-4">
+          <Card className="shadow-sm">
+            <Title>{t('Task_status', { defaultValue: 'Task status' })}</Title>
+            <Text>{t('task_report_status_split', { defaultValue: 'Distribution by current status' })}</Text>
+            <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center">
+              <div className="flex min-w-[280px] items-center justify-center">
+                <DonutChart
+                  className="h-56 w-56"
+                  data={analytics.taskStatusData}
+                  category="value"
+                  index="name"
+                  variant="donut"
+                  colors={analytics.taskStatusData.map((entry) => entry.color)}
+                  valueFormatter={(value) => `${value}`}
+                />
+              </div>
+              <div className="w-full">
+                <BarList data={analytics.taskStatusData} />
+              </div>
+            </div>
+          </Card>
 
-              <Box display="flex" justifyContent="space-between" padding="0 50px">
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#01baab',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '50px',
-                        // height: '50px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[3]} {t('task_open')}</Typography>
-                      <Typography variant="p"></Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#01baab"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[3])}
-                  />
-                </Box>
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#ead93e',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '40px',
-                        // height: '40px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[2]} {t('In_Progress')}</Typography>
-                      <Typography variant="p"></Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#ead93e"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[2])}
-                  />
-                </Box>
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#00f57a',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '40px',
-                        // height: '40px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[1]} {t('task_closed')}</Typography>
-                      <Typography variant="p"></Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#00f57a"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[1])}
-                  />
-                </Box>
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#fb3d61',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '40px',
-                        // height: '40px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[4]} {t('Expired')}</Typography>
-                      <Typography variant="p"></Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#fb3d61"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[4])}
-                  />
-                </Box>
-              </Box>
-              <Typography variant="h4" paddingLeft="50px" marginTop="50px">
-                Estado de Ciclos
-              </Typography>
-              {/* <Box display="flex" justifyContent="space-between" padding="0 50px">
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            > */}
-              {/* <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#01baab',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '50px',
-                    // height: '50px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[3]} Abiertos</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#01baab"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[3])}
-              />
-            </Box>
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            >
-              <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#ead93e',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '40px',
-                    // height: '40px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[2]} En Progreso</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#ead93e"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[2])}
-              />
-            </Box>
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            >
-              <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#00f57a',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '40px',
-                    // height: '40px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[1]} Cerrados</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#00f57a"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[1])}
-              />
-            </Box>
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            >
-              <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#fb3d61',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '40px',
-                    // height: '40px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[4]} Vencidos</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#fb3d61"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[4])}
-              />
-            </Box> */}
-              {/* </Box> */}
-              {/* </Box> */}
-            </>
-          )}
-            
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            padding="50px"
-            gap={2}
-            flexWrap={{ md: 'wrap', lg: 'nowrap' }}
-          >
-            <Box sx={graphicBoxStyles} padding="30px">
-              {pieChart1 && taskCounts !== null && !Array.isArray(taskCounts.tasks) && (
-                <ReactECharts option={pieChart1} style={{ height: '300px', width: '100%' }} />
+          <Card className="shadow-sm">
+            <Title>{t('Cycle_status', { defaultValue: 'Cycle status' })}</Title>
+            <Text>{t('task_report_cycle_split', { defaultValue: 'Distribution for loaded cycles' })}</Text>
+            <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center">
+              <div className="flex min-w-[280px] items-center justify-center">
+                <DonutChart
+                  className="h-56 w-56"
+                  data={analytics.cycleStatusData}
+                  category="value"
+                  index="name"
+                  variant="donut"
+                  colors={analytics.cycleStatusData.map((entry) => entry.color)}
+                  valueFormatter={(value) => `${value}`}
+                />
+              </div>
+              <div className="w-full">
+                <BarList data={analytics.cycleStatusData} />
+              </div>
+            </div>
+          </Card>
+        </Grid>
+
+        <Grid numItemsLg={2} className="gap-4">
+          <Card className="shadow-sm">
+            <Title>{t('task_report_monthly_trend', { defaultValue: 'Monthly task trend' })}</Title>
+            <Text>{t('task_report_monthly_trend_desc', { defaultValue: 'Tasks by start date over the last 6 months' })}</Text>
+            <AreaChart
+              className="mt-5 h-72"
+              data={analytics.trendData}
+              index="month"
+              categories={['tareas']}
+              colors={['blue']}
+              yAxisWidth={42}
+            />
+          </Card>
+
+          <Card className="shadow-sm">
+            <Title>{t('task_report_owners', { defaultValue: 'Top responsible users' })}</Title>
+            <Text>{t('task_report_owners_desc', { defaultValue: 'Who owns most tasks in this filtered set' })}</Text>
+            <div className="mt-5">
+              {analytics.ownerRanking.length > 0 ? (
+                <BarList data={analytics.ownerRanking} />
+              ) : (
+                <Text>{t('task_report_no_owner_data', { defaultValue: 'No responsible users for the current filters.' })}</Text>
               )}
-            </Box>
+            </div>
 
-            <Box sx={graphicBoxStyles} padding="30px">
-              {taskCounts !== null && !Array.isArray(taskCounts.tasks) && (
-                <ReactECharts option={pieChart2} style={{ height: '300px', width: '100%' }} />
+            <Title className="mt-8">{t('Activities_by_tag', { defaultValue: 'Activities by tag' })}</Title>
+            <div className="mt-4">
+              {analytics.tagRanking.length > 0 ? (
+                <BarList data={analytics.tagRanking} />
+              ) : (
+                <Text>{t('task_report_no_tag_data', { defaultValue: 'No tags available for the current filters.' })}</Text>
               )}
-            </Box>
-          </Box>
+            </div>
+          </Card>
+        </Grid>
 
-          {/* Contenido embebido en lugar de "cambios" */}
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            width="100%"
-            sx={{ mt: 4 }}
-          >
-            {/*
-            <Box
-              className="shadow-lg rounded-2xl border border-gray-200"
-              sx={{
-                width: "90%",
-                height: "400px",
-                overflow: "hidden",
-              }}
-            >
-              <iframe
-                //src="https://www.slideteam.net/wp/wp-content/uploads/2025/07/8-Panel-de-estado-de-tareas-de-gestion-de-proyectos-presupuesto-y-prioridad.png"
-                
-                //src="https://amatiabi.sofactia.pro/superset/dashboard/22/?native_filters_key=qFJ5AJE3EX8iszWnyQzbjaJ52P5N4ueBgw37wpVQb_6goBfeDB0yL2aEwPeEDGed"
-                //src="https://amatiabi.sofactia.pro/superset/dashboard/22/?native_filters_key=aWMD_DMSv92FhBZGBfD4xi57uOu9GRXrRCYZvSca-QnhyRCbjswRm5zWV_ft7Rpb"
-                src="https://amatiabi.sofactia.pro/superset/dashboard/p/wx6Xp6WKkev/"
-                
-                title="Gráficos externos"
-                width="100%"
-                height="100%"
-                style={{ border: "none" }}
-                loading="lazy"
-              />
-            </Box>
-            */}
-          </Box>
-        </>
-      )}
+        <Card className="shadow-sm">
+          <Flex justifyContent="between" alignItems="center">
+            <div>
+              <Title>{t('task_report_key_tasks', { defaultValue: 'Key task listing' })}</Title>
+              <Text>{t('task_report_key_tasks_desc', { defaultValue: 'First tasks after applying the active filters and sort.' })}</Text>
+            </div>
+            <Badge color="blue">{t('task_report_completion', { defaultValue: 'Completion' })}: {analytics.completionRate}%</Badge>
+          </Flex>
+
+          <Table className="mt-5">
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>{t('task', { defaultValue: 'Task' })}</TableHeaderCell>
+                <TableHeaderCell>{t('executioner', { defaultValue: 'Responsible' })}</TableHeaderCell>
+                <TableHeaderCell>{t('tags', { defaultValue: 'Tags' })}</TableHeaderCell>
+                <TableHeaderCell>{t('status', { defaultValue: 'Status' })}</TableHeaderCell>
+                <TableHeaderCell>{t('progress', { defaultValue: 'Progress' })}</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tableRows.map((task) => {
+                const statusCode = task.task_status || '3';
+                const statusItem = statusMeta[statusCode] || FALLBACK_STATUS_META[statusCode];
+                const statusLabel = t(statusItem.key, { defaultValue: statusItem.label });
+                const firstResponsible = task.responsibles[0] || '-';
+
+                return (
+                  <TableRow key={task.id}>
+                    <TableCell>
+                      <div className="max-w-[430px]">
+                        <Text>{task.task_title || '-'}</Text>
+                        <Text className="mt-1 text-xs text-slate-500">
+                          {task.task_description || '-'}
+                        </Text>
+                      </div>
+                    </TableCell>
+                    <TableCell>{firstResponsible}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {task.tags.slice(0, 3).map((tag) => {
+                          const tagName = String(tag?.name || tag?.label || tag?.nb_tag || '').trim();
+                          if (!tagName) return null;
+                          return (
+                            <Badge key={`${task.id}-${tagName}`} color="cyan">
+                              {tagName}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge color={COLOR_BY_STATUS[statusCode] || 'slate'}>{statusLabel}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="w-24">
+                        <Text>{Math.round(task.progress)}%</Text>
+                        <ProgressBar value={Math.round(task.progress)} color="blue" className="mt-1" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+
+          {tableRows.length === 0 && (
+            <div className="py-8">
+              <Text>{t('task_report_empty', { defaultValue: 'No tasks available for the selected filters.' })}</Text>
+            </div>
+          )}
+        </Card>
+      </div>
     </Box>
   );
 }

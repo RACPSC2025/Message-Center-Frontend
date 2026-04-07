@@ -71,7 +71,7 @@ import DayTaskList from './DayTaskList';
 import TaskCalender from './TaskCalender';
 import TaskDetailsDrawer from './TaskDetailsDrawer';
 import TaskGroupList from './TaskGroupList';
-import TaskReport from './TaskReport';
+import TaskReportTremor from './TaskReportTremor';
 import TaskTableList from './TaskTableList';
 import TasksListView from './TasksListView';
 import UpcomingTaskList from './UpcomingTaskList';
@@ -99,6 +99,8 @@ export default function Component() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const dispatch = useDispatch();
+  const canCreateTask = useHasPermission('task', 'create_task');
+  const canCreateCycle = useHasPermission('task', 'create_cycle');
   const calendarContainerRef = useRef(null);
   const dateFormat = 'YYYY-MM-DD';
 
@@ -829,7 +831,7 @@ export default function Component() {
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
         {selectedView === 'report' ? (
-          <TaskReport />
+          <TaskReportTremor />
         ) : selectedView === 'calendar' ? (
           <Box className="w-full px-1 py-3 overflow-hidden">
             <div className="flex flex-col lg:flex-row gap-4">
@@ -892,7 +894,7 @@ export default function Component() {
             {/* SpeedDialComponent ubicado en Task.js (Boton Flotante) - Comentado temporalmente */}
             
             {/* Botones flotantes según permisos */}
-            {useHasPermission('task', 'create_task') && (
+            {canCreateTask && (
               <SpeedDialComponent
                 openSpeedDial={openSpeedDial}
                 handleCloseSpeedDial={() => setOpenSpeedDial(false)}
@@ -903,7 +905,7 @@ export default function Component() {
                 }}
               />
             )}
-            {useHasPermission('task', 'create_cycle') && (
+            {canCreateCycle && (
               <SpeedDialComponent
                 openSpeedDial={openSpeedDial}
                 handleCloseSpeedDial={() => setOpenSpeedDial(false)}
