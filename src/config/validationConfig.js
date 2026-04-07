@@ -10,9 +10,9 @@ export const REQUIRED_FIELDS_CONFIG = {
   create_date: true,
   real_closing_date: true,
   level_1: true,
-  level_2: true,
-  level_3: true,
-  level_4: true,
+  level_2: false,
+  level_3: false,
+  level_4: false,
   
   // Observación
   hs_process: true,

@@ -32,6 +32,7 @@ import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
 import ActionsReportTremos from './ActionsReportTremos';
+import { fetchActionLevelOptions } from './actionLevelService';
 
 const ActionsDetails = lazy(() => import('./ActionsDetails'));
 const ActionsComments = lazy(() => import('./ActionsComments'));
@@ -171,39 +172,12 @@ export function Component() {
     setOrganizationFilterState({});
   };
 
-  const getFormDataFromSelectedValues = (selectedValues) => {
-    const formData = new FormData();
-    Object.entries(selectedValues).forEach(([key, value]) => {
-      if (value) {
-        formData.append(`id_${key}`, value);
-      }
+  const fetchLevelData = (level, selectedValues = {}) =>
+    fetchActionLevelOptions({
+      dispatch,
+      level,
+      selectedValues
     });
-    return formData;
-  };
-
-  const fetchLevelData = (level, formData = null) => {
-    return new Promise((resolve, reject) => {
-      const payload = formData ? { level, formData } : { level };
-
-      dispatch(fetchActionListLevel(payload))
-        .then((response) => {
-          const apiResponse = response?.payload?.data;
-
-          if (apiResponse?.messages === 'Success' && Array.isArray(apiResponse?.data)) {
-            const levelOptions = apiResponse.data.map((item) => ({
-              value: item.value,
-              label: item.label
-            }));
-            resolve(levelOptions);
-          } else {
-            reject(new Error(`Failed to fetch level ${level} data`));
-          }
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
-  };
 
   const filterDefinitions = useMemo(() => {
     return [
@@ -215,29 +189,20 @@ export function Component() {
       {
         id: 'level2',
         label: 'Company',
-        fetchOptions: async (parentValues) => {
-          const formData = getFormDataFromSelectedValues(parentValues);
-          return fetchLevelData(2, formData);
-        }
+        fetchOptions: async (parentValues) => fetchLevelData(2, parentValues)
       },
       {
         id: 'level3',
         label: 'Region',
-        fetchOptions: async (parentValues) => {
-          const formData = getFormDataFromSelectedValues(parentValues);
-          return fetchLevelData(3, formData);
-        }
+        fetchOptions: async (parentValues) => fetchLevelData(3, parentValues)
       },
       {
         id: 'level4',
         label: 'Location',
-        fetchOptions: async (parentValues) => {
-          const formData = getFormDataFromSelectedValues(parentValues);
-          return fetchLevelData(4, formData);
-        }
+        fetchOptions: async (parentValues) => fetchLevelData(4, parentValues)
       }
     ];
-  }, []);
+  }, [dispatch]);
 
   const getInitialOrganizationValues = useMemo(() => {
     return {
@@ -503,7 +468,7 @@ export function Component() {
   const handleFetchFormFields = () => {
     dispatch(fetchActionFormFields()).then((data) => {
       if (data?.payload?.messages === 'Success') {
-        let rawFormFields = data?.payload?.data;
+        let rawFormFields = clone(data?.payload?.data || {});
         const tabItems = Object.keys(rawFormFields).map((fieldGroupKey) => ({
           key: convertString(fieldGroupKey),
           label: fieldGroupKey
@@ -512,10 +477,35 @@ export function Component() {
         rawFormFields = Object.keys(rawFormFields).reduce((acc, cur) => {
           const tabItem = tabItems.find((item) => item.label === cur);
           if (tabItem) {
-            acc[tabItem.key] = rawFormFields[tabItem.label];
+            acc[tabItem.key] = clone(rawFormFields[tabItem.label] || {});
           }
           return acc;
         }, {});
+
+        // Keep level requirement rules explicit in UI metadata.
+        ['level_2', 'level_3', 'level_4'].forEach((fieldID) => {
+          const groupKey = Object.keys(rawFormFields).find((group) =>
+            Object.prototype.hasOwnProperty.call(rawFormFields[group] || {}, fieldID)
+          );
+
+          if (groupKey && rawFormFields[groupKey]?.[fieldID]) {
+            rawFormFields[groupKey][fieldID] = {
+              ...rawFormFields[groupKey][fieldID],
+              required: false
+            };
+          }
+        });
+
+        const level1GroupKey = Object.keys(rawFormFields).find((group) =>
+          Object.prototype.hasOwnProperty.call(rawFormFields[group] || {}, 'level_1')
+        );
+
+        if (level1GroupKey && rawFormFields[level1GroupKey]?.level_1) {
+          rawFormFields[level1GroupKey].level_1 = {
+            ...rawFormFields[level1GroupKey].level_1,
+            required: true
+          };
+        }
 
         setFormTabItems(tabItems);
         setFormFields(rawFormFields);

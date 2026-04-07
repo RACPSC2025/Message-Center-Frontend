@@ -8,6 +8,7 @@ import { getActionDetails } from '../../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../../stores/actions/submitActionFormSlice';
 import { showErrorMsg, showSuccessMsg } from '../../utils/others';
 import UnsavedChangesDialog from '../../components/UnsavedChangesDialog';
+import { fetchActionLevelOptions } from './actionLevelService';
 
 const ActionsDetails = lazy(() => import('./ActionsDetails'));
 const ActionsComments = lazy(() => import('./ActionsComments'));
@@ -92,6 +93,16 @@ export default function ActionsDrawer({
     }, []);
   };
 
+  const getFieldById = (fieldID) => {
+    const formFieldGroups = Object.keys(formFields);
+    for (const group of formFieldGroups) {
+      if (formFields[group]?.[fieldID]) {
+        return formFields[group][fieldID];
+      }
+    }
+    return null;
+  };
+
   const getFormFieldGroup = (fieldID) => {
     const formFieldGroups = Object.keys(formFields);
     const group = formFieldGroups.find((fieldGroup) => {
@@ -101,21 +112,99 @@ export default function ActionsDrawer({
     return group;
   };
 
-  const checkDependentFields = (id, value) => {
+  const setFieldOptions = (fieldID, options) => {
+    const group = getFormFieldGroup(fieldID);
+    if (!group) return;
+
+    setFormFields((prevFields) => {
+      const field = prevFields?.[group]?.[fieldID];
+      if (!field) return prevFields;
+
+      return {
+        ...prevFields,
+        [group]: {
+          ...prevFields[group],
+          [fieldID]: {
+            ...field,
+            options,
+            api_details: {}
+          }
+        }
+      };
+    });
+  };
+
+  const loadLevelOptions = async (level, selectedValues, targetFieldID) => {
+    try {
+      const options = await fetchActionLevelOptions({
+        dispatch,
+        level,
+        selectedValues
+      });
+      setFieldOptions(targetFieldID, options);
+    } catch (error) {
+      setFieldOptions(targetFieldID, []);
+    }
+  };
+
+  const loadDependentLevelOptions = (changedFieldID, formModel) => {
+    if (changedFieldID === 'level_1') {
+      if (!formModel?.level_1) {
+        setFieldOptions('level_2', []);
+        setFieldOptions('level_3', []);
+        setFieldOptions('level_4', []);
+        return;
+      }
+      loadLevelOptions(2, { level_1: formModel.level_1 }, 'level_2');
+      setFieldOptions('level_3', []);
+      setFieldOptions('level_4', []);
+    }
+
+    if (changedFieldID === 'level_2') {
+      if (!formModel?.level_2) {
+        setFieldOptions('level_3', []);
+        setFieldOptions('level_4', []);
+        return;
+      }
+      loadLevelOptions(3, { level_1: formModel?.level_1, level_2: formModel.level_2 }, 'level_3');
+      setFieldOptions('level_4', []);
+    }
+
+    if (changedFieldID === 'level_3') {
+      if (!formModel?.level_3) {
+        setFieldOptions('level_4', []);
+        return;
+      }
+      loadLevelOptions(
+        4,
+        {
+          level_1: formModel?.level_1,
+          level_2: formModel?.level_2,
+          level_3: formModel.level_3
+        },
+        'level_4'
+      );
+    }
+  };
+
+  const checkDependentFields = (id, value, nextFormModel) => {
+    let updatedFormModel = { ...nextFormModel };
     const findFormField = (id) => flattenFormFields().find((field) => field.name === id);
 
     const formField = findFormField(id);
     const { dependent = [] } = formField || {};
 
     if (dependent.length) {
+      dependent.forEach((dependentID) => {
+        updatedFormModel[dependentID] = null;
+      });
+
       const [firstDependentID] = dependent;
-      //Clear the next dependent field
-      handleUpdateModel(firstDependentID, null);
 
       //Also update API details for dependent field
       const dependentFieldDetails = findFormField(firstDependentID);
       const updatedDependentFieldDetails = getUpdatedCascadingDropdownField(dependentFieldDetails, {
-        ...actionFormModel,
+        ...updatedFormModel,
         [id]: value
       });
 
@@ -129,14 +218,20 @@ export default function ActionsDrawer({
         [dependentFieldGroup]: updatedDependentFieldGroup
       }));
     }
+
+    loadDependentLevelOptions(id, updatedFormModel);
+    return updatedFormModel;
   };
 
   const handleUpdateModel = (id, value) => {
-    setActionFormModel((prevFormModel) => ({
-      ...prevFormModel,
-      [id]: value
-    }));
-    checkDependentFields(id, value);
+    setActionFormModel((prevFormModel) => {
+      const nextFormModel = {
+        ...prevFormModel,
+        [id]: value
+      };
+
+      return checkDependentFields(id, value, nextFormModel);
+    });
   };
 
   const getUpdatedCascadingDropdownField = (field, formModel) => {
@@ -218,6 +313,43 @@ export default function ActionsDrawer({
       handleGetActionDetails(formData);
     }
   }, [selectedAction]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    if (!getFieldById('level_1')) return;
+
+    loadLevelOptions(1, {}, 'level_1');
+
+    if (actionFormModel?.level_1) {
+      loadLevelOptions(2, { level_1: actionFormModel.level_1 }, 'level_2');
+    }
+
+    if (actionFormModel?.level_2) {
+      loadLevelOptions(
+        3,
+        { level_1: actionFormModel?.level_1, level_2: actionFormModel.level_2 },
+        'level_3'
+      );
+    }
+
+    if (actionFormModel?.level_3) {
+      loadLevelOptions(
+        4,
+        {
+          level_1: actionFormModel?.level_1,
+          level_2: actionFormModel?.level_2,
+          level_3: actionFormModel.level_3
+        },
+        'level_4'
+      );
+    }
+  }, [
+    drawerOpen,
+    selectedAction?.id,
+    actionFormModel?.level_1,
+    actionFormModel?.level_2,
+    actionFormModel?.level_3
+  ]);
 
   return (
     <Drawer
