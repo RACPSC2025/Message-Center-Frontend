@@ -1,4 +1,4 @@
-import { Add, Close, CheckCircle } from '@mui/icons-material';
+import { Add, CheckCircle, Insights, TableRows } from '@mui/icons-material';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppBar,
@@ -31,6 +31,7 @@ import { removeFilter, selectAppliedFilterModel, selectListOptions, setFilter } 
 import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
+import ActionsReportTremos from './ActionsReportTremos';
 
 const ActionsDetails = lazy(() => import('./ActionsDetails'));
 const ActionsComments = lazy(() => import('./ActionsComments'));
@@ -58,6 +59,7 @@ export function Component() {
   const [initialCommentTab, setInitialCommentTab] = useState('list'); // Nuevo estado
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [organizationFilterState, setOrganizationFilterState] = useState({});
+  const [selectedView, setSelectedView] = useState('table');
 
   const filterData = useAppliedFilterModel('actions');
 
@@ -656,15 +658,40 @@ export function Component() {
           </Box>
         </Box>
         <Box sx={{ flexGrow: 1, minHeight: 0, px: 1 }}>
-          <ActionTable
-            actions={filteredActions}
-            actionStatus={actionStatus}
-            columnConfig={tableColumnConfig}
-            isFetching={actionListLoading}
-            onClickTableAction={handleClickTableActionButton}
-            newActionByUser={newActionByDescription}
-            onRefreshData={handleFetchActionList}
-          />
+          <Box sx={{ mb: 1, px: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Button
+              variant={selectedView === 'table' ? 'contained' : 'outlined'}
+              size="small"
+              startIcon={<TableRows fontSize="small" />}
+              onClick={() => setSelectedView('table')}
+              sx={{ textTransform: 'none', borderRadius: '8px' }}
+            >
+              {t('table', { defaultValue: 'Tabla' })}
+            </Button>
+            <Button
+              variant={selectedView === 'report' ? 'contained' : 'outlined'}
+              size="small"
+              startIcon={<Insights fontSize="small" />}
+              onClick={() => setSelectedView('report')}
+              sx={{ textTransform: 'none', borderRadius: '8px' }}
+            >
+              {t('report', { defaultValue: 'Reporte' })}
+            </Button>
+          </Box>
+
+          {selectedView === 'report' ? (
+            <ActionsReportTremos actions={filteredActions} isLoading={actionListLoading} />
+          ) : (
+            <ActionTable
+              actions={filteredActions}
+              actionStatus={actionStatus}
+              columnConfig={tableColumnConfig}
+              isFetching={actionListLoading}
+              onClickTableAction={handleClickTableActionButton}
+              newActionByUser={newActionByDescription}
+              onRefreshData={handleFetchActionList}
+            />
+          )}
         </Box>
       </Box>
 
