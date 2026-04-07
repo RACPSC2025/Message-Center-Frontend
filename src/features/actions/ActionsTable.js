@@ -50,7 +50,7 @@ export default function ActionTable({
   const [globalEditMode, setGlobalEditMode] = useState({
     enabled: false,
     actionId: null,
-    editableFields: ['action_status', 'responsible_person_name', 'reviewer_person_name', 'action_closing_date', 'action_real_closing_date', 'action_start_date', 'module_string_id']
+    editableFields: ['action_status', 'what_description']
   });
 
   // Estado para acumular cambios pendientes por acción
@@ -317,7 +317,7 @@ export default function ActionTable({
   const processPendingChanges = async (actionId) => {
     const changes = pendingChanges[actionId];
     if (!changes || Object.keys(changes).length === 0) {
-      //console.log('[API] No hay cambios pendientes para la acción:', actionId);
+      console.log('[API] No hay cambios pendientes para la acción:', actionId);
       return;
     }
 
@@ -326,7 +326,7 @@ export default function ActionTable({
       ...changes
     };
 
-    //console.log('[API] Enviando actualización al endpoint:', apiPayload);
+    console.log('[API] Enviando actualización al endpoint:', apiPayload);
     
     try {
       // Despachar la acción de Redux para actualizar
@@ -368,23 +368,17 @@ export default function ActionTable({
     setEditingStatusCell(null);
   };
 
-  // Manejar el cambio de administrador
-  const handleAdminChange = (actionId, field, newAdminValue) => {
-    // Buscar el label del administrador seleccionado
-    const selectedAdmin = administradores.find(a => a.value === newAdminValue);
-    const finalValue = selectedAdmin ? selectedAdmin.label : newAdminValue;
-    
-    // Acumular cambio pendiente
-    addPendingChange(actionId, field, finalValue);
-    
-    const updatedData = editableActions.map((row) =>
-      row.action_id === actionId ? { ...row, [field]: finalValue } : row
+  // Manejar el cambio de descripción
+  const handleDescriptionChange = useCallback((actionId, newDescriptionValue) => {
+    addPendingChange(actionId, 'what_description', newDescriptionValue);
+    setEditableActions(prev => 
+      prev.map(row => 
+        row.action_id === actionId 
+          ? { ...row, what_description: newDescriptionValue } 
+          : row
+      )
     );
-    setEditableActions(updatedData);
-    setEditingAdminCell(null);
-    
-    //console.log('[API] Administrador actualizado localmente:', { actionId, field, newAdmin: finalValue });
-  };
+  }, []);
 
   // Manejar el cambio de fecha
   const handleDateChange = (actionId, field, newDateValue) => {
@@ -801,6 +795,42 @@ export default function ActionTable({
         );
       
       default:
+        // VERIFICAR SI ES CAMPO WHAT_DESCRIPTION PARA EDICIÓN
+        if (field === 'what_description') {
+          // VERIFICACIÓN DE MODO GLOBAL
+          const isGloballyEditing = globalEditMode.enabled && 
+                                 globalEditMode.actionId === data.action_id &&
+                                 globalEditMode.editableFields.includes('what_description');
+          const isEditing = isGloballyEditing;
+
+          return (
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center' }}>
+              {isEditing ? (
+                <TextField
+                  value={value || ''}
+                  onChange={(e) => handleDescriptionChange(data.action_id, e.target.value)}
+                  size="small"
+                  sx={{ flex: 1 }}
+                  multiline
+                  maxRows={3}
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <Box sx={{ 
+                  flex: 1, 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis', 
+                  whiteSpace: 'nowrap',
+                  px: 1
+                }}>
+                  {value || '-'}
+                </Box>
+              )}
+            </Box>
+          );
+        }
+        
         // CELDA DE TEXTO ESTÁNDAR
         return value;
     }
