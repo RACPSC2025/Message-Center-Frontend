@@ -320,16 +320,26 @@ export function Component() {
   };
 
   const handleSubmitActionData = () => {
-    if (isObject(selectedAction) || shouldCreateNewAction) {
-      const { action_id = '' } = selectedAction || {};
-      const formData = {
-        ...actionFormModel,
-        action_id,
-        action_source: actionFormModel?.action_source || 'hs_action'
-      };
+    const level1Value =
+      actionFormModel?.level_1
+      || actionFormModel?.id_region
+      || actionFormModel?.id_level1
+      || '';
 
-      handleActionForm(formData);
+    if (!String(level1Value).trim()) {
+      showErrorMsg(t('level1_required', { defaultValue: 'Level 1 is required' }));
+      return;
     }
+
+    const { action_id = '' } = selectedAction || {};
+    const formData = {
+      ...actionFormModel,
+      action_id,
+      level_1: actionFormModel?.level_1 || actionFormModel?.id_region || '',
+      action_source: actionFormModel?.action_source || selectedAction?.action_table || 'hs_action'
+    };
+
+    handleActionForm(formData);
   };
 
   const handleUpdateModel = (id, value) => {

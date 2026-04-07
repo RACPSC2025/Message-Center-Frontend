@@ -171,6 +171,12 @@ Implementacion frontend:
 
 - src/features/actions/Actions.js envia action_source con default hs_action
 - src/stores/actions/submitActionFormSlice.js refuerza action_source=hs_action cuando el payload no lo trae
+- src/stores/actions/submitActionFormSlice.js normaliza aliases de payload para evitar desalineaciones con el contrato PHP:
+  - `module_string_id`/`action_table` -> `action_source`
+  - `reviewer_person` -> `reviewer_person_id`
+  - `responsibe_person`/`responsible_person` -> `responsible_person_id` (all_action_plan)
+  - `id_region`/`id_planta`/`level3`/`level4` -> `level_1`/`level_2`/`level_3`/`level_4`
+  - `hs_cause` -> `hs_causes`
 
 Referencia completa del contrato:
 

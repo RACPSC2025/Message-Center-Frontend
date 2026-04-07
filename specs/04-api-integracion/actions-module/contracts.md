@@ -19,6 +19,12 @@ Para creacion/submit de acciones en frontend:
 
 - Enviar action_source con valor por defecto hs_action cuando no venga definido
 - No depender de module_string_id para seleccionar la fuente
+- Normalizar aliases de campos antes del submit (en `submitActionFormSlice`):
+  - `module_string_id` / `action_table` -> `action_source`
+  - `reviewer_person` -> `reviewer_person_id`
+  - `responsibe_person` / `responsible_person` -> `responsible_person_id` (cuando aplica)
+  - `id_region` / `id_planta` / `level3` / `level4` -> `level_1` / `level_2` / `level_3` / `level_4`
+  - `hs_cause` -> `hs_causes`
 
 ### Request JSON (ejemplo hs_action)
 
@@ -86,4 +92,6 @@ Para creacion/submit de acciones en frontend:
 ### Estado de implementacion frontend
 
 - src/features/actions/Actions.js define action_source = hs_action por defecto al enviar submit
-- src/stores/actions/submitActionFormSlice.js refuerza action_source = hs_action si no viene en payload
+- src/features/actions/ActionsDrawer.js envia `action_source` (no `module_string_id`) al submit
+- src/features/MessageCenterActions.js envia `action_source` (no `module_string_id`) al submit
+- src/stores/actions/submitActionFormSlice.js refuerza `action_source = hs_action` y normaliza aliases de payload para compatibilidad con respuesta de detalle/formulario

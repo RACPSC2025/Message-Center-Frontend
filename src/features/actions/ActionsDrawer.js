@@ -202,11 +202,13 @@ export default function ActionsDrawer({
   };
 
   const handleSubmitActionData = () => {
-    if (isObject(selectedAction) || shouldCreateNewAction) {
-      const { action_id = '', action_table: module_string_id = 'hs_action' } = selectedAction || {};
-      const formData = { ...actionFormModel, action_id, module_string_id };
-      handleActionForm(formData);
-    }
+    const { action_id = '', action_table = 'hs_action' } = selectedAction || {};
+    const formData = {
+      ...actionFormModel,
+      action_id,
+      action_source: actionFormModel?.action_source || action_table || 'hs_action'
+    };
+    handleActionForm(formData);
   };
 
   useEffect(() => {

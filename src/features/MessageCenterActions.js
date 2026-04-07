@@ -293,11 +293,25 @@ export function Component() {
   };
 
   const handleSubmitActionData = () => {
-    if (isObject(selectedAction) || shouldCreateNewAction) {
-      const { action_id = '', action_table: module_string_id = 'hs_action' } = selectedAction || {};
-      const formData = { ...actionFormModel, action_id, module_string_id };
-      handleActionForm(formData);
+    const level1Value =
+      actionFormModel?.level_1
+      || actionFormModel?.id_region
+      || actionFormModel?.id_level1
+      || '';
+
+    if (!String(level1Value).trim()) {
+      showErrorMsg(t('level1_required', { defaultValue: 'Level 1 is required' }));
+      return;
     }
+
+    const { action_id = '', action_table = 'hs_action' } = selectedAction || {};
+    const formData = {
+      ...actionFormModel,
+      action_id,
+      level_1: actionFormModel?.level_1 || actionFormModel?.id_region || '',
+      action_source: actionFormModel?.action_source || action_table || 'hs_action'
+    };
+    handleActionForm(formData);
   };
 
   const handleUpdateModel = (id, value) => {
