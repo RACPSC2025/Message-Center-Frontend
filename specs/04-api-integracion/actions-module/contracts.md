@@ -13,18 +13,43 @@
 - Si action_source no llega, el backend usa hs_action por defecto
 - module_string_id no define la tabla destino en este endpoint
 
-### Regla de frontend
 
-Para creacion/submit de acciones en frontend:
+### Reglas de frontend y validación (2024-06)
 
-- Enviar action_source con valor por defecto hs_action cuando no venga definido
-- No depender de module_string_id para seleccionar la fuente
-- Normalizar aliases de campos antes del submit (en `submitActionFormSlice`):
+#### 1. Validación de niveles (level_1 requerido, los demás opcionales)
+
+- Solo `level_1` es obligatorio en el formulario de acciones. `level_2`, `level_3` y `level_4` son opcionales y solo se muestran si existen opciones para el nivel anterior.
+- Esta validación está centralizada en `src/config/validationConfig.js` bajo `REQUIRED_FIELDS_CONFIG`.
+
+#### 2. Lógica unificada de niveles (filtros y formulario)
+
+- Tanto los filtros como el formulario usan la misma lógica y endpoints para obtener opciones de niveles:
+  - Endpoints: `/message_center_api/Action_api/list_level1`, `/list_level2`, `/list_level3`, `/list_level4` (POST)
+  - Lógica compartida en `src/features/actions/actionLevelService.js` (funciones `buildActionLevelsFormData` y `fetchActionLevelOptions`).
+- Se utiliza deep clone (`radash/clone`) antes de mutar el modelo de formulario para evitar errores de mutación sobre objetos readonly.
+- El estado de selección de niveles se actualiza de forma atómica para evitar pérdida de selección al cambiar valores rápidamente.
+
+#### 3. Normalización de payload antes de submit
+
+- Antes de enviar el formulario, los campos se normalizan en `submitActionFormSlice.js`:
   - `module_string_id` / `action_table` -> `action_source`
   - `reviewer_person` -> `reviewer_person_id`
   - `responsibe_person` / `responsible_person` -> `responsible_person_id` (cuando aplica)
   - `id_region` / `id_planta` / `level3` / `level4` -> `level_1` / `level_2` / `level_3` / `level_4`
   - `hs_cause` -> `hs_causes`
+
+#### 4. Fixes recientes y referencias
+
+- Se corrigió un error de mutación de estado ("Cannot assign to read only property 'level_2'") usando deep clone antes de mutar el modelo de formulario.
+- Se corrigió la pérdida de selección de niveles haciendo la actualización de estado atómica en el formulario.
+- Tanto los filtros como el formulario usan la misma fuente de datos y lógica para niveles, garantizando consistencia.
+
+Referencias de implementación:
+- `src/features/actions/Actions.js` (toggle table/report, lógica de filtros y submit, deep clone)
+- `src/features/actions/ActionsDrawer.js` (formulario, fixes de selección y deep clone)
+- `src/features/actions/actionLevelService.js` (lógica unificada de niveles)
+- `src/config/validationConfig.js` (solo level_1 requerido)
+- `src/stores/actions/submitActionFormSlice.js` (normalización de payload)
 
 ### Request JSON (ejemplo hs_action)
 

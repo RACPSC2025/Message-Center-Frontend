@@ -47,4 +47,4 @@ La carpeta specs no hace parte del bundle de React en produccion. El build toma 
 ## Reportes funcionales
 
 - reports/tasks-report-dashboard.md: contrato funcional del dashboard de tareas (vista report).
-- reports/actions-report-dashboard.md: contrato funcional del dashboard de acciones (vista report), incluyendo fuente de datos y catalogo de estados.
+- reports/actions-report-dashboard.md: contrato funcional del dashboard de acciones (vista report), incluyendo fuente de datos, catalogo de estados, consistencia table/report y reglas de niveles/validacion relacionadas.

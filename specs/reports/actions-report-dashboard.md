@@ -75,6 +75,19 @@ Fallback solamente si no existe catalogo en configuracion:
 
 - El segmento superior de titulo/filtros del dashboard usa `showHeaderFilters` y por defecto esta en `false`.
 - El cambio de vista `table/report` se maneja en `Actions.js` con tabs visuales alineados a la barra de filtros.
+- El toggle `table/report` replica el comportamiento visual del modulo Tasks para mantener consistencia UX entre modulos.
+
+## Consistencia de filtros y niveles
+
+- El dashboard y la tabla consumen exactamente el mismo dataset (`filteredActions`) luego de aplicar filtros activos.
+- Los filtros de niveles (`id_level1..id_level4`) y el formulario de creacion/edicion usan la misma logica de carga de opciones (`actionLevelService.js`) y los mismos endpoints `Action_api/list_level{1..4}`.
+- Solo `level_1` es obligatorio en el formulario; `level_2..level_4` son opcionales.
+
+## Notas de robustez recientes
+
+- Se aplico deep clone del modelo/campos de formulario antes de mutaciones para evitar errores runtime por objetos readonly.
+- Se ajusto la actualizacion de estado de niveles para que sea atomica y no pierda la seleccion del usuario.
+- Se corrigio el flujo de submit para evitar referencias a variables no definidas durante guardado.
 
 ## Relacion con la vista de tabla
 

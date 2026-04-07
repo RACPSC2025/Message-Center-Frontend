@@ -136,6 +136,8 @@ Reglas:
 - Los filtros en actions se persisten como id_level1..id_level4 (id_level5 si aplica por configuracion futura).
 - En actions, los filtros de nivel se aplican en frontend sobre la data ya cargada en tabla.
 - Por esta razon, id_level1..id_level4 no se envian en el request de get_actions_amatia_express.
+- La carga de opciones de niveles para filtros y formulario se centraliza en una logica compartida (`actionLevelService.js`) para mantener consistencia.
+- En el formulario de actions, solo `level_1` es obligatorio; `level_2..level_4` son opcionales (config centralizada en `validationConfig.js`).
 
 ## Contrato de tabla de actions (actualizado)
 
