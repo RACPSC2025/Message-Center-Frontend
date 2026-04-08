@@ -243,7 +243,8 @@ function MessageCenterCardItem({
                 color: blue[800],
                 fontWeight: 600,
                 lineHeight: 1.4,
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                marginRight: '10px',
               }}
             >
               {moduleLabel}
