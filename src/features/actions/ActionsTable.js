@@ -306,7 +306,7 @@ export default function ActionTable({
           column_type: column_type,
           ...restColumnConfig,
           width: 170, // ✅ Ancho fijo
-          editable: true,
+          editable: false,
           cellRenderer: (params) => {
             return getTableDefaultCellRenderer(params); // 📍 RENDERIZA CELDA DE ESTADO EDITABLE
           },
@@ -645,7 +645,7 @@ export default function ActionTable({
     const { data, value, colDef } = params;
     const field = colDef.field;
     
-    // VERIFICACIÓN DE MODO GLOBAL - Nueva funcionalidad
+    // VERIFICACIÓN DE MODO GLOBAL
     const isGloballyEditing = globalEditMode.enabled && 
                            globalEditMode.actionId === data.action_id &&
                            globalEditMode.editableFields.includes(field);
@@ -768,7 +768,7 @@ export default function ActionTable({
 
     switch (column_type) {
       case COLUMN_TYPES.DATE:
-        // CELDA DE FECHA ESTÁNDAR (no editable)
+        // CELDA DE FECHA ESTÁNDAR 
         return !value ? '-' : formatDayjs(value, 'DD MMMM YYYY');
       
       case COLUMN_TYPES.ID_WITH_STATUS: {
@@ -796,7 +796,7 @@ export default function ActionTable({
         const statusInfo = actionStatus[value] || {};
         const { color_code, label } = statusInfo;
         
-        // VERIFICACIÓN DE MODO GLOBAL - Nueva funcionalidad
+        // VERIFICACIÓN DE MODO GLOBAL
         const isGloballyEditing = globalEditMode.enabled && 
                                globalEditMode.actionId === data.action_id &&
                                globalEditMode.editableFields.includes(field);
