@@ -31,7 +31,10 @@ export default function ActionsDrawer({
   // Estados para el diálogo de confirmación de cambios sin guardar
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
   const [pendingCloseAction, setPendingCloseAction] = useState(null);
-
+  
+  // Estado para detectar cambios en el formulario de comentarios
+  const [hasCommentFormChanges, setHasCommentFormChanges] = useState(false);
+  
   // Manejadores para el diálogo de cambios sin guardar
   const handleConfirmExitWithoutSave = () => {
     if (pendingCloseAction) {
@@ -50,12 +53,9 @@ export default function ActionsDrawer({
   const handleCloseDrawerWithConfirmation = (hasUnsavedChanges = false) => {
     if (hasUnsavedChanges) {
       setShowUnsavedChangesDialog(true);
-      setPendingCloseAction(() => () => {
-        handleCloseDrawer();
-      });
-    } else {
-      handleCloseDrawer();
-    }
+      setPendingCloseAction(() => () => { handleCloseDrawer(); }); // () => impide que el dialogo se cierre de repente
+    } 
+    else handleCloseDrawer();
   };
 
   const drawerStyleAttrs = {
@@ -314,6 +314,13 @@ export default function ActionsDrawer({
     }
   }, [selectedAction]);
 
+  // Resetear el estado de cambios cuando se abre el drawer
+  useEffect(() => {
+    if (drawerOpen) {
+      setHasCommentFormChanges(false);
+    }
+  }, [drawerOpen]);
+
   useEffect(() => {
     if (!drawerOpen) return;
     if (!getFieldById('level_1')) return;
@@ -355,7 +362,7 @@ export default function ActionsDrawer({
     <Drawer
       anchor="right"
       open={drawerOpen}
-      onClose={handleCloseDrawerWithConfirmation}
+      onClose={() => handleCloseDrawerWithConfirmation(hasCommentFormChanges)}
       PaperProps={drawerStyleAttrs[viewType] || {}}
     >
       <AppBar position="static">
@@ -363,14 +370,18 @@ export default function ActionsDrawer({
           <Typography color="white" variant="h5" sx={{ flexGrow: 1 }}>
             {t(drawerTitle)}
           </Typography>
-          <IconButton edge="end" onClick={handleCloseDrawerWithConfirmation} aria-label="close">
+          <IconButton edge="end" onClick={() => handleCloseDrawerWithConfirmation(hasCommentFormChanges)} aria-label="close">
             <Close sx={{ color: 'white' }} />
           </IconButton>
         </Toolbar>
       </AppBar>
       <Suspense fallback={<div>{t('loading')}</div>}>
         {viewType === 'view_comment' ? (
-          <ActionsComments actionDetails={selectedAction} />
+          <ActionsComments 
+            actionDetails={selectedAction}
+            onFormChange={setHasCommentFormChanges}
+            onRefreshTable={handleFetchActionList}
+          />
         ) : viewType === 'view_action' ? (
           <ActionsDetails
             isFetching={actionDetailsLoading}
@@ -379,7 +390,7 @@ export default function ActionsDrawer({
             formModel={actionFormModel}
             onUpdateModel={handleUpdateModel}
             onSubmit={handleSubmitActionData}
-            onCancel={handleCloseDrawerWithConfirmation}
+            onCancel={() => handleCloseDrawerWithConfirmation(false)}
           />
         ) : (
           ''

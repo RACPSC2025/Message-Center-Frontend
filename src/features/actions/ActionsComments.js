@@ -14,7 +14,8 @@ import { showSuccessMsg } from '../../utils/others';
 export default function ActionsComments({ 
   actionDetails = {}, 
   defaultTab = 'list', 
-  onRefreshTable // Callback para actualizar tabla
+  onRefreshTable, // Callback para actualizar tabla
+  onFormChange // Callback para notificar cambios en el formulario
 }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -29,7 +30,16 @@ export default function ActionsComments({
     comment: initialComment, 
     comment_id: null, 
     progress: initialProgress, 
-    status: initialStatus 
+    status: initialStatus,
+    filePicker: null
+  });
+  
+  // Guardar valores iniciales para detectar cambios
+  const [initialFormValues, setInitialFormValues] = useState({
+    comment: initialComment,
+    status: initialStatus,
+    progress: initialProgress,
+    filePicker: null
   });
 
   // Obtener la lista de estados desde el store de filtros
@@ -47,10 +57,7 @@ export default function ActionsComments({
   const actionComments = actionCommentsData?.data || [];
 
   const handleFetchActionComments = ({ action_id, action_table }) => {
-    console.log('[DEBUG] Haciendo fetch con datos (ID acción): ', action_id);
-    // dispatch(fetchActionComments({ action_id, action_table }));
     dispatch(fetchActionComments({ action_id }));
-    console.log('[DEBUG] Comentarios de acción (actionComments)', actionComments)
   };
 
   const handleAddEditComments = (payload, resetFormFields) => {
@@ -60,10 +67,11 @@ export default function ActionsComments({
         resetFormFields();
         setActiveTab('list');
         
+        // Resetear estado de cambios al guardar exitosamente
+        if (onFormChange) onFormChange(false);
+        
         // Llamar al callback para actualizar la tabla
-        if (onRefreshTable) {
-          onRefreshTable();
-        }
+        if (onRefreshTable) onRefreshTable();
       }
     });
   };
@@ -89,7 +97,9 @@ export default function ActionsComments({
     const resetProgress = defaultTab === 'form' ? 100 : 0;
     const resetStatus = defaultTab === 'form' ? 'closed' : 'open';
     const resetComment = defaultTab === 'form' ? 'Cerrar acción: ' : '';
-    setCommentModel({ comment: resetComment, comment_id: null, progress: resetProgress, status: resetStatus });
+    setCommentModel({ comment: resetComment, comment_id: null, progress: resetProgress, status: resetStatus, filePicker: null });
+    // Resetear estado de cambios al cancelar
+    if (onFormChange) onFormChange(false);
   };
 
   const handleClickCommentEdit = (commentObj) => {
@@ -97,7 +107,7 @@ export default function ActionsComments({
     // Al editar un comentario, mantener los valores según el contexto
     const editProgress = defaultTab === 'form' ? 100 : 0;
     const editStatus = defaultTab === 'form' ? 'closed' : 'open';
-    setCommentModel({ comment, comment_id, progress: editProgress, status: editStatus });
+    setCommentModel({ comment, comment_id, progress: editProgress, status: editStatus, filePicker: null });
     setActiveTab('form');
   };
 
@@ -151,7 +161,6 @@ export default function ActionsComments({
   ];
 
   useEffect(() => {
-    // eliminar la actionDetails?.action_table
     if (activeTab === 'list' && actionDetails?.action_id && actionDetails?.action_table) {
       handleFetchActionComments({
         action_id: actionDetails?.action_id,
@@ -160,24 +169,45 @@ export default function ActionsComments({
     }
   }, [activeTab, actionDetails]); // Modificar para que solo sea por el cambio del id
 
+  // Detectar cambios en el formulario y notificar al padre
+  useEffect(() => {
+    if (activeTab === 'form' && onFormChange) {
+      const hasChanges = 
+        commentModel.comment !== initialFormValues.comment ||
+        commentModel.status !== initialFormValues.status ||
+        commentModel.progress !== initialFormValues.progress ||
+        commentModel.filePicker !== initialFormValues.filePicker;
+      
+      onFormChange(hasChanges);
+    }
+  }, [commentModel, initialFormValues, activeTab, onFormChange]);
+
+  // Resetear valores iniciales cuando cambia la acción o el tab por defecto
+  useEffect(() => {
+    const newInitialValues = {
+      comment: defaultTab === 'form' ? 'Cerrar acción: ' : '',
+      status: defaultTab === 'form' ? 'closed' : 'open',
+      progress: defaultTab === 'form' ? 100 : 0,
+      filePicker: null
+    };
+    setInitialFormValues(newInitialValues);
+    // Notificar que no hay cambios al resetear
+    if (onFormChange) onFormChange(false);
+    
+  }, [actionDetails?.action_id, defaultTab, onFormChange]);
+
   // Hacer focus en el textarea 
   useEffect(() => {
     if (activeTab === 'form') {
       // Pequeño delay para asegurar que el componente esté renderizado
       setTimeout(() => {
-        // Intentar encontrar el textarea por su ID o selector
-        const textarea = document.querySelector('textarea[name="comment"]') || 
-                       document.querySelector('textarea[placeholder*="comment"]') ||
-                       document.querySelector('textarea');
+        const $textarea = document.querySelector('textarea');
         
-        if (textarea) {
-          textarea.focus();
+        if ($textarea) {
+          $textarea.focus();
           // Mover cursor al final del texto
-          const length = textarea.value.length;
-          textarea.setSelectionRange(length, length);
-          console.log('[DEBUG] Focus aplicado al textarea');
-        } else {
-          console.log('[DEBUG] No se encontró el textarea');
+          const length = $textarea.value.length;
+          $textarea.setSelectionRange(length, length);
         }
       }, 200);
     }
@@ -255,6 +285,9 @@ export default function ActionsComments({
               }
             ]}
             initialValues={commentModel}
+            onChange={(newValues) => {
+              setCommentModel(prev => ({ ...prev, ...newValues }));
+            }}
             isLoading={editActionCommentsLoading}
             successCallback={handleFormSuccess}
             cancelCallback={handleFormCancel}
