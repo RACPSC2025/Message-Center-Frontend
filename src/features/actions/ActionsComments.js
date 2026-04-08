@@ -30,14 +30,16 @@ export default function ActionsComments({
     comment: initialComment, 
     comment_id: null, 
     progress: initialProgress, 
-    status: initialStatus 
+    status: initialStatus,
+    filePicker: null
   });
   
   // Guardar valores iniciales para detectar cambios
   const [initialFormValues, setInitialFormValues] = useState({
     comment: initialComment,
     status: initialStatus,
-    progress: initialProgress
+    progress: initialProgress,
+    filePicker: null
   });
 
   // Obtener la lista de estados desde el store de filtros
@@ -100,7 +102,7 @@ export default function ActionsComments({
     const resetProgress = defaultTab === 'form' ? 100 : 0;
     const resetStatus = defaultTab === 'form' ? 'closed' : 'open';
     const resetComment = defaultTab === 'form' ? 'Cerrar acción: ' : '';
-    setCommentModel({ comment: resetComment, comment_id: null, progress: resetProgress, status: resetStatus });
+    setCommentModel({ comment: resetComment, comment_id: null, progress: resetProgress, status: resetStatus, filePicker: null });
     // Resetear estado de cambios al cancelar
     if (onFormChange) onFormChange(false);
   };
@@ -110,7 +112,7 @@ export default function ActionsComments({
     // Al editar un comentario, mantener los valores según el contexto
     const editProgress = defaultTab === 'form' ? 100 : 0;
     const editStatus = defaultTab === 'form' ? 'closed' : 'open';
-    setCommentModel({ comment, comment_id, progress: editProgress, status: editStatus });
+    setCommentModel({ comment, comment_id, progress: editProgress, status: editStatus, filePicker: null });
     setActiveTab('form');
   };
 
@@ -179,7 +181,8 @@ export default function ActionsComments({
       const hasChanges = 
         commentModel.comment !== initialFormValues.comment ||
         commentModel.status !== initialFormValues.status ||
-        commentModel.progress !== initialFormValues.progress;
+        commentModel.progress !== initialFormValues.progress ||
+        commentModel.filePicker !== initialFormValues.filePicker;
       
       console.log('DEBUG: ActionsComments - hasChanges:', hasChanges);
       console.log('DEBUG: ActionsComments - commentModel:', commentModel);
@@ -194,7 +197,8 @@ export default function ActionsComments({
     const newInitialValues = {
       comment: defaultTab === 'form' ? 'Cerrar acción: ' : '',
       status: defaultTab === 'form' ? 'closed' : 'open',
-      progress: defaultTab === 'form' ? 100 : 0
+      progress: defaultTab === 'form' ? 100 : 0,
+      filePicker: null
     };
     setInitialFormValues(newInitialValues);
     // Notificar que no hay cambios al resetear
