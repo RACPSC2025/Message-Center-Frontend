@@ -220,7 +220,7 @@ export default function ActionTable({
                 <CommentForumIcon fontSize="small" />
               </IconButton>
               <Typography variant="body2" color="currentColor" sx={{ fontWeight: 500, fontSize: '0.9rem', ml: -0.2 }}>
-                {params.data.comment_count || 0}
+                { params.data.comments_count }
               </Typography>
             </Box>
           </Box>
