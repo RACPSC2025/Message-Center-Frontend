@@ -57,10 +57,7 @@ export default function ActionsComments({
   const actionComments = actionCommentsData?.data || [];
 
   const handleFetchActionComments = ({ action_id, action_table }) => {
-    console.log('[DEBUG] Haciendo fetch con datos (ID acción): ', action_id);
-    // dispatch(fetchActionComments({ action_id, action_table }));
     dispatch(fetchActionComments({ action_id }));
-    console.log('[DEBUG] Comentarios de acción (actionComments)', actionComments)
   };
 
   const handleAddEditComments = (payload, resetFormFields) => {
@@ -74,9 +71,7 @@ export default function ActionsComments({
         if (onFormChange) onFormChange(false);
         
         // Llamar al callback para actualizar la tabla
-        if (onRefreshTable) {
-          onRefreshTable();
-        }
+        if (onRefreshTable) onRefreshTable();
       }
     });
   };
@@ -166,7 +161,6 @@ export default function ActionsComments({
   ];
 
   useEffect(() => {
-    // eliminar la actionDetails?.action_table
     if (activeTab === 'list' && actionDetails?.action_id && actionDetails?.action_table) {
       handleFetchActionComments({
         action_id: actionDetails?.action_id,
@@ -184,10 +178,6 @@ export default function ActionsComments({
         commentModel.progress !== initialFormValues.progress ||
         commentModel.filePicker !== initialFormValues.filePicker;
       
-      console.log('DEBUG: ActionsComments - hasChanges:', hasChanges);
-      console.log('DEBUG: ActionsComments - commentModel:', commentModel);
-      console.log('DEBUG: ActionsComments - initialFormValues:', initialFormValues);
-      
       onFormChange(hasChanges);
     }
   }, [commentModel, initialFormValues, activeTab, onFormChange]);
@@ -202,9 +192,8 @@ export default function ActionsComments({
     };
     setInitialFormValues(newInitialValues);
     // Notificar que no hay cambios al resetear
-    if (onFormChange) {
-      onFormChange(false);
-    }
+    if (onFormChange) onFormChange(false);
+    
   }, [actionDetails?.action_id, defaultTab, onFormChange]);
 
   // Hacer focus en el textarea 
@@ -212,19 +201,13 @@ export default function ActionsComments({
     if (activeTab === 'form') {
       // Pequeño delay para asegurar que el componente esté renderizado
       setTimeout(() => {
-        // Intentar encontrar el textarea por su ID o selector
-        const textarea = document.querySelector('textarea[name="comment"]') || 
-                       document.querySelector('textarea[placeholder*="comment"]') ||
-                       document.querySelector('textarea');
+        const $textarea = document.querySelector('textarea');
         
-        if (textarea) {
-          textarea.focus();
+        if ($textarea) {
+          $textarea.focus();
           // Mover cursor al final del texto
-          const length = textarea.value.length;
-          textarea.setSelectionRange(length, length);
-          console.log('[DEBUG] Focus aplicado al textarea');
-        } else {
-          console.log('[DEBUG] No se encontró el textarea');
+          const length = $textarea.value.length;
+          $textarea.setSelectionRange(length, length);
         }
       }, 200);
     }
@@ -303,7 +286,6 @@ export default function ActionsComments({
             ]}
             initialValues={commentModel}
             onChange={(newValues) => {
-              console.log('DEBUG: FormBuilder onChange - newValues:', newValues);
               setCommentModel(prev => ({ ...prev, ...newValues }));
             }}
             isLoading={editActionCommentsLoading}

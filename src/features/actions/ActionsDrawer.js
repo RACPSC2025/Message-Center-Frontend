@@ -35,11 +35,6 @@ export default function ActionsDrawer({
   // Estado para detectar cambios en el formulario de comentarios
   const [hasCommentFormChanges, setHasCommentFormChanges] = useState(false);
   
-  // Debug: Log cuando cambia el estado
-  useEffect(() => {
-    console.log('DEBUG: hasCommentFormChanges changed to:', hasCommentFormChanges);
-  }, [hasCommentFormChanges]);
-
   // Manejadores para el diálogo de cambios sin guardar
   const handleConfirmExitWithoutSave = () => {
     if (pendingCloseAction) {
@@ -56,15 +51,11 @@ export default function ActionsDrawer({
 
   // Manejador de cierre con detección de cambios
   const handleCloseDrawerWithConfirmation = (hasUnsavedChanges = false) => {
-    console.log('DEBUG: handleCloseDrawerWithConfirmation - hasUnsavedChanges:', hasUnsavedChanges);
     if (hasUnsavedChanges) {
       setShowUnsavedChangesDialog(true);
-      setPendingCloseAction(() => () => {
-        handleCloseDrawer();
-      });
-    } else {
-      handleCloseDrawer();
-    }
+      setPendingCloseAction(() => () => { handleCloseDrawer(); }); // () => impide que el dialogo se cierre de repente
+    } 
+    else handleCloseDrawer();
   };
 
   const drawerStyleAttrs = {
