@@ -13,12 +13,14 @@ import {
   Typography
 } from '@mui/material';
 import ReactECharts from 'echarts-for-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import CircularGaugePercentage from '../components/CircularGaugePercentage';
 import FormBuilder from '../components/FormBuilder';
+import { useModuleCatalogs } from '../hooks/usePlatformConfig';
 import TheFullPageLoader from '../components/TheFullPageLoader';
 import { fetchTaskCounts } from '../stores/tasks/fetchTaskCountsSlice';
+import { normalizeStatusCode } from '../utils/others';
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -44,6 +46,62 @@ export function MessageCenterEventsReport() {
   const [tabValue, setTabValue] = useState('tareas');
   const taskCounts = useSelector((state) => state?.fetchTaskCounts?.data?.data ?? {});
   const taskCountLoading = useSelector((state) => state?.fetchTaskCounts?.loading ?? false);
+  const taskStatusCatalog = useModuleCatalogs('task', 'status') || [];
+
+  const fallbackStatusCatalog = useMemo(
+    () => [
+      { numericCode: '3', label: 'Abierto', color: '#ffc107' },
+      { numericCode: '1', label: 'Cerrado', color: '#28a745' },
+      { numericCode: '4', label: 'Vencido', color: '#dc3545' },
+      { numericCode: '2', label: 'Permanente', color: '#348fe2' }
+    ],
+    []
+  );
+
+  const normalizedTaskStatusCatalog = useMemo(() => {
+    if (!Array.isArray(taskStatusCatalog) || !taskStatusCatalog.length) {
+      return fallbackStatusCatalog;
+    }
+
+    const catalog = taskStatusCatalog
+      .map((statusItem) => {
+        const numericCode = normalizeStatusCode(statusItem?.numeric_code);
+        if (!numericCode) return null;
+
+        const fallbackStatus = fallbackStatusCatalog.find((item) => item.numericCode === numericCode);
+        return {
+          numericCode,
+          label: String(statusItem?.label || fallbackStatus?.label || '').trim(),
+          color: String(statusItem?.color || fallbackStatus?.color || '').trim() || fallbackStatus?.color
+        };
+      })
+      .filter(Boolean);
+
+    return catalog.length ? catalog : fallbackStatusCatalog;
+  }, [taskStatusCatalog, fallbackStatusCatalog]);
+
+  const getStatusCount = (countsByStatus, numericCode) =>
+    Number(countsByStatus?.[numericCode] ?? countsByStatus?.[String(numericCode)] ?? 0);
+
+  const taskStatusChartData = useMemo(
+    () =>
+      normalizedTaskStatusCatalog.map((statusItem) => ({
+        value: getStatusCount(taskCounts?.tasks, statusItem.numericCode),
+        name: statusItem.label,
+        itemStyle: { color: statusItem.color }
+      })),
+    [normalizedTaskStatusCatalog, taskCounts?.tasks]
+  );
+
+  const logtaskStatusChartData = useMemo(
+    () =>
+      normalizedTaskStatusCatalog.map((statusItem) => ({
+        value: getStatusCount(taskCounts?.logtasks, statusItem.numericCode),
+        name: statusItem.label,
+        itemStyle: { color: statusItem.color }
+      })),
+    [normalizedTaskStatusCatalog, taskCounts?.logtasks]
+  );
 
   const handleFilterButton = () => {
     setFilterPressed(!filterPressed);
@@ -73,7 +131,8 @@ export function MessageCenterEventsReport() {
   const graphicBoxStyles = {
     border: '1px solid rgba(224, 224, 224, 0.7)',
     borderRadius: '8px',
-    width: '100%'
+    flex: 1,
+    minWidth: 360
   };
 
   const barChartOptions = {
@@ -114,12 +173,11 @@ export function MessageCenterEventsReport() {
       orient: 'vertical',
       left: 'right',
       top: 40,
-      // top: 'center',
-      data: ['Abierto', 'Vencido', 'En Progreso', 'Cerrado'],
+      data: taskStatusChartData.map((item) => item.name),
       formatter: function (name) {
-        const data = pieChart1.series[0].data;
+        const data = taskStatusChartData;
         const item = data.find((item) => item.name === name);
-        return `${name} ${item.value}`;
+        return `${name} ${item?.value ?? 0}`;
       }
     },
     tooltip: {
@@ -131,24 +189,8 @@ export function MessageCenterEventsReport() {
       {
         type: 'pie',
         radius: '60%',
-        data: [
-          {
-            value: taskCounts?.tasks[3],
-            name: 'Abierto'
-          },
-          {
-            value: taskCounts?.tasks[4],
-            name: 'Vencido'
-          },
-          {
-            value: taskCounts?.tasks[1],
-            name: 'En Progreso'
-          },
-          {
-            value: taskCounts?.tasks[2],
-            name: 'Cerrado'
-          }
-        ]
+        stillShowZeroSum: true,
+        data: taskStatusChartData
       }
     ]
   };
@@ -162,12 +204,11 @@ export function MessageCenterEventsReport() {
       orient: 'vertical',
       left: 'right',
       top: 40,
-      // top: 'center',
-      data: ['Abierto', 'Vencido', 'En Progreso', 'Cerrado'],
+      data: logtaskStatusChartData.map((item) => item.name),
       formatter: function (name) {
-        const data = pieChart1.series[0].data;
+        const data = logtaskStatusChartData;
         const item = data.find((item) => item.name === name);
-        return `${name} ${item.value}`;
+        return `${name} ${item?.value ?? 0}`;
       }
     },
     tooltip: {
@@ -179,24 +220,8 @@ export function MessageCenterEventsReport() {
       {
         type: 'pie',
         radius: '60%',
-        data: [
-          {
-            value: taskCounts?.logtasks[3],
-            name: 'Abierto'
-          },
-          {
-            value: taskCounts?.logtasks[4],
-            name: 'Vencido'
-          },
-          {
-            value: taskCounts?.logtasks[1],
-            name: 'En Progreso'
-          },
-          {
-            value: taskCounts?.logtasks[2],
-            name: 'Cerrado'
-          }
-        ]
+        stillShowZeroSum: true,
+        data: logtaskStatusChartData
       }
     ]
   };
@@ -356,6 +381,7 @@ export function MessageCenterEventsReport() {
   };
 
   const calculatePercentage = (total, value) => {
+    if (!total || Number(total) <= 0) return 0;
     const result = (value / total) * 100;
     return parseInt(result);
   };
@@ -526,285 +552,92 @@ export function MessageCenterEventsReport() {
               </Box>
 
               <Box display="flex" justifyContent="space-between" padding="0 50px">
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
+                {normalizedTaskStatusCatalog.map((statusItem) => {
+                  const statusCount = getStatusCount(taskCounts?.tasks, statusItem.numericCode);
+
+                  return (
                     <Box
+                      key={statusItem.numericCode}
+                      sx={boxStyles}
                       display="flex"
+                      flexDirection="column"
                       alignItems="center"
                       justifyContent="center"
-                      sx={{
-                        background: '#01baab',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '50px',
-                        // height: '50px',
-                        color: 'white'
-                      }}
+                      gap={2}
                     >
-                      <AddToPhotos />
+                      <Box display="flex" gap={1} flexDirection="row" alignItems="center">
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          sx={{
+                            background: statusItem.color,
+                            padding: '10px',
+                            borderRadius: '50%',
+                            color: 'white'
+                          }}
+                        >
+                          <AddToPhotos />
+                        </Box>
+                        <Box>
+                          <Typography variant="h5">
+                            {statusCount} {statusItem.label}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <CircularGaugePercentage
+                        color={statusItem.color}
+                        percentage={calculatePercentage(taskCounts.total_tasks, statusCount)}
+                      />
                     </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[3]} Abiertas</Typography>
-                      <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#01baab"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[3])}
-                  />
-                </Box>
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#ead93e',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '40px',
-                        // height: '40px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[2]} En Progreso</Typography>
-                      <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#ead93e"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[2])}
-                  />
-                </Box>
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#00f57a',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '40px',
-                        // height: '40px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[1]} Cerradas</Typography>
-                      <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#00f57a"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[1])}
-                  />
-                </Box>
-                <Box
-                  sx={boxStyles}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                >
-                  <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      sx={{
-                        background: '#fb3d61',
-                        padding: '10px',
-                        borderRadius: '50%',
-                        // width: '40px',
-                        // height: '40px',
-                        color: 'white'
-                      }}
-                    >
-                      <AddToPhotos />
-                    </Box>
-                    <Box>
-                      <Typography variant="h5">{taskCounts.tasks[4]} Vencidas</Typography>
-                      <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                    </Box>
-                  </Box>
-                  <CircularGaugePercentage
-                    color="#fb3d61"
-                    percentage={calculatePercentage(taskCounts.total_tasks, taskCounts.tasks[4])}
-                  />
-                </Box>
+                  );
+                })}
               </Box>
               <Typography variant="h4" paddingLeft="50px" marginTop="50px">
                 Estado de Ciclos
               </Typography>
-              {/* <Box display="flex" justifyContent="space-between" padding="0 50px">
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            > */}
-              {/* <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#01baab',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '50px',
-                    // height: '50px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[3]} Abiertos</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
+              <Box display="flex" justifyContent="space-between" padding="0 50px">
+                {normalizedTaskStatusCatalog.map((statusItem) => {
+                  const statusCount = getStatusCount(taskCounts?.logtasks, statusItem.numericCode);
+
+                  return (
+                    <Box
+                      key={`logtask-${statusItem.numericCode}`}
+                      sx={boxStyles}
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      justifyContent="center"
+                      gap={2}
+                    >
+                      <Box display="flex" gap={1} flexDirection="row" alignItems="center">
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          sx={{
+                            background: statusItem.color,
+                            padding: '10px',
+                            borderRadius: '50%',
+                            color: 'white'
+                          }}
+                        >
+                          <AddToPhotos />
+                        </Box>
+                        <Box>
+                          <Typography variant="h5">
+                            {statusCount} {statusItem.label}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <CircularGaugePercentage
+                        color={statusItem.color}
+                        percentage={calculatePercentage(taskCounts.total_logtasks, statusCount)}
+                      />
+                    </Box>
+                  );
+                })}
               </Box>
-              <CircularGaugePercentage
-                color="#01baab"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[3])}
-              />
-            </Box>
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            >
-              <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#ead93e',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '40px',
-                    // height: '40px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[2]} En Progreso</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#ead93e"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[2])}
-              />
-            </Box>
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            >
-              <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#00f57a',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '40px',
-                    // height: '40px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[1]} Cerrados</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#00f57a"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[1])}
-              />
-            </Box>
-            <Box
-              sx={boxStyles}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              gap={2}
-            >
-              <Box display="flex" gap={1} flexDirection="row" alignItems="center">
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  sx={{
-                    background: '#fb3d61',
-                    padding: '10px',
-                    borderRadius: '50%',
-                    // width: '40px',
-                    // height: '40px',
-                    color: 'white'
-                  }}
-                >
-                  <AddToPhotos />
-                </Box>
-                <Box>
-                  <Typography variant="h5">{taskCounts.logtasks[4]} Vencidos</Typography>
-                  <Typography variant="p">6 en las próximas 4 semanas</Typography>
-                </Box>
-              </Box>
-              <CircularGaugePercentage
-                color="#fb3d61"
-                percentage={calculatePercentage(taskCounts.total_logtasks, taskCounts.logtasks[4])}
-              />
-            </Box> */}
-              {/* </Box> */}
-              {/* </Box> */}
             </>
           )}
           <Box
@@ -812,7 +645,7 @@ export function MessageCenterEventsReport() {
             justifyContent="space-between"
             padding="50px"
             gap={2}
-            flexWrap={{ md: 'wrap', lg: 'nowrap' }}
+            flexWrap="wrap"
           >
             {/* <Box  padding="50px" gap={2}> */}
             <Box sx={graphicBoxStyles} padding="30px">

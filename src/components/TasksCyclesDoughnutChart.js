@@ -2,22 +2,10 @@ import { Box, Typography } from '@mui/material';
 import { ArcElement, Chart as ChartJS, Legend, Tooltip } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
-  fetchAutocompleteOptions,
-  removeAllFilters,
-  removeFilter,
   selectFilterItemValue,
-  selectListOptions,
-  setFilter
 } from '../stores/filterSlice';
-
-// Custom hook to get list options
-const useListOptions = (module, fieldName) =>
-  useSelector((state) => selectListOptions(state, module, fieldName));
-
-const useListOptionsGlobal = (fieldName) =>
-  useSelector((state) => state.globalData?.[fieldName] ?? []);
 
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
@@ -123,6 +111,12 @@ function TaskCyclesDoughnutChart({
   };
   */
 
+  const hasDynamicStatusData =
+    Array.isArray(dataSetTasks?.taskStatusData) &&
+    dataSetTasks.taskStatusData.length > 0 &&
+    Array.isArray(dataSetTasks?.cycleStatusData) &&
+    dataSetTasks.cycleStatusData.length > 0;
+
   const mapStatusToKey = (statusValue, suffix = 'Tasks') => {
     switch (statusValue) {
       case 'pending':
@@ -138,16 +132,35 @@ function TaskCyclesDoughnutChart({
     }
   };
 
+  const labels = hasDynamicStatusData
+    ? dataSetTasks.taskStatusData.map((status) => status.label)
+    : listTaskStatus.map((status) => t(status.label));
+
+  const tasksValues = hasDynamicStatusData
+    ? dataSetTasks.taskStatusData.map((status) => Number(status.value) || 0)
+    : listTaskStatus.map((status) => {
+      const key = mapStatusToKey(status.value);
+      return Number(dataSetTasks?.[key]) || 0;
+    });
+
+  const cyclesValues = hasDynamicStatusData
+    ? dataSetTasks.cycleStatusData.map((status) => Number(status.value) || 0)
+    : listTaskStatus.map((status) => {
+      const key = mapStatusToKey(status.value, 'Cycles');
+      return Number(dataSetTasks?.[key]) || 0;
+    });
+
+  const colors = hasDynamicStatusData
+    ? dataSetTasks.taskStatusData.map((status) => status.color)
+    : listTaskStatus.map((status) => status.color_code);
+
   const chartData = {
-    labels: listTaskStatus.map((status) => t(status.label)),
+    labels,
     datasets: [
       {
         label: t('tasks'),
-        data: listTaskStatus.map((status) => {
-          const key = mapStatusToKey(status.value); // ← función auxiliar
-          return dataSetTasks[key] ?? 0;
-        }),
-        backgroundColor: listTaskStatus.map((status) => status.color_code),
+        data: tasksValues,
+        backgroundColor: colors,
         borderWidth: 0
       },
       {
@@ -157,11 +170,8 @@ function TaskCyclesDoughnutChart({
       },
       {
         label: t('cycles'),
-        data: listTaskStatus.map((status) => {
-          const key = mapStatusToKey(status.value, 'Cycles');
-          return dataSetTasks[key] ?? 0;
-        }),
-        backgroundColor: listTaskStatus.map((status) => status.color_code),
+        data: cyclesValues,
+        backgroundColor: colors,
         borderWidth: 0
       }
     ]
