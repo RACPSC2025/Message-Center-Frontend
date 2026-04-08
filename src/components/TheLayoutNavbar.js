@@ -83,12 +83,23 @@ const MODULE_CONFIG = [
     icon: CheckCircleOutline,
     activeModuleKey: 'actions',
     chartComponent: StatusDoughnutChart,
-    getStatusData: (processedData) => [
-      { key: 'open', value: processedData.openActions },
-      { key: 'closed', value: processedData.closedActions },
-      { key: 'cancelled', value: processedData.cancelledActions },
-      { key: 'delayed', value: processedData.delayedActions }
-    ]
+    getStatusData: (processedData) => {
+      if (Array.isArray(processedData.actionStatusData) && processedData.actionStatusData.length) {
+        return processedData.actionStatusData.map((status) => ({
+          key: status.code,
+          label: status.label,
+          color: status.color,
+          value: status.value
+        }));
+      }
+
+      return [
+        { key: 'open', value: processedData.openActions },
+        { key: 'closed', value: processedData.closedActions },
+        { key: 'cancelled', value: processedData.cancelledActions },
+        { key: 'delayed', value: processedData.delayedActions }
+      ];
+    }
   }
 ];
 

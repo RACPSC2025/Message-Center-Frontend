@@ -55,7 +55,12 @@ function StatusDoughnutChart({
   };
 
   const chartDataValue = dataSet.map(({ value }) => value);
-  const chartDataColors = dataSet.map(({ key }) => {
+  const chartDataColors = dataSet.map(({ key, color }) => {
+    const datasetColor = String(color || '').trim();
+    if (datasetColor) {
+      return datasetColor;
+    }
+
     // Primero intentar usar el color desde Redux, luego el mapeo estático
     return colorMap[key] || STATUS_TO_COLOR_MAPPING[key] || '#ccc';
   });

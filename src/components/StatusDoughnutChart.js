@@ -16,17 +16,30 @@ function StatusDoughnutChart({
   // Obtener los colores desde el filterSlice
   const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
 
+  const labelMap = dataSet.reduce((acc, item) => {
+    if (item?.key) {
+      acc[item.key] = item.label || item.key;
+    }
+    return acc;
+  }, {});
+
   // Configuración por defecto con tooltip personalizado
   const defaultOptions = {
     cutout: '80%',
     plugins: {
+      legend: {
+        display: false
+      },
       tooltip: {
         callbacks: {
           label: function(context) {
             const value = context.parsed;
             const dataIndex = context.dataIndex;
             const statusKey = dataSet[dataIndex]?.key;
-            const statusLabel = actionStatusList.find(status => status.value === statusKey)?.label || statusKey;
+            const statusLabel =
+              labelMap[statusKey]
+              || actionStatusList.find(status => status.value === statusKey)?.label
+              || statusKey;
             return `${value} ${statusLabel}`;
           }
         }
@@ -43,9 +56,11 @@ function StatusDoughnutChart({
   }, {});
 
   const chartDataValue = dataSet.map(({ value }) => value);
-  const chartDataColors = dataSet.map(({ key }) => {
-    const color = colorMap[key] || '#ccc';
-    return color;
+  const chartDataColors = dataSet.map(({ key, color }) => {
+    const datasetColor = String(color || '').trim();
+    const colorFromFilter = colorMap[key];
+    const finalColor = datasetColor || colorFromFilter || '#ccc';
+    return finalColor;
   });
 
   const chartData = {

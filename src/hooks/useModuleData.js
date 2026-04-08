@@ -17,6 +17,13 @@ const TASK_STATUS_FALLBACK = [
   { numeric_code: 2, code: 'permanent', label: 'Permanente', color: '#348fe2' }
 ];
 
+const ACTION_STATUS_FALLBACK = [
+  { numeric_code: 3, code: 'pending', label: 'Abierto', color: '#ffc107' },
+  { numeric_code: 1, code: 'completed', label: 'Cerrado', color: '#28a745' },
+  { numeric_code: 4, code: 'delayed', label: 'Vencido', color: '#dc3545' },
+  { numeric_code: 2, code: 'permanent', label: 'Permanente', color: '#348fe2' }
+];
+
 const normalizeTaskStatusCatalog = (taskStatusCatalog = []) => {
   const sourceCatalog = Array.isArray(taskStatusCatalog) && taskStatusCatalog.length
     ? taskStatusCatalog
@@ -103,11 +110,72 @@ const buildTaskModuleData = (data = {}, taskStatusCatalog = []) => {
   };
 };
 
+const normalizeActionStatusCatalog = (actionStatusCatalog = []) => {
+  const sourceCatalog = Array.isArray(actionStatusCatalog) && actionStatusCatalog.length
+    ? actionStatusCatalog
+    : ACTION_STATUS_FALLBACK;
+
+  return sourceCatalog
+    .map((statusItem) => {
+      const normalizedNumericCode = normalizeStatusCode(statusItem?.numeric_code);
+      if (!normalizedNumericCode) return null;
+
+      const fallbackStatus = ACTION_STATUS_FALLBACK.find(
+        (item) => normalizeStatusCode(item.numeric_code) === normalizedNumericCode
+      );
+
+      return {
+        numericCode: normalizedNumericCode,
+        code: String(statusItem?.code || fallbackStatus?.code || '').trim(),
+        label: String(statusItem?.label || fallbackStatus?.label || '').trim(),
+        color: String(statusItem?.color || fallbackStatus?.color || '').trim() || fallbackStatus?.color
+      };
+    })
+    .filter(Boolean);
+};
+
+const getActionCountByCode = (data = {}, code = '') => {
+  const countByCode = {
+    pending: toNumber(data?.pending ?? data?.open),
+    completed: toNumber(data?.completed ?? data?.closed),
+    delayed: toNumber(data?.delayed),
+    permanent: toNumber(data?.permanent)
+  };
+
+  return countByCode[code] ?? 0;
+};
+
+const buildActionModuleData = (data = {}, actionStatusCatalog = []) => {
+  const statusCatalog = normalizeActionStatusCatalog(actionStatusCatalog);
+
+  const actionStatusData = statusCatalog.map((status) => ({
+    code: status.code,
+    label: status.label,
+    color: status.color,
+    value: getActionCountByCode(data, status.code)
+  }));
+
+  return {
+    // Compatibilidad con consumidores existentes
+    openActions: toNumber(data?.open),
+    closedActions: toNumber(data?.closed),
+    cancelledActions: toNumber(data?.cancelled),
+    delayedActions: toNumber(data?.delayed),
+    totalActions: toNumber(data?.total),
+
+    // Datos dinámicos para gráficas según configuración
+    actionStatusData
+  };
+};
+
 export const useModuleData = () => {
   const dispatch = useDispatch();
   const moduleData = useSelector((state) => state.moduleStatistics);
   const taskStatusCatalog = useSelector(
     (state) => state.platformConfig?.data?.modules?.task?.catalogs?.status ?? []
+  );
+  const actionStatusCatalog = useSelector(
+    (state) => state.platformConfig?.data?.modules?.actions?.catalogs?.status ?? []
   );
 
   const MODULE_CONFIG = [
@@ -115,13 +183,7 @@ export const useModuleData = () => {
       id: 'actions',
       label: 'Actions',
       reduxFetchAction: fetchActionCount,
-      transformData: (data) => ({
-        openActions: toNumber(data?.open),
-        closedActions: toNumber(data?.closed),
-        cancelledActions: toNumber(data?.cancelled),
-        delayedActions: toNumber(data?.delayed),
-        totalActions: toNumber(data?.total)
-      })
+      transformData: (data) => buildActionModuleData(data, actionStatusCatalog)
     },
     {
       id: 'tasks',
