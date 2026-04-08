@@ -14,7 +14,8 @@ import { showSuccessMsg } from '../../utils/others';
 export default function ActionsComments({ 
   actionDetails = {}, 
   defaultTab = 'list', 
-  onRefreshTable // Callback para actualizar tabla
+  onRefreshTable, // Callback para actualizar tabla
+  onFormChange // Callback para notificar cambios en el formulario
 }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -30,6 +31,13 @@ export default function ActionsComments({
     comment_id: null, 
     progress: initialProgress, 
     status: initialStatus 
+  });
+  
+  // Guardar valores iniciales para detectar cambios
+  const [initialFormValues, setInitialFormValues] = useState({
+    comment: initialComment,
+    status: initialStatus,
+    progress: initialProgress
   });
 
   // Obtener la lista de estados desde el store de filtros
@@ -59,6 +67,9 @@ export default function ActionsComments({
         showSuccessMsg(data?.payload?.messages);
         resetFormFields();
         setActiveTab('list');
+        
+        // Resetear estado de cambios al guardar exitosamente
+        if (onFormChange) onFormChange(false);
         
         // Llamar al callback para actualizar la tabla
         if (onRefreshTable) {
@@ -90,6 +101,8 @@ export default function ActionsComments({
     const resetStatus = defaultTab === 'form' ? 'closed' : 'open';
     const resetComment = defaultTab === 'form' ? 'Cerrar acción: ' : '';
     setCommentModel({ comment: resetComment, comment_id: null, progress: resetProgress, status: resetStatus });
+    // Resetear estado de cambios al cancelar
+    if (onFormChange) onFormChange(false);
   };
 
   const handleClickCommentEdit = (commentObj) => {
@@ -159,6 +172,36 @@ export default function ActionsComments({
       });
     }
   }, [activeTab, actionDetails]); // Modificar para que solo sea por el cambio del id
+
+  // Detectar cambios en el formulario y notificar al padre
+  useEffect(() => {
+    if (activeTab === 'form' && onFormChange) {
+      const hasChanges = 
+        commentModel.comment !== initialFormValues.comment ||
+        commentModel.status !== initialFormValues.status ||
+        commentModel.progress !== initialFormValues.progress;
+      
+      console.log('DEBUG: ActionsComments - hasChanges:', hasChanges);
+      console.log('DEBUG: ActionsComments - commentModel:', commentModel);
+      console.log('DEBUG: ActionsComments - initialFormValues:', initialFormValues);
+      
+      onFormChange(hasChanges);
+    }
+  }, [commentModel, initialFormValues, activeTab, onFormChange]);
+
+  // Resetear valores iniciales cuando cambia la acción o el tab por defecto
+  useEffect(() => {
+    const newInitialValues = {
+      comment: defaultTab === 'form' ? 'Cerrar acción: ' : '',
+      status: defaultTab === 'form' ? 'closed' : 'open',
+      progress: defaultTab === 'form' ? 100 : 0
+    };
+    setInitialFormValues(newInitialValues);
+    // Notificar que no hay cambios al resetear
+    if (onFormChange) {
+      onFormChange(false);
+    }
+  }, [actionDetails?.action_id, defaultTab, onFormChange]);
 
   // Hacer focus en el textarea 
   useEffect(() => {
@@ -255,6 +298,10 @@ export default function ActionsComments({
               }
             ]}
             initialValues={commentModel}
+            onChange={(newValues) => {
+              console.log('DEBUG: FormBuilder onChange - newValues:', newValues);
+              setCommentModel(prev => ({ ...prev, ...newValues }));
+            }}
             isLoading={editActionCommentsLoading}
             successCallback={handleFormSuccess}
             cancelCallback={handleFormCancel}
