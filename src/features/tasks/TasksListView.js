@@ -761,45 +761,47 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
   // Cálculos para el Dashboard
   const stats = useMemo(() => {
+    const initialCountsByStatus = normalizedTaskStatusCatalog.reduce((acc, status) => {
+      acc[status.numericCode] = 0;
+      return acc;
+    }, {});
+
+    const completedStatusCode =
+      normalizedTaskStatusCatalog.find((status) => status.code === 'completed')?.numericCode || '1';
+
     if (!logtasks || logtasks.length === 0) {
-      return { completed: 0, inProgress: 0, expired: 0, open: 0, averageProgress: 0 };
+      return { countsByStatus: initialCountsByStatus, averageProgress: 0 };
     }
 
-    const counts = { completed: 0, inProgress: 0, expired: 0, open: 0 };
+    const countsByStatus = { ...initialCountsByStatus };
     let totalProgress = 0;
 
     logtasks.forEach(lt => {
-      const status = String(lt.logtask_status || lt.task_status);
+      const status = normalizeStatusCode(lt.logtask_status || lt.task_status || lt.status);
       // Asegurar que sea número
       let progress = parseFloat(lt.percentage || lt.progress || 0);
 
       // Si el estado es "Completado" (1), forzamos 100% para el cálculo promedio
       // esto corrige casos donde la BE envía status:1 pero progress:0
-      if (status === '1') {
+      if (status === completedStatusCode) {
         progress = 100;
       }
 
       totalProgress += progress;
 
-      if (status === '1') counts.completed++;
-      else if (status === '2') counts.inProgress++;
-      else if (status === '4') counts.expired++;
-      else if (status === '3') counts.open++;
+      if (status) {
+        countsByStatus[status] = (countsByStatus[status] || 0) + 1;
+      }
     });
 
     return {
-      ...counts,
+      countsByStatus,
       averageProgress: Math.round(totalProgress / logtasks.length)
     };
-  }, [logtasks]);
+  }, [logtasks, normalizedTaskStatusCatalog]);
 
   const statsByStatusCode = useMemo(
-    () => ({
-      '1': stats.completed,
-      '2': stats.inProgress,
-      '3': stats.open,
-      '4': stats.expired
-    }),
+    () => stats.countsByStatus || {},
     [stats]
   );
 
