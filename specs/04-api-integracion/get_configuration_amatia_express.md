@@ -10,6 +10,14 @@ Resumen rapido:
 - Slice: src/stores/platformConfigSlice.js
 - Hook de acceso: src/hooks/usePlatformConfig.js
 - Integracion en navegacion: src/config/generalConfig.js y src/routes/RoutesFile.js
+- Integracion en charts/estadisticas:
+	- src/hooks/useModuleData.js (taskStatusData, cycleStatusData, actionStatusData)
+	- src/components/TasksCyclesDoughnutChart.js
+	- src/components/StatusDoughnutChart.js
+	- src/components/StatusDoughnutChartNavbar.js
+	- src/features/MessageCenterEventsReport.js
+	- src/features/tasks/TasksListView.js
+	- src/features/tasks/TaskCyclesTable.js
 - Integracion en LegalMatriz:
 	- permissions.create_requirement -> visibilidad boton create_legal_requirement (SpeedDial)
 	- permissions.create_article -> visibilidad tab create_legal_requirement (OptionsDrawer)
@@ -17,3 +25,10 @@ Resumen rapido:
 	- features.analysis_ia -> visibilidad columna analysis_with_amatia y tab analysis_of_regulation
 	- features.compliance_view -> visibilidad tab compliance
 	- navegacion entre tabs por tabId centralizado en src/features/MessageCenterLegalMatriz/tabIds.js
+
+Notas de contrato para estados y tipos (2026):
+
+- No usar labels hardcodeados para status en tareas/acciones.
+- Resolver estado por `numeric_code` del catalogo correspondiente.
+- Para tipo de tarea, usar `modules.task.catalogs.task_type` y mapear desde `activity_type`.
+- Mantener fallback local solo para resiliencia cuando no llegue configuracion.

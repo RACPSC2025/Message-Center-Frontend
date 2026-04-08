@@ -78,6 +78,28 @@ El dashboard renderiza con componentes Tremor y layout propio:
   - Si no hay catálogo, se usan colores/etiquetas fallback (`#28a745`, `#348fe2`, `#ffc107`, `#dc3545`)
 - Las etiquetas de estado en donuts y tabla usan primero el label del catálogo, luego traducción, luego fallback.
 
+## Consistencia transversal del modulo tasks (2026)
+
+Ademas del dashboard Tremor, el mismo contrato de estados y colores ya se aplica en otras vistas del modulo:
+
+- `src/features/tasks/TasksListView.js`
+  - filtros de estado y colores de UI por catalogo `task.status`.
+  - estadisticas de ciclos por estado con conteo dinamico (`countsByStatus`), sin `if` hardcode por codigo.
+- `src/features/tasks/TaskCyclesTable.js`
+  - badge de progreso y label de estado por `taskStatusCatalog`.
+  - visibilidad del label de estado controlada por estado local (`showStatusLabel`, default `false`).
+- `src/components/TaskDoubleRingChart.js`
+  - anillo interno/externo usando colores del dataset dinamico (`chartData`) cuando estan disponibles.
+- `src/components/TasksCyclesDoughnutChart.js`
+  - consumo preferente de `taskStatusData` y `cycleStatusData` generado en `useModuleData`.
+  - fallback legacy para compatibilidad si aun no llega dataset dinamico.
+- `src/features/MessageCenterEventsReport.js`
+  - graficas ECharts de tareas y ciclos alimentadas por `task.status` (labels y colores dinamicos).
+
+Resultado:
+
+- La misma definicion de estados (codigo, nombre, color) se refleja de forma consistente en lista, tabla, cards y donuts.
+
 ## Comportamiento de carga
 
 - Mientras `fetchListTaskNew` está en `loading`, se muestra `TheFullPageLoader`.

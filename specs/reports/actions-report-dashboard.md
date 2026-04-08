@@ -50,6 +50,12 @@ Fallback solamente si no existe catalogo en configuracion:
 - `3`: `#f9a825`
 - `4`: `#c62828`
 
+Consumo adicional en estadisticas globales y navbar:
+
+- `src/hooks/useModuleData.js` construye `actionStatusData` dinamico por catalogo.
+- `src/components/TheLayoutNavbar.js` usa `actionStatusData` cuando existe para alimentar el donut lateral.
+- `src/components/StatusDoughnutChartNavbar.js` prioriza el color del dataset dinamico antes de fallback.
+
 ## Normalizacion de datos
 
 `ActionsReportTremos` normaliza los campos recibidos para evitar variaciones del API:
@@ -76,6 +82,7 @@ Fallback solamente si no existe catalogo en configuracion:
 - El segmento superior de titulo/filtros del dashboard usa `showHeaderFilters` y por defecto esta en `false`.
 - El cambio de vista `table/report` se maneja en `Actions.js` con tabs visuales alineados a la barra de filtros.
 - El toggle `table/report` replica el comportamiento visual del modulo Tasks para mantener consistencia UX entre modulos.
+- En `src/components/StatusDoughnutChart.js` se mantuvo la composicion visual original del donut (leyenda embebida desactivada) para evitar rompimiento de layout; labels dinamicos se muestran via tooltip/dataset.
 
 ## Consistencia de filtros y niveles
 

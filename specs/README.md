@@ -27,6 +27,7 @@ Objetivos:
   - legal-requests-module/README.md
 - 05-dev/
   - ejecucion-build-deploy.md
+  - tasklist-tags-and-permissions.md
 - 06-conventions/
   - componentes-hooks-i18n.md
 - reports/
@@ -46,5 +47,5 @@ La carpeta specs no hace parte del bundle de React en produccion. El build toma 
 
 ## Reportes funcionales
 
-- reports/tasks-report-dashboard.md: contrato funcional del dashboard de tareas (vista report).
-- reports/actions-report-dashboard.md: contrato funcional del dashboard de acciones (vista report), incluyendo fuente de datos, catalogo de estados, consistencia table/report y reglas de niveles/validacion relacionadas.
+- reports/tasks-report-dashboard.md: contrato funcional del dashboard de tareas (vista report) y consistencia de estados/colores en lista, tabla y charts del modulo.
+- reports/actions-report-dashboard.md: contrato funcional del dashboard de acciones (vista report), incluyendo fuente de datos, catalogo de estados, consistencia table/report/navbar y consideraciones de layout del chart.

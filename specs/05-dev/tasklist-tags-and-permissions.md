@@ -74,9 +74,11 @@ const canCreateTags = useHasPermission('task', 'create_tags');
 
 **Ejemplo de mapeo en código:**
 ```js
-const platformConfig = window.store?.getState()?.platformConfig?.data;
-const taskTypeCatalog = platformConfig?.modules?.task?.catalogs?.task_type || [];
-const currentLang = (window.i18next && window.i18next.language) || 'es';
+const taskTypeCatalog = useSelector(
+   (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.task_type ?? []
+);
+const { i18n } = useTranslation();
+const currentLang = (i18n?.language || 'es').toLowerCase();
 
 let typeLabel = '';
 if (task.activity_type) {
@@ -94,7 +96,30 @@ task_type: typeLabel || 'CÍCLICA',
 **Notas:**
 - El catálogo de tipos de tarea puede ser actualizado desde backend y soporta nuevos tipos.
 - El mapeo es robusto ante valores numéricos o string en `activity_type`.
-- El label es siempre consistente con el idioma de la UI.
+- El label es consistente con el idioma de la UI y se obtiene desde `i18n.language` (no desde `window`).
+- El resultado normalizado en `TasksListView` expone:
+   - `task_type` (label final)
+   - `task_type_code` (ej: unique/cyclic/permanent)
+   - `task_type_numeric_code`
+
+## 4. Estados y gráficas de tareas/ciclos por configuración
+
+- Los estados visibles en `TasksListView`, `TaskCyclesTable` y gráficos de tareas/ciclos se toman de `modules.task.catalogs.status`.
+- El frontend normaliza códigos con `normalizeStatusCode` para evitar diferencias entre string/number.
+- Se mantiene fallback local de estados/colores si no existe catálogo.
+
+Cambios aplicados en frontend:
+
+- `TasksListView.js`
+   - filtros y leyenda de estados dinámicos por catálogo;
+   - conteo de `logtasks` por estado sin hardcode (`countsByStatus`);
+   - promedio de progreso con ajuste para estado completado (`100%` cuando corresponda).
+- `TaskCyclesTable.js`
+   - color y label del badge de progreso desde catálogo (`taskStatusCatalog` prop).
+- `TaskDoubleRingChart.js`
+   - prioriza colores provenientes de `chartData` dinámico.
+- `TaskReportTremor.js`
+   - donuts y tabla por catálogo dinámico de estados (`task.status`).
 
 ### Consideraciones de UX
 - El modal de etiquetas es accesible solo si el permiso `create_tags` está activo.
@@ -104,4 +129,4 @@ task_type: typeLabel || 'CÍCLICA',
 
 ---
 
-**Última actualización:** Marzo 2026
+**Última actualización:** Abril 2026

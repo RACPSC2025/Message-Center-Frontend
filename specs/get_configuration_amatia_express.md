@@ -118,6 +118,38 @@ Validar si modulo esta habilitado:
 
 useIsModuleEnabled('legal_matrix')
 
+## Patron recomendado para estados, colores y labels en charts
+
+Para evitar hardcodes y desalineaciones entre modulos, la UI usa catalogos de configuracion como fuente de verdad.
+
+Catalogos clave:
+
+- `modules.task.catalogs.status` para estados de tareas y ciclos
+- `modules.actions.catalogs.status` para estados de acciones
+- `modules.task.catalogs.task_type` para tipo de tarea (`activity_type`)
+
+Reglas implementadas en frontend:
+
+1. Normalizar codigo de estado con `normalizeStatusCode` antes de comparar.
+2. Resolver label/color por `numeric_code` desde catalogo.
+3. Si el catalogo no existe, usar fallback local para no romper la UI.
+4. Reutilizar el mismo mapeo en lista, tabla, tarjetas y graficas para mantener consistencia.
+
+Componentes y hooks donde aplica:
+
+- `src/hooks/useModuleData.js`
+	- `tasks`: expone `taskStatusData` y `cycleStatusData` dinamicos + campos legacy (`openTasks`, `completedTasks`, etc.)
+	- `actions`: expone `actionStatusData` dinamico + campos legacy (`openActions`, `closedActions`, etc.)
+- `src/components/TasksCyclesDoughnutChart.js`: prioriza dataset dinamico y mantiene fallback legacy.
+- `src/components/StatusDoughnutChart.js` y `src/components/StatusDoughnutChartNavbar.js`: priorizan color/label dinamicos sin romper layout visual existente.
+- `src/features/tasks/TasksListView.js`: usa catalogos para filtros, leyenda, iconografia por tipo, estadisticas de estados y colores.
+- `src/features/tasks/TaskCyclesTable.js`: badge y label de estado por catalogo en columna de progreso.
+- `src/features/MessageCenterEventsReport.js`: graficas ECharts de tareas/ciclos por catalogo y colores dinamicos.
+
+Beneficio:
+
+- Cambios de estados/nombres/colores en backend se reflejan en frontend sin tocar codigo de presentacion.
+
 ## Reglas de UI para legal_matrix (MessageCenterLegalMatriz)
 
 Archivos frontend relacionados:
