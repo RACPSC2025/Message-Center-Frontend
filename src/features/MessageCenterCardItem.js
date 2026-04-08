@@ -17,6 +17,7 @@ function MessageCenterCardItem({
   date,
   message,
   desc,
+  keywordToHighlight = '',
   onClick,
   onCheckChanged,
   onToggleImportant,
@@ -33,6 +34,41 @@ function MessageCenterCardItem({
   const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState(null);
   const menuOpen = Boolean(anchorEl);
+
+  const escapeRegExp = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const renderHighlightedText = (text) => {
+    const content = String(text || '');
+    const keyword = String(keywordToHighlight || '').trim();
+
+    if (!keyword || !content) {
+      return content;
+    }
+
+    const pattern = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
+    const parts = content.split(pattern);
+
+    return parts.map((part, index) => {
+      if (part.toLowerCase() === keyword.toLowerCase()) {
+        return (
+          <Box
+            key={`highlight-${index}`}
+            component="mark"
+            sx={{
+              px: 0.25,
+              borderRadius: '2px',
+              backgroundColor: '#fff59d',
+              color: 'inherit'
+            }}
+          >
+            {part}
+          </Box>
+        );
+      }
+
+      return <span key={`text-${index}`}>{part}</span>;
+    });
+  };
 
   const handleMenuClick = (event) => {
     event.stopPropagation();
@@ -191,7 +227,7 @@ function MessageCenterCardItem({
                 color: isUnread ? blue[900] : 'text.primary'
               }}
             >
-              {reviewer}
+              {renderHighlightedText(reviewer)}
             </Typography>
           </Box>
 
@@ -238,7 +274,7 @@ function MessageCenterCardItem({
               mr: 1
             }}
           >
-            {message}
+            {renderHighlightedText(message)}
           </Typography>
           
           {/* 🔹 Action buttons container - SIEMPRE VISIBLE */}
@@ -361,7 +397,7 @@ function MessageCenterCardItem({
             color: isUnread ? blue[900] : 'text.secondary'
           }}
         >
-          {desc}
+          {renderHighlightedText(desc)}
         </Typography>
       </Box>
 

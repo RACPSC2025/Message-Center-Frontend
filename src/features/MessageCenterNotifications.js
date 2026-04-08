@@ -117,6 +117,15 @@ function MessageCenterNotifications() {
       .toLowerCase();
   }, [filterData?.filter_module_string, showModuleStringFilter]);
 
+  const keywordToHighlight = useMemo(() => {
+    const rawKeyword =
+      typeof filterData?.filter_keywords === 'object'
+        ? filterData?.filter_keywords?.value
+        : filterData?.filter_keywords;
+
+    return String(rawKeyword || '').trim();
+  }, [filterData?.filter_keywords]);
+
   const dashboardMessageLoading = useSelector(
     (state) => state?.fetchDashboardMessageDetails?.loading ?? false
   );
@@ -636,6 +645,7 @@ function MessageCenterNotifications() {
               <MessageCenterImportantTab
                 key={`important-${tabKey}`}
                 filterData={apiFilterData}
+                keywordToHighlight={keywordToHighlight}
                 moduleStringFilter={moduleStringFilter}
                 showArchivedMessages={showArchivedMessages}
                 showSelectionCheckbox={showSelectionCheckbox}
@@ -662,6 +672,7 @@ function MessageCenterNotifications() {
               <MessageCenterUnreadTab
                 key={`unread-${tabKey}`}
                 filterData={apiFilterData}
+                keywordToHighlight={keywordToHighlight}
                 moduleStringFilter={moduleStringFilter}
                 showArchivedMessages={showArchivedMessages}
                 showSelectionCheckbox={showSelectionCheckbox}
@@ -688,6 +699,7 @@ function MessageCenterNotifications() {
               <MessageCenterReadTab
                 key={`read-${tabKey}`}
                 filterData={apiFilterData}
+                keywordToHighlight={keywordToHighlight}
                 moduleStringFilter={moduleStringFilter}
                 showArchivedMessages={showArchivedMessages}
                 showSelectionCheckbox={showSelectionCheckbox}

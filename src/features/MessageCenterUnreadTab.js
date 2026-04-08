@@ -9,6 +9,7 @@ import MessageCenterCarditemSkeleton from './MessageCenterCarditemSkeleton';
 
 const MessageCenterUnreadTab = ({
   filterData = {},
+  keywordToHighlight = '',
   moduleStringFilter = '',
   showArchivedMessages = false,
   showSelectionCheckbox = false,
@@ -134,6 +135,7 @@ const MessageCenterUnreadTab = ({
           {msgs.map((msg) => (
             <MessageCenterCardItem
               key={msg.id_message}
+              keywordToHighlight={keywordToHighlight}
               showSelectionCheckbox={showSelectionCheckbox}
               reviewer={msg[singleNotificationEmployeeKey]}
               moduleLabel={getModuleStringLabel?.(msg.module_string)}
