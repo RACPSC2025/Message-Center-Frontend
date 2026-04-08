@@ -27,10 +27,20 @@ import clsx from 'clsx';
 const EditableDescriptionField = ({ 
   initialValue, 
   actionId, 
-  onSave
+  onSave,
+  onValueChange
 }) => {
   const [localValue, setLocalValue] = useState(initialValue || '');
   const inputRef = useRef(null);
+  
+  // Notificar al padre del cambio inmediato (para sincronización)
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    if (onValueChange) {
+      onValueChange(newValue);
+    }
+  };
   
   // Solo notificar al padre cuando el usuario termine de editar (onBlur)
   const handleBlur = () => {
@@ -50,7 +60,7 @@ const EditableDescriptionField = ({
     <TextField
       inputRef={inputRef}
       value={localValue}
-      onChange={(e) => setLocalValue(e.target.value)}
+      onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       size="small"
@@ -99,6 +109,9 @@ export default function ActionTable({
 
   // Estado para guardar los datos originales antes de entrar en modo edición
   const [originalData, setOriginalData] = useState({});
+
+  // Ref para guardar el valor actual del campo de descripción en edición
+  const currentDescriptionValue = useRef('');
 
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -439,14 +452,59 @@ export default function ActionTable({
     const wasEditing = globalEditMode.enabled && globalEditMode.actionId === actionId;
     
     if (wasEditing) {
-      // Si estaba editando, procesar los cambios pendientes antes de desactivar
-      processPendingChanges(actionId);
+      // Crear el payload de cambios incluyendo el valor actual de descripción
+      const changes = { ...pendingChanges[actionId] };
+      
+      // Añadir el valor de descripción del ref si existe
+      if (currentDescriptionValue.current && currentDescriptionValue.current !== originalData[actionId]?.what_description) {
+        changes.what_description = currentDescriptionValue.current;
+      }
+      
+      // Si hay cambios, procesarlos directamente
+      if (Object.keys(changes).length > 0) {
+        const apiPayload = {
+          action_id: parseInt(actionId),
+          ...changes
+        };
+        
+        console.log('[API] Enviando actualización al endpoint:', apiPayload);
+        
+        // Llamar a la API directamente
+        dispatch(updateAction(apiPayload))
+          .unwrap()
+          .then((result) => {
+            if (result?.status === 1) {
+              showSuccessMsg(result?.messages || 'Acción actualizada correctamente');
+              if (onRefreshData) {
+                onRefreshData();
+              }
+            } else {
+              showErrorMsg(result?.messages || 'Error al actualizar la acción');
+            }
+          })
+          .catch(() => {
+            showErrorMsg('Error al actualizar la acción');
+          });
+      } else {
+        console.log('[API] No hay cambios pendientes para la acción:', actionId);
+      }
+      
       // Limpiar datos originales guardados
       setOriginalData(prev => {
         const newOriginal = { ...prev };
         delete newOriginal[actionId];
         return newOriginal;
       });
+      
+      // Limpiar cambios pendientes
+      setPendingChanges(prev => {
+        const newPending = { ...prev };
+        delete newPending[actionId];
+        return newPending;
+      });
+      
+      // Limpiar el ref del valor actual
+      currentDescriptionValue.current = '';
     } else {
       // Si va a entrar en modo edición, guardar los datos originales
       const currentAction = editableActions.find(action => action.action_id === actionId);
@@ -455,13 +513,15 @@ export default function ActionTable({
           ...prev,
           [actionId]: { ...currentAction }
         }));
+        // Inicializar el ref con el valor actual
+        currentDescriptionValue.current = currentAction.what_description || '';
       }
     }
     
     setGlobalEditMode(prev => ({
       enabled: !prev.enabled,
-      actionId: prev.enabled ? null : actionId, // Si ya está activo, lo desactiva
-      editableFields: prev.editableFields // Mantiene los mismos campos editables
+      actionId: prev.enabled ? null : actionId,
+      editableFields: prev.editableFields
     }));
     
     // Limpiar estados de edición individuales al cambiar modo global
@@ -851,6 +911,9 @@ export default function ActionTable({
                   initialValue={value}
                   actionId={data.action_id}
                   onSave={handleDescriptionChange}
+                  onValueChange={(newValue) => {
+                    currentDescriptionValue.current = newValue;
+                  }}
                 />
               ) : (
                 <Box sx={{ 
