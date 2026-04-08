@@ -15,6 +15,7 @@ import EditResponsablesDrawer from '../MessageCenterEventsList/EditResponsablesD
 const TaskCyclesTable = ({ 
   logtasks = [], 
   isLoading = false,
+  taskStatusCatalog = [],
   onSelectCycle,
   onOpenFollowup,
   onCloseCycle,
@@ -50,17 +51,35 @@ const TaskCyclesTable = ({
     return '#fb3d61'; // Rojo - Retrasado
   };
 
-  // ✅ OBTENER COLOR DEL ESTADO DEL CICLO
-  const getCycleStatusColor = (statusValue) => {
-    const numericStatusValue = Number(statusValue);
-    switch (numericStatusValue) {
-      case 1: return '#00f57a'; // Completado
-      case 2: return '#1a90ff'; // En Progreso
-      case 3: return '#fbc02d'; // Abierto
-      case 4: return '#fb3d61'; // Vencido
-      default: return '#90a4ae'; // Gris por defecto
-    }
-  };
+  const statusMetaByCode = useMemo(() => {
+    const fallback = {
+      '1': { label: 'Cerrado', color: '#28a745' },
+      '2': { label: 'Permanente', color: '#348fe2' },
+      '3': { label: 'Abierto', color: '#ffc107' },
+      '4': { label: 'Vencido', color: '#dc3545' }
+    };
+
+    const mapped = Array.isArray(taskStatusCatalog)
+      ? taskStatusCatalog.reduce((acc, status) => {
+          const code = String(status?.numericCode || status?.numeric_code || '').trim();
+          if (!code) return acc;
+
+          acc[code] = {
+            label: String(status?.label || fallback[code]?.label || '').trim() || fallback[code]?.label,
+            color: String(status?.color || fallback[code]?.color || '').trim() || fallback[code]?.color
+          };
+          return acc;
+        }, {})
+      : {};
+
+    return { ...fallback, ...mapped };
+  }, [taskStatusCatalog]);
+
+  const getCycleStatusColor = (statusValue) =>
+    statusMetaByCode[String(statusValue)]?.color || '#90a4ae';
+
+  const getCycleStatusLabel = (statusValue) =>
+    statusMetaByCode[String(statusValue)]?.label || '-';
 
   // ✅ MANEJAR CLIC EN ATTACH FILE
   const handleAttachFileClick = (task) => {
@@ -265,14 +284,17 @@ const TaskCyclesTable = ({
         const badgeData = `${percentageInt}%`;
         // Color según logtask_status
         const badgeColor = getCycleStatusColor(params.data.logtask_status);
+        const statusLabel = getCycleStatusLabel(params.data.logtask_status);
         return (
           <Box
             sx={{
               width: '100%',
               height: '100%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              gap: 0.3
             }}
           >
             <Typography
@@ -286,6 +308,9 @@ const TaskCyclesTable = ({
               className="badge"
             >
               {badgeData}
+            </Typography>
+            <Typography sx={{ fontSize: '0.62rem', color: '#607d8b', fontWeight: 600 }}>
+              {statusLabel}
             </Typography>
           </Box>
         );
@@ -372,7 +397,7 @@ const TaskCyclesTable = ({
       },
       cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     }
-  ], [theme, t]);
+  ], [theme, t, statusMetaByCode]);
 
   // ✅ TRANSFORMAR DATOS PARA AG GRID
   const rowData = useMemo(() => {

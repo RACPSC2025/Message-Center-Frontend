@@ -59,7 +59,7 @@ import { normalizeStatusCode, stripHtmlTags } from '../../utils/others';
 const TASKS_PER_PAGE = 10;
 
 const TasksListView = ({ onCreateTask, refreshKey }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const theme = useTheme();
   // Permisos de plataforma para el módulo de tareas
@@ -161,6 +161,12 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
 
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
+  const taskStatusCatalog = useSelector(
+    (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.status ?? []
+  );
+  const taskTypeCatalog = useSelector(
+    (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.task_type ?? []
+  );
   const selectedLegalTaskIds =
     useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
   const uploadAttachmentFocus = useSelector(
@@ -198,38 +204,123 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const etiquetasFilter = useSelector((state) => selectFilterItemValue(state, 'events', 'Etiquetas'));
 
 
-  // ✅ COLORES DINÁMICOS DESDE REDUX
-  const TASK_STATUS_COLORS = useMemo(() => {
-    // 1. Definir defaults por seguridad
-    const defaults = {
-      '1': '#00f57a', // Completado (verde)
-      '2': '#1a90ff', // En progreso (azul)
-      '3': '#fbc02d', // Abierto (amarillo)
-      '4': '#fb3d61' // Vencido (rojo)
-    };
+  const TASK_STATUS_FALLBACK = useMemo(
+    () => [
+      { code: 'pending', numeric_code: 3, label: 'Abierto', color: '#ffc107' },
+      { code: 'completed', numeric_code: 1, label: 'Cerrado', color: '#28a745' },
+      { code: 'delayed', numeric_code: 4, label: 'Vencido', color: '#dc3545' },
+      { code: 'permanent', numeric_code: 2, label: 'Permanente', color: '#348fe2' }
+    ],
+    []
+  );
 
-    // 2. Si no hay datos de la API, retornar defaults
-    if (!listTaskStatus || listTaskStatus.length === 0) return defaults;
+  const normalizedTaskStatusCatalog = useMemo(() => {
+    const sourceCatalog = Array.isArray(taskStatusCatalog) && taskStatusCatalog.length
+      ? taskStatusCatalog
+      : TASK_STATUS_FALLBACK;
 
-    // 3. Sobreescribir con colores de la API
-    const dynamicColors = { ...defaults };
-    
-    listTaskStatus.forEach(status => {
-      // ↓ La API a veces devuelve el entero o string ↓ 
-      const code = String(status.value_number);
+    return sourceCatalog
+      .map((statusItem) => {
+        const numericCode = normalizeStatusCode(statusItem?.numeric_code);
+        if (!numericCode) return null;
 
-      if (status.color_code) dynamicColors[code] = status.color_code;
+        const fallbackStatus = TASK_STATUS_FALLBACK.find(
+          (item) => normalizeStatusCode(item.numeric_code) === numericCode
+        );
+
+        return {
+          code: String(statusItem?.code || fallbackStatus?.code || '').trim().toLowerCase(),
+          numericCode,
+          label: String(statusItem?.label || fallbackStatus?.label || '').trim(),
+          color: String(statusItem?.color || fallbackStatus?.color || '').trim() || fallbackStatus?.color
+        };
+      })
+      .filter(Boolean);
+  }, [taskStatusCatalog, TASK_STATUS_FALLBACK]);
+
+  const TASK_STATUS_COLORS = useMemo(
+    () =>
+      normalizedTaskStatusCatalog.reduce((acc, status) => {
+        acc[status.numericCode] = status.color;
+        return acc;
+      }, {}),
+    [normalizedTaskStatusCatalog]
+  );
+
+  const STATUS_FILTER_META = useMemo(
+    () =>
+      normalizedTaskStatusCatalog.reduce((acc, status) => {
+        acc[status.numericCode] = {
+          label: status.label,
+          color: status.color
+        };
+        return acc;
+      }, {}),
+    [normalizedTaskStatusCatalog]
+  );
+
+  const normalizedTaskTypeCatalog = useMemo(() => {
+    const sourceCatalog = Array.isArray(taskTypeCatalog) && taskTypeCatalog.length
+      ? taskTypeCatalog
+      : [
+          { code: 'unique', numeric_code: 1, label_es: 'Única', label_en: 'Unique' },
+          { code: 'cyclic', numeric_code: 3, label_es: 'Cíclica', label_en: 'Cyclic' },
+          { code: 'permanent', numeric_code: 5, label_es: 'Permanente', label_en: 'Permanent' }
+        ];
+
+    return sourceCatalog.map((item) => ({
+      code: String(item?.code || '').trim().toLowerCase(),
+      numericCode: Number(item?.numeric_code),
+      labelEs: String(item?.label_es || '').trim(),
+      labelEn: String(item?.label_en || '').trim()
+    }));
+  }, [taskTypeCatalog]);
+
+  const getTaskTypeInfoFromActivityType = (activityType) => {
+    const fallbackType =
+      normalizedTaskTypeCatalog.find((item) => item.code === 'cyclic' || item.numericCode === 3)
+      || normalizedTaskTypeCatalog[0]
+      || null;
+
+    const normalizedActivityType = String(activityType ?? '').trim();
+    const activityTypeNumber = Number(normalizedActivityType);
+
+    const matchedType = normalizedTaskTypeCatalog.find((item) => {
+      if (!item) return false;
+      const codeMatches = item.code && item.code === normalizedActivityType.toLowerCase();
+      const numericMatches = Number.isFinite(activityTypeNumber) && item.numericCode === activityTypeNumber;
+      return codeMatches || numericMatches;
     });
 
-    return dynamicColors;
-  }, [listTaskStatus]);
+    const resolvedType = matchedType || fallbackType;
+    const language = (i18n?.language || 'es').toLowerCase();
+    const isEnglish = language.startsWith('en');
+    const label = isEnglish
+      ? (resolvedType?.labelEn || resolvedType?.labelEs || 'Cyclic')
+      : (resolvedType?.labelEs || resolvedType?.labelEn || 'Cíclica');
 
-  const STATUS_FILTER_META = useMemo(() => ({
-    '1': { label: 'Completed', color: TASK_STATUS_COLORS['1'] },
-    '2': { label: 'In_Progress', color: TASK_STATUS_COLORS['2'] },
-    '3': { label: 'abierto', color: TASK_STATUS_COLORS['3'] },
-    '4': { label: 'Expired', color: TASK_STATUS_COLORS['4'] }
-  }), [TASK_STATUS_COLORS]);
+    return {
+      code: resolvedType?.code || 'cyclic',
+      numericCode: resolvedType?.numericCode ?? 3,
+      label
+    };
+  };
+
+  const mapTaskFromApi = (task) => {
+    const taskTypeInfo = getTaskTypeInfoFromActivityType(task?.activity_type ?? task?.task_type);
+
+    return {
+      ...task,
+      start_date: task.task_start_date || task.start_date,
+      end_date: task.task_end_date || task.end_date,
+      task_type: taskTypeInfo.label,
+      task_type_code: taskTypeInfo.code,
+      task_type_numeric_code: taskTypeInfo.numericCode,
+      task_title: task.task_title?.trim() || 'Sin título',
+      tags: task.tags ? Object.values(task.tags) : [],
+      progress: parseFloat(task.progress) || 0
+    };
+  };
 
 
 
@@ -245,19 +336,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
         console.log("📋 Tareas recibidas:", tasksData);
 
         // ⚠️ MAPEO CRÍTICO: La API devuelve campos con nombres diferentes
-        const mappedTasks = tasksData.map(task => ({
-          ...task,
-          // Mapear campos de fecha
-          start_date: task.task_start_date || task.start_date,
-          end_date: task.task_end_date || task.end_date,
-          // Manejo de valores null con defaults
-          task_type: task.task_type || 'CÍCLICA',
-          task_title: task.task_title?.trim() || 'Sin título',
-          // Convertir tags de objeto a array
-          tags: task.tags ? Object.values(task.tags) : [],
-          // Asegurar que progress sea número
-          progress: parseFloat(task.progress) || 0
-        }));
+        const mappedTasks = tasksData.map(mapTaskFromApi);
 
         setTasks(mappedTasks);
         setIsInitialized(true);
@@ -278,7 +357,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       setIsInitialized(true);
       console.error("❌ Error al cargar tareas:", error);
     });
-  }, [dispatch, refreshKey]);
+  }, [dispatch, refreshKey, taskTypeCatalog, i18n.language]);
 
   useEffect(() => {
     const status = Number(uploadAttachmentFocus?.status);
@@ -580,19 +659,20 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     }
   };
 
-  const getTaskIcon = (type, isSelected) => {
+  const getTaskIcon = (taskTypeCode, isSelected) => {
     const typeColors = {
-      'ÚNICA': '#ba68c8',
-      'PERMANENTE': '#ff9800',
-      'CÍCLICA': '#90a4ae'
+      unique: '#ba68c8',
+      permanent: '#ff9800',
+      cyclic: '#90a4ae'
     };
-    const iconColor = isSelected ? '#a4a4a4' : (typeColors[type?.toUpperCase()] || '#90a4ae');
+    const normalizedTypeCode = String(taskTypeCode || '').trim().toLowerCase();
+    const iconColor = isSelected ? '#a4a4a4' : (typeColors[normalizedTypeCode] || '#90a4ae');
     const iconStyle = { fontSize: 16, color: iconColor, transition: 'color 0.2s ease' };
 
-    switch (type?.toUpperCase()) {
-      case 'ÚNICA': return <UniqueIcon sx={iconStyle} />;
-      case 'PERMANENTE': return <PermanentIcon sx={iconStyle} />;
-      case 'CÍCLICA':
+    switch (normalizedTypeCode) {
+      case 'unique': return <UniqueIcon sx={iconStyle} />;
+      case 'permanent': return <PermanentIcon sx={iconStyle} />;
+      case 'cyclic':
       default: return <SyncIcon sx={iconStyle} />;
     }
   };
@@ -605,22 +685,15 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
   
   const statusFilters = useMemo(() => {
-    const source = Array.isArray(listTaskStatus) ? listTaskStatus : [];
-    const backendByCode = {};
-
-    source.forEach((statusItem) => {
-      const code = getStatusCodeFromItem(statusItem);
-      if (!code || !STATUS_FILTER_META[code] || backendByCode[code]) return;
-      backendByCode[code] = statusItem;
-    });
-
-    // Siempre mostrar los 4 filtros en el orden del diseño
-    return ['3', '1', '4', '2'].map((code) => ({
-      code,
-      label: STATUS_FILTER_META[code].label,
-      color: STATUS_FILTER_META[code].color
-    }));
-  }, [listTaskStatus, STATUS_FILTER_META]);
+    const desiredOrder = ['3', '1', '4', '2'];
+    return desiredOrder
+      .filter((code) => STATUS_FILTER_META[code])
+      .map((code) => ({
+        code,
+        label: STATUS_FILTER_META[code].label,
+        color: STATUS_FILTER_META[code].color
+      }));
+  }, [STATUS_FILTER_META]);
 
   const normalizedSelectedStatus = useMemo(
     () => normalizeStatusCode(selectedStatus),
@@ -719,6 +792,27 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       averageProgress: Math.round(totalProgress / logtasks.length)
     };
   }, [logtasks]);
+
+  const statsByStatusCode = useMemo(
+    () => ({
+      '1': stats.completed,
+      '2': stats.inProgress,
+      '3': stats.open,
+      '4': stats.expired
+    }),
+    [stats]
+  );
+
+  const chartStatusItems = useMemo(
+    () =>
+      normalizedTaskStatusCatalog.map((status) => ({
+        code: status.numericCode,
+        label: status.label,
+        color: status.color,
+        count: Number(statsByStatusCode[status.numericCode] || 0)
+      })),
+    [normalizedTaskStatusCatalog, statsByStatusCode]
+  );
 
   return (
     <Box sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
@@ -950,10 +1044,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                                         ...task,
                                         start_date: task.task_start_date || task.start_date,
                                         end_date: task.task_end_date || task.end_date,
-                                        task_type: task.task_type || 'CÍCLICA',
-                                        task_title: task.task_title?.trim() || 'Sin título',
-                                        tags: task.tags ? Object.values(task.tags) : [],
-                                        progress: parseFloat(task.progress) || 0
+                                        ...mapTaskFromApi(task)
                                       }));
                                       const found = mappedTasks.find(t => String(t.id) === String(updatedTaskId));
                                       if (found) {
@@ -985,8 +1076,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                           secondary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                               <Chip 
-                                icon={getTaskIcon(task.task_type, isSelected)}
-                                label={task.task_type || 'CÍCLICA'}
+                                icon={getTaskIcon(task.task_type_code, isSelected)}
+                                label={task.task_type || getTaskTypeInfoFromActivityType(task?.activity_type).label}
                                 size="small"
                                 sx={{
                                   height: 'auto',
@@ -1203,6 +1294,12 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                 <TaskDoubleRingChart
                   percentage={stats.averageProgress}
                   stats={stats}
+                  chartData={chartStatusItems.map((item) => ({
+                    key: item.code,
+                    value: item.count,
+                    color: item.color,
+                    label: item.label
+                  }))}
                   size={88}
                   strokeWidth={9}
                   taskState={getTaskPriorityStatus(selectedTask)} // Pasamos el estado (código '1', '2', '3' o '4')
@@ -1210,14 +1307,9 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
                 {/* Estados de los ciclos en formato vertical */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3, alignItems: 'flex-start' }}>
-                  {[
-                    { label: t('Completed'), statusKey: '1', count: stats.completed },
-                    { label: t('InProgress'), statusKey: '2', count: stats.inProgress },
-                    { label: t('Delayed'), statusKey: '4', count: stats.expired },
-                    { label: t('Pending'), statusKey: '3', count: stats.open }
-                  ].map((item) => (
-                    <Box key={item.label} display="flex" alignItems="center" gap={0.5}>
-                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: TASK_STATUS_COLORS[item.statusKey] }} />
+                  {chartStatusItems.map((item) => (
+                    <Box key={item.code} display="flex" alignItems="center" gap={0.5}>
+                      <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: item.color || '#90a4ae' }} />
                       <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.6rem' }}>
                         {item.label}: <b>{item.count}</b>
                       </Typography>
@@ -1232,6 +1324,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           <TaskCyclesTable
             logtasks={filteredLogtasks}
             isLoading={logtaskListLoading}
+            taskStatusCatalog={normalizedTaskStatusCatalog}
             onSelectCycle={(cycle) => {
               setSelectedLogtask(cycle);
               setFocusedCommentId(null);
@@ -1349,39 +1442,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           // fetchListTaskNew es async thunk, así que podemos esperar a que termine
           dispatch(fetchListTaskNew()).then((data) => {
             const tasksData = data?.payload?.data || [];
-            // Obtener catálogo de tipos de tarea desde la configuración de plataforma
-            const platformConfig = window.store?.getState()?.platformConfig?.data;
-            const taskTypeCatalog = platformConfig?.modules?.task?.catalogs?.task_type || [];
-            const currentLang = (window.i18next && window.i18next.language) || 'es';
-
-            const mappedTasks = tasksData.map(task => {
-              // Buscar el tipo de tarea por activity_type (robusto ante string, numérico o vacío)
-              let typeLabel = '';
-              //console.log('Mapping task type for task ID', task.id, 'original activity_type:', task.activity_type);
-              const activityTypeStr = (task.activity_type !== undefined && task.activity_type !== null) ? String(task.activity_type).trim() : '';
-              //console.log('Processing task ID', task.id, 'with activity_type:', task.activity_type, 'normalized to:', activityTypeStr);
-              if (activityTypeStr !== '') {
-                const activityTypeNum = Number(activityTypeStr);
-                const foundType = taskTypeCatalog.find((item) => {
-                  // Comparar por code (string) o numeric_code (número)
-                  return String(item.code) === activityTypeStr || item.numeric_code === activityTypeNum;
-                });
-                //console.log('Mapping task type for task ID', task.id, 'activity_type:', activityTypeStr, 'found type:', foundType);
-                if (foundType) {
-                  typeLabel = currentLang === 'en' ? foundType.label_en : foundType.label_es;
-                }
-              }
-              // Si no hay coincidencia, por defecto 'CÍCLICA'
-              return {
-                ...task,
-                start_date: task.task_start_date || task.start_date,
-                end_date: task.task_end_date || task.end_date,
-                task_type: typeLabel || 'CÍCLICA',
-                task_title: task.task_title?.trim() || 'Sin título',
-                tags: task.tags ? Object.values(task.tags) : [],
-                progress: parseFloat(task.progress) || 0
-              };
-            });
+            const mappedTasks = tasksData.map(mapTaskFromApi);
             const found = mappedTasks.find(t => String(t.id) === String(updatedTaskId));
             if (found) {
               setSelectedTask(found);

@@ -90,8 +90,18 @@ export const TaskDoubleRingChart = ({
     });
   }
 
+  const chartColorByCode = Array.isArray(chartData)
+    ? chartData.reduce((acc, segment) => {
+        const code = String(segment?.key ?? '').trim();
+        if (code && segment?.color) {
+          acc[code] = segment.color;
+        }
+        return acc;
+      }, {})
+    : {};
+
   // Determinar color dinámico del anillo interior
-  const innerRingColor = statusColors[String(taskState)] || '#eeeeee';
+  const innerRingColor = chartColorByCode[String(taskState)] || statusColors[String(taskState)] || '#eeeeee';
 
   // --- 4. Preparación de Datos (Anillo Exterior) ---
   let segments = [];
@@ -99,7 +109,10 @@ export const TaskDoubleRingChart = ({
 
   if (chartData && Array.isArray(chartData)) {
     // Modo Dinámico
-    segments = chartData;
+    segments = chartData.map((segment) => ({
+      ...segment,
+      color: segment?.color || statusColors[String(segment?.key)] || '#90a4ae'
+    }));
     total = segments.reduce((acc, curr) => acc + (curr.value || 0), 0);
   } else if (stats) {
     // Modo Legacy
