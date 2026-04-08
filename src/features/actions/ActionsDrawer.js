@@ -380,6 +380,7 @@ export default function ActionsDrawer({
           <ActionsComments 
             actionDetails={selectedAction}
             onFormChange={setHasCommentFormChanges}
+            onRefreshTable={handleFetchActionList}
           />
         ) : viewType === 'view_action' ? (
           <ActionsDetails
