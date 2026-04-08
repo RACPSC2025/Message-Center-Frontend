@@ -37,7 +37,7 @@ export const fetchActionCount = createAsyncThunk(
   async (payload = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/message_center_api/action_api/get_action_counts',
+        '/message_center_api/action_api/get_action_counts_amatia_express',
         payload
       );
       return response?.data;

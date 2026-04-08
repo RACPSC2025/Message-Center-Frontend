@@ -299,15 +299,18 @@ export default function ActionsDetails({
         
         {/* Botones de acción del formulario */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, borderTop: 1 }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="primary"
-            sx={{ mx: 1 }}
-            onClick={handleSubmit}
-          >
-            {t('Save')}
-          </Button>
+          {/* Mostrar botón Guardar solo en el último tab */}
+          {activeTab === tabItems[tabItems.length - 1]?.key && (
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              sx={{ mx: 1 }}
+              onClick={handleSubmit}
+            >
+              {t('Save')}
+            </Button>
+          )}
           <Button
             variant="outlined"
             size="small"

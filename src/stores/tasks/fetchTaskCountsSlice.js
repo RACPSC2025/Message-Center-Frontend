@@ -9,7 +9,7 @@ const initialState = {
 
 export const fetchTaskCounts = createAsyncThunk('task/count', async (id, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post('/tasklist_api/get_task_counts');
+    const response = await axiosInstance.post('/tasklist_api/get_task_counts_amatia_express');
     return response?.data;
   } catch (error) {
     return rejectWithValue(error.message);
