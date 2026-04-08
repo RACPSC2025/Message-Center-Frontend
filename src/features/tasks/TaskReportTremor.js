@@ -222,56 +222,50 @@ export default function TaskReportTremor() {
   ]);
 
   const reportData = useMemo(() => {
-    const taskStatus = { '1': 0, '2': 0, '3': 0, '4': 0 };
-    const cycleStatus = { '1': 0, '2': 0, '3': 0, '4': 0 };
+    const statusCodes = Object.keys(statusMap);
+    const taskStatus = statusCodes.reduce((acc, code) => {
+      acc[code] = 0;
+      return acc;
+    }, {});
+    const cycleStatus = statusCodes.reduce((acc, code) => {
+      acc[code] = 0;
+      return acc;
+    }, {});
     let progressSum = 0;
 
     filteredTasks.forEach((task) => {
-      taskStatus[task.task_status] += 1;
+      const taskStatusCode = normalizeStatusCode(task.task_status || task.status) || '3';
+      taskStatus[taskStatusCode] = (taskStatus[taskStatusCode] || 0) + 1;
       progressSum += task.progress;
+
       task.logtask_list.forEach((cycle) => {
         const code = normalizeStatusCode(cycle?.logtask_status || cycle?.task_status || cycle?.status) || '3';
-        cycleStatus[code] += 1;
+        cycleStatus[code] = (cycleStatus[code] || 0) + 1;
       });
     });
 
     const totalTasks = filteredTasks.length;
     const totalCycles = Object.values(cycleStatus).reduce((acc, value) => acc + value, 0);
-    const completion = totalTasks > 0 ? Math.round((taskStatus['1'] / totalTasks) * 100) : 0;
+    const completedCode =
+      Object.keys(statusMap).find((code) =>
+        String(statusMap[code]?.label || '').trim().toLowerCase() === 'cerrado'
+      ) || '1';
+    const completion = totalTasks > 0 ? Math.round(((taskStatus[completedCode] || 0) / totalTasks) * 100) : 0;
     const averageProgress = totalTasks > 0 ? Math.round(progressSum / totalTasks) : 0;
 
-    const firstDonutSegments = [
-      {
-        label: statusMap['2'].label || t('task_status_in_progress', { defaultValue: 'En progreso' }),
-        value: taskStatus['2'],
-        color: statusMap['2'].color
-      },
-      {
-        label: statusMap['3'].label || t('task_status_pending', { defaultValue: 'Pendiente' }),
-        value: taskStatus['3'],
-        color: statusMap['3'].color
-      },
-      {
-        label: statusMap['1'].label || t('task_status_completed', { defaultValue: 'Cerrado' }),
-        value: taskStatus['1'],
-        color: statusMap['1'].color
-      }
-    ];
+    const segmentOrder = ['3', '1', '4', '2'].filter((code) => statusMap[code]);
 
-    const completedCycles = cycleStatus['1'];
-    const remainingCycles = Math.max(totalCycles - completedCycles, 0);
-    const secondDonutSegments = [
-      {
-        label: statusMap['1'].label || t('task_status_completed', { defaultValue: 'Cerrado' }),
-        value: completedCycles,
-        color: statusMap['1'].color
-      },
-      {
-        label: statusMap['3'].label || t('task_status_pending', { defaultValue: 'Pendiente' }),
-        value: remainingCycles,
-        color: statusMap['3'].color
-      }
-    ];
+    const firstDonutSegments = segmentOrder.map((code) => ({
+      label: statusMap[code].label,
+      value: taskStatus[code] || 0,
+      color: statusMap[code].color
+    }));
+
+    const secondDonutSegments = segmentOrder.map((code) => ({
+      label: statusMap[code].label,
+      value: cycleStatus[code] || 0,
+      color: statusMap[code].color
+    }));
 
     return {
       taskStatus,
@@ -280,8 +274,8 @@ export default function TaskReportTremor() {
       totalCycles,
       completion,
       averageProgress,
-      delayed: taskStatus['4'],
-      activeCycles: cycleStatus['2'] + cycleStatus['3'],
+      delayed: taskStatus['4'] || 0,
+      activeCycles: (cycleStatus['2'] || 0) + (cycleStatus['3'] || 0),
       firstDonutSegments,
       secondDonutSegments
     };
@@ -422,15 +416,9 @@ export default function TaskReportTremor() {
               </thead>
               <tbody className="divide-y divide-[#eceef0]">
                 {tableRows.map((task) => {
-                  const tableStatus = statusMap[task.task_status] || STATUS_FALLBACK['3'];
-                  const statusLabel =
-                    task.task_status === '1'
-                      ? (statusMap['1'].label || t('task_status_completed', { defaultValue: 'Finalizado' }))
-                      : task.task_status === '4'
-                        ? (statusMap['4'].label || t('task_status_delayed', { defaultValue: 'Vencido' }))
-                        : task.task_status === '2'
-                          ? (statusMap['2'].label || t('task_status_in_progress', { defaultValue: 'En progreso' }))
-                          : (statusMap['3'].label || t('task_status_pending', { defaultValue: 'Pendiente' }));
+                  const statusCode = normalizeStatusCode(task.task_status || task.status) || '3';
+                  const tableStatus = statusMap[statusCode] || STATUS_FALLBACK['3'];
+                  const statusLabel = tableStatus.label || '-';
 
                   return (
                   <tr key={task.id} className="transition-colors hover:bg-[#f7f9fb]">

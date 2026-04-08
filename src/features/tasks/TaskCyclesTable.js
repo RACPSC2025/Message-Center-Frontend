@@ -252,6 +252,9 @@ const TaskCyclesTable = ({
   };
 
   // ✅ DEFINIR COLUMNAS PARA AG GRID
+  // Estado para mostrar/ocultar el statusLabel
+  const [showStatusLabel, setShowStatusLabel] = useState(false);
+
   const columnDefs = useMemo(() => [
     {
       field: 'actions',
@@ -309,9 +312,11 @@ const TaskCyclesTable = ({
             >
               {badgeData}
             </Typography>
-            <Typography sx={{ fontSize: '0.62rem', color: '#607d8b', fontWeight: 600 }}>
-              {statusLabel}
-            </Typography>
+            {showStatusLabel && (
+              <Typography sx={{ fontSize: '0.62rem', color: '#607d8b', fontWeight: 600 }}>
+                {statusLabel}
+              </Typography>
+            )}
           </Box>
         );
       }

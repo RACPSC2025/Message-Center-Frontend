@@ -1312,7 +1312,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                   {chartStatusItems.map((item) => (
                     <Box key={item.code} display="flex" alignItems="center" gap={0.5}>
                       <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: item.color || '#90a4ae' }} />
-                      <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.6rem' }}>
+                      <Typography sx={{ color: '#78909c', fontWeight: 600, fontSize: '0.8rem' }}>
                         {item.label}: <b>{item.count}</b>
                       </Typography>
                     </Box>
