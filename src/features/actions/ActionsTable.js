@@ -22,6 +22,47 @@ import { updateAction } from '../../stores/actions/updateActionSlice';
 import { Description, Field, Label, Textarea } from '@headlessui/react';
 import clsx from 'clsx';
 
+// Componente separado para el campo de descripción editable
+// Usa estado interno para evitar re-renders del componente padre
+const EditableDescriptionField = ({ 
+  initialValue, 
+  actionId, 
+  onSave
+}) => {
+  const [localValue, setLocalValue] = useState(initialValue || '');
+  const inputRef = useRef(null);
+  
+  // Solo notificar al padre cuando el usuario termine de editar (onBlur)
+  const handleBlur = () => {
+    if (localValue !== initialValue) {
+      onSave(actionId, localValue);
+    }
+  };
+  
+  // O también al presionar Enter
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur(); // Esto disparará onBlur
+    }
+  };
+
+  return (
+    <TextField
+      inputRef={inputRef}
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      size="small"
+      sx={{ flex: 1 }}
+      multiline
+      maxRows={3}
+      autoFocus
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+};
+
 export default function ActionTable({
   actions,
   actionStatus,
@@ -806,15 +847,10 @@ export default function ActionTable({
           return (
             <Box sx={{ width: '100%', display: 'flex', alignItems: 'center' }}>
               {isEditing ? (
-                <TextField
-                  value={value || ''}
-                  onChange={(e) => handleDescriptionChange(data.action_id, e.target.value)}
-                  size="small"
-                  sx={{ flex: 1 }}
-                  multiline
-                  maxRows={3}
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
+                <EditableDescriptionField
+                  initialValue={value}
+                  actionId={data.action_id}
+                  onSave={handleDescriptionChange}
                 />
               ) : (
                 <Box sx={{ 
