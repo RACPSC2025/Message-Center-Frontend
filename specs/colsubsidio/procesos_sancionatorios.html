@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Procesos Sancionatorios - Editorial Enterprise</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f8fafb",
+                    "inverse-primary": "#58d8e4",
+                    "on-tertiary-fixed-variant": "#930015",
+                    "on-tertiary-container": "#850012",
+                    "surface-dim": "#d8dadb",
+                    "outline": "#6c797c",
+                    "on-secondary-fixed-variant": "#3c494f",
+                    "primary-container": "#32bcc8",
+                    "surface": "#f8fafb",
+                    "outline-variant": "#bbc9cc",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#bbc8d0",
+                    "on-tertiary-fixed": "#410004",
+                    "on-secondary-fixed": "#111d23",
+                    "inverse-on-surface": "#eff1f2",
+                    "surface-container-low": "#f2f4f5",
+                    "on-primary": "#ffffff",
+                    "secondary": "#546067",
+                    "tertiary-fixed-dim": "#ffb3ae",
+                    "on-surface-variant": "#3c494c",
+                    "surface-variant": "#e1e3e4",
+                    "primary-fixed-dim": "#58d8e4",
+                    "primary": "#006971",
+                    "surface-container-high": "#e6e8e9",
+                    "error-container": "#ffdad6",
+                    "tertiary-container": "#ff8983",
+                    "on-tertiary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-background": "#191c1d",
+                    "on-primary-container": "#00474c",
+                    "on-secondary-container": "#5a666d",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#2e3132",
+                    "on-secondary": "#ffffff",
+                    "secondary-container": "#d7e4ec",
+                    "surface-container-highest": "#e1e3e4",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#ffdad7",
+                    "on-primary-fixed-variant": "#004f55",
+                    "primary-fixed": "#83f3ff",
+                    "tertiary": "#b81d27",
+                    "on-primary-fixed": "#002022",
+                    "surface-container": "#eceeef",
+                    "background": "#f8fafb",
+                    "surface-tint": "#006971",
+                    "on-surface": "#191c1d",
+                    "secondary-fixed": "#d7e4ec"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="bg-[#2e3132] dark:bg-[#191c1d] h-full w-64 fixed left-0 top-0 z-40 shadow-2xl shadow-black/10 flex flex-col py-6">
+<div class="px-6 mb-8">
+<h1 class="text-[#f8fafb] font-headline font-bold tracking-tight text-lg">Editorial Enterprise</h1>
+<p class="text-[#bbc9cc] font-body text-xs opacity-70">Precision Curator</p>
+</div>
+<nav class="flex-grow space-y-1 px-4">
+<a class="flex items-center gap-3 px-4 py-2.5 text-[#bbc9cc] hover:text-[#f8fafb] transition-colors hover:bg-[#3c494c] rounded-lg" href="#">
+<span class="material-symbols-outlined text-sm">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-[#bbc9cc] hover:text-[#f8fafb] transition-colors hover:bg-[#3c494c] rounded-lg" href="#">
+<span class="material-symbols-outlined text-sm">analytics</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-[#bbc9cc] hover:text-[#f8fafb] transition-colors hover:bg-[#3c494c] rounded-lg" href="#">
+<span class="material-symbols-outlined text-sm">library_books</span>
+<span class="text-sm font-medium">Legal Library</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-[#bbc9cc] hover:text-[#f8fafb] transition-colors hover:bg-[#3c494c] rounded-lg" href="#">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-sm font-medium">Compliance Hub</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-[#bbc9cc] hover:text-[#f8fafb] transition-colors hover:bg-[#3c494c] rounded-lg" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-6">
+<button class="w-full bg-[#006971] text-white py-2.5 rounded-lg font-headline font-bold text-sm scale-95 active:scale-90 transition-transform">
+                New Case
+            </button>
+</div>
+<div class="mt-auto px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-[#bbc9cc] hover:text-[#f8fafb] text-xs" href="#">
+<span class="material-symbols-outlined text-base">help</span>
+<span>Help</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-[#bbc9cc] hover:text-[#f8fafb] text-xs" href="#">
+<span class="material-symbols-outlined text-base">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-[#f2f4f5] dark:bg-[#1c1f20] w-full sticky top-0 z-30 border-b border-[#bbc9cc]/15 flex items-center justify-between px-8 py-3 ml-64">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</div>
+<span class="text-[#006971] font-headline font-black text-xl tracking-tight leading-none">Compliance Manager</span>
+</div>
+<nav class="flex items-center gap-6 font-inter text-sm font-medium">
+<a class="text-[#3c494c] hover:text-[#006971] transition-all" href="#">Matriz Legal</a>
+<a class="text-[#3c494c] hover:text-[#006971] transition-all" href="#">Tareas</a>
+<a class="text-[#3c494c] hover:text-[#006971] transition-all" href="#">Gestor de Permisos</a>
+<a class="text-[#006971] border-b-2 border-[#006971] font-semibold py-1" href="#">Procesos Sancionatorios</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+<input class="bg-surface-container-lowest border-none rounded-full pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search proceedings..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-[#f8fafb] rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="professional portrait of a legal compliance officer in business attire, soft studio lighting, neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZlU6d4JhEaVSmFdYxE3KZwhnCRJmfsrTOCmNnYtxKAK47sWEOonMwp6QyM7uQpSdtShVaFLuF278HZ9dN-hLfstVUVjxb37oLNcEgK5VNFPRvWJLRLbh6r4rvsulvSGTHbU90n0D1jW45jx76PukGG7zWVW2xG2uK9e8F4LT6oSCm2nPghCIY0glAnpL7RhoFpjW34Vo30WYZzO_NWdr7HmNh8lyFO0JQQQs5Qmg21ehZFjJVErXxaELsPURBy82-645NfRwHAe-v"/>
+</div>
+</div>
+</header>
+<main class="ml-64 p-8 min-h-screen">
+<!-- Dashboard Summary Header -->
+<header class="flex justify-between items-end mb-8">
+<div>
+<p class="text-on-surface-variant text-sm mb-1 font-medium">Módulo de Control</p>
+<h2 class="text-3xl font-headline font-extrabold text-on-surface tracking-tight">Procesos Sancionatorios</h2>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 text-primary font-semibold text-sm rounded-lg hover:bg-primary-container/10 transition-colors">
+<span class="material-symbols-outlined text-lg">description</span>
+                    Generar Reporte
+                </button>
+<button class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-b from-primary-container to-primary text-white font-headline font-bold text-sm rounded-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+                    Iniciar Nuevo Proceso
+                </button>
+</div>
+</header>
+<!-- Stats Grid (Circular Rings) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<!-- Ring 1: Active -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex items-center justify-between">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">Sanciones Activas</h3>
+<p class="text-on-surface-variant text-xs mt-1">Requieren atención inmediata</p>
+<p class="text-4xl font-headline font-extrabold text-tertiary mt-3">24</p>
+</div>
+<div class="relative h-20 w-20">
+<svg class="h-full w-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-high" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<circle class="stroke-tertiary progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="30" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-headline font-bold text-xs text-tertiary">70%</div>
+</div>
+</div>
+<!-- Ring 2: Appeal -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex items-center justify-between">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">En Apelación</h3>
+<p class="text-on-surface-variant text-xs mt-1">Revisión técnico-legal</p>
+<p class="text-4xl font-headline font-extrabold text-[#eab308] mt-3">12</p>
+</div>
+<div class="relative h-20 w-20">
+<svg class="h-full w-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-high" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<circle class="stroke-[#eab308] progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="65" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-headline font-bold text-xs text-[#eab308]">35%</div>
+</div>
+</div>
+<!-- Ring 3: Closed -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex items-center justify-between">
+<div>
+<h3 class="font-headline font-bold text-lg text-on-surface">Cerradas</h3>
+<p class="text-on-surface-variant text-xs mt-1">Últimos 30 días</p>
+<p class="text-4xl font-headline font-extrabold text-primary mt-3">48</p>
+</div>
+<div class="relative h-20 w-20">
+<svg class="h-full w-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-high" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<circle class="stroke-primary progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="15" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-headline font-bold text-xs text-primary">85%</div>
+</div>
+</div>
+</div>
+<!-- Search & Filters Container -->
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-wrap gap-4 items-center mb-6">
+<div class="flex-grow flex items-center bg-surface-container-lowest px-4 py-2 rounded-lg gap-3">
+<span class="material-symbols-outlined text-outline">filter_list</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full" placeholder="Filtrar por tipo de infracción o requisito legal..." type="text"/>
+</div>
+<select class="bg-surface-container-lowest border-none rounded-lg text-sm px-4 py-2 focus:ring-primary/20 font-medium">
+<option>Gravedad: Todas</option>
+<option>Alta</option>
+<option>Media</option>
+<option>Baja</option>
+</select>
+<select class="bg-surface-container-lowest border-none rounded-lg text-sm px-4 py-2 focus:ring-primary/20 font-medium">
+<option>Estado: Todos</option>
+<option>Notificado</option>
+<option>En Descargos</option>
+<option>Apelación</option>
+</select>
+<button class="bg-primary-container/20 text-on-primary-container px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider">Limpiar Filtros</button>
+</div>
+<!-- Table / List Content -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant/15">
+<tr>
+<th class="px-6 py-4 font-headline font-bold text-xs text-on-surface-variant tracking-wider">CÓDIGO / REQUISITO</th>
+<th class="px-6 py-4 font-headline font-bold text-xs text-on-surface-variant tracking-wider">GRAVEDAD</th>
+<th class="px-6 py-4 font-headline font-bold text-xs text-on-surface-variant tracking-wider">ESTADO ACTUAL</th>
+<th class="px-6 py-4 font-headline font-bold text-xs text-on-surface-variant tracking-wider">FECHA LÍMITE</th>
+<th class="px-6 py-4 font-headline font-bold text-xs text-on-surface-variant tracking-wider">ACCIONES</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">EXP-2024-001</span>
+<span class="text-xs text-on-surface-variant mt-1">Norma Ambiental ISO 14001:2015</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-2"></span>
+                                ALTA
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">mark_email_read</span>
+<span class="text-sm font-medium">Notificado</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-sm font-headline font-bold text-tertiary">15 Oct 2024</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex gap-2">
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">attach_file</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">EXP-2024-012</span>
+<span class="text-xs text-on-surface-variant mt-1">Ley de Protección de Datos Personales</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mr-2"></span>
+                                MEDIA
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#eab308] text-lg">pending_actions</span>
+<span class="text-sm font-medium">En Descargos</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-sm font-headline font-bold text-on-surface-variant">28 Oct 2024</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex gap-2">
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">attach_file</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-on-surface">EXP-2023-442</span>
+<span class="text-xs text-on-surface-variant mt-1">Regulación de Seguridad y Salud Ocupacional</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-on-primary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mr-2"></span>
+                                BAJA
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-lg">gavel</span>
+<span class="text-sm font-medium">Apelación</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-sm font-headline font-bold text-tertiary">02 Oct 2024</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex gap-2">
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-2 text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-lg">attach_file</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination-like Footer -->
+<div class="px-6 py-4 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant font-medium">
+<span>Mostrando 1-10 de 36 procesos activos</span>
+<div class="flex gap-4">
+<button class="hover:text-primary transition-colors">Anterior</button>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-primary text-white rounded">1</span>
+<span class="px-2 py-0.5 hover:bg-outline-variant/20 rounded">2</span>
+<span class="px-2 py-0.5 hover:bg-outline-variant/20 rounded">3</span>
+</div>
+<button class="hover:text-primary transition-colors">Siguiente</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-[#f8fafb] dark:bg-[#191c1d] w-full py-4 mt-auto border-t border-[#bbc9cc]/15 flex justify-between items-center px-8 ml-64">
+<div class="flex items-center gap-4">
+<span class="font-headline font-bold text-[#006971] text-sm">Editorial Enterprise</span>
+<span class="font-inter text-xs text-[#3c494c]">© 2024 Editorial Enterprise. All rights reserved.</span>
+</div>
+<div class="flex gap-6">
+<a class="font-inter text-xs text-[#3c494c] hover:underline opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-inter text-xs text-[#3c494c] hover:underline opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-inter text-xs text-[#3c494c] hover:underline opacity-80 hover:opacity-100" href="#">Security</a>
+</div>
+</footer>
+</body></html>
