@@ -77,6 +77,11 @@ Reglas aplicadas:
 Con la nueva respuesta de configuracion, los modulos `permit_manager` y `sanctioning_processes` se deben renderizar como tabs de navegacion cuando `enabled = true`.
 En fase inicial pueden apuntar a vistas placeholder (espacio en blanco) mientras se define su funcionalidad completa.
 
+Mapeo implementado actual:
+
+- `permit_manager` -> `/view/permit_manager` -> `src/features/permitManager/PermitManager.js`
+- `sanctioning_processes` -> `/view/sanctioning_processes` -> `src/features/sanctioningProcesses/SanctioningProcesses.js`
+
 Uso adicional en filtros de notifications:
 
 - `modules.legal_matrix.enabled`, `modules.task.enabled` y `modules.actions.enabled` controlan que opciones se muestran en el filtro `filter_module_string` del panel izquierdo de notifications.

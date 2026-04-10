@@ -30,6 +30,10 @@ Objetivos:
   - tasklist-tags-and-permissions.md
 - 06-conventions/
   - componentes-hooks-i18n.md
+- colsubsidio/
+  - modulos/README.md
+  - modulos/gestor-permisos/README.md
+  - modulos/procesos-sancionatorios/README.md
 - reports/
   - tasks-report-dashboard.md
   - actions-report-dashboard.md
@@ -40,6 +44,11 @@ Objetivos:
 - 04-api-integracion/get_configuration_amatia_express.md
 
 Describe como se consulta la configuracion backend, como se guarda en Redux y como se usa para visibilidad/titulos de modulos.
+
+Incluye mapeo de nuevos modulos de configuracion a rutas:
+
+- permit_manager -> /view/permit_manager
+- sanctioning_processes -> /view/sanctioning_processes
 
 ## Nota de compilado
 

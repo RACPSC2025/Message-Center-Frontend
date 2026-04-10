@@ -10,6 +10,12 @@ Resumen rapido:
 - Slice: src/stores/platformConfigSlice.js
 - Hook de acceso: src/hooks/usePlatformConfig.js
 - Integracion en navegacion: src/config/generalConfig.js y src/routes/RoutesFile.js
+	- Nuevos modulos por configuracion:
+		- permit_manager -> /view/permit_manager
+		- sanctioning_processes -> /view/sanctioning_processes
+	- Placeholders actuales:
+		- src/features/permitManager/PermitManager.js
+		- src/features/sanctioningProcesses/SanctioningProcesses.js
 - Integracion en charts/estadisticas:
 	- src/hooks/useModuleData.js (taskStatusData, cycleStatusData, actionStatusData)
 	- src/components/TasksCyclesDoughnutChart.js
@@ -18,6 +24,7 @@ Resumen rapido:
 	- src/features/MessageCenterEventsReport.js
 	- src/features/tasks/TasksListView.js
 	- src/features/tasks/TaskCyclesTable.js
+	- src/components/TheLayoutNavbar.js (permite renderizar botones de modulos sin estadisticas para placeholders)
 - Integracion en LegalMatriz:
 	- permissions.create_requirement -> visibilidad boton create_legal_requirement (SpeedDial)
 	- permissions.create_article -> visibilidad tab create_legal_requirement (OptionsDrawer)

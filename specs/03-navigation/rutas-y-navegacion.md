@@ -18,12 +18,21 @@ Mapeo actual en RoutesFile:
 - actions
 - findings
 - LegalMatriz
+- permit_manager
+- sanctioning_processes
 
 Componentes activos por ruta:
 
 - /view/events -> src/features/tasks/Tasks.js
 - /view/actions -> src/features/actions/Actions.js
 - /view/LegalMatriz -> src/features/MessageCenterLegalMatriz.js
+- /view/permit_manager -> src/features/permitManager/PermitManager.js
+- /view/sanctioning_processes -> src/features/sanctioningProcesses/SanctioningProcesses.js
+
+Estado inicial de nuevos modulos:
+
+- `PermitManager` y `SanctioningProcesses` se encuentran en modo placeholder (vista en blanco).
+- Se renderizan cuando `modules.permit_manager.enabled = true` y `modules.sanctioning_processes.enabled = true`.
 
 ## Origen de permisos y visibilidad
 
@@ -49,10 +58,13 @@ Componentes activos por ruta:
 - Header usa polling corto para no leidos y escucha evento custom dashboard-message-created.
 - BaseTab recibe items desde modulePermissions.
 - Los DoughnutChart del sidebar izquierdo solo se muestran si el modulo esta habilitado en platformConfig (modules.*.enabled = true).
+- Sidebar izquierdo: para `permit_manager` y `sanctioning_processes` se muestra boton navegable sin depender de estadisticas cargadas.
 - Al hacer click en un DoughnutChart del sidebar, la app navega al modulo correspondiente:
   - legals -> /view/LegalMatriz
   - tasks -> /view/events
   - actions -> /view/actions
+  - permit_manager -> /view/permit_manager
+  - sanctioning_processes -> /view/sanctioning_processes
 - En el dropdown de usuario del header:
   - BackToDashboard redirige a {apiUrl}dashboard
   - SignOut redirige a {apiUrl}login-express/
@@ -89,6 +101,7 @@ Componentes activos por ruta:
 - Etiquetas del dropdown de modulo son bilingues y dependen del idioma activo:
   - es: Matriz legal, Tareas, Acciones
   - en: Legal Matrix, Tasks, Actions
+- Nota: por ahora el filtro de modulo en notifications mantiene solo legal_matrix, task y actions.
 - Si un modulo esta deshabilitado (`enabled = false`), no aparece como opcion en el filtro.
 - Si se pulsa ClearFilters en BaseFilter para notifications:
   - se limpia filterData del modulo
