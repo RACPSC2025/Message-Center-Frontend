@@ -7,17 +7,46 @@ const initialState = {
   error: null
 };
 
+const normalizeCommentsPayload = (payload = {}) => {
+  const apiData = payload?.data;
+
+  if (Array.isArray(apiData)) {
+    return {
+      ...payload,
+      data: {
+        responsible_comments: apiData,
+        reviewer_comments: [],
+        other_comments: [],
+        attachments: []
+      }
+    };
+  }
+
+  return {
+    ...payload,
+    data: {
+      responsible_comments: apiData?.responsible_comments || [],
+      reviewer_comments: apiData?.reviewer_comments || [],
+      other_comments: apiData?.other_comments || [],
+      attachments: apiData?.attachments || [],
+      action_id: apiData?.action_id,
+      action_table: apiData?.action_table,
+      source_table: apiData?.source_table,
+      responsible_person: apiData?.responsible_person,
+      reviewer_person: apiData?.reviewer_person
+    }
+  };
+};
+
 export const fetchActionComments = createAsyncThunk(
   'comments/list_action_comments',
   async (data = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/message_center_api/action_api/dashboard_actions_list_comments_amatia_express',
+        '/message_center_api/action_api/get_actions_list_comments_amatia_express',
         data
       );
-      console.log('[DEBUG] Datos de fetch', data)
-      console.log('[DEBUG] Datos de la respuesta', response.data)
-      return response?.data;
+      return normalizeCommentsPayload(response?.data);
     } catch (error) {
       return rejectWithValue(error.message);
     }

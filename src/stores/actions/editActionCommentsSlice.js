@@ -26,11 +26,12 @@ export const editActionComments = createAsyncThunk(
   'comments/add_edit_comment',
   async (data = {}, { rejectWithValue }) => {
     try {
+      const payload = data?.formData ?? data;
       const response = await axiosInstance.post(
-        '/message_center_api/action_api/dashboard_actions_create_comment_amatia_express',
-        data
+        '/message_center_api/action_api/create_actions_comment_amatia_express',
+        payload
       );
-      
+
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);

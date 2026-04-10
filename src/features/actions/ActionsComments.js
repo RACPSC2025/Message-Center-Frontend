@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,10 +6,11 @@ import BaseTab from '../../components/BaseTab';
 import CommentCard from '../../components/CommentCard';
 import FormBuilder from '../../components/FormBuilder';
 import EmptyState from '../../components/EmptyState';
+import { useModuleCatalogs } from '../../hooks/usePlatformConfig';
 import { editActionComments } from '../../stores/actions/editActionCommentsSlice';
 import { fetchActionComments } from '../../stores/actions/fetchActionCommentsSlice';
 import { selectListOptions } from '../../stores/filterSlice';
-import { showSuccessMsg } from '../../utils/others';
+import { showErrorMsg, showSuccessMsg } from '../../utils/others';
 
 export default function ActionsComments({ 
   actionDetails = {}, 
@@ -44,6 +45,45 @@ export default function ActionsComments({
 
   // Obtener la lista de estados desde el store de filtros
   const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
+  const actionsStatusCatalog = useModuleCatalogs('actions', 'status') || [];
+
+  const resolveStatusNumericCode = (statusValue) => {
+    if (statusValue === undefined || statusValue === null || statusValue === '') return '';
+
+    const numericValue = Number(statusValue);
+    if (Number.isFinite(numericValue) && actionsStatusCatalog.some(
+      (statusItem) => Number(statusItem?.numeric_code) === numericValue
+    )) {
+      return numericValue;
+    }
+
+    const statusMatch = actionsStatusCatalog.find((statusItem) => {
+      const code = String(statusItem?.code || '').toLowerCase().trim();
+      const label = String(statusItem?.label || '').toLowerCase().trim();
+      const rawValue = String(statusValue).toLowerCase().trim();
+      return rawValue === code || rawValue === label;
+    });
+
+    if (statusMatch?.numeric_code !== undefined && statusMatch?.numeric_code !== null) {
+      return Number(statusMatch.numeric_code);
+    }
+
+    return Number.isFinite(numericValue) ? numericValue : '';
+  };
+
+  const actionStatusOptions = useMemo(() => {
+    if (Array.isArray(actionsStatusCatalog) && actionsStatusCatalog.length > 0) {
+      return actionsStatusCatalog.map((status) => ({
+        value: Number(status?.numeric_code),
+        label: status?.label
+      }));
+    }
+
+    return (actionStatusList || []).map((status) => ({
+      value: status?.value,
+      label: status?.label
+    }));
+  }, [actionsStatusCatalog, actionStatusList]);
 
 
   const { loading: actionCommentsLoading = false, data: actionCommentsData = {} } = useSelector(
@@ -62,7 +102,8 @@ export default function ActionsComments({
 
   const handleAddEditComments = (payload, resetFormFields) => {
     dispatch(editActionComments(payload)).then((data) => {
-      if (data?.payload?.status === 1) {
+      const status = Number(data?.payload?.status);
+      if (status === 1 || status === 303) {
         showSuccessMsg(data?.payload?.messages);
         resetFormFields();
         setActiveTab('list');
@@ -72,21 +113,39 @@ export default function ActionsComments({
         
         // Llamar al callback para actualizar la tabla
         if (onRefreshTable) onRefreshTable();
+      } else {
+        showErrorMsg(data?.payload?.messages || t('error_occurred'));
       }
     });
   };
 
   const handleFormSuccess = (updatedFormModel, resetFormFields) => {
-    const { action_id, module_id } = actionDetails;
+    const { action_id, action_table } = actionDetails;
     const { comment, filePicker = null, progress, status } = updatedFormModel;
+    const normalizedActionStatus = resolveStatusNumericCode(status);
 
-    // Crear objeto directamente, sin FormData
-    const payload = {
+    const payloadBase = {
       action_id,
       comment,
-      action_status: status,
+      action_source: action_table,
+      action_status: normalizedActionStatus,
       percentage: progress
     };
+
+    const payload = filePicker
+      ? {
+          formData: (() => {
+            const formData = new FormData();
+            Object.entries(payloadBase).forEach(([key, value]) => {
+              if (value !== undefined && value !== null && value !== '') {
+                formData.append(key, value);
+              }
+            });
+            formData.append('imagefiles[]', filePicker);
+            return formData;
+          })()
+        }
+      : payloadBase;
     
     handleAddEditComments(payload, resetFormFields);
   };
@@ -271,10 +330,7 @@ export default function ActionsComments({
                 type: "dropdown",
                 defaultValue: "open",
                 required: true,
-                options: actionStatusList.map(status => ({
-                  value: status.value,
-                  label: status.label
-                }))
+                options: actionStatusOptions
               },
               {
                 id: "progress",

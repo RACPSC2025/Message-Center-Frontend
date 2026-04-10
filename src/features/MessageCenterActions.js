@@ -355,6 +355,18 @@ export function Component() {
     setDrawerOpen(true);
   };
 
+  const handleCommentSaved = () => {
+    handleFetchActionList();
+
+    if (selectedAction?.id && selectedAction?.action_table && selectedAction?.action_id) {
+      handleGetActionDetails({
+        dashboard_action_id: selectedAction.id,
+        action_table: selectedAction.action_table,
+        action_id: selectedAction.action_id
+      });
+    }
+  };
+
   const updateCascadingDropdownFormFields = (formModel) => {
     const formFieldGroups = Object.keys(formFields);
     const updatedFormFields = formFieldGroups.reduce((acc, cur) => {
@@ -593,7 +605,11 @@ export function Component() {
         </AppBar>
         <Suspense fallback={<div>{t('loading')}</div>}>
           {viewType === 'view_comment' ? (
-            <MessageCenterActionComments actionDetails={selectedAction} />
+            <MessageCenterActionComments
+              actionDetails={selectedAction}
+              actionCurrentValues={actionFormModel}
+              onCommentSaved={handleCommentSaved}
+            />
           ) : viewType === 'view_action' ? (
             <MessageCenterActionDetails
               isFetching={actionDetailsLoading}

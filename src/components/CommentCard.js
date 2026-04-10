@@ -8,6 +8,7 @@ import {
 import {
   Edit as EditIcon,
   AttachFile as AttachmentIcon,
+  UploadFile as UploadFileIcon,
   CalendarToday as CalendarTodayIcon,
   PictureAsPdf as PictureAsPdfIcon,
   Description as DescriptionIcon
@@ -46,10 +47,22 @@ const styles = {
   }
 };
 
-export default function CommentCard({ comment, onClickEdit, wrapperStyle = {}, loading = false, role = 'otro' }) {
+export default function CommentCard({
+  comment,
+  onClickEdit,
+  onUploadAttachment,
+  uploadingAttachments = false,
+  wrapperStyle = {},
+  loading = false,
+  role = 'otro',
+  hideEdit = false
+}) {
   const { t } = useTranslation();
-  
+
+  const commentAttachments = comment?.attachments || [];
+
   const handleAttachmentClick = (url) => {
+    if (!url) return;
     window.open(url, '_blank');
   };
 
@@ -71,7 +84,15 @@ export default function CommentCard({ comment, onClickEdit, wrapperStyle = {}, l
     }
   };
 
-  const formatDate = comment?.comment_time ? new Date(comment.comment_time).toLocaleDateString() : '';
+  const formatDateValue = comment?.created_date || comment?.comment_time || comment?.created;
+  const parsedDate = formatDateValue ? new Date(formatDateValue) : null;
+  const formatDate = parsedDate && !Number.isNaN(parsedDate.getTime())
+    ? parsedDate.toLocaleDateString()
+    : '';
+
+  const getAttachmentUrl = (attachment) => attachment?.url || attachment?.path || '';
+  const getAttachmentName = (attachment, index) =>
+    attachment?.file_name || attachment?.old_filename || attachment?.new_filename || `Adjunto ${index + 1}`;
 
   return (
     <Box sx={styles.card}>
@@ -142,22 +163,22 @@ export default function CommentCard({ comment, onClickEdit, wrapperStyle = {}, l
         {loading ? (
           <Skeleton animation="wave" height={32} width="120px" sx={{ mt: 1 }} />
         ) : (
-          comment?.attachments?.length > 0 && (
+          commentAttachments.length > 0 && (
             <Box sx={{ mt: 1 }}>
-              {comment.attachments.map((attachment, index) => (
-                <Button 
+              {commentAttachments.map((attachment, index) => (
+                <Button
                   key={attachment.id || index}
-                  startIcon={getAttachmentIcon(attachment.old_filename)}
-                  onClick={() => handleAttachmentClick(attachment.path)}
-                  sx={{ 
-                    color: '#6c757d', 
-                    textTransform: 'none', 
+                  startIcon={getAttachmentIcon(getAttachmentName(attachment, index))}
+                  onClick={() => handleAttachmentClick(getAttachmentUrl(attachment))}
+                  sx={{
+                    color: '#6c757d',
+                    textTransform: 'none',
                     '&:hover': { bgcolor: '#f8f9fa', color: '#212529' },
                     mr: 1,
                     mb: 1
                   }}
                 >
-                  {attachment.old_filename || `Adjunto ${index + 1}`}
+                  {getAttachmentName(attachment, index)}
                 </Button>
               ))}
             </Box>
@@ -168,14 +189,34 @@ export default function CommentCard({ comment, onClickEdit, wrapperStyle = {}, l
         {loading ? (
           <Skeleton animation="wave" height={32} width="80px" sx={{ mt: 1 }} />
         ) : (
-          <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-            <Button 
-              onClick={onClickEdit}
-              startIcon={<EditIcon />}
-              sx={{ color: '#6c757d', textTransform: 'none', '&:hover': { bgcolor: '#f8f9fa', color: '#212529' } }}
-            >
-              {t('edit')}
-            </Button>
+          <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+            {!hideEdit && (
+              <Button
+                onClick={onClickEdit}
+                startIcon={<EditIcon />}
+                sx={{
+                  color: '#6c757d',
+                  textTransform: 'none',
+                  '&:hover': { bgcolor: '#f8f9fa', color: '#212529' }
+                }}
+              >
+                {t('edit')}
+              </Button>
+            )}
+            {onUploadAttachment && (
+              <Button
+                onClick={onUploadAttachment}
+                disabled={uploadingAttachments}
+                startIcon={<UploadFileIcon />}
+                sx={{
+                  color: '#6c757d',
+                  textTransform: 'none',
+                  '&:hover': { bgcolor: '#f8f9fa', color: '#212529' }
+                }}
+              >
+                {t('upload_file')}
+              </Button>
+            )}
           </Box>
         )}
       </Box>
