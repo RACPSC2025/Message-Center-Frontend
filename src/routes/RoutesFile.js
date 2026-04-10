@@ -20,6 +20,10 @@ const MessageCenterEvents = lazy(() => import('../features/MessageCenterEvents')
 const MessageCenterActions = lazy(() => import('../features/MessageCenterActions'));
 const Findings = lazy(() => import('../features/findings/Findings'));
 const MessageCenterLegalMatriz = lazy(() => import('../features/MessageCenterLegalMatriz'));
+const PermitManager = lazy(() => import('../features/permitManager/PermitManager'));
+const SanctioningProcesses = lazy(
+  () => import('../features/sanctioningProcesses/SanctioningProcesses')
+);
 const Tasks = lazy(() => import('../features/tasks/Tasks'));
 const Actions = lazy(() => import('../features/actions/Actions'));
 const Inspections = lazy(() => import('../features/inspections/Inspections'));
@@ -94,7 +98,9 @@ export default function RoutesFile() {
     inspections: <Inspections />,
     actions: <Actions />,
     findings: <Findings />,
-    LegalMatriz: <MessageCenterLegalMatriz />
+    LegalMatriz: <MessageCenterLegalMatriz />,
+    permit_manager: <PermitManager />,
+    sanctioning_processes: <SanctioningProcesses />
   };
 
   return (

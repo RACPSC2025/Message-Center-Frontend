@@ -63,6 +63,8 @@ Se construye modulePermissions dinamicamente a partir de state.platformConfig.da
 - task -> ruta events
 - findings -> ruta findings
 - actions -> ruta actions
+- permit_manager -> ruta permit_manager
+- sanctioning_processes -> ruta sanctioning_processes
 
 Reglas aplicadas:
 
@@ -71,6 +73,9 @@ Reglas aplicadas:
 - si no hay titulo en API, usa fallback de etiqueta local
 - notifications se mantiene como modulo de navegacion del sistema
 - enviroment se usa para renderizar la etiqueta de ambiente en el sidebar izquierdo
+
+Con la nueva respuesta de configuracion, los modulos `permit_manager` y `sanctioning_processes` se deben renderizar como tabs de navegacion cuando `enabled = true`.
+En fase inicial pueden apuntar a vistas placeholder (espacio en blanco) mientras se define su funcionalidad completa.
 
 Uso adicional en filtros de notifications:
 

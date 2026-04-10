@@ -1,6 +1,8 @@
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import GavelIcon from '@mui/icons-material/Gavel';
 import { Box, IconButton, SvgIcon, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +36,7 @@ import {
   selectListOptions,
   setFilter
 } from '../stores/filterSlice';
-import { t } from 'i18next';
+import { useLanguage } from '../providers/languageProvider';
 
 // Custom hook to get list options
 const useListOptions = (module, fieldName) =>
@@ -79,9 +81,10 @@ const MODULE_CONFIG = [
   {
     id: 'actions',
     configKey: 'actions',
-    label: t('Actions'),
+    fallbackLabel: 'Actions',
     icon: CheckCircleOutline,
     activeModuleKey: 'actions',
+    requiresStats: true,
     chartComponent: StatusDoughnutChart,
     getStatusData: (processedData) => {
       if (Array.isArray(processedData.actionStatusData) && processedData.actionStatusData.length) {
@@ -100,11 +103,32 @@ const MODULE_CONFIG = [
         { key: 'delayed', value: processedData.delayedActions }
       ];
     }
+  },
+  {
+    id: 'permit_manager',
+    configKey: 'permit_manager',
+    fallbackLabel: 'Permit Manager',
+    icon: AssignmentTurnedInIcon,
+    activeModuleKey: 'permit_manager',
+    requiresStats: false,
+    chartComponent: StatusDoughnutChart,
+    getStatusData: () => []
+  },
+  {
+    id: 'sanctioning_processes',
+    configKey: 'sanctioning_processes',
+    fallbackLabel: 'Sanctioning Processes',
+    icon: GavelIcon,
+    activeModuleKey: 'sanctioning_processes',
+    requiresStats: false,
+    chartComponent: StatusDoughnutChart,
+    getStatusData: () => []
   }
 ];
 
 function TheLayoutNavbar({ expanded = false, onToggle }) {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -178,24 +202,33 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
 
   const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? {});
 
+  const getLocalizedModuleTitle = (moduleConfig, fallbackLabel) => {
+    const preferredTitle = language === 'en' ? moduleConfig?.title_en : moduleConfig?.title_es;
+    const secondaryTitle = language === 'en' ? moduleConfig?.title_es : moduleConfig?.title_en;
+    return preferredTitle || secondaryTitle || fallbackLabel;
+  };
+
   // Process modules for display - memoized to prevent recalculation on every render
   const modules = useMemo(() => {
     return MODULE_CONFIG.map((module) => {
       const moduleProcessedData = getModuleData(module.id) || {};
       const isLoaded = isModuleLoaded(module.id);
-      const isEnabled = platformModules?.[module.configKey]?.enabled ?? false;
+      const moduleConfig = platformModules?.[module.configKey] ?? {};
+      const isEnabled = moduleConfig?.enabled ?? false;
+      const hasData = module.requiresStats ? isLoaded : true;
 
       return {
         id: module.id,
         icon: module.icon,
-        label: module.label,
+        label: getLocalizedModuleTitle(moduleConfig, module.fallbackLabel),
         routeKey: module.activeModuleKey,
-        statusData: isLoaded ? module.getStatusData(moduleProcessedData) : [],
+        statusData: hasData ? module.getStatusData(moduleProcessedData) : [],
         isLoaded,
-        isEnabled
+        isEnabled,
+        hasData
       };
-    }).filter((module) => module.isLoaded && module.isEnabled); // Show loaded modules enabled in platform config
-  }, [moduleData, platformModules]);
+    }).filter((module) => module.isEnabled && module.hasData); // Show enabled modules, including modules without stats
+  }, [moduleData, platformModules, language]);
 
   const activeModule = useSelector((state) => state.globalData.activeModule);
   const platformConfig = useSelector((state) => state.platformConfig?.data ?? {});

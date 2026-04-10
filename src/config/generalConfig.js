@@ -1,4 +1,12 @@
-import { Apps, CalendarToday, CheckCircleOutline, MailOutline, Search } from '@mui/icons-material';
+import {
+  Apps,
+  AssignmentTurnedIn,
+  CalendarToday,
+  CheckCircleOutline,
+  Gavel,
+  MailOutline,
+  Search
+} from '@mui/icons-material';
 import defaultConfig from './defaultConfig.json';
 import { modulesConfiguration } from './modulesConfig';
 
@@ -30,6 +38,20 @@ const MODULE_DEFINITIONS = [
     key: 'actions',
     fallbackLabel: 'Actions',
     icon: <CheckCircleOutline fontSize="small" />
+  },
+  {
+    configKey: 'permit_manager',
+    moduleName: 'permit_manager',
+    key: 'permit_manager',
+    fallbackLabel: 'Permit Manager',
+    icon: <AssignmentTurnedIn fontSize="small" />
+  },
+  {
+    configKey: 'sanctioning_processes',
+    moduleName: 'sanctioning_processes',
+    key: 'sanctioning_processes',
+    fallbackLabel: 'Sanctioning Processes',
+    icon: <Gavel fontSize="small" />
   }
 ];
 
