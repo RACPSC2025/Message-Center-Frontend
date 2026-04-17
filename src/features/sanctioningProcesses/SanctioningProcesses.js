@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { Add, Description, Assignment } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -77,6 +77,21 @@ function SanctioningProcesses() {
   const [selectedProcess, setSelectedProcess] = useState(null);
   const [tableColumnConfig, setTableColumnConfig] = useState([]);
   const [initialVisibleFields, setInitialVisibleFields] = useState([]);
+
+  const sanctioningRows = useMemo(() => {
+    const items = sanctioningProcessesTableData?.data?.items || [];
+
+    return items.map((item) => {
+      const caseNumberAndContent =
+        item?.CASE_NUMBER_AND_CONTENT_OF_RESPONSE || item?.colsubsidio_response || '';
+
+      return {
+        ...item,
+        CASE_NUMBER_AND_CONTENT_OF_RESPONSE: caseNumberAndContent,
+        colsubsidio_response: caseNumberAndContent
+      };
+    });
+  }, []);
 
   const modifyTableColumns = (columnConfig = []) => {
     return columnConfig.map((config) => {
@@ -176,7 +191,7 @@ function SanctioningProcesses() {
 
       {/* Tabla de Procesos Sancionatorios */}
       <SanctioningProcessesTable
-        data={sanctioningProcessesTableData?.data?.items || []}
+        data={sanctioningRows}
         columnDefs={tableColumnConfig}
         initialVisibleFields={initialVisibleFields}
         paginationData={sanctioningProcessesTableData?.meta?.pagination}

@@ -1,5 +1,24 @@
 # Modulo: Procesos Sancionatorios
 
+## Estado de Implementacion Frontend (2026-04)
+
+Implementado actualmente:
+- Tabla dinamica construida desde configuracion de headers del API.
+- Visibilidad inicial de columnas gobernada por `display_in_table` (columnas ocultas quedan disponibles para seleccion manual).
+- Drawer de detalle por registro con tabs fijas por fase legal: `FASE I`, `FASE II`, `FASE III`, `CIERRE`.
+- Acordeones del drawer colapsados por defecto para priorizar lectura progresiva.
+- Seccion de informacion completa con render profesional para textos largos (`white-space: pre-line`, tarjetas de lectura, scroll interno).
+- Bitacora por fase legal con timeline visual y nodos por tipo de evento.
+- Cada evento de bitacora incluye ejemplos de:
+	- ejecutor (usuario),
+	- fecha de ejecucion,
+	- adjuntos (pdf, excel, word e imagen).
+- Compatibilidad de esquema para campo de respuesta:
+	- nuevo: `CASE_NUMBER_AND_CONTENT_OF_RESPONSE`
+	- legacy: `colsubsidio_response`
+
+Documentacion tecnica de ajustes: ver `./ajustes-implementados-2026-04.md`.
+
 ## 1. Proposito
 El modulo Procesos Sancionatorios centraliza la gestion de casos de incumplimiento normativo y su tratamiento legal/administrativo.
 

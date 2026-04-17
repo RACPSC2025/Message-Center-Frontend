@@ -9,7 +9,7 @@ Retorna la definición de columnas/headers para la tabla de Procesos Sancionator
 ## Endpoint
 
 ```
-GET /message_center_api/Sanctioning_Processes_api/sanctioning_processes_table_headers_amatia_expres
+POST /message_center_api/Sanctioning_Processes_api/sanctioning_processes_table_headers_amatia_expres
 ```
 
 > Nota: el nombre del método omite la 's' final de "express" — respetar al consumir.
@@ -73,7 +73,7 @@ Los headers vienen ordenados por el campo `order` (ascendente).
 | 9     | `process_stage`          | Etapa del Proceso                                   | TRUE    | text        | list      |
 | 10    | `cargo_description`      | Cargo                                               | TRUE    | long_text   |           |
 | 11    | `tema`                   | Tema                                                | TRUE    | text        | list      |
-| 12    | `colsubsidio_response`   | Radicado y Contenido de Respuesta Colsubsidio       | TRUE    | long_text   |           |
+| 12    | `CASE_NUMBER_AND_CONTENT_OF_RESPONSE`   | Radicado y Contenido de Respuesta Colsubsidio       | TRUE    | long_text   |           |
 | 13    | `estrategia`             | Estrategia                                          | TRUE    | long_text   |           |
 | 14    | `estimated_sanction_amount` | Monto de la posible sanción (Tasación estimada)  | TRUE    | number      |           |
 
@@ -98,3 +98,6 @@ Los headers vienen ordenados por el campo `order` (ascendente).
 - La columna `id` tiene `display_in_table: FALSE` — se incluye en la respuesta pero no se muestra en la grilla; se usa como referencia interna para operaciones CRUD.
 - Las columnas `type_edit: 'list'` requieren un endpoint separado para obtener las opciones de cada lista (a definir en fases posteriores).
 - El ordenamiento de headers se hace en servidor con `uasort` por campo `order`; el frontend puede confiar en el orden recibido.
+- El frontend consume este endpoint siguiendo el mismo patron del modulo Actions (llamado POST con `axiosInstance`).
+- Para compatibilidad de datos historicos, el frontend soporta ambos nombres de campo de respuesta: `CASE_NUMBER_AND_CONTENT_OF_RESPONSE` (actual) y `colsubsidio_response` (legacy).
+- `display_in_table` define visibilidad inicial en la grilla, no disponibilidad de la columna en el selector.

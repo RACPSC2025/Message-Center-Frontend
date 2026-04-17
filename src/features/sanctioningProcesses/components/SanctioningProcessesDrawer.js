@@ -4,9 +4,12 @@ import {
   ExpandMore,
   Description,
   History,
-  CheckCircle,
   AttachFile,
-  WarningAmber
+  WarningAmber,
+  PictureAsPdf,
+  TableChart,
+  Image,
+  InsertDriveFile
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -37,9 +40,39 @@ const FIELD_LABELS = {
   cargo_description: 'Cargo',
   tema: 'Tema',
   colsubsidio_response: 'Radicado y Contenido de Respuesta Colsubsidio',
+  CASE_NUMBER_AND_CONTENT_OF_RESPONSE: 'Radicado y Contenido de Respuesta Colsubsidio',
   estrategia: 'Estrategia',
   estimated_sanction_amount: 'Monto de la posible sancion'
 };
+
+const LONG_TEXT_FIELDS = [
+  'legal_phases_actions',
+  'cargo_description',
+  'colsubsidio_response',
+  'CASE_NUMBER_AND_CONTENT_OF_RESPONSE'
+];
+
+const EXECUTOR_BY_TYPE = {
+  actuacion: ['Laura Gomez', 'Daniel Rojas', 'Mariana Torres'],
+  respuesta: ['Andres Villalba', 'Paula Cardenas', 'Carolina Ramirez'],
+  estrategia: ['Equipo Legal Colsubsidio']
+};
+
+const ATTACHMENT_CYCLE = [
+  [
+    { name: 'auto_apertura.pdf', type: 'pdf' },
+    { name: 'matriz_seguimiento.xlsx', type: 'excel' }
+  ],
+  [
+    { name: 'respuesta_descargos.docx', type: 'word' },
+    { name: 'evidencia_visita_01.jpg', type: 'image' }
+  ],
+  [{ name: 'acta_reunion.pdf', type: 'pdf' }],
+  [
+    { name: 'consolidado_pruebas.xlsx', type: 'excel' },
+    { name: 'anexo_fotografico.png', type: 'image' }
+  ]
+];
 
 const normalizeText = (value) => String(value ?? '').split('\u000b').join(' ').trim();
 
@@ -76,6 +109,34 @@ const splitLines = (value = '') =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+const formatMockDate = (seed) => {
+  const day = ((seed * 3) % 27) + 1;
+  const month = (seed % 12) + 1;
+  const year = 2026;
+
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+};
+
+const getMockEntryMeta = (type, index) => {
+  const users = EXECUTOR_BY_TYPE[type] || EXECUTOR_BY_TYPE.actuacion;
+  const actor = users[index % users.length];
+  const attachments = ATTACHMENT_CYCLE[index % ATTACHMENT_CYCLE.length];
+
+  return {
+    actor,
+    timestamp: formatMockDate(index + 1),
+    attachments
+  };
+};
+
+const attachmentIconByType = {
+  pdf: PictureAsPdf,
+  excel: TableChart,
+  word: Description,
+  image: Image,
+  default: InsertDriveFile
+};
+
 const buildPhaseLogs = (selectedProcess) => {
   const actionsLines = splitLines(selectedProcess?.legal_phases_actions);
   const grouped = {
@@ -87,38 +148,47 @@ const buildPhaseLogs = (selectedProcess) => {
 
   actionsLines.forEach((line, index) => {
     const phase = detectPhaseBucket(getPhaseFromAction(line));
+    const metadata = getMockEntryMeta('actuacion', index);
 
     grouped[phase].push({
       id: `${phase}-action-${index + 1}`,
       type: 'actuacion',
       content: line,
-      actor: 'Sistema',
-      timestamp: 'Sin fecha'
+      actor: metadata.actor,
+      timestamp: metadata.timestamp,
+      attachments: metadata.attachments
     });
   });
 
-  const responseLines = splitLines(selectedProcess?.colsubsidio_response);
+  const responseContent =
+    selectedProcess?.CASE_NUMBER_AND_CONTENT_OF_RESPONSE || selectedProcess?.colsubsidio_response;
+
+  const responseLines = splitLines(responseContent);
   responseLines.forEach((line, index) => {
     const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE I');
+    const metadata = getMockEntryMeta('respuesta', index);
 
     grouped[currentPhase].push({
       id: `${currentPhase}-response-${index + 1}`,
       type: 'respuesta',
       content: line,
-      actor: 'Colsubsidio',
-      timestamp: 'Radicado'
+      actor: metadata.actor,
+      timestamp: metadata.timestamp,
+      attachments: metadata.attachments
     });
   });
 
   if (normalizeText(selectedProcess?.estrategia)) {
     const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE I');
+    const metadata = getMockEntryMeta('estrategia', 0);
 
     grouped[currentPhase].push({
       id: `${currentPhase}-strategy-1`,
       type: 'estrategia',
       content: `Estrategia: ${normalizeText(selectedProcess.estrategia)}`,
-      actor: 'Equipo legal',
-      timestamp: 'Plan de accion'
+      actor: metadata.actor,
+      timestamp: metadata.timestamp,
+      attachments: metadata.attachments
     });
   }
 
@@ -228,19 +298,52 @@ export default function SanctioningProcessesDrawer({
               }}
             >
               {infoEntries.map(([key, value]) => (
-                <Box key={key}>
+                <Box
+                  key={key}
+                  sx={{
+                    gridColumn: LONG_TEXT_FIELDS.includes(key) ? { xs: '1 / -1', sm: '1 / -1' } : 'auto'
+                  }}
+                >
                   <Typography sx={{ fontSize: '0.72rem', color: '#6c797c', fontWeight: 700 }}>
                     {(FIELD_LABELS[key] || key).toUpperCase()}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.9rem', color: '#191c1d', whiteSpace: 'pre-line' }}>
-                    {key === 'estimated_sanction_amount'
-                      ? new Intl.NumberFormat('es-CO', {
-                          style: 'currency',
-                          currency: 'COP',
-                          maximumFractionDigits: 0
-                        }).format(Number(value || 0))
-                      : normalizeText(value || '-')}
-                  </Typography>
+
+                  {LONG_TEXT_FIELDS.includes(key) ? (
+                    <Box
+                      sx={{
+                        mt: 0.7,
+                        px: 1.25,
+                        py: 1,
+                        bgcolor: '#ffffff',
+                        borderRadius: 1.5,
+                        border: '1px solid rgba(187, 201, 204, 0.35)',
+                        maxHeight: 190,
+                        overflowY: 'auto'
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: '0.84rem',
+                          lineHeight: 1.6,
+                          color: '#191c1d',
+                          whiteSpace: 'pre-line',
+                          textAlign: 'justify'
+                        }}
+                      >
+                        {normalizeText(value || '-')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography sx={{ fontSize: '0.9rem', color: '#191c1d', whiteSpace: 'pre-line' }}>
+                      {key === 'estimated_sanction_amount'
+                        ? new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            maximumFractionDigits: 0
+                          }).format(Number(value || 0))
+                        : normalizeText(value || '-')}
+                    </Typography>
+                  )}
                 </Box>
               ))}
             </Box>
@@ -282,6 +385,8 @@ export default function SanctioningProcessesDrawer({
                       : entry.type === 'respuesta'
                       ? 'Carga de documentos / respuesta'
                       : 'Alerta / estrategia';
+
+                  const entryAttachments = entry.attachments || [];
 
                   const nodeIcon =
                     entry.type === 'actuacion' ? (
@@ -335,6 +440,33 @@ export default function SanctioningProcessesDrawer({
                         <Typography sx={{ color: '#3c494c', fontSize: '0.8rem', whiteSpace: 'pre-line' }}>
                           {entry.content}
                         </Typography>
+
+                        <Box sx={{ mt: 1.5 }}>
+                          <Typography sx={{ fontSize: '0.68rem', color: '#6c797c', fontWeight: 700, mb: 0.8 }}>
+                            ADJUNTOS ({entryAttachments.length})
+                          </Typography>
+
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                            {entryAttachments.map((file, fileIndex) => {
+                              const FileIcon = attachmentIconByType[file.type] || attachmentIconByType.default;
+
+                              return (
+                                <Chip
+                                  key={`${entry.id}-file-${fileIndex}`}
+                                  icon={<FileIcon sx={{ fontSize: 16 }} />}
+                                  label={file.name}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: '#ffffff',
+                                    border: '1px solid rgba(187, 201, 204, 0.45)',
+                                    color: '#3c494c',
+                                    '& .MuiChip-label': { fontSize: '0.7rem', fontWeight: 600 }
+                                  }}
+                                />
+                              );
+                            })}
+                          </Box>
+                        </Box>
                       </Box>
                     </Box>
                   );
