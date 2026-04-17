@@ -62,6 +62,20 @@ const dropdownReviewerList = {
   minSearchLength: 3
 };
 
+const permitManagerStatusOptions = [
+  { value: 'approved', label: 'Aprobado' },
+  { value: 'in_review', label: 'En revisión' },
+  { value: 'processing', label: 'En trámite' },
+  { value: 'expired', label: 'Vencido' }
+];
+
+const permitManagerSourceOptions = [
+  { value: 'environmental_authority', label: 'Autoridad ambiental' },
+  { value: 'internal_request', label: 'Solicitud interna' },
+  { value: 'renewal_process', label: 'Proceso de renovación' },
+  { value: 'document_update', label: 'Actualización documental' }
+];
+
 export const filterConfigs = {
   LegalMatriz: [
     textSearchField,
@@ -411,5 +425,27 @@ export const filterConfigs = {
       ...dropdownReviewerList,
       labelKey: 'Reviewer'
     }
-  ]
+  ],
+
+  permit_manager: [
+    textSearchField,
+    {
+      labelKey: 'Status',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_status',
+      default_value: '',
+      options: permitManagerStatusOptions,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Category',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_source',
+      default_value: '',
+      options: permitManagerSourceOptions,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    }
+  ],
 };

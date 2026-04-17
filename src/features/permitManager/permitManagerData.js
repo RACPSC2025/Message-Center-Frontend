@@ -21,6 +21,13 @@ export const STATUS_META = Object.freeze({
   }
 });
 
+export const SOURCE_OPTIONS = Object.freeze([
+  { value: 'environmental_authority', label: 'Autoridad ambiental' },
+  { value: 'internal_request', label: 'Solicitud interna' },
+  { value: 'renewal_process', label: 'Proceso de renovación' },
+  { value: 'document_update', label: 'Actualización documental' }
+]);
+
 const RESPONSIBLE_OPTIONS = Object.freeze([
   { value: 'noel_calderon', label: 'Noel Calderón' },
   { value: 'laura_mendez', label: 'Laura Méndez' },
@@ -218,6 +225,11 @@ const flattenOrganizationTree = (tree) =>
 
 const ORGANIZATION_LOCATIONS = flattenOrganizationTree(ORGANIZATION_TREE);
 
+const SOURCE_SEQUENCE = SOURCE_OPTIONS.map((source) => source.value);
+
+const getSourceLabel = (sourceValue) =>
+  SOURCE_OPTIONS.find((source) => source.value === sourceValue)?.label || '';
+
 const FIXED_PERMITS = Object.freeze([
   {
     permitId: 'PM-9021',
@@ -229,6 +241,8 @@ const FIXED_PERMITS = Object.freeze([
     expiredRequirements: 0,
     dueDate: TODAY.add(180, 'day').format('YYYY-MM-DD'),
     createdDate: TODAY.subtract(80, 'day').format('YYYY-MM-DD'),
+    source: 'environmental_authority',
+    sourceLabel: getSourceLabel('environmental_authority'),
     responsibleId: 'noel_calderon',
     responsibleName: 'Noel Calderón',
     id_level1: 'negocio_infraestructura',
@@ -250,6 +264,8 @@ const FIXED_PERMITS = Object.freeze([
     expiredRequirements: 2,
     dueDate: TODAY.add(14, 'day').format('YYYY-MM-DD'),
     createdDate: TODAY.subtract(60, 'day').format('YYYY-MM-DD'),
+    source: 'renewal_process',
+    sourceLabel: getSourceLabel('renewal_process'),
     responsibleId: 'laura_mendez',
     responsibleName: 'Laura Méndez',
     id_level1: 'negocio_infraestructura',
@@ -271,6 +287,8 @@ const FIXED_PERMITS = Object.freeze([
     expiredRequirements: 4,
     dueDate: TODAY.subtract(5, 'day').format('YYYY-MM-DD'),
     createdDate: TODAY.subtract(140, 'day').format('YYYY-MM-DD'),
+    source: 'document_update',
+    sourceLabel: getSourceLabel('document_update'),
     responsibleId: 'camila_salazar',
     responsibleName: 'Camila Salazar',
     id_level1: 'negocio_operaciones',
@@ -292,6 +310,7 @@ const buildGeneratedPermits = (count) =>
   Array.from({ length: count }, (_, index) => {
     const location = ORGANIZATION_LOCATIONS[index % ORGANIZATION_LOCATIONS.length];
     const status = STATUS_SEQUENCE[index % STATUS_SEQUENCE.length];
+    const source = SOURCE_SEQUENCE[index % SOURCE_SEQUENCE.length];
     const responsible = RESPONSIBLE_OPTIONS[index % RESPONSIBLE_OPTIONS.length];
     const dueDate = TODAY.add(
       DUE_DATE_OFFSETS[index % DUE_DATE_OFFSETS.length] + Math.floor(index / 10) * 6,
@@ -314,6 +333,8 @@ const buildGeneratedPermits = (count) =>
       expiredRequirements: dueDateDiff < 0 ? 1 + (index % 4) : dueDateDiff <= 15 ? 1 : 0,
       dueDate: dueDate.format('YYYY-MM-DD'),
       createdDate: createdDate.format('YYYY-MM-DD'),
+      source,
+      sourceLabel: getSourceLabel(source),
       responsibleId: responsible.value,
       responsibleName: responsible.label,
       ...location

@@ -15,11 +15,21 @@ import {
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import TableComponent from '../../components/TableComponent';
+import { selectAppliedFilterModel } from '../../stores/filterSlice';
 import { PERMIT_ROWS, STATUS_META } from './permitManagerData';
 
 const PAGE_OPTIONS = [20, 50, 100];
+
+function normalizeText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
 
 function formatTableDate(dateValue) {
   const parsedDate = dayjs(dateValue);
@@ -164,7 +174,36 @@ function FooterDotStat({ color, text }) {
 
 function PermitManager() {
   const { t } = useTranslation();
-  const filteredPermits = PERMIT_ROWS;
+  const filterData = useSelector((state) => selectAppliedFilterModel(state, 'permit_manager'));
+
+  const filteredPermits = useMemo(() => {
+    let result = PERMIT_ROWS;
+
+    const keyword = normalizeText(filterData?.filter_keywords);
+    if (keyword) {
+      result = result.filter((row) =>
+        [
+          row.permitId,
+          row.permitNumber,
+          row.applicant,
+          row.statusLabel,
+          row.sourceLabel
+        ]
+          .map((value) => normalizeText(value))
+          .some((value) => value.includes(keyword))
+      );
+    }
+
+    if (filterData?.filter_status) {
+      result = result.filter((row) => row.status === filterData.filter_status);
+    }
+
+    if (filterData?.filter_source) {
+      result = result.filter((row) => row.source === filterData.filter_source);
+    }
+
+    return result;
+  }, [filterData]);
 
   const permitCount = filteredPermits.length;
   const activePermits = filteredPermits.filter((permit) => permit.status === 'approved').length;
@@ -188,6 +227,28 @@ function PermitManager() {
 
   const columnDefs = useMemo(
     () => [
+      {
+        field: 'actions',
+        headerName: 'Opciones',
+        width: 110,
+        pinned: 'left',
+        sortable: false,
+        filter: false,
+        cellRenderer: () => (
+          <Stack direction="row" spacing={0.25} alignItems="center">
+            <Tooltip title={t('permit_manager_view', { defaultValue: 'Ver detalle' })}>
+              <IconButton size="small">
+                <Visibility fontSize="small" sx={{ color: '#0B7A84' }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('permit_manager_edit', { defaultValue: 'Editar permiso' })}>
+              <IconButton size="small">
+                <Edit fontSize="small" sx={{ color: '#52627A' }} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        )
+      },
       {
         field: 'permitId',
         headerName: 'ID',
@@ -217,6 +278,7 @@ function PermitManager() {
         headerName: 'Estado de trámite',
         minWidth: 210,
         flex: 1.2,
+        filter: false,
         cellRenderer: (params) => {
           const statusMeta = STATUS_META[params.data.status] || STATUS_META.processing;
           return (
@@ -277,27 +339,6 @@ function PermitManager() {
           );
         }
       },
-      {
-        field: 'actions',
-        headerName: 'Acciones',
-        width: 110,
-        sortable: false,
-        filter: false,
-        cellRenderer: () => (
-          <Stack direction="row" spacing={0.25} alignItems="center">
-            <Tooltip title={t('permit_manager_view', { defaultValue: 'Ver detalle' })}>
-              <IconButton size="small">
-                <Visibility fontSize="small" sx={{ color: '#0B7A84' }} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t('permit_manager_edit', { defaultValue: 'Editar permiso' })}>
-              <IconButton size="small">
-                <Edit fontSize="small" sx={{ color: '#52627A' }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        )
-      }
     ],
     [t]
   );
