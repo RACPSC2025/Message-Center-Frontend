@@ -92,15 +92,16 @@ function SanctioningProcessesTable({
       )
     },
     {
-      field: 'acciones',
-      headerName: 'ACCIONES',
-      width: 140,
+      field: 'opciones',
+      headerName: 'OPCIONES',
+      width: 120,
+      pinned: 'left',
       filter: false,  
       cellRenderer: (params) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <IconButton 
             title="Ver detalles"
-            size="small" 
+            size="small"
             sx={{ color: '#6c757d', '&:hover': { color: '#006971' } }}
             onClick={() => onView && onView(params.data)}
           >
@@ -109,16 +110,16 @@ function SanctioningProcessesTable({
 
           <IconButton 
             title="Editar proceso"
-            size="small" 
+            size="small"
             sx={{ color: '#6c757d', '&:hover': { color: '#006971' } }}
             onClick={() => onEdit && onEdit(params.data)}
           >
             <Edit />
           </IconButton>
-          
+
           <IconButton 
             title="Adjuntos"
-            size="small" 
+            size="small"
             sx={{ color: '#6c757d', '&:hover': { color: '#006971' } }}
             onClick={() => onAttach && onAttach(params.data)}
           >

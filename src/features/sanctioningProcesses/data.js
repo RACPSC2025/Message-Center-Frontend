@@ -151,7 +151,7 @@ export const mockApiResponse = {
       {
         id: "PS-2024-016",
         codigo: "EXP-2024-094",
-        norma_asociada: "Ley de Conservación del Agua",
+        norma_asociada: "Normas de Conservación del Agua",
         gravedad: "media",
         estado: "en_descargos",
         fecha_limite: "2025-01-05"

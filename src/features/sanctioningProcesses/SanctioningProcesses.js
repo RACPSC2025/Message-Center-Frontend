@@ -4,12 +4,19 @@ import { Add, Description, Assignment } from '@mui/icons-material';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
 import SanctioningStatsList from './components/SanctioningStatsList';
 import SanctioningProcessesTable from './components/SanctioningProcessesTable';
+import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
 
 import { statsData, mockApiResponse } from './data';
 
 const tableHandlers = {
   handleRowClick: (row) => console.log('[DEBUG] Fila clickeada:', row),
-  handleView: (row) => console.log('[DEBUG] Ver:', row),
+  
+  handleView: (row, setOpenDrawer, setSelectedProcess) => {
+    console.log('[DEBUG] Ver:', row);
+    setSelectedProcess(row);
+    setOpenDrawer(true);
+  },
+  
   handleEdit: (row) => console.log('[DEBUG] Editar:', row),
   handleAttach: (row) => console.log('[DEBUG] Adjuntar:', row),
   handleRefresh: () => console.log('[DEBUG] Refrescando datos...')
@@ -35,8 +42,12 @@ const speedDialActions = [
 ];
 
 // Handler del SpeedDial
-const handleActionClick = (action, setOpenSpeedDial) => {
-  console.log('[DEBUG] Iniciando nuevo proceso:', action);
+const handleActionClick = (actionData, setOpenSpeedDial) => {
+  console.log('[DEBUG] Iniciando nuevo proceso:', actionData);
+  
+  // Extraer solo el action del objeto
+  const action = actionData.action || actionData;
+  
   switch(action) {
     case 'ambiental':
       console.log('[DEBUG] Abriendo formulario para proceso ambiental...');
@@ -55,6 +66,8 @@ const handleActionClick = (action, setOpenSpeedDial) => {
 
 function SanctioningProcesses() {
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedProcess, setSelectedProcess] = useState(null);
 
   return (
     <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa', p: 3 }}>
@@ -96,7 +109,7 @@ function SanctioningProcesses() {
         data={mockApiResponse.data.items}
         paginationData={mockApiResponse.meta.pagination}
         onRowClick={tableHandlers.handleRowClick}
-        onView={tableHandlers.handleView}
+        onView={(row) => tableHandlers.handleView(row, setOpenDrawer, setSelectedProcess)}
         onEdit={tableHandlers.handleEdit}
         onAttach={tableHandlers.handleAttach}
         onRefresh={tableHandlers.handleRefresh}
@@ -109,6 +122,13 @@ function SanctioningProcesses() {
         handleCloseSpeedDial={() => setOpenSpeedDial(false)}
         speedDialActions={speedDialActions}
         handleActionClick={(action) => handleActionClick(action, setOpenSpeedDial)}
+      />
+
+      {/* Drawer para ver detalles del proceso */}
+      <SanctioningProcessesDrawer
+        open={openDrawer}
+        handleClose={() => setOpenDrawer(false)}
+        selectedProcess={selectedProcess}
       />
     </Box>
   );
