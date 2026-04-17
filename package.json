@@ -79,6 +79,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build && npm run copy-config",
     "copy-config": "node scripts/copy-config.js",
+    "generate-sanctioning-temp-json": "node scripts/generate-sanctioning-temp-json.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "postinstall": "node -e \"require('fs').copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.js', 'public/static/js/pdf.worker.min.js')\""

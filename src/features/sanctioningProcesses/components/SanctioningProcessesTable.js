@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
-import { Box, Typography, Chip, IconButton } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import { Visibility, Edit, AttachFile } from '@mui/icons-material';
 import TableComponent from '../../../components/TableComponent';
-import { getGravedadColor, getEstadoIcon, formatDate } from '../utils';
+import { formatDate } from '../utils';
 
 function SanctioningProcessesTable({ 
   data = [],
+  columnDefs = [],
+  initialVisibleFields = [],
   onRowClick = null,
   onEdit = null,
   onView = null,
@@ -13,93 +15,17 @@ function SanctioningProcessesTable({
   onRefresh = null,
   paginationData = null 
 }) {
-  // Configuración de columnas
-  const columnDefs = useMemo(() => [
-    {
-      field: 'codigo',
-      headerName: 'CÓDIGO / REQUISITO',
-      width: 200,
-      flex: 1,
-      cellRenderer: (params) => (
-        <Box sx={{ p: 1 }}>
-          <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#212529' }}>
-            {params.data.codigo}
-          </Typography>
-
-          <Typography sx={{ fontSize: '0.75rem', color: '#6c757d', mt: 0.5 }}>
-            {params.data.norma_asociada}
-          </Typography>
-        </Box>
-      )
-    },
-    {
-      field: 'gravedad',
-      headerName: 'GRAVEDAD',
-      width: 140,
-      cellRenderer: (params) => {
-        const colors = getGravedadColor(params.value);
-        
-        return (
-          <Chip
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: colors.dot }} />
-                {params.value.toUpperCase()}
-              </Box>
-            }
-            sx={{
-              bgcolor: colors.bg,
-              color: colors.color,
-              fontWeight: 'bold',
-              fontSize: '0.75rem',
-              height: 24
-            }}
-            size="small"
-          />
-        );
-      }
-    },
-    {
-      field: 'estado',
-      headerName: 'ESTADO ACTUAL',
-      width: 180,
-      cellRenderer: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {getEstadoIcon(params.data.estado)}
-          
-          <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#212529' }}>
-            {params.value}
-          </Typography>
-        </Box>
-      )
-    },
-    {
-      field: 'fecha_limite',
-      headerName: 'FECHA LÍMITE',
-      width: 150,
-      type: 'dateColumn',
-      filter: 'agDateColumnFilter',
-      valueFormatter: (params) => formatDate(params.value),
-      cellRenderer: (params) => (
-        <Typography sx={{ 
-          fontSize: '0.875rem', 
-          fontWeight: 700, 
-          color: params.data.estado === 'en_descargos' ? '#eab308' : '#006971',
-          fontFamily: '"Inter", sans-serif'
-        }}>
-          {formatDate(params.value)}
-        </Typography>
-      )
-    },
-    {
+  const mergedColumnDefs = useMemo(() => {
+    const optionsColumn = {
       field: 'opciones',
       headerName: 'OPCIONES',
       width: 120,
       pinned: 'left',
-      filter: false,  
+      filter: false,
+      sortable: false,
       cellRenderer: (params) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton 
+          <IconButton
             title="Ver detalles"
             size="small"
             sx={{ color: '#6c757d', '&:hover': { color: '#006971' } }}
@@ -108,7 +34,7 @@ function SanctioningProcessesTable({
             <Visibility />
           </IconButton>
 
-          <IconButton 
+          <IconButton
             title="Editar proceso"
             size="small"
             sx={{ color: '#6c757d', '&:hover': { color: '#006971' } }}
@@ -117,7 +43,7 @@ function SanctioningProcessesTable({
             <Edit />
           </IconButton>
 
-          <IconButton 
+          <IconButton
             title="Adjuntos"
             size="small"
             sx={{ color: '#6c757d', '&:hover': { color: '#006971' } }}
@@ -127,8 +53,52 @@ function SanctioningProcessesTable({
           </IconButton>
         </Box>
       )
-    }
-  ], []);
+    };
+
+    const apiColumns = (columnDefs || []).map((column) => {
+      if (column.field === 'estimated_sanction_amount') {
+        return {
+          ...column,
+          type: 'number',
+          valueFormatter: (params) => {
+            const rawValue = params?.value;
+            const numericValue = Number(rawValue);
+
+            if (!Number.isFinite(numericValue)) {
+              return rawValue || '';
+            }
+
+            return new Intl.NumberFormat('es-CO', {
+              style: 'currency',
+              currency: 'COP',
+              maximumFractionDigits: 0
+            }).format(numericValue);
+          }
+        };
+      }
+
+      if (column.field?.includes('date')) {
+        return {
+          ...column,
+          valueFormatter: (params) => formatDate(params?.value)
+        };
+      }
+
+      return column;
+    });
+
+    return [...apiColumns, optionsColumn];
+  }, [columnDefs, onAttach, onEdit, onView]);
+
+  const defaultVisibleFields = useMemo(() => {
+    const baseFields = initialVisibleFields.length > 0
+      ? initialVisibleFields
+      : mergedColumnDefs
+          .filter((column) => column.field !== 'opciones')
+          .map((column) => column.field);
+
+    return Array.from(new Set([...baseFields, 'opciones']));
+  }, [initialVisibleFields, mergedColumnDefs]);
   
   return (
     <Box sx={{ 
@@ -141,13 +111,14 @@ function SanctioningProcessesTable({
     }}>
       <TableComponent
         rowData={data}
-        columnDefs={columnDefs}
+        columnDefs={mergedColumnDefs}
         pagination={true}
         pageOption={[paginationData?.page_size || 10]}
         sortable={true}
         filterable={true}
         resizable={true}
         autoHeight={true}
+        initialVisibleColumns={defaultVisibleFields}
         onRowClicked={onRowClick}
         onRefresh={onRefresh}
       />

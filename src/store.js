@@ -70,6 +70,7 @@ import unreadMessagesReducer from './stores/messages/unreadMessagesSlice';
 import updateMessageFlagReducer from './stores/messages/updateMessageFlagSlice';
 import fetchModuleNavigationIdsReducer from './stores/messages/fetchModuleNavigationIdsSlice';
 import platformConfigReducer from './stores/platformConfigSlice';
+import fetchSanctioningProcessesTableHeadersReducer from './stores/sanctioningProcesses/fetchSanctioningProcessesTableHeadersSlice';
 
 
 export const store = configureStore({
@@ -143,6 +144,7 @@ export const store = configureStore({
     updateMessageFlag: updateMessageFlagReducer,
     moduleNavigation: fetchModuleNavigationIdsReducer,
     platformConfig: platformConfigReducer,
+    sanctioningProcessesTableHeaders: fetchSanctioningProcessesTableHeadersReducer,
   }
 });
 

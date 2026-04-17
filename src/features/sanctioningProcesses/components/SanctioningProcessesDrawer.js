@@ -1,108 +1,151 @@
-import { 
-  Close, 
-  Description, 
-  Schedule, 
-  CheckCircle, 
-  Pending, 
-  MarkEmailRead,
+import { useMemo, useState } from 'react';
+import {
+  Close,
+  ExpandMore,
+  Description,
+  History,
+  CheckCircle,
   AttachFile,
-  Person
+  WarningAmber
 } from '@mui/icons-material';
-import { 
-  AppBar, 
-  Drawer, 
-  IconButton, 
-  Toolbar, 
-  Typography, 
-  Box, 
-  Chip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Avatar,
-  Paper,
-  Grid
+  Box,
+  Chip,
+  Drawer,
+  IconButton,
+  Tab,
+  Tabs,
+  Typography
 } from '@mui/material';
-import { getGravedadColor, getEstadoIcon, formatDate } from '../utils';
+
+const LEGAL_PHASE_TABS = ['FASE I', 'FASE II', 'FASE III', 'CIERRE'];
+
+const FIELD_LABELS = {
+  id: 'ID',
+  process_id: 'ID Proceso',
+  ues: 'UES',
+  sede: 'Sede',
+  expediente: 'Expediente',
+  autoridad: 'Autoridad',
+  current_legal_phase: 'Fase Legal Actual',
+  legal_phases_actions: 'Fases Legales - Actuaciones',
+  process_stage: 'Etapa del Proceso',
+  cargo_description: 'Cargo',
+  tema: 'Tema',
+  colsubsidio_response: 'Radicado y Contenido de Respuesta Colsubsidio',
+  estrategia: 'Estrategia',
+  estimated_sanction_amount: 'Monto de la posible sancion'
+};
+
+const normalizeText = (value) => String(value ?? '').split('\u000b').join(' ').trim();
+
+const detectPhaseBucket = (textValue = '') => {
+  const normalized = normalizeText(textValue).toUpperCase();
+
+  if (normalized.includes('CIERRE')) {
+    return 'CIERRE';
+  }
+
+  if (normalized.includes('FASE III')) {
+    return 'FASE III';
+  }
+
+  if (normalized.includes('FASE II')) {
+    return 'FASE II';
+  }
+
+  if (normalized.includes('FASE I')) {
+    return 'FASE I';
+  }
+
+  return 'FASE I';
+};
+
+const getPhaseFromAction = (actionText = '') => {
+  const phaseMatch = normalizeText(actionText).match(/(FASE\s+[IVX]+\s*:\s*[^\r\n]+)/i);
+  return phaseMatch ? phaseMatch[1].toUpperCase() : 'FASE SIN CLASIFICAR';
+};
+
+const splitLines = (value = '') =>
+  normalizeText(value)
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+const buildPhaseLogs = (selectedProcess) => {
+  const actionsLines = splitLines(selectedProcess?.legal_phases_actions);
+  const grouped = {
+    'FASE I': [],
+    'FASE II': [],
+    'FASE III': [],
+    CIERRE: []
+  };
+
+  actionsLines.forEach((line, index) => {
+    const phase = detectPhaseBucket(getPhaseFromAction(line));
+
+    grouped[phase].push({
+      id: `${phase}-action-${index + 1}`,
+      type: 'actuacion',
+      content: line,
+      actor: 'Sistema',
+      timestamp: 'Sin fecha'
+    });
+  });
+
+  const responseLines = splitLines(selectedProcess?.colsubsidio_response);
+  responseLines.forEach((line, index) => {
+    const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE I');
+
+    grouped[currentPhase].push({
+      id: `${currentPhase}-response-${index + 1}`,
+      type: 'respuesta',
+      content: line,
+      actor: 'Colsubsidio',
+      timestamp: 'Radicado'
+    });
+  });
+
+  if (normalizeText(selectedProcess?.estrategia)) {
+    const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE I');
+
+    grouped[currentPhase].push({
+      id: `${currentPhase}-strategy-1`,
+      type: 'estrategia',
+      content: `Estrategia: ${normalizeText(selectedProcess.estrategia)}`,
+      actor: 'Equipo legal',
+      timestamp: 'Plan de accion'
+    });
+  }
+
+  return grouped;
+};
 
 export default function SanctioningProcessesDrawer({
   open = false,
   handleClose = () => {},
   selectedProcess = null
 }) {
-  if (!selectedProcess) return null;
+  const processData = selectedProcess || {};
 
-  const colors = getGravedadColor(selectedProcess.gravedad);
+  const phaseLogs = useMemo(() => buildPhaseLogs(processData), [processData]);
 
-  // Datos mock del historial del proceso
-  const processHistory = [
-    {
-      id: 1,
-      type: 'creation',
-      title: 'Proceso Creado',
-      description: 'Se inicia el proceso sancionatorio por presunta violación de la norma ambiental',
-      date: '2024-09-15T10:30:00',
-      user: 'Juan Pérez',
-      avatar: 'JP',
-      status: 'completed'
-    },
-    {
-      id: 2,
-      type: 'notification',
-      title: 'Notificación Enviada',
-      description: 'Se notifica formalmente al responsable del proceso',
-      date: '2024-09-16T14:20:00',
-      user: 'María González',
-      avatar: 'MG',
-      status: 'completed'
-    },
-    {
-      id: 3,
-      type: 'document',
-      title: 'Documentos Adjuntados',
-      description: 'Se adjunta evidencia fotográfica y reporte de inspección',
-      date: '2024-09-18T09:15:00',
-      user: 'Carlos Rodríguez',
-      avatar: 'CR',
-      status: 'completed'
-    },
-    {
-      id: 4,
-      type: 'response',
-      title: 'Descargos Recibidos',
-      description: 'El responsable presenta descargos y pruebas de cumplimiento',
-      date: '2024-09-25T16:45:00',
-      user: 'Ana López',
-      avatar: 'AL',
-      status: 'completed'
-    },
-    {
-      id: 5,
-      type: 'evaluation',
-      title: 'En Evaluación',
-      description: 'El comité evalúa los descargos y evidencia presentada',
-      date: '2024-10-05T11:30:00',
-      user: 'Roberto Sánchez',
-      avatar: 'RS',
-      status: 'pending'
-    }
-  ];
+  const [activeTab, setActiveTab] = useState(LEGAL_PHASE_TABS[0]);
 
-  const getEventIcon = (type) => {
-    switch(type) {
-      case 'creation': return <CheckCircle sx={{ color: '#4caf50' }} />;
-      case 'notification': return <MarkEmailRead sx={{ color: '#2196f3' }} />;
-      case 'document': return <AttachFile sx={{ color: '#ff9800' }} />;
-      case 'response': return <Description sx={{ color: '#9c27b0' }} />;
-      case 'evaluation': return <Pending sx={{ color: '#ff5722' }} />;
-      default: return <Schedule sx={{ color: '#757575' }} />;
-    }
-  };
+  const normalizedTab = LEGAL_PHASE_TABS.includes(activeTab) ? activeTab : LEGAL_PHASE_TABS[0];
+  const currentTabLogs = phaseLogs[normalizedTab] || [];
 
-  const getStatusColor = (status) => {
-    return status === 'completed' ? '#4caf50' : '#ff9800';
-  };
+  const infoEntries = Object.entries(processData).filter(([, value]) =>
+    String(value ?? '').trim() !== ''
+  );
+
+  if (!selectedProcess) {
+    return null;
+  }
 
   return (
     <Drawer
@@ -110,145 +153,196 @@ export default function SanctioningProcessesDrawer({
       open={open}
       onClose={handleClose}
       PaperProps={{
-        sx: { width: '60vw' }
+        sx: {
+          width: {
+            xs: '100vw',
+            md: '70vw'
+          },
+          bgcolor: '#ffffff'
+        }
       }}
     >
-      {/* ENCABEZADO DEL DRAWER */}
-      <AppBar position="static">
-        <Toolbar>
-          {/* título */}
-          <Typography color="white" variant="h6" sx={{ flexGrow: 1 }}>
-            Historial de Proceso
-          </Typography>
-          
-          {/* x */}
-          <IconButton edge="end" onClick={handleClose} aria-label="close">
-            <Close sx={{ color: 'white' }} />
+      <Box
+        sx={{
+          p: 3,
+          borderBottom: '1px solid rgba(187, 201, 204, 0.35)',
+          bgcolor: '#f8fafb'
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+          <Box>
+            <Chip
+              label={`Expediente ${normalizeText(selectedProcess?.expediente || '-')}`}
+              size="small"
+              sx={{ mb: 1, bgcolor: 'rgba(0, 105, 113, 0.1)', color: '#006971', fontWeight: 700 }}
+            />
+            <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: '#191c1d' }}>
+              Historial Detallado del Proceso
+            </Typography>
+            <Typography sx={{ color: '#3c494c', mt: 0.5 }}>
+              Estado consolidado: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
+            </Typography>
+          </Box>
+
+          <IconButton onClick={handleClose} aria-label="close drawer">
+            <Close />
           </IconButton>
-        </Toolbar>
-      </AppBar>
+        </Box>
 
-      <Box sx={{ p: 3, maxHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}>
-        {/* Header con información básica */}
-        <Paper sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ color: '#6c757d', mb: 1, fontWeight: 600 }}>
-                PROCESO
-              </Typography>
+        <Box sx={{ mt: 2 }}>
+          <Tabs
+            value={normalizedTab}
+            onChange={(_, value) => setActiveTab(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTabs-indicator': { bgcolor: '#006971' },
+              '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 },
+              '& .Mui-selected': { color: '#006971 !important' }
+            }}
+          >
+            {LEGAL_PHASE_TABS.map((phase) => (
+              <Tab key={phase} label={phase} value={phase} />
+            ))}
+          </Tabs>
+        </Box>
+      </Box>
 
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#212529' }}>
-                {selectedProcess.codigo}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ color: '#6c757d', mb: 1, fontWeight: 600 }}>
-                ESTADO ACTUAL
-              </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {getEstadoIcon(selectedProcess.estado)}
-                <Typography variant="body1" sx={{ fontWeight: 500, color: '#212529' }}>
-                  {selectedProcess.estado.replace(/_/g, ' ').toUpperCase()}
-                </Typography>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ color: '#6c757d', mb: 1, fontWeight: 600 }}>
-                NORMA ASOCIADA
-              </Typography>
-
-              <Typography variant="body1" sx={{ color: '#212529', fontWeight: 500 }}>
-                {selectedProcess.norma_asociada}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ color: '#6c757d', mb: 1, fontWeight: 600 }}>
-                GRAVEDAD
-              </Typography>
-              
-              <Chip
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: colors.dot }} />
-                    {selectedProcess.gravedad.toUpperCase()}
-                  </Box>
-                }
-                sx={{
-                  bgcolor: colors.bg,
-                  color: colors.color,
-                  fontWeight: 'bold',
-                  fontSize: '0.75rem',
-                  height: 24
-                }}
-                size="small"
-              />
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {/* Timeline del historial */}
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#212529', mb: 2 }}>
-          Historial de Actividades
-        </Typography>
-
-        <List>
-          {processHistory.map((event, index) => (
-            <ListItem 
-              key={event.id}
-              sx={{ 
-                mb: 2,
-                borderLeft: `3px solid ${getStatusColor(event.status)}`,
-                pl: 3,
-                borderRadius: 1
+      <Box sx={{ p: 3, overflowY: 'auto' }}>
+        <Accordion sx={{ mb: 2, borderRadius: '12px !important', boxShadow: 0 }}>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Description sx={{ color: '#006971' }} />
+              <Typography sx={{ fontWeight: 700 }}>Informacion completa del registro</Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                gap: 2,
+                p: 2,
+                bgcolor: '#f2f4f5',
+                borderRadius: 2
               }}
             >
-              <ListItemIcon>
-                <Avatar sx={{ 
-                  bgcolor: getStatusColor(event.status),
-                  width: 40,
-                  height: 40
-                }}>
-                  {event.avatar}
-                </Avatar>
-              </ListItemIcon>
-              
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    {getEventIcon(event.type)}
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#212529' }}>
-                      {event.title}
-                    </Typography>
-                  </Box>
-                }
-                secondary={
-                  <Box>
-                    <Typography variant="body2" sx={{ color: '#6c757d', mb: 1 }}>
-                      {event.description}
-                    </Typography>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Person sx={{ fontSize: 16, color: '#6c757d' }} />
-                        <Typography variant="caption" sx={{ color: '#6c757d' }}>
-                          {event.user}
+              {infoEntries.map(([key, value]) => (
+                <Box key={key}>
+                  <Typography sx={{ fontSize: '0.72rem', color: '#6c797c', fontWeight: 700 }}>
+                    {(FIELD_LABELS[key] || key).toUpperCase()}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.9rem', color: '#191c1d', whiteSpace: 'pre-line' }}>
+                    {key === 'estimated_sanction_amount'
+                      ? new Intl.NumberFormat('es-CO', {
+                          style: 'currency',
+                          currency: 'COP',
+                          maximumFractionDigits: 0
+                        }).format(Number(value || 0))
+                      : normalizeText(value || '-')}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+
+        <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }}>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <History sx={{ color: '#006971' }} />
+              <Typography sx={{ fontWeight: 700 }}>Bitacora por fase legal</Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            {currentTabLogs.length === 0 ? (
+              <Typography sx={{ color: '#6c797c' }}>
+                No hay eventos registrados para {normalizedTab}.
+              </Typography>
+            ) : (
+              <Box
+                sx={{
+                  position: 'relative',
+                  pl: 1,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 18,
+                    top: 8,
+                    bottom: 8,
+                    width: '2px',
+                    bgcolor: '#e6e8e9'
+                  }
+                }}
+              >
+                {currentTabLogs.map((entry, index) => {
+                  const title =
+                    entry.type === 'actuacion'
+                      ? `Actuacion ${index + 1}`
+                      : entry.type === 'respuesta'
+                      ? 'Carga de documentos / respuesta'
+                      : 'Alerta / estrategia';
+
+                  const nodeIcon =
+                    entry.type === 'actuacion' ? (
+                      <History sx={{ color: '#006971', fontSize: 16 }} />
+                    ) : entry.type === 'respuesta' ? (
+                      <AttachFile sx={{ color: '#006971', fontSize: 16 }} />
+                    ) : (
+                      <WarningAmber sx={{ color: '#b81d27', fontSize: 16 }} />
+                    );
+
+                  return (
+                    <Box key={entry.id} sx={{ position: 'relative', pl: 6, mb: 2.5 }}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          left: 0,
+                          top: 4,
+                          width: 36,
+                          height: 36,
+                          borderRadius: '50%',
+                          bgcolor: entry.type === 'estrategia' ? 'rgba(255, 137, 131, 0.25)' : 'rgba(50, 188, 200, 0.15)',
+                          border: '4px solid #fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 1
+                        }}
+                      >
+                        {nodeIcon}
+                      </Box>
+
+                      <Box sx={{ p: 2, bgcolor: '#f2f4f5', borderRadius: 2, border: '1px solid rgba(187, 201, 204, 0.2)' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1 }}>
+                          <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#191c1d', textTransform: 'uppercase' }}>
+                            {title}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.68rem', color: '#6c797c', fontWeight: 600 }}>
+                            {entry.timestamp}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <Avatar sx={{ width: 20, height: 20, bgcolor: '#006971', fontSize: '0.65rem' }}>
+                            {normalizeText(entry.actor || 'S').charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#3c494c', fontWeight: 600 }}>
+                            {entry.actor}
+                          </Typography>
+                        </Box>
+
+                        <Typography sx={{ color: '#3c494c', fontSize: '0.8rem', whiteSpace: 'pre-line' }}>
+                          {entry.content}
                         </Typography>
                       </Box>
-                      
-                      <Typography variant="caption" sx={{ color: '#6c757d' }}>
-                        {formatDate(event.date)}
-                      </Typography>
                     </Box>
-                  </Box>
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
+                  );
+                })}
+              </Box>
+            )}
+          </AccordionDetails>
+        </Accordion>
       </Box>
     </Drawer>
   );

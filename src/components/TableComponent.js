@@ -40,6 +40,7 @@ ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
 export default function TableComponent({
   rowData = [],
   columnDefs = [],
+  initialVisibleColumns = [],
   totalRecord = 0,
   editable = false,
   resizable = true,
@@ -75,11 +76,23 @@ export default function TableComponent({
     }
   };
 
+  const getDefaultVisibleColumns = (columns = [], preferredVisible = []) => {
+    const columnFields = columns.map((col) => col.field).filter(Boolean);
+
+    if (preferredVisible.length > 0) {
+      return preferredVisible.filter((field) => columnFields.includes(field));
+    }
+
+    return columnFields;
+  };
+
   const [gridApi, setGridApi] = useState(null);
   const gridRef = useRef();
 
   // Status for visible columns
-  const [visibleColumns, setVisibleColumns] = useState(columnDefs.map((col) => col.field));
+  const [visibleColumns, setVisibleColumns] = useState(
+    getDefaultVisibleColumns(columnDefs, initialVisibleColumns)
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRows, setTotalRows] = useState(0);
@@ -188,12 +201,12 @@ export default function TableComponent({
   };
 
   useEffect(() => {
-    const newVisibleColumns = columnDefs.map((col) => col.field);
+    const newVisibleColumns = getDefaultVisibleColumns(columnDefs, initialVisibleColumns);
     // Only update if the arrays are different
     if (JSON.stringify(newVisibleColumns) !== JSON.stringify(visibleColumns)) {
       setVisibleColumns(newVisibleColumns);
     }
-  }, [columnDefs]);
+  }, [columnDefs, initialVisibleColumns]);
 
   useEffect(() => {
     if (gridRef.current?.api) {
