@@ -24,6 +24,7 @@ const PermitManager = lazy(() => import('../features/permitManager/PermitManager
 const SanctioningProcesses = lazy(
   () => import('../features/sanctioningProcesses/SanctioningProcesses')
 );
+const AmbientalPermit = lazy(() => import('../features/ambientalPermit/AmbientalPermit'));
 const Tasks = lazy(() => import('../features/tasks/Tasks'));
 const Actions = lazy(() => import('../features/actions/Actions'));
 const Inspections = lazy(() => import('../features/inspections/Inspections'));
@@ -100,6 +101,7 @@ export default function RoutesFile() {
     findings: <Findings />,
     LegalMatriz: <MessageCenterLegalMatriz />,
     permit_manager: <PermitManager />,
+    ambiental_permit: <AmbientalPermit />,
     sanctioning_processes: <SanctioningProcesses />
   };
 

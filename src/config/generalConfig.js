@@ -7,6 +7,7 @@ import {
   MailOutline,
   Search
 } from '@mui/icons-material';
+import NatureIcon from '@mui/icons-material/Nature';
 import defaultConfig from './defaultConfig.json';
 import { modulesConfiguration } from './modulesConfig';
 
@@ -45,6 +46,13 @@ const MODULE_DEFINITIONS = [
     key: 'permit_manager',
     fallbackLabel: 'Permit Manager',
     icon: <AssignmentTurnedIn fontSize="small" />
+  },
+  {
+    configKey: 'ambiental_permit',
+    moduleName: 'ambiental_permit',
+    key: 'ambiental_permit',
+    fallbackLabel: 'Ambiental Permit',
+    icon: <NatureIcon fontSize="small" />
   },
   {
     configKey: 'sanctioning_processes',
@@ -107,11 +115,52 @@ export const deepMerge = (target, source) => {
   return target;
 };
 
+const DEFINITION_BY_CONFIG_KEY = Object.fromEntries(
+  MODULE_DEFINITIONS.map((def) => [def.configKey, def])
+);
+
+export const getModuleGroupsFromPlatformConfig = (platformConfig = defaultConfig, language = 'es') => {
+  const modulesGroup = platformConfig?.modules_group ?? {};
+  const modules = platformConfig?.modules ?? {};
+
+  return Object.entries(modulesGroup)
+    .filter(([, group]) => group.enable === true)
+    .map(([groupKey, group]) => {
+      const title =
+        language === 'en'
+          ? group.title_en || group.title_es
+          : group.title_es || group.title_en;
+
+      const groupModules = Object.entries(group.modules ?? {})
+        .filter(([, included]) => included === true)
+        .map(([configKey]) => {
+          const definition = DEFINITION_BY_CONFIG_KEY[configKey];
+          if (!definition) return null;
+          const moduleConfig = modules[configKey];
+          if (!moduleConfig?.enabled) return null;
+          return {
+            moduleName: definition.moduleName,
+            key: definition.key,
+            label: getLocalizedTitle(moduleConfig, definition.fallbackLabel, language),
+            icon: definition.icon,
+            configKey,
+            skipTranslation: Boolean(moduleConfig?.title_es || moduleConfig?.title_en)
+          };
+        })
+        .filter(Boolean);
+
+      return { groupKey, title, order: group.order ?? 999, modules: groupModules };
+    })
+    .filter((group) => group.modules.length > 0)
+    .sort((a, b) => a.order - b.order);
+};
+
 export const getGlobalConfiguration = (subdomain, options = {}) => {
   const { platformConfig = defaultConfig, language = 'es' } = options;
   const baseConfiguration = {
     ...generalConfiguration,
-    modulePermissions: getModulePermissionsFromPlatformConfig(platformConfig, language)
+    modulePermissions: getModulePermissionsFromPlatformConfig(platformConfig, language),
+    moduleGroups: getModuleGroupsFromPlatformConfig(platformConfig, language)
   };
 
   // Find specific configuration for the subdomain

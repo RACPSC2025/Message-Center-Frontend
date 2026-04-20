@@ -19,6 +19,7 @@ Mapeo actual en RoutesFile:
 - findings
 - LegalMatriz
 - permit_manager
+- ambiental_permit
 - sanctioning_processes
 
 Componentes activos por ruta:
@@ -27,12 +28,13 @@ Componentes activos por ruta:
 - /view/actions -> src/features/actions/Actions.js
 - /view/LegalMatriz -> src/features/MessageCenterLegalMatriz.js
 - /view/permit_manager -> src/features/permitManager/PermitManager.js
+- /view/ambiental_permit -> src/features/ambientalPermit/AmbientalPermit.js (placeholder)
 - /view/sanctioning_processes -> src/features/sanctioningProcesses/SanctioningProcesses.js
 
-Estado inicial de nuevos modulos:
+Estado de modulos:
 
-- `PermitManager` y `SanctioningProcesses` se encuentran en modo placeholder (vista en blanco).
-- Se renderizan cuando `modules.permit_manager.enabled = true` y `modules.sanctioning_processes.enabled = true`.
+- `ambiental_permit` es placeholder mientras se define su funcionalidad completa.
+- Se renderiza cuando `modules.ambiental_permit.enabled = true`.
 
 ## Origen de permisos y visibilidad
 
@@ -46,11 +48,26 @@ Estado inicial de nuevos modulos:
 - Si notifications esta visible: default = /view/notifications
 - Si notifications no esta visible: se usa el primer modulo visible.
 
+## Navegacion por grupos en el header
+
+El header ya no renderiza tabs planos por modulo. Ahora usa grupos definidos en `modules_group`:
+
+- Cada grupo habilitado (`enable: true`) aparece como boton-tab en la barra superior.
+- El orden es ascendente por `order`.
+- Al hacer click en un grupo se abre un Menu desplegable con los modulos del grupo.
+- Solo aparecen en el menu los modulos con `enabled: true` en `modules.[clave]`.
+- Al seleccionar un modulo del menu se navega a `/view/[key]`.
+- El grupo activo (que contiene el modulo en URL actual) se resalta con subrayado azul `#19aabb`.
+- La campana de notificaciones se mantiene como boton separado a la derecha, fuera de los grupos.
+
+Datos de grupos: `moduleGroups` en contexto `GlobalConfig`.
+Funcion que los genera: `getModuleGroupsFromPlatformConfig` en `src/config/generalConfig.js`.
+
 ## Layout de navegacion
 
 - src/components/TheLayout.js: shell principal
 - src/components/TheLayoutNavbar.js: sidebar
-- src/components/TheLayoutHeader.js: tabs y acciones de cabecera
+- src/components/TheLayoutHeader.js: grupos de modulos con dropdown y acciones de cabecera
 
 ## Detalles UX relevantes
 

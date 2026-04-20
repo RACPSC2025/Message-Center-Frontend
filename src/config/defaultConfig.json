@@ -1,9 +1,49 @@
 {
   "version": "1.0.0",
   "description": "Configuración global de permisos y características de la plataforma",
+  "modules_group": {
+    "legal_matriz_group": {
+      "title_es": "Matriz Legal",
+      "title_en": "Legal Matrix",
+      "order": 1,
+      "enable": true,
+      "modules": {
+        "legal_matrix": true
+      }
+    },
+    "task_group": {
+      "title_es": "Actividades",
+      "title_en": "Activities",
+      "order": 2,
+      "enable": true,
+      "modules": {
+        "task": true
+      }
+    },
+    "findings_group": {
+      "title_es": "Hallazgos",
+      "title_en": "Findings",
+      "order": 3,
+      "enable": true,
+      "modules": {
+        "findings": true
+      }
+    },
+    "actions_group": {
+      "title_es": "Gestor de hallazgos",
+      "title_en": "Manager of findings",
+      "order": 4,
+      "enable": true,
+      "modules": {
+        "actions": true
+      }
+    }
+  },
   "modules": {
     "legal_matrix": {
       "enabled": true,
+      "title_es": "Matriz legal",
+      "title_en": "Legal matrix",
       "description": "Módulo de gestión de matriz legal",
       "order": "0",
       "permissions": {
@@ -47,6 +87,8 @@
     },
     "task": {
       "enabled": true,
+      "title_es": "Actividades",
+      "title_en": "Tasks",
       "description": "Módulo de gestión de tareas",
       "order": "1",
       "permissions": {
@@ -89,6 +131,8 @@
     },
     "findings": {
       "enabled": true,
+      "title_es": "Hallazgos",
+      "title_en": "Findings",
       "description": "Es el módulo de hallazgos de Amatia Express",
       "order": "3",
       "permissions": {
@@ -102,6 +146,8 @@
     },
     "actions": {
       "enabled": true,
+      "title_es": "Gestor de hallazgos",
+      "title_en": "Manager of findings",
       "description": "Es el módulo de acciones para Amatia Express",
       "order": "2",
       "permissions": {

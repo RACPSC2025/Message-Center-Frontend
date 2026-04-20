@@ -14,7 +14,7 @@ La respuesta esperada tiene estructura:
 - messages
 - configuration
 
-La propiedad configuration contiene version, environment y modules con permisos, features y catalogos por modulo.
+La propiedad configuration contiene version, environment, modules_group y modules con permisos, features y catalogos por modulo.
 
 Nota:
 
@@ -51,35 +51,73 @@ En montaje del componente de rutas se despacha:
 
 Con esto la consulta ocurre al iniciar la aplicacion.
 
+## Estructura de modules_group
+
+La API ahora entrega `modules_group` que define grupos de modulos para la navegacion en header:
+
+```json
+"modules_group": {
+  "legal_matriz_group": {
+    "title_es": "Matriz Legal",
+    "title_en": "Legal Matrix",
+    "order": 1,
+    "enable": true,
+    "modules": {
+      "legal_matrix": true,
+      "permit_manager": true,
+      "ambiental_permit": true,
+      "sanctioning_processes": true
+    }
+  }
+}
+```
+
+Reglas de `modules_group`:
+
+- `enable: false` -> el grupo no aparece en la navegacion
+- `order` -> orden ascendente en la barra de tabs
+- `modules` -> claves que corresponden a modulos en `modules.[clave]`
+- Solo se renderizan modulos del grupo que tambien tengan `modules.[clave].enabled = true`
+
 ## Cómo se usa para visibilidad y titulos de modulos
 
 Archivo:
 
 - src/config/generalConfig.js
 
-Se construye modulePermissions dinamicamente a partir de state.platformConfig.data.modules:
+Se construye `modulePermissions` dinamicamente a partir de `state.platformConfig.data.modules`:
 
 - legal_matrix -> ruta LegalMatriz
 - task -> ruta events
 - findings -> ruta findings
 - actions -> ruta actions
 - permit_manager -> ruta permit_manager
+- ambiental_permit -> ruta ambiental_permit
 - sanctioning_processes -> ruta sanctioning_processes
+
+Se construye `moduleGroups` a partir de `state.platformConfig.data.modules_group`:
+
+- Funcion: `getModuleGroupsFromPlatformConfig(platformConfig, language)`
+- Exportada desde `src/config/generalConfig.js`
+- Incluida en el valor del contexto `GlobalConfig` en `src/routes/RoutesFile.js`
+- Cada grupo tiene: `groupKey`, `title` (localizado), `order`, `modules` (array de modulos habilitados)
 
 Reglas aplicadas:
 
 - visibility se toma de modules.[modulo].enabled
 - label usa title_es o title_en segun idioma actual
 - si no hay titulo en API, usa fallback de etiqueta local
-- notifications se mantiene como modulo de navegacion del sistema
+- notifications se mantiene como modulo de navegacion del sistema (campana separada)
 - enviroment se usa para renderizar la etiqueta de ambiente en el sidebar izquierdo
 
-Con la nueva respuesta de configuracion, los modulos `permit_manager` y `sanctioning_processes` se deben renderizar como tabs de navegacion cuando `enabled = true`.
-En fase inicial pueden apuntar a vistas placeholder (espacio en blanco) mientras se define su funcionalidad completa.
+Mapeo de rutas implementado:
 
-Mapeo implementado actual:
-
+- `legal_matrix` -> `/view/LegalMatriz` -> `src/features/MessageCenterLegalMatriz.js`
+- `task` -> `/view/events` -> `src/features/tasks/Tasks.js`
+- `findings` -> `/view/findings` -> `src/features/findings/Findings.js`
+- `actions` -> `/view/actions` -> `src/features/actions/Actions.js`
 - `permit_manager` -> `/view/permit_manager` -> `src/features/permitManager/PermitManager.js`
+- `ambiental_permit` -> `/view/ambiental_permit` -> `src/features/ambientalPermit/AmbientalPermit.js`
 - `sanctioning_processes` -> `/view/sanctioning_processes` -> `src/features/sanctioningProcesses/SanctioningProcesses.js`
 
 Uso adicional en filtros de notifications:
