@@ -16,6 +16,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Avatar,
+  Button,
   Box,
   Chip,
   Drawer,
@@ -582,56 +583,71 @@ export default function SanctioningProcessesDrawer({
         )}
 
         {activeDetailTab === DETAIL_TABS.LOG && (
-          <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }} defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Box sx={{ width: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <Box>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 1.5,
+                mb: 2
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel id="bitacora-phase-filter-label">Fase</InputLabel>
+                  <Select
+                    labelId="bitacora-phase-filter-label"
+                    value={bitacoraPhaseFilter}
+                    label="Fase"
+                    onChange={(event) => setBitacoraPhaseFilter(event.target.value)}
+                  >
+                    <MenuItem value={ALL_PHASES_OPTION}>{ALL_PHASES_OPTION}</MenuItem>
+                    {PHASE_OPTIONS.map((phaseOption) => (
+                      <MenuItem key={`bitacora-${phaseOption}`} value={phaseOption}>
+                        {phaseOption}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  size="small"
+                  type="date"
+                  label="Fecha"
+                  value={bitacoraDateFilter}
+                  onChange={(event) => setBitacoraDateFilter(event.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: 180 }}
+                />
+              </Box>
+
+              <Button
+                variant="contained"
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  bgcolor: '#006971',
+                  '&:hover': { bgcolor: '#00545a' }
+                }}
+              >
+                Nueva actuacion
+              </Button>
+            </Box>
+
+            <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }} defaultExpanded>
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <History sx={{ color: '#006971' }} />
                   <Typography sx={{ fontWeight: 700 }}>Bitacora general del proceso</Typography>
                 </Box>
-
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    pr: 5
-                  }}
-                >
-                  <FormControl size="small" sx={{ minWidth: 180 }}>
-                    <InputLabel id="bitacora-phase-filter-label">Fase</InputLabel>
-                    <Select
-                      labelId="bitacora-phase-filter-label"
-                      value={bitacoraPhaseFilter}
-                      label="Fase"
-                      onChange={(event) => setBitacoraPhaseFilter(event.target.value)}
-                    >
-                      <MenuItem value={ALL_PHASES_OPTION}>{ALL_PHASES_OPTION}</MenuItem>
-                      {PHASE_OPTIONS.map((phaseOption) => (
-                        <MenuItem key={`bitacora-${phaseOption}`} value={phaseOption}>
-                          {phaseOption}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <TextField
-                    size="small"
-                    type="date"
-                    label="Fecha"
-                    value={bitacoraDateFilter}
-                    onChange={(event) => setBitacoraDateFilter(event.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ minWidth: 180 }}
-                  />
-                </Box>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              {renderTimeline(filteredGeneralLogEntries, 'No hay eventos registrados en la bitacora general.')}
-            </AccordionDetails>
-          </Accordion>
+              </AccordionSummary>
+              <AccordionDetails>
+                {renderTimeline(filteredGeneralLogEntries, 'No hay eventos registrados en la bitacora general.')}
+              </AccordionDetails>
+            </Accordion>
+          </Box>
         )}
       </Box>
     </Drawer>
