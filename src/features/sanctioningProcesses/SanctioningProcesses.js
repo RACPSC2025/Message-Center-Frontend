@@ -138,10 +138,15 @@ function SanctioningProcesses() {
   }, [dispatch, i18n.language]);
 
   useEffect(() => {
-    if (headersResponse?.messages === 'Success') {
-      const tableData = headersResponse?.data ?? {};
-      const config = Object.keys(tableData?.headers || {})
-        .map((columnKey) => tableData?.headers[columnKey])
+    const tableData = headersResponse?.data ?? {};
+    const headers = tableData?.headers ?? headersResponse?.headers ?? {};
+
+    const hasSuccessMessage = headersResponse?.messages === 'Success';
+    const hasUsableHeaders = headers && typeof headers === 'object' && Object.keys(headers).length > 0;
+
+    if (hasSuccessMessage || hasUsableHeaders) {
+      const config = Object.keys(headers)
+        .map((columnKey) => headers[columnKey])
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
       const columnConfig = modifyTableColumns(config);
@@ -151,7 +156,11 @@ function SanctioningProcesses() {
 
       setTableColumnConfig(columnConfig);
       setInitialVisibleFields(visibleByDefault);
+      return;
     }
+
+    setTableColumnConfig([]);
+    setInitialVisibleFields([]);
   }, [headersResponse, i18n.language]);
 
   return (

@@ -99,6 +99,12 @@ function SanctioningProcessesTable({
 
     return Array.from(new Set([...baseFields, 'opciones']));
   }, [initialVisibleFields, mergedColumnDefs]);
+
+  const tableMountKey = useMemo(() => {
+    const fields = mergedColumnDefs.map((column) => column.field).filter(Boolean);
+    const visible = defaultVisibleFields.filter(Boolean);
+    return `${fields.join('|')}::${visible.join('|')}`;
+  }, [mergedColumnDefs, defaultVisibleFields]);
   
   return (
     <Box sx={{ 
@@ -110,6 +116,7 @@ function SanctioningProcessesTable({
       p: 2
     }}>
       <TableComponent
+        key={tableMountKey}
         rowData={data}
         columnDefs={mergedColumnDefs}
         pagination={true}

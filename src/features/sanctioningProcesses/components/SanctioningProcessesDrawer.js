@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Close,
   ExpandMore,
@@ -19,13 +19,39 @@ import {
   Box,
   Chip,
   Drawer,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Tab,
   Tabs,
+  TextField,
   Typography
 } from '@mui/material';
 
-const LEGAL_PHASE_TABS = ['FASE I', 'FASE II', 'FASE III', 'CIERRE'];
+const DETAIL_TABS = {
+  FORM: 'formulario',
+  PHASES: 'fases',
+  LOG: 'bitacora'
+};
+
+const PHASE_OPTIONS = [
+  'FASE I',
+  'FASE II',
+  'FASE III',
+  'FASE IV',
+  'FASE V',
+  'FASE VI',
+  'FASE VII',
+  'FASE VIII',
+  'FASE IX',
+  'FASE X',
+  'FASE XI',
+  'FASE XII'
+];
+
+const ALL_PHASES_OPTION = 'Todas';
 
 const FIELD_LABELS = {
   id: 'ID',
@@ -80,27 +106,23 @@ const detectPhaseBucket = (textValue = '') => {
   const normalized = normalizeText(textValue).toUpperCase();
 
   if (normalized.includes('CIERRE')) {
-    return 'CIERRE';
+    return 'FASE XII';
   }
 
-  if (normalized.includes('FASE III')) {
-    return 'FASE III';
-  }
+  const phaseMatch = normalized.match(/FASE\s+(XII|XI|X|IX|VIII|VII|VI|V|IV|III|II|I)/i);
 
-  if (normalized.includes('FASE II')) {
-    return 'FASE II';
-  }
-
-  if (normalized.includes('FASE I')) {
-    return 'FASE I';
+  if (phaseMatch) {
+    const phaseKey = `FASE ${phaseMatch[1].toUpperCase()}`;
+    return PHASE_OPTIONS.includes(phaseKey) ? phaseKey : 'FASE I';
   }
 
   return 'FASE I';
 };
 
 const getPhaseFromAction = (actionText = '') => {
-  const phaseMatch = normalizeText(actionText).match(/(FASE\s+[IVX]+\s*:\s*[^\r\n]+)/i);
-  return phaseMatch ? phaseMatch[1].toUpperCase() : 'FASE SIN CLASIFICAR';
+  const normalized = normalizeText(actionText).toUpperCase();
+  const phaseMatch = normalized.match(/FASE\s+(XII|XI|X|IX|VIII|VII|VI|V|IV|III|II|I)/i);
+  return phaseMatch ? `FASE ${phaseMatch[1].toUpperCase()}` : 'FASE I';
 };
 
 const splitLines = (value = '') =>
@@ -139,12 +161,10 @@ const attachmentIconByType = {
 
 const buildPhaseLogs = (selectedProcess) => {
   const actionsLines = splitLines(selectedProcess?.legal_phases_actions);
-  const grouped = {
-    'FASE I': [],
-    'FASE II': [],
-    'FASE III': [],
-    CIERRE: []
-  };
+  const grouped = PHASE_OPTIONS.reduce((acc, phase) => {
+    acc[phase] = [];
+    return acc;
+  }, {});
 
   actionsLines.forEach((line, index) => {
     const phase = detectPhaseBucket(getPhaseFromAction(line));
@@ -204,18 +224,249 @@ export default function SanctioningProcessesDrawer({
 
   const phaseLogs = useMemo(() => buildPhaseLogs(processData), [processData]);
 
-  const [activeTab, setActiveTab] = useState(LEGAL_PHASE_TABS[0]);
+  const [activeDetailTab, setActiveDetailTab] = useState(DETAIL_TABS.FORM);
+  const [selectedPhase, setSelectedPhase] = useState(PHASE_OPTIONS[0]);
+  const [bitacoraPhaseFilter, setBitacoraPhaseFilter] = useState(ALL_PHASES_OPTION);
+  const [bitacoraDateFilter, setBitacoraDateFilter] = useState('');
 
-  const normalizedTab = LEGAL_PHASE_TABS.includes(activeTab) ? activeTab : LEGAL_PHASE_TABS[0];
-  const currentTabLogs = phaseLogs[normalizedTab] || [];
+  useEffect(() => {
+    setActiveDetailTab(DETAIL_TABS.FORM);
+    setSelectedPhase(PHASE_OPTIONS[0]);
+    setBitacoraPhaseFilter(ALL_PHASES_OPTION);
+    setBitacoraDateFilter('');
+  }, [selectedProcess]);
 
-  const infoEntries = Object.entries(processData).filter(([, value]) =>
-    String(value ?? '').trim() !== ''
-  );
+  const normalizedPhase = PHASE_OPTIONS.includes(selectedPhase) ? selectedPhase : PHASE_OPTIONS[0];
+
+  const generalLogEntries = useMemo(() => {
+    return PHASE_OPTIONS.reduce((acc, phase) => {
+      const entries = phaseLogs[phase] || [];
+      const mappedEntries = entries.map((entry) => ({
+        ...entry,
+        phase
+      }));
+
+      return [...acc, ...mappedEntries];
+    }, []);
+  }, [phaseLogs]);
+
+  const filteredGeneralLogEntries = useMemo(() => {
+    const phaseFiltered =
+      bitacoraPhaseFilter === ALL_PHASES_OPTION
+        ? generalLogEntries
+        : generalLogEntries.filter((entry) => entry.phase === bitacoraPhaseFilter);
+
+    if (!bitacoraDateFilter) {
+      return phaseFiltered;
+    }
+
+    const dateParts = bitacoraDateFilter.split('-');
+    if (dateParts.length !== 3) {
+      return phaseFiltered;
+    }
+
+    const expectedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+    return phaseFiltered.filter((entry) => entry.timestamp === expectedDate);
+  }, [generalLogEntries, bitacoraPhaseFilter, bitacoraDateFilter]);
 
   if (!selectedProcess) {
     return null;
   }
+
+  const renderTimeline = (entries = [], emptyMessage = 'No hay eventos registrados.') => {
+    if (entries.length === 0) {
+      return <Typography sx={{ color: '#6c797c' }}>{emptyMessage}</Typography>;
+    }
+
+    return (
+      <Box
+        sx={{
+          position: 'relative',
+          pl: 1,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 18,
+            top: 8,
+            bottom: 8,
+            width: '2px',
+            bgcolor: '#e6e8e9'
+          }
+        }}
+      >
+        {entries.map((entry, index) => {
+          const baseTitle =
+            entry.type === 'actuacion'
+              ? `Actuacion ${index + 1}`
+              : entry.type === 'respuesta'
+              ? 'Carga de documentos / respuesta'
+              : 'Alerta / estrategia';
+
+          const title = entry.phase ? `${entry.phase} - ${baseTitle}` : baseTitle;
+
+          const entryAttachments = entry.attachments || [];
+
+          const nodeIcon =
+            entry.type === 'actuacion' ? (
+              <History sx={{ color: '#006971', fontSize: 16 }} />
+            ) : entry.type === 'respuesta' ? (
+              <AttachFile sx={{ color: '#006971', fontSize: 16 }} />
+            ) : (
+              <WarningAmber sx={{ color: '#b81d27', fontSize: 16 }} />
+            );
+
+          return (
+            <Box key={entry.id} sx={{ position: 'relative', pl: 6, mb: 2.5 }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 4,
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  bgcolor: entry.type === 'estrategia' ? 'rgba(255, 137, 131, 0.25)' : 'rgba(50, 188, 200, 0.15)',
+                  border: '4px solid #fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1
+                }}
+              >
+                {nodeIcon}
+              </Box>
+
+              <Box sx={{ p: 2, bgcolor: '#f2f4f5', borderRadius: 2, border: '1px solid rgba(187, 201, 204, 0.2)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1 }}>
+                  <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#191c1d', textTransform: 'uppercase' }}>
+                    {title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.68rem', color: '#6c797c', fontWeight: 600 }}>
+                    {entry.timestamp}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Avatar sx={{ width: 20, height: 20, bgcolor: '#006971', fontSize: '0.65rem' }}>
+                    {normalizeText(entry.actor || 'S').charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Typography sx={{ fontSize: '0.75rem', color: '#3c494c', fontWeight: 600 }}>
+                    {entry.actor}
+                  </Typography>
+                </Box>
+
+                <Typography sx={{ color: '#3c494c', fontSize: '0.8rem', whiteSpace: 'pre-line' }}>
+                  {entry.content}
+                </Typography>
+
+                <Box sx={{ mt: 1.5 }}>
+                  <Typography sx={{ fontSize: '0.68rem', color: '#6c797c', fontWeight: 700, mb: 0.8 }}>
+                    ADJUNTOS ({entryAttachments.length})
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                    {entryAttachments.map((file, fileIndex) => {
+                      const FileIcon = attachmentIconByType[file.type] || attachmentIconByType.default;
+
+                      return (
+                        <Chip
+                          key={`${entry.id}-file-${fileIndex}`}
+                          icon={<FileIcon sx={{ fontSize: 16 }} />}
+                          label={file.name}
+                          size="small"
+                          sx={{
+                            bgcolor: '#ffffff',
+                            border: '1px solid rgba(187, 201, 204, 0.45)',
+                            color: '#3c494c',
+                            '& .MuiChip-label': { fontSize: '0.7rem', fontWeight: 600 }
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  };
+
+  const renderInfoAccordion = () => (
+    <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }} defaultExpanded>
+      <AccordionSummary expandIcon={<ExpandMore />}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Description sx={{ color: '#006971' }} />
+          <Typography sx={{ fontWeight: 700 }}>Informacion completa del registro</Typography>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+            gap: 2,
+            p: 2,
+            bgcolor: '#f2f4f5',
+            borderRadius: 2
+          }}
+        >
+          {Object.entries(processData)
+            .filter(([, value]) => String(value ?? '').trim() !== '')
+            .map(([key, value]) => (
+              <Box
+                key={key}
+                sx={{
+                  gridColumn: LONG_TEXT_FIELDS.includes(key) ? { xs: '1 / -1', sm: '1 / -1' } : 'auto'
+                }}
+              >
+                <Typography sx={{ fontSize: '0.72rem', color: '#6c797c', fontWeight: 700 }}>
+                  {(FIELD_LABELS[key] || key).toUpperCase()}
+                </Typography>
+
+                {LONG_TEXT_FIELDS.includes(key) ? (
+                  <Box
+                    sx={{
+                      mt: 0.7,
+                      px: 1.25,
+                      py: 1,
+                      bgcolor: '#ffffff',
+                      borderRadius: 1.5,
+                      border: '1px solid rgba(187, 201, 204, 0.35)',
+                      maxHeight: 190,
+                      overflowY: 'auto'
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.84rem',
+                        lineHeight: 1.6,
+                        color: '#191c1d',
+                        whiteSpace: 'pre-line',
+                        textAlign: 'justify'
+                      }}
+                    >
+                      {normalizeText(value || '-')}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography sx={{ fontSize: '0.9rem', color: '#191c1d', whiteSpace: 'pre-line' }}>
+                    {key === 'estimated_sanction_amount'
+                      ? new Intl.NumberFormat('es-CO', {
+                          style: 'currency',
+                          currency: 'COP',
+                          maximumFractionDigits: 0
+                        }).format(Number(value || 0))
+                      : normalizeText(value || '-')}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  );
 
   return (
     <Drawer
@@ -261,220 +512,127 @@ export default function SanctioningProcessesDrawer({
 
         <Box sx={{ mt: 2 }}>
           <Tabs
-            value={normalizedTab}
-            onChange={(_, value) => setActiveTab(value)}
-            variant="scrollable"
-            scrollButtons="auto"
+            value={activeDetailTab}
+            onChange={(_, value) => setActiveDetailTab(value)}
             sx={{
               '& .MuiTabs-indicator': { bgcolor: '#006971' },
               '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 },
               '& .Mui-selected': { color: '#006971 !important' }
             }}
           >
-            {LEGAL_PHASE_TABS.map((phase) => (
-              <Tab key={phase} label={phase} value={phase} />
-            ))}
+            <Tab label="Formulario" value={DETAIL_TABS.FORM} />
+            <Tab label="Fases" value={DETAIL_TABS.PHASES} />
+            <Tab label="Bitacora" value={DETAIL_TABS.LOG} />
           </Tabs>
         </Box>
       </Box>
 
       <Box sx={{ p: 3, overflowY: 'auto' }}>
-        <Accordion sx={{ mb: 2, borderRadius: '12px !important', boxShadow: 0 }}>
-          <AccordionSummary expandIcon={<ExpandMore />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Description sx={{ color: '#006971' }} />
-              <Typography sx={{ fontWeight: 700 }}>Informacion completa del registro</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
+        {activeDetailTab === DETAIL_TABS.FORM && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: '#f2f4f5',
+              border: '1px solid rgba(187, 201, 204, 0.35)',
+              minHeight: 220
+            }}
+          >
+            <Typography sx={{ fontWeight: 700, color: '#191c1d', mb: 0.5 }}>
+              Fase actual: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
+            </Typography>
+          </Box>
+        )}
+
+        {activeDetailTab === DETAIL_TABS.PHASES && (
+          <Box>
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-                gap: 2,
+                mb: 2,
                 p: 2,
+                borderRadius: 2,
                 bgcolor: '#f2f4f5',
-                borderRadius: 2
+                border: '1px solid rgba(187, 201, 204, 0.35)'
               }}
             >
-              {infoEntries.map(([key, value]) => (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                <History sx={{ color: '#006971' }} />
+                <Typography sx={{ fontWeight: 700 }}>Fases del proceso</Typography>
+              </Box>
+
+              <FormControl size="small" sx={{ minWidth: 240 }}>
+                <InputLabel id="phase-selector-label">Fase</InputLabel>
+                <Select
+                  labelId="phase-selector-label"
+                  value={normalizedPhase}
+                  label="Fase"
+                  onChange={(event) => setSelectedPhase(event.target.value)}
+                >
+                  {PHASE_OPTIONS.map((phaseOption) => (
+                    <MenuItem key={phaseOption} value={phaseOption}>
+                      {phaseOption}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {renderInfoAccordion()}
+          </Box>
+        )}
+
+        {activeDetailTab === DETAIL_TABS.LOG && (
+          <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }} defaultExpanded>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Box sx={{ width: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                  <History sx={{ color: '#006971' }} />
+                  <Typography sx={{ fontWeight: 700 }}>Bitacora general del proceso</Typography>
+                </Box>
+
                 <Box
-                  key={key}
                   sx={{
-                    gridColumn: LONG_TEXT_FIELDS.includes(key) ? { xs: '1 / -1', sm: '1 / -1' } : 'auto'
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    pr: 5
                   }}
                 >
-                  <Typography sx={{ fontSize: '0.72rem', color: '#6c797c', fontWeight: 700 }}>
-                    {(FIELD_LABELS[key] || key).toUpperCase()}
-                  </Typography>
-
-                  {LONG_TEXT_FIELDS.includes(key) ? (
-                    <Box
-                      sx={{
-                        mt: 0.7,
-                        px: 1.25,
-                        py: 1,
-                        bgcolor: '#ffffff',
-                        borderRadius: 1.5,
-                        border: '1px solid rgba(187, 201, 204, 0.35)',
-                        maxHeight: 190,
-                        overflowY: 'auto'
-                      }}
+                  <FormControl size="small" sx={{ minWidth: 180 }}>
+                    <InputLabel id="bitacora-phase-filter-label">Fase</InputLabel>
+                    <Select
+                      labelId="bitacora-phase-filter-label"
+                      value={bitacoraPhaseFilter}
+                      label="Fase"
+                      onChange={(event) => setBitacoraPhaseFilter(event.target.value)}
                     >
-                      <Typography
-                        sx={{
-                          fontSize: '0.84rem',
-                          lineHeight: 1.6,
-                          color: '#191c1d',
-                          whiteSpace: 'pre-line',
-                          textAlign: 'justify'
-                        }}
-                      >
-                        {normalizeText(value || '-')}
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Typography sx={{ fontSize: '0.9rem', color: '#191c1d', whiteSpace: 'pre-line' }}>
-                      {key === 'estimated_sanction_amount'
-                        ? new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                            maximumFractionDigits: 0
-                          }).format(Number(value || 0))
-                        : normalizeText(value || '-')}
-                    </Typography>
-                  )}
+                      <MenuItem value={ALL_PHASES_OPTION}>{ALL_PHASES_OPTION}</MenuItem>
+                      {PHASE_OPTIONS.map((phaseOption) => (
+                        <MenuItem key={`bitacora-${phaseOption}`} value={phaseOption}>
+                          {phaseOption}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    size="small"
+                    type="date"
+                    label="Fecha"
+                    value={bitacoraDateFilter}
+                    onChange={(event) => setBitacoraDateFilter(event.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: 180 }}
+                  />
                 </Box>
-              ))}
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-
-        <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }}>
-          <AccordionSummary expandIcon={<ExpandMore />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <History sx={{ color: '#006971' }} />
-              <Typography sx={{ fontWeight: 700 }}>Bitacora por fase legal</Typography>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            {currentTabLogs.length === 0 ? (
-              <Typography sx={{ color: '#6c797c' }}>
-                No hay eventos registrados para {normalizedTab}.
-              </Typography>
-            ) : (
-              <Box
-                sx={{
-                  position: 'relative',
-                  pl: 1,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 18,
-                    top: 8,
-                    bottom: 8,
-                    width: '2px',
-                    bgcolor: '#e6e8e9'
-                  }
-                }}
-              >
-                {currentTabLogs.map((entry, index) => {
-                  const title =
-                    entry.type === 'actuacion'
-                      ? `Actuacion ${index + 1}`
-                      : entry.type === 'respuesta'
-                      ? 'Carga de documentos / respuesta'
-                      : 'Alerta / estrategia';
-
-                  const entryAttachments = entry.attachments || [];
-
-                  const nodeIcon =
-                    entry.type === 'actuacion' ? (
-                      <History sx={{ color: '#006971', fontSize: 16 }} />
-                    ) : entry.type === 'respuesta' ? (
-                      <AttachFile sx={{ color: '#006971', fontSize: 16 }} />
-                    ) : (
-                      <WarningAmber sx={{ color: '#b81d27', fontSize: 16 }} />
-                    );
-
-                  return (
-                    <Box key={entry.id} sx={{ position: 'relative', pl: 6, mb: 2.5 }}>
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          left: 0,
-                          top: 4,
-                          width: 36,
-                          height: 36,
-                          borderRadius: '50%',
-                          bgcolor: entry.type === 'estrategia' ? 'rgba(255, 137, 131, 0.25)' : 'rgba(50, 188, 200, 0.15)',
-                          border: '4px solid #fff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 1
-                        }}
-                      >
-                        {nodeIcon}
-                      </Box>
-
-                      <Box sx={{ p: 2, bgcolor: '#f2f4f5', borderRadius: 2, border: '1px solid rgba(187, 201, 204, 0.2)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1 }}>
-                          <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#191c1d', textTransform: 'uppercase' }}>
-                            {title}
-                          </Typography>
-                          <Typography sx={{ fontSize: '0.68rem', color: '#6c797c', fontWeight: 600 }}>
-                            {entry.timestamp}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          <Avatar sx={{ width: 20, height: 20, bgcolor: '#006971', fontSize: '0.65rem' }}>
-                            {normalizeText(entry.actor || 'S').charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Typography sx={{ fontSize: '0.75rem', color: '#3c494c', fontWeight: 600 }}>
-                            {entry.actor}
-                          </Typography>
-                        </Box>
-
-                        <Typography sx={{ color: '#3c494c', fontSize: '0.8rem', whiteSpace: 'pre-line' }}>
-                          {entry.content}
-                        </Typography>
-
-                        <Box sx={{ mt: 1.5 }}>
-                          <Typography sx={{ fontSize: '0.68rem', color: '#6c797c', fontWeight: 700, mb: 0.8 }}>
-                            ADJUNTOS ({entryAttachments.length})
-                          </Typography>
-
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
-                            {entryAttachments.map((file, fileIndex) => {
-                              const FileIcon = attachmentIconByType[file.type] || attachmentIconByType.default;
-
-                              return (
-                                <Chip
-                                  key={`${entry.id}-file-${fileIndex}`}
-                                  icon={<FileIcon sx={{ fontSize: 16 }} />}
-                                  label={file.name}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: '#ffffff',
-                                    border: '1px solid rgba(187, 201, 204, 0.45)',
-                                    color: '#3c494c',
-                                    '& .MuiChip-label': { fontSize: '0.7rem', fontWeight: 600 }
-                                  }}
-                                />
-                              );
-                            })}
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Box>
-                  );
-                })}
               </Box>
-            )}
-          </AccordionDetails>
-        </Accordion>
+            </AccordionSummary>
+            <AccordionDetails>
+              {renderTimeline(filteredGeneralLogEntries, 'No hay eventos registrados en la bitacora general.')}
+            </AccordionDetails>
+          </Accordion>
+        )}
       </Box>
     </Drawer>
   );
