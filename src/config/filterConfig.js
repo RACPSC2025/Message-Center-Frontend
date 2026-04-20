@@ -1,6 +1,12 @@
 //import { useTranslation } from 'react-i18next';
 //const { t } = useTranslation();
 import i18n from 'i18next';
+import {
+  PERMIT_AUTHORITY_OPTIONS,
+  PERMIT_STATUS_OPTIONS,
+  PERMIT_TYPE_OPTIONS,
+  PERMIT_UNIT_OPTIONS
+} from '../features/permitManager/permitManagerData';
 
 const textSearchField = {
   labelKey: 'Keywords',
@@ -61,20 +67,6 @@ const dropdownReviewerList = {
   group_by_label: 'FilterBy',
   minSearchLength: 3
 };
-
-const permitManagerStatusOptions = [
-  { value: 'approved', label: 'Aprobado' },
-  { value: 'in_review', label: 'En revisión' },
-  { value: 'processing', label: 'En trámite' },
-  { value: 'expired', label: 'Vencido' }
-];
-
-const permitManagerSourceOptions = [
-  { value: 'environmental_authority', label: 'Autoridad ambiental' },
-  { value: 'internal_request', label: 'Solicitud interna' },
-  { value: 'renewal_process', label: 'Proceso de renovación' },
-  { value: 'document_update', label: 'Actualización documental' }
-];
 
 export const filterConfigs = {
   LegalMatriz: [
@@ -142,6 +134,45 @@ export const filterConfigs = {
       group_by_label: 'FilterBy'
     },
     dateRangeField
+  ],
+  permit_manager: [
+    textSearchField,
+    {
+      labelKey: 'Unidad',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_unit',
+      default_value: '',
+      options: PERMIT_UNIT_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Tipo de permiso',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_permit_type',
+      default_value: '',
+      options: PERMIT_TYPE_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Autoridad',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_authority',
+      default_value: '',
+      options: PERMIT_AUTHORITY_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Estado del trámite',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_status',
+      default_value: '',
+      options: PERMIT_STATUS_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    }
   ],
   events: [
     textSearchField,
@@ -427,25 +458,4 @@ export const filterConfigs = {
     }
   ],
 
-  permit_manager: [
-    textSearchField,
-    {
-      labelKey: 'Status',
-      type: 'autocompleteWithoutLevel',
-      name: 'filter_status',
-      default_value: '',
-      options: permitManagerStatusOptions,
-      group_by_key: 'filter_by',
-      group_by_label: 'FilterBy'
-    },
-    {
-      labelKey: 'Category',
-      type: 'autocompleteWithoutLevel',
-      name: 'filter_source',
-      default_value: '',
-      options: permitManagerSourceOptions,
-      group_by_key: 'filter_by',
-      group_by_label: 'FilterBy'
-    }
-  ],
 };

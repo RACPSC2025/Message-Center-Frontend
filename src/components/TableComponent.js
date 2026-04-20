@@ -40,7 +40,7 @@ ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
 export default function TableComponent({
   rowData = [],
   columnDefs = [],
-  initialVisibleColumns = [],
+  initialVisibleColumns = null,
   totalRecord = 0,
   editable = false,
   resizable = true,
@@ -90,9 +90,13 @@ export default function TableComponent({
   const gridRef = useRef();
 
   // Status for visible columns
-  const [visibleColumns, setVisibleColumns] = useState(
-    getDefaultVisibleColumns(columnDefs, initialVisibleColumns)
-  );
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const allColumnFields = columnDefs.map((col) => col.field);
+    if (Array.isArray(initialVisibleColumns) && initialVisibleColumns.length > 0) {
+      return initialVisibleColumns.filter((field) => allColumnFields.includes(field));
+    }
+    return allColumnFields;
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRows, setTotalRows] = useState(0);
@@ -201,10 +205,23 @@ export default function TableComponent({
   };
 
   useEffect(() => {
-    const newVisibleColumns = getDefaultVisibleColumns(columnDefs, initialVisibleColumns);
-    // Only update if the arrays are different
-    if (JSON.stringify(newVisibleColumns) !== JSON.stringify(visibleColumns)) {
-      setVisibleColumns(newVisibleColumns);
+    const allColumnFields = columnDefs.map((col) => col.field);
+    const validCurrentFields = visibleColumns.filter((field) => allColumnFields.includes(field));
+
+    if (validCurrentFields.length === 0) {
+      const fallbackVisibleColumns =
+        Array.isArray(initialVisibleColumns) && initialVisibleColumns.length > 0
+          ? initialVisibleColumns.filter((field) => allColumnFields.includes(field))
+          : allColumnFields;
+
+      if (JSON.stringify(fallbackVisibleColumns) !== JSON.stringify(visibleColumns)) {
+        setVisibleColumns(fallbackVisibleColumns);
+      }
+      return;
+    }
+
+    if (JSON.stringify(validCurrentFields) !== JSON.stringify(visibleColumns)) {
+      setVisibleColumns(validCurrentFields);
     }
   }, [columnDefs, initialVisibleColumns]);
 
