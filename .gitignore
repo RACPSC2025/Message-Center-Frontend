@@ -7,6 +7,12 @@
 
 # testing
 /coverage
+/test/results/artifacts
+/test/results/html-report
+/test/results/junit.xml
+/test/.auth.json
+/test/.env.test
+/playwright-report
 
 # production
 /build

@@ -81,6 +81,9 @@
     "copy-config": "node scripts/copy-config.js",
     "generate-sanctioning-temp-json": "node scripts/generate-sanctioning-temp-json.js",
     "test": "react-scripts test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report test/results/html-report",
     "eject": "react-scripts eject",
     "postinstall": "node -e \"require('fs').copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.js', 'public/static/js/pdf.worker.min.js')\""
   },
@@ -104,6 +107,8 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@playwright/test": "^1.59.1",
+    "dotenv": "^17.4.2",
     "eslint": "^8.48.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.28.1",
