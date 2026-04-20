@@ -1,17 +1,5 @@
-import {
-  Edit,
-  ErrorOutlineRounded,
-  Visibility
-} from '@mui/icons-material';
-import {
-  Box,
-  Chip,
-  IconButton,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography
-} from '@mui/material';
+import { Edit, Visibility } from '@mui/icons-material';
+import { Box, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +7,12 @@ import { useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import TableComponent from '../../components/TableComponent';
 import { selectAppliedFilterModel } from '../../stores/filterSlice';
-import { PERMIT_ROWS, STATUS_META } from './permitManagerData';
+import {
+  PERMIT_INITIAL_VISIBLE_COLUMNS,
+  PERMIT_ROWS,
+  PERMIT_TABLE_COLUMNS,
+  STATUS_META
+} from './permitManagerData';
 
 const PAGE_OPTIONS = [20, 50, 100];
 
@@ -32,9 +25,13 @@ function normalizeText(value) {
 }
 
 function formatTableDate(dateValue) {
+  if (!dateValue) {
+    return 'N/A';
+  }
+
   const parsedDate = dayjs(dateValue);
   if (!parsedDate.isValid()) {
-    return '';
+    return dateValue;
   }
 
   return parsedDate.format('DD MMM, YYYY');
@@ -131,13 +128,7 @@ function SummaryCard({
           >
             {description}
           </Typography>
-          <Box
-            sx={{
-              mt: 1.7
-            }}
-          >
-            {footer}
-          </Box>
+          <Box sx={{ mt: 1.7 }}>{footer}</Box>
         </Box>
 
         <Box
@@ -183,163 +174,115 @@ function PermitManager() {
     if (keyword) {
       result = result.filter((row) =>
         [
-          row.permitId,
-          row.permitNumber,
-          row.applicant,
-          row.statusLabel,
-          row.sourceLabel
+          row.unidad,
+          row.sede,
+          row.tipoPermiso,
+          row.tipoTramite,
+          row.expediente,
+          row.autoridad,
+          row.actoAdministrativoInicial,
+          row.numeroRadicadoSolicitudAutoridad,
+          row.estadoTramite
         ]
           .map((value) => normalizeText(value))
           .some((value) => value.includes(keyword))
       );
     }
 
-    if (filterData?.filter_status) {
-      result = result.filter((row) => row.status === filterData.filter_status);
+    if (filterData?.filter_unit) {
+      result = result.filter((row) => row.unidad === filterData.filter_unit);
     }
 
-    if (filterData?.filter_source) {
-      result = result.filter((row) => row.source === filterData.filter_source);
+    if (filterData?.filter_permit_type) {
+      result = result.filter((row) => row.tipoPermiso === filterData.filter_permit_type);
+    }
+
+    if (filterData?.filter_authority) {
+      result = result.filter((row) => row.autoridad === filterData.filter_authority);
+    }
+
+    if (filterData?.filter_status) {
+      result = result.filter((row) => row.estadoTramite === filterData.filter_status);
     }
 
     return result;
   }, [filterData]);
 
   const permitCount = filteredPermits.length;
-  const activePermits = filteredPermits.filter((permit) => permit.status === 'approved').length;
-  const inProgressPermits = filteredPermits.filter((permit) =>
-    ['in_review', 'processing'].includes(permit.status)
+  const inProcessCount = filteredPermits.filter((permit) => permit.statusKey === 'in_process').length;
+  const grantedCount = filteredPermits.filter((permit) => permit.statusKey === 'granted').length;
+  const pendingCount = filteredPermits.filter((permit) => permit.statusKey === 'pending').length;
+  const withdrawnCount = filteredPermits.filter((permit) => permit.statusKey === 'withdrawn').length;
+  const activeCount = filteredPermits.filter((permit) =>
+    ['in_process', 'pending'].includes(permit.statusKey)
   ).length;
-  const totalRequirements = filteredPermits.reduce(
-    (accumulator, permit) => accumulator + permit.requirementsTotal,
-    0
-  );
-  const expiredRequirements = filteredPermits.reduce(
-    (accumulator, permit) => accumulator + permit.expiredRequirements,
-    0
-  );
-  const permitProgress = permitCount > 0
-    ? Math.round(((activePermits + inProgressPermits) / permitCount) * 100)
-    : 0;
-  const requirementsProgress = totalRequirements > 0
-    ? Math.round(((totalRequirements - expiredRequirements) / totalRequirements) * 100)
-    : 0;
+  const totalUnits = new Set(filteredPermits.map((permit) => permit.unidad)).size;
+  const recordProgress = permitCount > 0 ? Math.round((grantedCount / permitCount) * 100) : 0;
+  const activeProgress = permitCount > 0 ? Math.round((activeCount / permitCount) * 100) : 0;
 
   const columnDefs = useMemo(
-    () => [
-      {
-        field: 'actions',
-        headerName: 'Opciones',
-        width: 110,
-        pinned: 'left',
-        sortable: false,
-        filter: false,
-        cellRenderer: () => (
-          <Stack direction="row" spacing={0.25} alignItems="center">
-            <Tooltip title={t('permit_manager_view', { defaultValue: 'Ver detalle' })}>
-              <IconButton size="small">
-                <Visibility fontSize="small" sx={{ color: '#0B7A84' }} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t('permit_manager_edit', { defaultValue: 'Editar permiso' })}>
-              <IconButton size="small">
-                <Edit fontSize="small" sx={{ color: '#52627A' }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        )
-      },
-      {
-        field: 'permitId',
-        headerName: 'ID',
-        width: 132,
-        pinned: 'left',
-        cellRenderer: (params) => (
-          <span style={{ color: '#5A6F93', fontWeight: 500 }}>#{params.value}</span>
-        )
-      },
-      {
-        field: 'permitNumber',
-        headerName: 'Número',
-        width: 190,
-        pinned: 'left',
-        cellRenderer: (params) => (
-          <span style={{ color: '#0F172A', fontWeight: 700 }}>{params.value}</span>
-        )
-      },
-      {
-        field: 'applicant',
-        headerName: 'Solicitante',
-        minWidth: 260,
-        flex: 1.8
-      },
-      {
-        field: 'statusLabel',
-        headerName: 'Estado de trámite',
-        minWidth: 210,
-        flex: 1.2,
-        filter: false,
-        cellRenderer: (params) => {
-          const statusMeta = STATUS_META[params.data.status] || STATUS_META.processing;
-          return (
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 9,
-                  height: 9,
-                  borderRadius: '50%',
-                  bgcolor: statusMeta.dotColor
-                }}
-              />
-              <span style={{ color: '#0F172A', fontWeight: 600 }}>{params.value}</span>
-            </Box>
-          );
+    () =>
+      PERMIT_TABLE_COLUMNS.map((column) => {
+        switch (column.field) {
+          case 'actions':
+            return {
+              ...column,
+              cellRenderer: () => (
+                <Stack direction="row" spacing={0.25} alignItems="center">
+                  <Tooltip title={t('permit_manager_view', { defaultValue: 'Ver detalle' })}>
+                    <IconButton size="small">
+                      <Visibility fontSize="small" sx={{ color: '#0B7A84' }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={t('permit_manager_edit', { defaultValue: 'Editar permiso' })}>
+                    <IconButton size="small">
+                      <Edit fontSize="small" sx={{ color: '#52627A' }} />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              )
+            };
+          case 'expediente':
+            return {
+              ...column,
+              cellRenderer: (params) => (
+                <span style={{ color: '#0F172A', fontWeight: 700 }}>{params.value || 'N/A'}</span>
+              )
+            };
+          case 'estadoTramite':
+            return {
+              ...column,
+              cellRenderer: (params) => {
+                const statusMeta = STATUS_META[params.data.statusKey] || STATUS_META.in_process;
+                return (
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 9,
+                        height: 9,
+                        borderRadius: '50%',
+                        bgcolor: statusMeta.dotColor
+                      }}
+                    />
+                    <span style={{ color: '#0F172A', fontWeight: 600 }}>{params.value}</span>
+                  </Box>
+                );
+              }
+            };
+          case 'fechaRadicacionPermiso':
+          case 'fechaProyectadaOtorgamiento':
+            return {
+              ...column,
+              cellRenderer: (params) => (
+                <Typography sx={{ color: '#334155', fontWeight: 500 }}>
+                  {formatTableDate(params.value)}
+                </Typography>
+              )
+            };
+          default:
+            return column;
         }
-      },
-      {
-        field: 'requirementsTotal',
-        headerName: 'Requisitos',
-        minWidth: 135,
-        maxWidth: 170,
-        flex: 0.7,
-        cellRenderer: (params) => (
-          <Chip
-            size="small"
-            sx={{
-              px: 0.5,
-              borderRadius: '999px',
-              bgcolor: '#E8F9FC',
-              color: '#0B7A84',
-              fontWeight: 700
-            }}
-            label={`${params.value} +`}
-          />
-        )
-      },
-      {
-        field: 'dueDate',
-        headerName: 'Vencimiento',
-        minWidth: 170,
-        flex: 1,
-        cellRenderer: (params) => {
-          const text =
-            params.data.status === 'expired'
-              ? t('expired', { defaultValue: 'Expired' })
-              : formatTableDate(params.value);
-
-          return (
-            <Typography
-              sx={{
-                color: params.data.status === 'expired' ? '#D13F3F' : '#334155',
-                fontWeight: params.data.status === 'expired' ? 700 : 500
-              }}
-            >
-              {text}
-            </Typography>
-          );
-        }
-      },
-    ],
+      }),
     [t]
   );
 
@@ -374,41 +317,36 @@ function PermitManager() {
             }}
           >
             <SummaryCard
-              title={t('permit_manager_created_title', { defaultValue: 'Permisos Creados' })}
+              title={t('permit_manager_created_title', { defaultValue: 'Permisos Registrados' })}
               description={t('permit_manager_created_description', {
-                defaultValue: 'Gestión activa de autorizaciones administrativas y licencias.'
+                defaultValue: 'Muestra anonimizada para seguimiento operativo por unidad y autoridad.'
               })}
-              progressValue={permitProgress}
+              progressValue={recordProgress}
               progressColor="#0B7A84"
               ringValue={permitCount}
               ringCaption={t('permit_manager_total', { defaultValue: 'TOTAL' })}
               footer={
                 <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
-                  <FooterDotStat color="#0B7A84" text={`${activePermits} Activos`} />
-                  <FooterDotStat color="#CBD5E1" text={`${inProgressPermits} Trámite`} />
+                  <FooterDotStat color="#E8A126" text={`${inProcessCount} En proceso`} />
+                  <FooterDotStat color="#0B7A84" text={`${grantedCount} Otorgados`} />
                 </Stack>
               }
             />
 
             <SummaryCard
-              title={t('permit_manager_requirements_title', {
-                defaultValue: 'Requisitos Generados'
+              title={t('permit_manager_active_title', { defaultValue: 'Trámites Activos' })}
+              description={t('permit_manager_active_description', {
+                defaultValue: 'Casos abiertos o pendientes priorizados para seguimiento.'
               })}
-              description={t('permit_manager_requirements_description', {
-                defaultValue: 'Control detallado de documentación técnica y legal obligatoria.'
-              })}
-              progressValue={requirementsProgress}
+              progressValue={activeProgress}
               progressColor="#F2B51D"
-              ringValue={totalRequirements}
-              ringCaption={t('permit_manager_items', { defaultValue: 'ITEMS' })}
+              ringValue={activeCount}
+              ringCaption={t('permit_manager_active', { defaultValue: 'ACTIVOS' })}
               footer={
-                <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
-                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.8 }}>
-                    <ErrorOutlineRounded sx={{ fontSize: 18, color: '#E53935' }} />
-                    <Typography sx={{ color: '#E53935', fontWeight: 800, fontSize: '0.98rem' }}>
-                      {expiredRequirements} Vencidos
-                    </Typography>
-                  </Box>
+                <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
+                  <FooterDotStat color="#D97706" text={`${pendingCount} Pendientes`} />
+                  <FooterDotStat color="#64748B" text={`${withdrawnCount} Desistidos`} />
+                  <FooterDotStat color="#CBD5E1" text={`${totalUnits} Unidades`} />
                 </Stack>
               }
             />
@@ -431,6 +369,7 @@ function PermitManager() {
               <TableComponent
                 rowData={filteredPermits}
                 columnDefs={columnDefs}
+                initialVisibleColumns={PERMIT_INITIAL_VISIBLE_COLUMNS}
                 totalRecord={filteredPermits.length}
                 filterable={true}
                 pagination={true}
