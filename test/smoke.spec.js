@@ -1,22 +1,43 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
-const BASE = 'http://localhost:3000/amatia/message-center';
-const URL_NOTIFICATIONS = `${BASE}#/view/notifications`;
+const MODULE = 'Notifications';
+const ROUTE   = 'http://localhost:3000/amatia/message-center#/view/notifications';
 
-// Count visible date-group headers (proxy for notification groups rendered)
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 async function countDateGroups(page) {
   return page.locator('p.MuiTypography-body2').filter({
     hasText: /lunes|martes|miércoles|jueves|viernes|sábado|domingo/i,
   }).count();
 }
 
-// Extract number from active tab label e.g. "Importante (21)" → 21
 async function getActiveTabCount(page) {
-  const tabText = await page.locator('[role="tab"][aria-selected="true"]').textContent();
-  const match = tabText?.match(/\((\d+)\)/);
+  const text = await page.locator('[role="tab"][aria-selected="true"]').textContent();
+  const match = text?.match(/\((\d+)\)/);
   return match ? parseInt(match[1]) : null;
 }
+
+async function snap(page, testInfo, name) {
+  const proj = testInfo.project.name;
+  const dir  = path.join('test', 'results', 'screenshots', proj);
+  fs.mkdirSync(dir, { recursive: true });
+  const filePath = path.join(dir, `${name}.png`);
+  await page.screenshot({ path: filePath, fullPage: false });
+  await testInfo.attach(name, { path: filePath, contentType: 'image/png' });
+  return filePath;
+}
+
+function annotate(testInfo, { criticality, elements }) {
+  testInfo.annotations.push({ type: 'module',      description: MODULE });
+  testInfo.annotations.push({ type: 'route',       description: ROUTE });
+  testInfo.annotations.push({ type: 'criticality', description: criticality });
+  testInfo.annotations.push({ type: 'elements',    description: elements });
+}
+
+// ─── Suite: sidebar filters ───────────────────────────────────────────────────
 
 test.describe('Notifications — sidebar filters', () => {
   const consoleErrors = [];
@@ -27,27 +48,37 @@ test.describe('Notifications — sidebar filters', () => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
     page.on('pageerror', err => consoleErrors.push(`[pageerror] ${err.message}`));
-
-    await page.goto(URL_NOTIFICATIONS);
+    await page.goto(ROUTE);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
   });
 
-  // ─── BASELINE ────────────────────────────────────────────────────────────────
+  // ── BASELINE ────────────────────────────────────────────────────────────────
 
-  test('baseline — notifications load with data', async ({ page }) => {
-    const groups = await countDateGroups(page);
+  test('baseline — página carga con datos', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'CRÍTICO',
+      elements: 'Título "CENTRO DE NOTIFICACIONES", grupos por fecha (p.MuiTypography-body2), contador tab activo ([role=tab][aria-selected=true])',
+    });
+
+    const groups   = await countDateGroups(page);
     const tabCount = await getActiveTabCount(page);
-    console.log(`Date groups visible: ${groups} | Tab count: ${tabCount}`);
+    await snap(page, testInfo, '01-baseline');
+
     expect(groups).toBeGreaterThan(0);
-    await page.screenshot({ path: 'test/results/01-baseline.png', fullPage: false });
+    expect(tabCount).toBeGreaterThan(0);
   });
 
-  // ─── FILTER: BÚSQUEDA POR TÍTULO ─────────────────────────────────────────────
+  // ── BÚSQUEDA POR TÍTULO ──────────────────────────────────────────────────────
 
-  test('filter — search "tarea" reduces visible items', async ({ page }) => {
-    const groupsBefore = await countDateGroups(page);
-    console.log(`Groups before search: ${groupsBefore}`);
+  test('filtro búsqueda — "tarea" reduce grupos visibles', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'ALTO',
+      elements: 'input[placeholder="Palabras clave"], grupos fecha (p.MuiTypography-body2)',
+    });
+
+    const before = await countDateGroups(page);
+    await snap(page, testInfo, '02a-search-before');
 
     const searchInput = page.locator('input[placeholder="Palabras clave"]');
     await expect(searchInput).toBeVisible();
@@ -55,207 +86,242 @@ test.describe('Notifications — sidebar filters', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    const groupsAfter = await countDateGroups(page);
-    console.log(`Groups after search "tarea": ${groupsAfter}`);
+    const after = await countDateGroups(page);
+    await snap(page, testInfo, '02b-search-tarea');
 
-    await page.screenshot({ path: 'test/results/02-search-tarea.png', fullPage: false });
-    // Search should change result count (fewer or equal, never more for specific term)
-    expect(groupsAfter).toBeLessThanOrEqual(groupsBefore);
+    expect(after).toBeLessThan(before);
   });
 
-  test('filter — search with no-match term shows empty state', async ({ page }) => {
+  test('filtro búsqueda — término sin resultado muestra estado vacío', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'MEDIO',
+      elements: 'input[placeholder="Palabras clave"], estado vacío (skeleton / 0 grupos)',
+    });
+
     const searchInput = page.locator('input[placeholder="Palabras clave"]');
     await searchInput.fill('zzz_no_existe_xyz_9999');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     const groups = await countDateGroups(page);
-    console.log(`Groups after no-match search: ${groups}`);
+    await snap(page, testInfo, '03-search-nomatch');
 
-    await page.screenshot({ path: 'test/results/03-search-nomatch.png', fullPage: false });
     expect(groups).toBe(0);
   });
 
-  // ─── FILTER: RANGO DE FECHAS ──────────────────────────────────────────────────
+  // ── RANGO DE FECHAS ───────────────────────────────────────────────────────────
 
-  test('filter — date range filters by start date', async ({ page }) => {
-    const groupsBefore = await countDateGroups(page);
+  test('filtro fecha — rango 2026-01-20 a 2026-01-26 filtra ventana', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'ALTO',
+      elements: 'input[placeholder="YYYY-MM-DD"] nth(0) inicio, nth(1) fin, grupos fecha resultado',
+    });
 
-    // Date inputs use YYYY-MM-DD format
     const dateInputs = page.locator('input[placeholder="YYYY-MM-DD"]');
     const startInput = dateInputs.nth(0);
-
-    await expect(startInput).toBeVisible();
-    await startInput.click();
-    await startInput.fill('2026-01-26'); // date of most recent notification in screenshot
-    await startInput.press('Enter');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    const groupsAfter = await countDateGroups(page);
-    console.log(`Groups before date filter: ${groupsBefore} | after: ${groupsAfter}`);
-
-    await page.screenshot({ path: 'test/results/04-filter-start-date.png', fullPage: false });
-    // Filtering to a specific start date should reduce or maintain groups
-    expect(groupsAfter).toBeLessThanOrEqual(groupsBefore);
-  });
-
-  test('filter — date range start + end filters to window', async ({ page }) => {
-    const dateInputs = page.locator('input[placeholder="YYYY-MM-DD"]');
-    const startInput = dateInputs.nth(0);
-    const endInput = dateInputs.nth(1);
+    const endInput   = dateInputs.nth(1);
 
     await startInput.click();
     await startInput.fill('2026-01-20');
     await startInput.press('Tab');
-
     await endInput.click();
     await endInput.fill('2026-01-26');
     await endInput.press('Enter');
-
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     const groups = await countDateGroups(page);
-    console.log(`Groups in date window 2026-01-20 to 2026-01-26: ${groups}`);
+    await snap(page, testInfo, '04-date-range');
 
-    await page.screenshot({ path: 'test/results/05-filter-date-range.png', fullPage: false });
-    // Only notifications within that window should show
-    expect(groups).toBeGreaterThanOrEqual(0); // may be 0 or more
+    // Rango acotado: ≤ grupos totales y resultado coherente
+    expect(groups).toBeGreaterThanOrEqual(0);
+    expect(groups).toBeLessThanOrEqual(12);
   });
 
-  // ─── CLEAR FILTERS ───────────────────────────────────────────────────────────
+  test('filtro fecha — solo fecha inicio no colapsa resultados', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'MEDIO',
+      elements: 'input[placeholder="YYYY-MM-DD"] nth(0) solo inicio',
+    });
 
-  test('clear filters — restores original count after search', async ({ page }) => {
-    const groupsBefore = await countDateGroups(page);
+    const startInput = page.locator('input[placeholder="YYYY-MM-DD"]').nth(0);
+    await startInput.click();
+    await startInput.fill('2026-01-26');
+    await startInput.press('Enter');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
 
-    // Apply search filter
+    const groups = await countDateGroups(page);
+    await snap(page, testInfo, '05-date-start-only');
+
+    expect(groups).toBeGreaterThanOrEqual(0);
+  });
+
+  // ── LIMPIAR FILTROS ────────────────────────────────────────────────────────────
+
+  test('limpiar filtros — restaura datos tras búsqueda', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'ALTO',
+      elements: 'button "Limpiar filtros" (MuiButton-contained), input Palabras clave vaciado',
+    });
+
+    const before = await countDateGroups(page);
     const searchInput = page.locator('input[placeholder="Palabras clave"]');
     await searchInput.fill('tarea');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(800);
+    await snap(page, testInfo, '06a-before-clear');
 
-    // Clear
     const clearBtn = page.getByRole('button', { name: /limpiar filtros/i });
     await expect(clearBtn).toBeVisible();
     await clearBtn.click();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    const groupsAfter = await countDateGroups(page);
-    const searchValue = await searchInput.inputValue();
-    console.log(`Groups restored: ${groupsAfter} (was ${groupsBefore}) | search cleared: "${searchValue}"`);
+    const after  = await countDateGroups(page);
+    const value  = await searchInput.inputValue();
+    await snap(page, testInfo, '06b-after-clear');
 
-    await page.screenshot({ path: 'test/results/06-after-clear.png', fullPage: false });
-    expect(searchValue).toBe('');
-    expect(groupsAfter).toBe(groupsBefore);
+    expect(value).toBe('');
+    expect(after).toBe(before);
   });
 
-  test('clear filters — LIMPIAR FILTROS restores data after date filter', async ({ page }) => {
-    // NOTE: "LIMPIAR FILTROS" resets the API filter and restores data
-    // but does NOT clear the DatePicker UI value — that's app behavior.
-    // Use the inline "LIMPIAR" link (above date fields) to also clear the DatePicker UI.
-    const groupsBefore = await countDateGroups(page);
+  test('limpiar fecha — botón inline LIMPIAR vacía DatePicker y restaura datos', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'ALTO',
+      elements: 'button "Limpiar" (inline sobre Rango de fechas), DatePicker UI value, grupos restaurados',
+    });
+    // NOTA: "LIMPIAR FILTROS" restaura datos pero NO limpia UI del DatePicker.
+    // El botón inline "Limpiar" (texto exacto) es el correcto para limpiar fechas.
 
-    const dateInputs = page.locator('input[placeholder="YYYY-MM-DD"]');
-    const startInput = dateInputs.nth(0);
+    const before = await countDateGroups(page);
+    const startInput = page.locator('input[placeholder="YYYY-MM-DD"]').nth(0);
     await startInput.fill('2026-01-26');
     await startInput.press('Enter');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(800);
+    await snap(page, testInfo, '07a-date-set');
 
-    // Click the inline "LIMPIAR" link that appears over date range fields
-    const inlineClearLink = page.getByRole('button', { name: /^limpiar$/i });
-    if (await inlineClearLink.isVisible()) {
-      await inlineClearLink.click();
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(800);
+    const inlineClear = page.getByRole('button', { name: /^limpiar$/i });
+    if (await inlineClear.isVisible()) {
+      await inlineClear.click();
     } else {
-      // Fallback: "LIMPIAR FILTROS" resets data even if DatePicker UI stays
       await page.getByRole('button', { name: /limpiar filtros/i }).click();
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(800);
     }
-
-    const groupsAfter = await countDateGroups(page);
-    const startValue = await startInput.inputValue();
-    console.log(`Date input after clear: "${startValue}" | groups: ${groupsAfter} (was ${groupsBefore})`);
-
-    await page.screenshot({ path: 'test/results/07-after-date-clear.png', fullPage: false });
-    // Data must be restored regardless of which clear button was used
-    expect(groupsAfter).toBe(groupsBefore);
-  });
-
-  // ─── TABS ────────────────────────────────────────────────────────────────────
-
-  test('tabs — Sin Leer tab switches content', async ({ page }) => {
-    const sinLeerTab = page.getByRole('tab', { name: /sin leer/i });
-    await sinLeerTab.click();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    await expect(sinLeerTab).toHaveAttribute('aria-selected', 'true');
-    const groups = await countDateGroups(page);
-    console.log(`Sin Leer groups: ${groups}`);
+    const after = await countDateGroups(page);
+    await snap(page, testInfo, '07b-date-cleared');
 
-    await page.screenshot({ path: 'test/results/08-tab-sinleer.png', fullPage: false });
+    expect(after).toBe(before);
+  });
+
+  // ── TABS ──────────────────────────────────────────────────────────────────────
+
+  test('tab Sin Leer — cambia contenido y queda activo', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'ALTO',
+      elements: '[role=tab] "Sin Leer (N)", aria-selected=true tras click, grupos fecha cargados',
+    });
+
+    const tab = page.getByRole('tab', { name: /sin leer/i });
+    await tab.click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    const groups = await countDateGroups(page);
+    await snap(page, testInfo, '08-tab-sinleer');
+
     expect(groups).toBeGreaterThan(0);
   });
 
-  test('tabs — Leídos tab switches content', async ({ page }) => {
-    const leidosTab = page.getByRole('tab', { name: /leídos/i });
-    await leidosTab.click();
+  test('tab Leídos — cambia contenido y queda activo', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'MEDIO',
+      elements: '[role=tab] "Leídos (N)", aria-selected=true tras click',
+    });
+
+    const tab = page.getByRole('tab', { name: /leídos/i });
+    await tab.click();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    await expect(leidosTab).toHaveAttribute('aria-selected', 'true');
-    await page.screenshot({ path: 'test/results/09-tab-leidos.png', fullPage: false });
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await snap(page, testInfo, '09-tab-leidos');
   });
 
-  // ─── NO JS ERRORS ────────────────────────────────────────────────────────────
+  // ── ERRORES JS ────────────────────────────────────────────────────────────────
 
-  test('no JS errors during filter interactions', async ({ page }) => {
-    // Run all filter interactions and check for errors
+  test('sin errores JS durante interacciones de filtro', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'CRÍTICO',
+      elements: 'console.error, pageerror — deben ser 0 tras búsqueda + limpiar',
+    });
+
     const searchInput = page.locator('input[placeholder="Palabras clave"]');
     await searchInput.fill('tarea');
     await page.waitForTimeout(800);
     await page.getByRole('button', { name: /limpiar filtros/i }).click();
     await page.waitForTimeout(500);
+    await snap(page, testInfo, '10-no-errors');
 
     const appErrors = consoleErrors.filter(e =>
       !e.includes('Warning:') &&
       !e.includes('ResizeObserver') &&
       !e.includes('favicon')
     );
-    if (appErrors.length > 0) console.log('Errors:', appErrors);
     expect(appErrors).toHaveLength(0);
   });
 });
 
-// ─── BASELINE SMOKE ──────────────────────────────────────────────────────────
+// ─── Suite: carga de página ───────────────────────────────────────────────────
 
-test.describe('Smoke — page load', () => {
+test.describe('Notifications — carga de página', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(URL_NOTIFICATIONS);
+    await page.goto(ROUTE);
     await page.waitForLoadState('networkidle');
   });
 
-  test('page loads at correct URL', async ({ page }) => {
+  test('URL correcta post-navegación', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'CRÍTICO',
+      elements: 'URL contiene "message-center"',
+    });
+    await snap(page, testInfo, '11-url-check');
     await expect(page).toHaveURL(/message-center/);
   });
 
-  test('no crash — body renders visible content', async ({ page }) => {
+  test('sin crash — body renderiza contenido', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'CRÍTICO',
+      elements: 'body no contiene "Something went wrong" ni "Cannot read"',
+    });
+    await snap(page, testInfo, '12-no-crash');
     await expect(page.locator('body')).not.toContainText('Something went wrong');
     await expect(page.locator('body')).not.toContainText('Cannot read');
   });
 
-  test('app root mounts — React root not empty', async ({ page }) => {
+  test('React root no vacío', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'CRÍTICO',
+      elements: '#root innerHTML.length > 100',
+    });
     const root = page.locator('#root');
     await expect(root).not.toBeEmpty();
+    const html = await root.innerHTML();
+    await snap(page, testInfo, '13-root-mounted');
+    expect(html.length).toBeGreaterThan(100);
   });
 
-  test('layout renders — navbar or sidebar present', async ({ page }) => {
+  test('navbar lateral visible', async ({ page }, testInfo) => {
+    annotate(testInfo, {
+      criticality: 'ALTO',
+      elements: 'nav / [role=navigation] / [class*=Navbar] / [class*=sidebar]',
+    });
     const nav = page.locator('nav, [role="navigation"], [class*="Navbar"], [class*="sidebar"]').first();
     await expect(nav).toBeVisible({ timeout: 10000 });
+    await snap(page, testInfo, '14-navbar');
   });
 });

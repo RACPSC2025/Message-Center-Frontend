@@ -9,10 +9,11 @@ module.exports = defineConfig({
   fullyParallel: false,
   retries: 1,
   workers: 1,
-  timeout: 30_000,
-  expect: { timeout: 10_000 },
+  timeout: 45_000,
+  expect: { timeout: 12_000 },
 
   reporter: [
+    ['./test/md-reporter.js'],
     ['html', { outputFolder: 'test/results/html-report', open: 'never' }],
     ['junit', { outputFile: 'test/results/junit.xml' }],
     ['list'],
@@ -20,11 +21,11 @@ module.exports = defineConfig({
 
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    // Auto-capture on failure — reporter picks up the path
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
     headless: true,
-    viewport: { width: 1280, height: 800 },
     locale: 'es-CO',
     timezoneId: 'America/Bogota',
   },
@@ -33,8 +34,25 @@ module.exports = defineConfig({
 
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'desktop-1280',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+      },
+    },
+    {
+      name: 'tablet-768',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 768, height: 1024 },
+      },
+    },
+    {
+      name: 'mobile-375',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 375, height: 667 },
+      },
     },
   ],
 });

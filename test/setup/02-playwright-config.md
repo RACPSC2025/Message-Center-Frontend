@@ -87,18 +87,53 @@ use: {
 ### Option B — Skip Auth (app has no login gate locally)
 If `http://localhost:3000/amatia/message-center` loads without login, skip auth setup entirely.
 
+## Resoluciones Probadas
+
+3 proyectos definidos en `playwright.config.js`:
+
+| Proyecto | Viewport | Dispositivo simulado |
+|----------|----------|---------------------|
+| `desktop-1280` | 1280×800 | Desktop Chrome |
+| `tablet-768` | 768×1024 | Tablet |
+| `mobile-375` | 375×667 | Mobile |
+
+Cada spec corre 3 veces (una por proyecto). 14 tests × 3 = **42 tests por ejecución**.
+
+## MD Reporter
+
+Every run auto-generates `test/results/YYYY-MM-DD_HH-mm-ss_results.md`.
+
+Source: `test/md-reporter.js` — registered in `playwright.config.js`:
+```js
+reporter: [
+  ['./test/md-reporter.js'],   // ← timestamped Markdown per run
+  ['html', { outputFolder: 'test/results/html-report', open: 'never' }],
+  ['junit', { outputFile: 'test/results/junit.xml' }],
+  ['list'],
+],
+```
+
+Report includes:
+- Header: status, total pass/fail, duration
+- Per suite: ✅/❌ per test with duration
+- On failure: error message + auto-screenshot path
+- Summary table
+- Failed tests detail section (only when failures exist)
+
 ## Run Commands
 
 ```bash
-# All tests
-npx playwright test
+# All tests — generates MD report
+pnpm test:e2e
 
-# Single module
+# Single spec
 npx playwright test test/01-notifications.spec.js
 
-# With UI mode (visual debugger)
-npx playwright test --ui
+# Visual debugger (no MD report generated in UI mode)
+pnpm test:e2e:ui
 
-# Open HTML report after run
-npx playwright show-report
+# Open HTML report
+pnpm test:e2e:report
 ```
+
+> ⚠️ Never pass `--reporter=list` or `--reporter=X` via CLI — overrides config, skips MD reporter.

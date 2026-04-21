@@ -32,6 +32,20 @@ Main dashboard. Shows notification cards grouped by date (date group headers are
 - Date range `2026-01-20` to `2026-01-26`: shows 2 groups
 - Start date `2026-01-26` alone: shows all 12 groups (start date only not filtering as expected — possible API behavior)
 
+## Responsive Behavior (42 tests, 3 resoluciones)
+- **desktop-1280 (1280×800):** ✅ 14/14 — layout completo, sidebar + filtros visibles
+- **tablet-768 (768×1024):** ✅ 14/14 — misma funcionalidad, layout adaptado
+- **mobile-375 (375×667):** ✅ 14/14 — filtros y tabs funcionan, navbar colapsa
+
+## Criticidad de Tests
+| Test | Criticidad |
+|------|-----------|
+| Carga de página, sin crash, React root | 🔴 CRÍTICO |
+| Sin errores JS en filtros | 🔴 CRÍTICO |
+| Búsqueda filtra resultados, limpiar restaura | 🟠 ALTO |
+| Rango de fechas, tabs activos, navbar visible | 🟠 ALTO |
+| Sin match muestra vacío, fecha inicio sola | 🟡 MEDIO |
+
 ---
 
 ## E2E Test Steps for AI

@@ -70,7 +70,7 @@ http://localhost:3000/amatia/message-center#/view/<module>
 
 ## Screenshot Policy
 
-All screenshots auto-capture on failure via Playwright config:
+Auto-capture on failure via Playwright config:
 ```js
 use: {
   screenshot: 'only-on-failure',
@@ -78,7 +78,52 @@ use: {
   trace: 'retain-on-failure',
 }
 ```
-Screenshots saved to: `test-results/<test-name>/screenshot.png`
+Failure artifacts saved to: `test/results/artifacts/<test-name>/`
+
+Manual screenshots inside tests:
+```js
+await page.screenshot({ path: 'test/results/my-step.png', fullPage: false });
+```
+
+---
+
+## Result Files per Run
+
+Every execution generates a timestamped Markdown report in `test/results/`:
+
+```
+test/results/
+├── 2026-04-21_10-30-55_results.md   ← run at 10:30:55
+├── 2026-04-21_15-12-03_results.md   ← run at 15:12:03
+├── 01-baseline.png
+├── 02-search-tarea.png
+└── artifacts/                        ← failure screenshots/video/trace
+```
+
+### Report format
+```
+# Test Results — 21/4/2026, 10:30:55 a. m.
+
+Status: ✅ All passed  
+Run: 14 tests — 14 passed · 0 failed
+
+## Suite Name
+✅ test name  1.9s
+❌ test name  3.2s
+   Error: expect(received).toBe(expected)
+   📸 Screenshot: test/results/artifacts/.../test-failed-1.png
+
+## Summary
+| ✅ Passed | 13 |
+| ❌ Failed |  1 |
+| Total     | 14 |
+
+## Failed Tests Detail   ← only if failures exist
+### ❌ Suite › test name
+  full error message + screenshot path
+```
+
+Reporter source: `test/md-reporter.js`
 
 ---
 
@@ -93,5 +138,8 @@ See [skills/required-skills.md](skills/required-skills.md)
 1. Read `setup/01-prerequisites.md` → install dependencies
 2. Read `setup/02-playwright-config.md` → create `playwright.config.js`
 3. Read each `modules/XX-<name>/steps.md` → implement `.spec.js` test file per module
-4. Run: `npx playwright test --reporter=html`
-5. On failure: screenshots in `test-results/`, open `playwright-report/index.html`
+4. **Run:** `pnpm test:e2e` (generates MD report automatically)
+5. **View results:** `test/results/YYYY-MM-DD_HH-mm-ss_results.md`
+6. **On failure:** screenshots in `test/results/artifacts/`, run `pnpm test:e2e:report` for HTML
+
+> ⚠️ Do NOT use `--reporter=list` CLI flag — it overrides config and skips MD reporter.
