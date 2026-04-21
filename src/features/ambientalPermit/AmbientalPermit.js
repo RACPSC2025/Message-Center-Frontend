@@ -10,6 +10,7 @@ import {
 import { useMemo, useState } from 'react';
 
 import rawData from './ambientalPermitsData.json';
+import AmbientalPermitDrawer from './AmbientalPermitDrawer';
 import AmbientalPermitKanban from './AmbientalPermitKanban';
 import AmbientalPermitTable from './AmbientalPermitTable';
 
@@ -30,6 +31,13 @@ export default function AmbientalPermit() {
   const [filterUnidad, setFilterUnidad] = useState('');
   const [filterSede,   setFilterSede]   = useState('');
   const [filterTipo,   setFilterTipo]   = useState('');
+  const [drawerOpen,   setDrawerOpen]   = useState(false);
+  const [selectedPermit, setSelectedPermit] = useState(null);
+
+  function handleCardClick(item) {
+    setSelectedPermit(item);
+    setDrawerOpen(true);
+  }
 
   const sedeOptions = useMemo(() => {
     const base = filterUnidad
@@ -209,9 +217,15 @@ export default function AmbientalPermit() {
         {selectedView === 'tabla' ? (
           <AmbientalPermitTable items={filteredData} />
         ) : (
-          <AmbientalPermitKanban items={filteredData} />
+          <AmbientalPermitKanban items={filteredData} onCardClick={handleCardClick} />
         )}
       </Box>
+
+      <AmbientalPermitDrawer
+        open={drawerOpen}
+        item={selectedPermit}
+        onClose={() => setDrawerOpen(false)}
+      />
     </Box>
   );
 }
