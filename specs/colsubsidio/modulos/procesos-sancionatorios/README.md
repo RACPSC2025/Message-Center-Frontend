@@ -5,14 +5,21 @@
 Implementado actualmente:
 - Tabla dinamica construida desde configuracion de headers del API.
 - Visibilidad inicial de columnas gobernada por `display_in_table` (columnas ocultas quedan disponibles para seleccion manual).
-- Drawer de detalle por registro con tabs fijas por fase legal: `FASE I`, `FASE II`, `FASE III`, `CIERRE`.
-- Acordeones del drawer colapsados por defecto para priorizar lectura progresiva.
+- Drawer de detalle por registro con tabs funcionales: `Formulario`, `Fases`, `Bitacora`.
+- Tab por defecto al abrir drawer: `Formulario`.
 - Seccion de informacion completa con render profesional para textos largos (`white-space: pre-line`, tarjetas de lectura, scroll interno).
-- Bitacora por fase legal con timeline visual y nodos por tipo de evento.
+- Tab `Formulario` con formulario estilo aplicacion:
+	- Campo comun en todas las fases: `Por medio del cual se apertura tal...`.
+	- En `FASE I` (Apertura) agrega campos: `Acto administrativo`, `Sede`, `De donde es`, `Motivo de la apertura`.
+- Tab `Fases` con selector de 12 fases y expandible `Informacion completa del registro` (expandido por defecto).
+- Tab `Bitacora` con bitacora general del proceso (independiente de fases).
+- Bitacora con timeline visual, nodos por tipo de evento y orden descendente (mas reciente primero).
 - Cada evento de bitacora incluye ejemplos de:
 	- ejecutor (usuario),
 	- fecha de ejecucion,
 	- adjuntos (pdf, excel, word e imagen).
+- Controles de bitacora (selector de fase + fecha + boton `Nueva actuacion`) gobernados por estado local del tab:
+	- por defecto `false`, por lo tanto no visibles.
 - Compatibilidad de esquema para campo de respuesta:
 	- nuevo: `CASE_NUMBER_AND_CONTENT_OF_RESPONSE`
 	- legacy: `colsubsidio_response`

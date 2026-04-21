@@ -104,5 +104,20 @@ Requisito:
 - Definir estrategia de auditoria (quien, cuando, que cambio).
 
 ## 11. Archivos Relacionados
-- UI referencia: ../../gestion_permisos.html
-- Lineamientos visuales: ../../DESIGN_template_gestion_permisos.md
+
+| Archivo | Descripción |
+|---|---|
+| `Permisos_En_Tramite_Documentacion.md` | Diccionario de columnas y calidad de datos del dataset fuente (`Permisos_Ambientales_1.xlsx`) |
+| `permisos-en-tramite-implementacion.md` | **Implementación actual del módulo `ambientalPermit`:** vistas, filtros, kanban, drawer, mock data y pendientes de API |
+| `configuracion-modulo.md` | Parámetros funcionales del módulo gestor de permisos (fase conceptual) |
+| `api-contract.md` | Contrato de API (pendiente de definición completa) |
+
+## 12. Estado de Implementación (2026-04-21)
+
+El módulo `ambientalPermit` (`/view/ambiental_permit`) pasó de placeholder a funcional con:
+
+- **Vista Tabla:** MUI Table sticky headers, semáforo visual, chips de estado coloreados.
+- **Vista Kanban:** @dnd-kit, 5 columnas por estado de trámite, drag-and-drop entre columnas, ordenamiento por fecha proyectada ascendente.
+- **Drawer de detalle:** 3 tabs — Detalles, Actividades (checklist), Comentarios (chat-style con adjuntos).
+- **Filtros:** Unidad → Sede (cascading), Tipo de permiso, limpiar filtros.
+- **Datos:** JSON mock de 27 registros representativos. Pendiente integración API.

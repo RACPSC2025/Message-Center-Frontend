@@ -35,14 +35,26 @@ Documentar los cambios realizados en frontend para alinear el modulo de Procesos
 ## 5. Drawer de detalles (rediseno funcional)
 
 ### Estructura implementada
-- Tabs fijas por fase legal:
-  - `FASE I`
-  - `FASE II`
-  - `FASE III`
-  - `CIERRE`
-- Acordeones colapsados por defecto:
-  - Informacion completa del registro.
-  - Bitacora por fase legal.
+- Tabs funcionales:
+  - `Formulario`
+  - `Fases`
+  - `Bitacora`
+- Tab por defecto al abrir drawer: `Formulario`.
+
+### Contenido por tab
+- `Formulario`:
+  - muestra titulo con fase actual,
+  - incluye formulario estilo aplicacion (FormBuilder),
+  - campo comun para todas las fases: `Por medio del cual se apertura tal...`,
+  - en `FASE I` agrega: `Acto administrativo`, `Sede`, `De donde es`, `Motivo de la apertura`.
+- `Fases`:
+  - selector de 12 fases (`FASE I` a `FASE XII`),
+  - expandible `Informacion completa del registro` (expandido por defecto),
+  - no muestra historial de fase en este tab.
+- `Bitacora`:
+  - muestra solo bitacora general del proceso,
+  - barra de controles antes del expandible (selector, fecha, boton),
+  - visibilidad de controles gobernada por estado local (`false` por defecto).
 
 ### Visualizacion de textos largos
 - Campos largos renderizados en tarjetas full-width con:
@@ -56,13 +68,17 @@ Campos cubiertos:
 - `colsubsidio_response`
 - `CASE_NUMBER_AND_CONTENT_OF_RESPONSE`
 
-## 6. Bitacora por fase legal
+## 6. Bitacora general del proceso
 
 ### Implementado
-- Timeline visual por fase con nodos por tipo de evento:
+- Timeline visual general con nodos por tipo de evento:
   - actuacion,
   - carga de documentos/respuesta,
   - estrategia.
+- Orden de eventos: descendente por fecha (mas reciente primero).
+- La fase en el titulo de cada registro depende de estado local del tab (`showBitacoraFilters`):
+  - `false` (default): no se muestra dato de fase,
+  - `true`: se muestra la fase y se habilita filtro visual.
 
 ### Metadatos de ejemplo agregados (demo)
 Cada evento de bitacora ahora incluye ejemplos para visualizar:

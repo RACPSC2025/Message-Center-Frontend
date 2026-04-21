@@ -30,6 +30,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import FormBuilder from '../../../components/FormBuilder';
 
 const DETAIL_TABS = {
   FORM: 'formulario',
@@ -132,6 +133,18 @@ const splitLines = (value = '') =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+const getEntryTimestampValue = (timestamp = '') => {
+  const normalized = normalizeText(timestamp);
+  const match = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) {
+    return 0;
+  }
+
+  const [, day, month, year] = match;
+  return new Date(`${year}-${month}-${day}T00:00:00`).getTime();
+};
+
 const formatMockDate = (seed) => {
   const day = ((seed * 3) % 27) + 1;
   const month = (seed % 12) + 1;
@@ -229,12 +242,28 @@ export default function SanctioningProcessesDrawer({
   const [selectedPhase, setSelectedPhase] = useState(PHASE_OPTIONS[0]);
   const [bitacoraPhaseFilter, setBitacoraPhaseFilter] = useState(ALL_PHASES_OPTION);
   const [bitacoraDateFilter, setBitacoraDateFilter] = useState('');
+  const [showBitacoraFilters] = useState(false);
+  const [formValues, setFormValues] = useState({});
+
+  const currentProcessPhase = useMemo(
+    () => detectPhaseBucket(selectedProcess?.current_legal_phase || ''),
+    [selectedProcess]
+  );
+
+  const isOpeningPhase = currentProcessPhase === 'FASE I';
 
   useEffect(() => {
     setActiveDetailTab(DETAIL_TABS.FORM);
     setSelectedPhase(PHASE_OPTIONS[0]);
     setBitacoraPhaseFilter(ALL_PHASES_OPTION);
     setBitacoraDateFilter('');
+    setFormValues({
+      administrative_act: '',
+      headquarters: normalizeText(selectedProcess?.sede || ''),
+      origin: normalizeText(selectedProcess?.ues || ''),
+      opening_reason: '',
+      process_statement: ''
+    });
   }, [selectedProcess]);
 
   const normalizedPhase = PHASE_OPTIONS.includes(selectedPhase) ? selectedPhase : PHASE_OPTIONS[0];
@@ -270,12 +299,68 @@ export default function SanctioningProcessesDrawer({
     return phaseFiltered.filter((entry) => entry.timestamp === expectedDate);
   }, [generalLogEntries, bitacoraPhaseFilter, bitacoraDateFilter]);
 
+  const formFields = useMemo(() => {
+    const sharedFields = [
+      {
+        id: 'process_statement',
+        label: 'Por medio del cual se apertura tal...',
+        type: 'textarea',
+        required: true,
+        gridSize: '12'
+      }
+    ];
+
+    if (!isOpeningPhase) {
+      return sharedFields;
+    }
+
+    return [
+      {
+        id: 'administrative_act',
+        label: 'Acto administrativo',
+        type: 'text',
+        required: true,
+        gridSize: '6'
+      },
+      {
+        id: 'headquarters',
+        label: 'Sede',
+        type: 'text',
+        required: true,
+        gridSize: '6'
+      },
+      {
+        id: 'origin',
+        label: 'De donde es',
+        type: 'text',
+        required: true,
+        gridSize: '6'
+      },
+      {
+        id: 'opening_reason',
+        label: 'Motivo de la apertura',
+        type: 'textarea',
+        required: true,
+        gridSize: '12'
+      },
+      ...sharedFields
+    ];
+  }, [isOpeningPhase]);
+
   if (!selectedProcess) {
     return null;
   }
 
-  const renderTimeline = (entries = [], emptyMessage = 'No hay eventos registrados.') => {
-    if (entries.length === 0) {
+  const renderTimeline = (
+    entries = [],
+    emptyMessage = 'No hay eventos registrados.',
+    showPhaseData = true
+  ) => {
+    const sortedEntries = [...entries].sort(
+      (a, b) => getEntryTimestampValue(b?.timestamp) - getEntryTimestampValue(a?.timestamp)
+    );
+
+    if (sortedEntries.length === 0) {
       return <Typography sx={{ color: '#6c797c' }}>{emptyMessage}</Typography>;
     }
 
@@ -295,7 +380,7 @@ export default function SanctioningProcessesDrawer({
           }
         }}
       >
-        {entries.map((entry, index) => {
+        {sortedEntries.map((entry, index) => {
           const baseTitle =
             entry.type === 'actuacion'
               ? `Actuacion ${index + 1}`
@@ -303,7 +388,7 @@ export default function SanctioningProcessesDrawer({
               ? 'Carga de documentos / respuesta'
               : 'Alerta / estrategia';
 
-          const title = entry.phase ? `${entry.phase} - ${baseTitle}` : baseTitle;
+          const title = showPhaseData && entry.phase ? `${entry.phase} - ${baseTitle}` : baseTitle;
 
           const entryAttachments = entry.attachments || [];
 
@@ -542,6 +627,21 @@ export default function SanctioningProcessesDrawer({
             <Typography sx={{ fontWeight: 700, color: '#191c1d', mb: 0.5 }}>
               Fase actual: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
             </Typography>
+
+            <Box sx={{ mt: 2 }}>
+              <FormBuilder
+                inputFields={formFields}
+                controlled={true}
+                initialValues={formValues}
+                onChange={(id, value) =>
+                  setFormValues((prevState) => ({
+                    ...prevState,
+                    [id]: value
+                  }))
+                }
+                showActionButton={false}
+              />
+            </Box>
           </Box>
         )}
 
@@ -584,57 +684,59 @@ export default function SanctioningProcessesDrawer({
 
         {activeDetailTab === DETAIL_TABS.LOG && (
           <Box>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 1.5,
-                mb: 2
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <FormControl size="small" sx={{ minWidth: 180 }}>
-                  <InputLabel id="bitacora-phase-filter-label">Fase</InputLabel>
-                  <Select
-                    labelId="bitacora-phase-filter-label"
-                    value={bitacoraPhaseFilter}
-                    label="Fase"
-                    onChange={(event) => setBitacoraPhaseFilter(event.target.value)}
-                  >
-                    <MenuItem value={ALL_PHASES_OPTION}>{ALL_PHASES_OPTION}</MenuItem>
-                    {PHASE_OPTIONS.map((phaseOption) => (
-                      <MenuItem key={`bitacora-${phaseOption}`} value={phaseOption}>
-                        {phaseOption}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  size="small"
-                  type="date"
-                  label="Fecha"
-                  value={bitacoraDateFilter}
-                  onChange={(event) => setBitacoraDateFilter(event.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ minWidth: 180 }}
-                />
-              </Box>
-
-              <Button
-                variant="contained"
-                size="small"
+            {showBitacoraFilters && (
+              <Box
                 sx={{
-                  textTransform: 'none',
-                  fontWeight: 700,
-                  bgcolor: '#006971',
-                  '&:hover': { bgcolor: '#00545a' }
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 2
                 }}
               >
-                Nueva actuacion
-              </Button>
-            </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <FormControl size="small" sx={{ minWidth: 180 }}>
+                    <InputLabel id="bitacora-phase-filter-label">Fase</InputLabel>
+                    <Select
+                      labelId="bitacora-phase-filter-label"
+                      value={bitacoraPhaseFilter}
+                      label="Fase"
+                      onChange={(event) => setBitacoraPhaseFilter(event.target.value)}
+                    >
+                      <MenuItem value={ALL_PHASES_OPTION}>{ALL_PHASES_OPTION}</MenuItem>
+                      {PHASE_OPTIONS.map((phaseOption) => (
+                        <MenuItem key={`bitacora-${phaseOption}`} value={phaseOption}>
+                          {phaseOption}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    size="small"
+                    type="date"
+                    label="Fecha"
+                    value={bitacoraDateFilter}
+                    onChange={(event) => setBitacoraDateFilter(event.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: 180 }}
+                  />
+                </Box>
+
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    bgcolor: '#006971',
+                    '&:hover': { bgcolor: '#00545a' }
+                  }}
+                >
+                  Nueva actuacion
+                </Button>
+              </Box>
+            )}
 
             <Accordion sx={{ borderRadius: '12px !important', boxShadow: 0 }} defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMore />}>
@@ -644,7 +746,11 @@ export default function SanctioningProcessesDrawer({
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
-                {renderTimeline(filteredGeneralLogEntries, 'No hay eventos registrados en la bitacora general.')}
+                {renderTimeline(
+                  showBitacoraFilters ? filteredGeneralLogEntries : generalLogEntries,
+                  'No hay eventos registrados en la bitacora general.',
+                  showBitacoraFilters
+                )}
               </AccordionDetails>
             </Accordion>
           </Box>
