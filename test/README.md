@@ -46,19 +46,25 @@ test/
 
 ---
 
+## Router Type
+App uses **HashRouter** — routes go after `#`. Full URL format:
+```
+http://localhost:3000/amatia/message-center#/view/<module>
+```
+
 ## Route Map
 
-| Module                  | URL path                                              |
-|-------------------------|-------------------------------------------------------|
-| Notifications           | `/amatia/message-center/view/notifications`           |
-| Events / Tasks          | `/amatia/message-center/view/events`                  |
-| Actions                 | `/amatia/message-center/view/actions`                 |
-| Findings                | `/amatia/message-center/view/findings`                |
-| Inspections             | `/amatia/message-center/view/inspections`             |
-| Legal Matriz            | `/amatia/message-center/view/LegalMatriz`             |
-| Permit Manager          | `/amatia/message-center/view/permit_manager`          |
-| Ambiental Permit        | `/amatia/message-center/view/ambiental_permit`        |
-| Sanctioning Processes   | `/amatia/message-center/view/sanctioning_processes`   |
+| Module                  | Full URL                                                              |
+|-------------------------|-----------------------------------------------------------------------|
+| Notifications           | `http://localhost:3000/amatia/message-center#/view/notifications`     |
+| Events / Tasks          | `http://localhost:3000/amatia/message-center#/view/events`            |
+| Actions                 | `http://localhost:3000/amatia/message-center#/view/actions`           |
+| Findings                | `http://localhost:3000/amatia/message-center#/view/findings`          |
+| Inspections             | `http://localhost:3000/amatia/message-center#/view/inspections`       |
+| Legal Matriz            | `http://localhost:3000/amatia/message-center#/view/LegalMatriz`       |
+| Permit Manager          | `http://localhost:3000/amatia/message-center#/view/permit_manager`    |
+| Ambiental Permit        | `http://localhost:3000/amatia/message-center#/view/ambiental_permit`  |
+| Sanctioning Processes   | `http://localhost:3000/amatia/message-center#/view/sanctioning_processes` |
 
 ---
 
