@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import { Add, Description, Assignment } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import SpeedDialComponent from '../../components/SpeedDialComponent';
-import SanctioningStatsList from './components/SanctioningStatsList';
-import SanctioningProcessesTable from './components/SanctioningProcessesTable';
-import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
+import { useTranslation } from 'react-i18next';
+import { Box } from '@mui/material';
+import { Add, Description, Assignment } from '@mui/icons-material';
+
 import { fetchSanctioningProcessesTableHeaders } from '../../stores/sanctioningProcesses/fetchSanctioningProcessesTableHeadersSlice';
 
-import { statsData } from './data';
+import SpeedDialComponent from '../../components/SpeedDialComponent';
+
+import SanctioningProcessesTable from './components/SanctioningProcessesTable';
+import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
+
+// TODO: Este es en archivo temporal, eliminar despues
 import sanctioningProcessesTableData from './temp/sanctioningProcessesTableData.temp.json';
 
 const tableHandlers = {
@@ -70,11 +72,15 @@ const handleActionClick = (actionData, setOpenSpeedDial) => {
 
 function SanctioningProcesses() {
   const { i18n } = useTranslation();
+
   const dispatch = useDispatch();
+
   const headersResponse = useSelector((state) => state?.sanctioningProcessesTableHeaders?.data || {});
+
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
+  
   const [tableColumnConfig, setTableColumnConfig] = useState([]);
   const [initialVisibleFields, setInitialVisibleFields] = useState([]);
 
@@ -121,22 +127,19 @@ function SanctioningProcesses() {
         sortable: true
       };
 
-      if (column_type === 'number') {
-        columnProps.type = 'number';
-      }
-
-      if (column_type === 'status') {
-        columnProps.cellClass = 'font-semibold';
-      }
+      if (column_type === 'number') columnProps.type = 'number';
+      if (column_type === 'status') columnProps.cellClass = 'font-semibold';
 
       return columnProps;
     });
   };
 
+  // Cargar encabezados
   useEffect(() => {
     dispatch(fetchSanctioningProcessesTableHeaders(i18n.language || 'es'));
   }, [dispatch, i18n.language]);
-
+  
+  // Transformar los datos crudos de la API en la configuración utilizada
   useEffect(() => {
     const tableData = headersResponse?.data ?? {};
     const headers = tableData?.headers ?? headersResponse?.headers ?? {};
@@ -165,39 +168,7 @@ function SanctioningProcesses() {
 
   return (
     <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa', p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            fontSize: '0.875rem',
-            color: '#6c757d',
-            mb: 0.5,
-            fontWeight: 500
-          }}
-        >
-          Módulo de Control
-        </Typography>
-
-        <Typography
-          variant="h4"
-          sx={{
-            fontSize: '1.75rem',
-            fontWeight: 700,
-            color: '#212529',
-            fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif'
-          }}
-        >
-          Procesos Sancionatorios
-        </Typography>
-      </Box>
       
-      {/* Estadísticas */}
-      <SanctioningStatsList
-        stats={statsData}
-        spacing={3}
-        columns={{ xs: 12, md: 4 }}
-      />
-
       {/* Tabla de Procesos Sancionatorios */}
       <SanctioningProcessesTable
         data={sanctioningRows}
