@@ -1,7 +1,18 @@
-import { Edit, Visibility } from '@mui/icons-material';
-import { Box, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { CheckCircle, Edit, TableChart, ViewWeek, Visibility } from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  FormControl,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
@@ -13,8 +24,15 @@ import {
   PERMIT_TABLE_COLUMNS,
   STATUS_META
 } from './permitManagerData';
+import PermitManagerDrawer from './PermitManagerDrawer';
+import PermitManagerKanban from './PermitManagerKanban';
 
 const PAGE_OPTIONS = [20, 50, 100];
+const VIEW_TABS = [
+  { id: 'tabla', label: 'Tabla', Icon: TableChart },
+  { id: 'kanban', label: 'Kanban', Icon: ViewWeek }
+];
+const HEADER_PLACEHOLDER_FILTERS = ['Negocio', 'Compañía', 'Región', 'Ubicación'];
 
 function normalizeText(value) {
   return String(value ?? '')
@@ -37,134 +55,11 @@ function formatTableDate(dateValue) {
   return parsedDate.format('DD MMM, YYYY');
 }
 
-function ProgressRing({ value, accentColor, displayValue, displayCaption = '' }) {
-  const safeValue = Math.max(0, Math.min(value, 100));
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-  const progress = safeValue / 100;
-  const strokeDashoffset = circumference * (1 - progress);
-  const displayText = String(displayValue ?? '');
-  const numberFontSize = displayText.length >= 4 ? '1.3rem' : '1.75rem';
-
-  return (
-    <Box sx={{ position: 'relative', width: 110, height: 110 }}>
-      <svg width="110" height="110" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r={radius} fill="none" stroke="#E7EDF4" strokeWidth="8" />
-        <circle
-          cx="55"
-          cy="55"
-          r={radius}
-          fill="none"
-          stroke={accentColor}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          transform="rotate(-90 55 55)"
-        />
-      </svg>
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column'
-        }}
-      >
-        <Typography sx={{ fontSize: numberFontSize, fontWeight: 800, lineHeight: 1, color: accentColor }}>
-          {displayText}
-        </Typography>
-        {displayCaption ? (
-          <Typography sx={{ mt: 0.3, fontSize: '0.68rem', fontWeight: 800, color: '#64748B' }}>
-            {displayCaption}
-          </Typography>
-        ) : null}
-      </Box>
-    </Box>
-  );
-}
-
-function SummaryCard({
-  title,
-  description,
-  progressValue,
-  progressColor,
-  ringValue,
-  ringCaption,
-  footer
-}) {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 3,
-        border: '1px solid #E7EDF4',
-        p: { xs: 2, md: 2.75 },
-        minHeight: 132
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-          minHeight: '100%'
-        }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
-            {title}
-          </Typography>
-          <Typography
-            sx={{
-              mt: 0.45,
-              fontSize: '0.92rem',
-              lineHeight: 1.45,
-              color: '#64748B'
-            }}
-          >
-            {description}
-          </Typography>
-          <Box sx={{ mt: 1.7 }}>{footer}</Box>
-        </Box>
-
-        <Box
-          sx={{
-            flexShrink: 0,
-            width: 132,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <ProgressRing
-            value={progressValue}
-            accentColor={progressColor}
-            displayValue={ringValue}
-            displayCaption={ringCaption}
-          />
-        </Box>
-      </Box>
-    </Paper>
-  );
-}
-
-function FooterDotStat({ color, text }) {
-  return (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
-      <Typography sx={{ color: '#1E293B', fontWeight: 700, fontSize: '0.98rem' }}>
-        {text}
-      </Typography>
-    </Box>
-  );
-}
-
 function PermitManager() {
   const { t } = useTranslation();
+  const [selectedView, setSelectedView] = useState('kanban');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedPermit, setSelectedPermit] = useState(null);
   const filterData = useSelector((state) => selectAppliedFilterModel(state, 'permit_manager'));
 
   const filteredPermits = useMemo(() => {
@@ -193,6 +88,10 @@ function PermitManager() {
       result = result.filter((row) => row.unidad === filterData.filter_unit);
     }
 
+    if (filterData?.filter_sede) {
+      result = result.filter((row) => row.sede === filterData.filter_sede);
+    }
+
     if (filterData?.filter_permit_type) {
       result = result.filter((row) => row.tipoPermiso === filterData.filter_permit_type);
     }
@@ -209,16 +108,6 @@ function PermitManager() {
   }, [filterData]);
 
   const permitCount = filteredPermits.length;
-  const inProcessCount = filteredPermits.filter((permit) => permit.statusKey === 'in_process').length;
-  const grantedCount = filteredPermits.filter((permit) => permit.statusKey === 'granted').length;
-  const pendingCount = filteredPermits.filter((permit) => permit.statusKey === 'pending').length;
-  const withdrawnCount = filteredPermits.filter((permit) => permit.statusKey === 'withdrawn').length;
-  const activeCount = filteredPermits.filter((permit) =>
-    ['in_process', 'pending'].includes(permit.statusKey)
-  ).length;
-  const totalUnits = new Set(filteredPermits.map((permit) => permit.unidad)).size;
-  const recordProgress = permitCount > 0 ? Math.round((grantedCount / permitCount) * 100) : 0;
-  const activeProgress = permitCount > 0 ? Math.round((activeCount / permitCount) * 100) : 0;
 
   const columnDefs = useMemo(
     () =>
@@ -286,6 +175,11 @@ function PermitManager() {
     [t]
   );
 
+  const handleOpenDrawer = (permit) => {
+    setSelectedPermit(permit);
+    setDrawerOpen(true);
+  };
+
   return (
     <BaseFeaturePageLayout>
       <Box
@@ -300,85 +194,196 @@ function PermitManager() {
       >
         <Box
           sx={{
-            px: { xs: 2, md: 3 },
-            pt: 2.5,
-            pb: 2,
             display: 'flex',
-            flexDirection: 'column',
-            gap: 2.5,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: { xs: 2, md: 3 },
+            py: 1,
+            bgcolor: '#FFFFFF',
+            borderBottom: '1px solid #EDF2F4',
+            flexWrap: 'wrap',
+            gap: 1,
             flexShrink: 0
           }}
         >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' },
-              gap: 2.5
-            }}
-          >
-            <SummaryCard
-              title={t('permit_manager_created_title', { defaultValue: 'Permisos Registrados' })}
-              description={t('permit_manager_created_description', {
-                defaultValue: 'Muestra anonimizada para seguimiento operativo por unidad y autoridad.'
-              })}
-              progressValue={recordProgress}
-              progressColor="#0B7A84"
-              ringValue={permitCount}
-              ringCaption={t('permit_manager_total', { defaultValue: 'TOTAL' })}
-              footer={
-                <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
-                  <FooterDotStat color="#E8A126" text={`${inProcessCount} En proceso`} />
-                  <FooterDotStat color="#0B7A84" text={`${grantedCount} Otorgados`} />
-                </Stack>
-              }
-            />
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+            {HEADER_PLACEHOLDER_FILTERS.map((label) => (
+              <FormControl key={label} size="small" sx={{ minWidth: 94 }}>
+                <Select
+                  value=""
+                  displayEmpty
+                  onChange={() => {}}
+                  sx={{
+                    height: '40px',
+                    borderRadius: '4px',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#C7D1DB' },
+                    color: '#5E6B78',
+                    fontSize: '0.88rem',
+                    bgcolor: '#FFFFFF'
+                  }}
+                  renderValue={() => <span style={{ color: '#5E6B78' }}>{label}</span>}
+                >
+                  <MenuItem value="">{label}</MenuItem>
+                </Select>
+              </FormControl>
+            ))}
 
-            <SummaryCard
-              title={t('permit_manager_active_title', { defaultValue: 'Trámites Activos' })}
-              description={t('permit_manager_active_description', {
-                defaultValue: 'Casos abiertos o pendientes priorizados para seguimiento.'
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {}}
+              sx={{
+                height: '40px',
+                px: 2,
+                borderRadius: '4px',
+                borderColor: '#62D5F5',
+                color: '#00BCD4',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                '&:hover': {
+                  borderColor: '#62D5F5',
+                  bgcolor: 'rgba(98,213,245,0.05)'
+                }
+              }}
+            >
+              Limpiar filtros
+            </Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, ml: 'auto' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CheckCircle sx={{ fontSize: '1.1rem', color: 'text.secondary' }} />
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                  fontSize: '0.98rem',
+                  fontStyle: 'italic',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {permitCount} trámite{permitCount !== 1 ? 's' : ''} encontrados
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 3.5, alignItems: 'flex-end', pb: 0.5 }}>
+              {VIEW_TABS.map(({ id, label, Icon }) => {
+                const isActive = selectedView === id;
+
+                return (
+                  <Box
+                    key={id}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': { opacity: 1 }
+                    }}
+                    onClick={() => setSelectedView(id)}
+                  >
+                    <Box sx={{ color: isActive ? '#F57C00' : '#B0BEC5', mb: 0.2 }}>
+                      <Icon color={isActive ? 'warning' : 'action'} fontSize="medium" />
+                    </Box>
+                    <Typography
+                      sx={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        color: isActive ? '#263238' : '#B0BEC5',
+                        textTransform: 'capitalize'
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                  </Box>
+                );
               })}
-              progressValue={activeProgress}
-              progressColor="#F2B51D"
-              ringValue={activeCount}
-              ringCaption={t('permit_manager_active', { defaultValue: 'ACTIVOS' })}
-              footer={
-                <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>
-                  <FooterDotStat color="#D97706" text={`${pendingCount} Pendientes`} />
-                  <FooterDotStat color="#64748B" text={`${withdrawnCount} Desistidos`} />
-                  <FooterDotStat color="#CBD5E1" text={`${totalUnits} Unidades`} />
-                </Stack>
-              }
-            />
+            </Box>
           </Box>
         </Box>
 
-        <Box sx={{ flexGrow: 1, minHeight: 0, px: { xs: 2, md: 3 }, pb: 2.5 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: 3,
-              border: '1px solid #E7EDF4',
-              overflow: 'hidden'
-            }}
-          >
-            <Box sx={{ flexGrow: 1, minHeight: 0, px: 2.5, pb: 2 }}>
-              <TableComponent
-                rowData={filteredPermits}
-                columnDefs={columnDefs}
-                initialVisibleColumns={PERMIT_INITIAL_VISIBLE_COLUMNS}
-                totalRecord={filteredPermits.length}
-                filterable={true}
-                pagination={true}
-                perPage={20}
-                pageOption={PAGE_OPTIONS}
-              />
-            </Box>
-          </Paper>
+        <Box
+          sx={{
+            flexGrow: 1,
+            minHeight: 0,
+            px: { xs: 2, md: 3 },
+            py: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}
+        >
+          {selectedView === 'tabla' ? (
+            <Paper
+              elevation={0}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 3,
+                border: '1px solid #E7EDF4',
+                overflow: 'hidden'
+              }}
+            >
+              <Box sx={{ flexGrow: 1, minHeight: 0, px: 2.5, pb: 2 }}>
+                <TableComponent
+                  rowData={filteredPermits}
+                  columnDefs={columnDefs.map((column) =>
+                    column.field === 'actions'
+                      ? {
+                          ...column,
+                          cellRenderer: (params) => (
+                            <Stack direction="row" spacing={0.25} alignItems="center">
+                              <Tooltip title={t('permit_manager_view', { defaultValue: 'Ver detalle' })}>
+                                <IconButton size="small" onClick={() => handleOpenDrawer(params.data)}>
+                                  <Visibility fontSize="small" sx={{ color: '#0B7A84' }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={t('permit_manager_edit', { defaultValue: 'Editar permiso' })}>
+                                <IconButton size="small">
+                                  <Edit fontSize="small" sx={{ color: '#52627A' }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          )
+                        }
+                      : column
+                  )}
+                  initialVisibleColumns={PERMIT_INITIAL_VISIBLE_COLUMNS}
+                  totalRecord={filteredPermits.length}
+                  filterable={true}
+                  pagination={true}
+                  perPage={20}
+                  pageOption={PAGE_OPTIONS}
+                />
+              </Box>
+            </Paper>
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 3,
+                border: '1px solid #E7EDF4',
+                overflow: 'hidden'
+              }}
+            >
+              <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+                <PermitManagerKanban items={filteredPermits} onCardClick={handleOpenDrawer} />
+              </Box>
+            </Paper>
+          )}
         </Box>
+
+        <PermitManagerDrawer
+          open={drawerOpen}
+          item={selectedPermit}
+          onClose={() => setDrawerOpen(false)}
+        />
       </Box>
     </BaseFeaturePageLayout>
   );

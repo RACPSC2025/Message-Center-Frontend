@@ -17,7 +17,7 @@ export const STATUS_META = Object.freeze({
   },
   withdrawn: {
     label: 'Desistido',
-    dotColor: '#64748B'
+    dotColor: '#C62828'
   },
   closed: {
     label: 'Cerrado',
@@ -357,7 +357,14 @@ const PERMIT_TYPE_TEMPLATES = Object.freeze([
   }
 ]);
 
-const STATUS_SEQUENCE = Object.freeze(['En proceso', 'Otorgado', 'Pendiente', 'En proceso', 'Desistido']);
+const STATUS_SEQUENCE = Object.freeze([
+  'En proceso',
+  'Otorgado',
+  'Pendiente',
+  'En proceso',
+  'Desistido',
+  'Cerrado'
+]);
 const SEMAPHORE_SEQUENCE = Object.freeze(['Verde', 'Amarillo', 'Rojo', 'Sin dato', 'Amarillo']);
 const PROJECT_EXECUTION_SEQUENCE = Object.freeze([
   'Establecimiento abierto',
