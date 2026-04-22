@@ -38,6 +38,8 @@ class MarkdownReporter {
   onBegin(_config, suite) {
     this.startTime = new Date();
     this.totalTests = suite.allTests().length;
+    this.moduleNames = new Set();
+    this.moduleRoutes = new Set();
   }
 
   onTestEnd(test, result) {
@@ -51,6 +53,12 @@ class MarkdownReporter {
       .filter(a => a.name === 'screenshot' && a.path)
       .map(a => ({ name: 'failure-screenshot', path: relPath(a.path) }));
 
+    const annotations = test.annotations || [];
+    const mod   = annotations.find(a => a.type === 'module')?.description;
+    const route = annotations.find(a => a.type === 'route')?.description;
+    if (mod)   this.moduleNames.add(mod);
+    if (route) this.moduleRoutes.add(route);
+
     this.results.push({
       project:     test.parent?.project()?.name || 'unknown',
       suite:       test.parent?.title || '',
@@ -59,7 +67,7 @@ class MarkdownReporter {
       duration:    result.duration,
       error:       result.error ? stripAnsi(result.error.message) : null,
       shots:       [...namedShots, ...failShots],
-      annotations: test.annotations || [],
+      annotations,
     });
   }
 
@@ -77,10 +85,17 @@ class MarkdownReporter {
     const overallOk = failed.length === 0;
     const statusBadge = overallOk ? '✅ PASÓ' : `❌ FALLÓ (${failed.length})`;
 
+    // Módulo(s) detectados desde anotaciones
+    const moduleName  = [...this.moduleNames].join(', ')  || 'E2E';
+    const moduleRoute = [...this.moduleRoutes].join(', ') || '';
+
+    // Slug para el nombre del archivo: minúsculas, sin espacios
+    const moduleSlug = moduleName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
     // ── Header ─────────────────────────────────────────────────────────────────
     let md = `# Reporte de Pruebas E2E — ${d.toLocaleString('es-CO')}\n\n`;
-    md += `> **Módulo revisado:** Notifications  \n`;
-    md += `> **Ruta:** \`http://localhost:3000/amatia/message-center#/view/notifications\`  \n`;
+    md += `> **Módulo revisado:** ${moduleName}  \n`;
+    md += `> **Ruta:** \`${moduleRoute}\`  \n`;
     md += `> **Resultado global:** ${statusBadge}  \n`;
     md += `> **Tests:** ${this.results.length} total — ✅ ${passed.length} pasaron · ❌ ${failed.length} fallaron`;
     if (flaky.length)   md += ` · ⚠️ ${flaky.length} intermitentes`;
@@ -187,7 +202,8 @@ class MarkdownReporter {
     }
 
     // ── Pie con ruta del archivo ───────────────────────────────────────────────
-    const outFile = `test/results/${timestamp}_results.md`;
+    const fileName = moduleSlug ? `${timestamp}_${moduleSlug}_results.md` : `${timestamp}_results.md`;
+    const outFile = `test/results/${fileName}`;
     md += `---\n\n## 📁 Archivos Generados\n\n`;
     md += `| Tipo | Ruta |\n|------|------|\n`;
     md += `| 📄 Este reporte | \`${outFile}\` |\n`;
@@ -201,7 +217,7 @@ class MarkdownReporter {
     // ── Escribir archivo ───────────────────────────────────────────────────────
     const outDir = path.join(process.cwd(), 'test', 'results');
     fs.mkdirSync(outDir, { recursive: true });
-    const outPath = path.join(outDir, `${timestamp}_results.md`);
+    const outPath = path.join(outDir, fileName);
     fs.writeFileSync(outPath, md, 'utf8');
 
     console.log(`\n📄 Reporte MD generado: ${outFile}`);
