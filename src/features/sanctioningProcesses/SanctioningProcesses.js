@@ -8,6 +8,7 @@ import { fetchSanctioningProcessesTableHeaders } from '../../stores/sanctioningP
 
 import SpeedDialComponent from '../../components/SpeedDialComponent';
 
+import OrganizationFilter from "./components/OrganizationFilter";
 import SanctioningProcessesTable from './components/SanctioningProcessesTable';
 import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
 
@@ -169,6 +170,19 @@ function SanctioningProcesses() {
   return (
     <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa', p: 3 }}>
       
+      {/* Filtros: negocio, compañía, región, ubicación */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        alignItems: 'center', 
+        p: 2, 
+        bgcolor: 'background.paper',
+        borderRadius: 1,
+        mb: 2
+      }}>
+        <OrganizationFilter />
+      </Box>
+
       {/* Tabla de Procesos Sancionatorios */}
       <SanctioningProcessesTable
         data={sanctioningRows}
