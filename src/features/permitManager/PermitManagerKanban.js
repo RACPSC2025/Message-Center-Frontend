@@ -16,8 +16,25 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { DragIndicator } from '@mui/icons-material';
-import { Box, Chip, Paper, Tooltip, Typography } from '@mui/material';
+import {
+  Close,
+  DragIndicator,
+  FilterList,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+  Search
+} from '@mui/icons-material';
+import {
+  Box,
+  Chip,
+  Collapse,
+  IconButton,
+  InputBase,
+  Paper,
+  Popover,
+  Tooltip,
+  Typography
+} from '@mui/material';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -86,6 +103,17 @@ function sortByFechaProyectada(items) {
   });
 }
 
+function matchesColumnSearch(item, searchValue) {
+  const term = normalizeText(searchValue);
+  if (!term) {
+    return true;
+  }
+
+  return [item.tipoPermiso, item.sede, item.autoridad]
+    .map((value) => normalizeText(value))
+    .some((value) => value.includes(term));
+}
+
 function FieldRow({ label, value }) {
   if (!value || value === 'N/A') {
     return null;
@@ -111,7 +139,13 @@ function FieldRow({ label, value }) {
   );
 }
 
-function PermitKanbanCard({ item, columnColor, isDragging = false }) {
+function PermitKanbanCard({
+  item,
+  columnColor,
+  isDragging = false,
+  isExpanded = false,
+  onToggleDetail = () => {}
+}) {
   const semaforoKey = normalizeText(item.semaforoAmbiental || 'sin dato');
   const semColor = SEMAFORO_COLOR[semaforoKey] || '#90a4ae';
   const semLabel = SEMAFORO_LABEL[semaforoKey] || '';
@@ -122,7 +156,6 @@ function PermitKanbanCard({ item, columnColor, isDragging = false }) {
       sx={{
         p: 1.5,
         borderRadius: '8px',
-        borderLeft: `4px solid ${columnColor}`,
         bgcolor: '#ffffff',
         transition: 'box-shadow 0.2s',
         '&:hover': { boxShadow: 3 },
@@ -169,56 +202,84 @@ function PermitKanbanCard({ item, columnColor, isDragging = false }) {
         </Tooltip>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
-        <Chip
-          label={item.sede}
-          size="small"
-          sx={{
-            fontSize: '0.63rem',
-            height: 18,
-            bgcolor: '#f5f5f5',
-            color: '#546e7a',
-            maxWidth: 118,
-            '& .MuiChip-label': {
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              display: 'block'
-            }
-          }}
-        />
-        <Chip
-          label={item.autoridad}
-          size="small"
-          sx={{
-            fontSize: '0.63rem',
-            height: 18,
-            bgcolor: '#e8f4fd',
-            color: '#1565c0',
-            maxWidth: 118,
-            '& .MuiChip-label': {
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              display: 'block'
-            }
-          }}
-        />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+          <Chip
+            label={item.sede}
+            size="small"
+            sx={{
+              fontSize: '0.63rem',
+              height: 18,
+              bgcolor: '#f5f5f5',
+              color: '#546e7a',
+              maxWidth: 118,
+              '& .MuiChip-label': {
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block'
+              }
+            }}
+          />
+          <Chip
+            label={item.autoridad}
+            size="small"
+            sx={{
+              fontSize: '0.63rem',
+              height: 18,
+              bgcolor: '#e8f4fd',
+              color: '#1565c0',
+              maxWidth: 118,
+              '& .MuiChip-label': {
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block'
+              }
+            }}
+          />
+        </Box>
+
+        <Tooltip title={isExpanded ? 'Ocultar detalle' : 'Ver detalle'} placement="top">
+          <IconButton
+            size="small"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleDetail();
+            }}
+            sx={{
+              width: 20,
+              height: 20,
+              color: '#78909c',
+              flexShrink: 0,
+              '&:hover': { bgcolor: '#eef5f7', color: '#00838f' }
+            }}
+          >
+            {isExpanded ? (
+              <KeyboardArrowUp sx={{ fontSize: '1rem' }} />
+            ) : (
+              <KeyboardArrowDown sx={{ fontSize: '1rem' }} />
+            )}
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      <Box sx={{ borderTop: '1px solid #f0f0f0', pt: 1 }}>
-        <FieldRow label="Tipo de trámite" value={item.tipoTramite} />
-        <FieldRow label="Acto adm. inicial" value={item.actoAdministrativoInicial} />
-        <FieldRow label="Expediente" value={item.expediente} />
-        <FieldRow label="F. radicación" value={item.fechaRadicacionPermiso} />
-        <FieldRow label="N.° radicado solicitud" value={item.numeroRadicadoSolicitudAutoridad} />
-        <FieldRow label="F. proyectada otorgamiento" value={item.fechaProyectadaOtorgamiento} />
-      </Box>
+      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+        <Box sx={{ pt: 0.75 }}>
+          <FieldRow label="Tipo de trámite" value={item.tipoTramite} />
+          <FieldRow label="Acto adm. inicial" value={item.actoAdministrativoInicial} />
+          <FieldRow label="Expediente" value={item.expediente} />
+          <FieldRow label="F. radicación" value={item.fechaRadicacionPermiso} />
+          <FieldRow label="N.° radicado solicitud" value={item.numeroRadicadoSolicitudAutoridad} />
+          <FieldRow label="F. proyectada otorgamiento" value={item.fechaProyectadaOtorgamiento} />
+        </Box>
+      </Collapse>
     </Paper>
   );
 }
 
 function SortablePermitKanbanCard({ item, columnColor, onCardClick }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.recordId
   });
@@ -257,7 +318,13 @@ function SortablePermitKanbanCard({ item, columnColor, onCardClick }) {
         }}
         sx={{ cursor: 'pointer' }}
       >
-        <PermitKanbanCard item={item} columnColor={columnColor} isDragging={isDragging} />
+        <PermitKanbanCard
+          item={item}
+          columnColor={columnColor}
+          isDragging={isDragging}
+          isExpanded={isExpanded}
+          onToggleDetail={() => setIsExpanded((previous) => !previous)}
+        />
       </Box>
     </Box>
   );
@@ -266,6 +333,14 @@ function SortablePermitKanbanCard({ item, columnColor, onCardClick }) {
 function PermitKanbanColumn({ columnId, items, onCardClick }) {
   const config = COLUMN_CONFIG[columnId] || { color: '#90a4ae', bg: '#fafafa', light: '#f5f5f5' };
   const { setNodeRef, isOver } = useDroppable({ id: columnId });
+  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+  const [searchValue, setSearchValue] = useState('');
+  const filterOpen = Boolean(filterAnchorEl);
+  const filteredItems = useMemo(
+    () => items.filter((item) => matchesColumnSearch(item, searchValue)),
+    [items, searchValue]
+  );
+  const visibleCount = searchValue ? filteredItems.length : items.length;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 280, maxWidth: 300, flexShrink: 0 }}>
@@ -291,22 +366,102 @@ function PermitKanbanColumn({ columnId, items, onCardClick }) {
         >
           {columnId}
         </Typography>
-        <Box
-          sx={{
-            bgcolor: 'rgba(255,255,255,0.25)',
-            borderRadius: '50%',
-            width: 22,
-            height: 22,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#fff' }}>
-            {items.length}
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title="Buscar en columna">
+            <IconButton
+              size="small"
+              onClick={(event) => setFilterAnchorEl(event.currentTarget)}
+              sx={{
+                width: 22,
+                height: 22,
+                color: '#fff',
+                bgcolor: filterOpen || searchValue ? 'rgba(255,255,255,0.22)' : 'transparent',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.22)' }
+              }}
+            >
+              <FilterList sx={{ fontSize: '0.95rem' }} />
+            </IconButton>
+          </Tooltip>
+          <Box
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.25)',
+              borderRadius: '50%',
+              width: 22,
+              height: 22,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, color: '#fff' }}>
+              {visibleCount}
+            </Typography>
+          </Box>
         </Box>
       </Box>
+
+      <Popover
+        open={filterOpen}
+        anchorEl={filterAnchorEl}
+        onClose={() => setFilterAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        PaperProps={{
+          sx: {
+            mt: 0.75,
+            p: 1,
+            width: 226,
+            borderRadius: '3px',
+            boxShadow: '0 8px 24px rgba(15,23,42,0.18)',
+            border: '1px solid #d7dde5',
+            bgcolor: '#f7f7f7',
+            overflow: 'visible'
+          }
+        }}
+      >
+        <Box
+          sx={{
+            height: 34,
+            px: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            border: '2px solid #1e9bff',
+            borderRadius: '6px',
+            bgcolor: '#fff',
+            boxShadow: '0 1px 2px rgba(15,23,42,0.08)'
+          }}
+        >
+          <Search sx={{ fontSize: '0.95rem', color: '#607d8b' }} />
+          <InputBase
+            autoFocus
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder="Filtrando..."
+            sx={{
+              flex: 1,
+              fontSize: '0.82rem',
+              color: '#37474f',
+              '& input': {
+                p: 0,
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none'
+              },
+              '& input:focus': {
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none'
+              }
+            }}
+          />
+          {searchValue ? (
+            <IconButton size="small" onClick={() => setSearchValue('')} sx={{ p: 0.25 }}>
+              <Close sx={{ fontSize: '0.9rem', color: '#90a4ae' }} />
+            </IconButton>
+          ) : null}
+        </Box>
+      </Popover>
 
       <Box
         ref={setNodeRef}
@@ -324,10 +479,10 @@ function PermitKanbanColumn({ columnId, items, onCardClick }) {
         }}
       >
         <SortableContext
-          items={items.map((item) => item.recordId)}
+          items={filteredItems.map((item) => item.recordId)}
           strategy={verticalListSortingStrategy}
         >
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <SortablePermitKanbanCard
               key={item.recordId}
               item={item}
@@ -337,7 +492,7 @@ function PermitKanbanColumn({ columnId, items, onCardClick }) {
           ))}
         </SortableContext>
 
-        {items.length === 0 && (
+        {filteredItems.length === 0 && (
           <Box
             sx={{
               display: 'flex',
@@ -349,7 +504,7 @@ function PermitKanbanColumn({ columnId, items, onCardClick }) {
             }}
           >
             <Typography sx={{ fontSize: '0.72rem', color: config.color, opacity: 0.6 }}>
-              Sin trámites
+              {searchValue ? 'Sin resultados' : 'Sin trámites'}
             </Typography>
           </Box>
         )}
