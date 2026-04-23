@@ -29,8 +29,8 @@ import PermitManagerKanban from './PermitManagerKanban';
 
 const PAGE_OPTIONS = [20, 50, 100];
 const VIEW_TABS = [
-  { id: 'tabla', label: 'Tabla', Icon: TableChart },
-  { id: 'kanban', label: 'Kanban', Icon: ViewWeek }
+  { id: 'kanban', label: 'Kanban', Icon: ViewWeek },
+  { id: 'tabla', label: 'Tabla', Icon: TableChart }
 ];
 const HEADER_PLACEHOLDER_FILTERS = ['Negocio', 'Compañía', 'Región', 'Ubicación'];
 

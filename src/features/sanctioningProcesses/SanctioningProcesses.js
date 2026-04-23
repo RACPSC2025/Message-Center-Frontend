@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import { Add, Description, Assignment } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import SpeedDialComponent from '../../components/SpeedDialComponent';
-import SanctioningStatsList from './components/SanctioningStatsList';
-import SanctioningProcessesTable from './components/SanctioningProcessesTable';
-import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
+import { useTranslation } from 'react-i18next';
+import { Box } from '@mui/material';
+import { Add, Description, Assignment } from '@mui/icons-material';
+
 import { fetchSanctioningProcessesTableHeaders } from '../../stores/sanctioningProcesses/fetchSanctioningProcessesTableHeadersSlice';
 
-import { statsData } from './data';
+import SpeedDialComponent from '../../components/SpeedDialComponent';
+import ViewControls from '../../components/ViewControls';
+
+import OrganizationFilter from "./components/OrganizationFilter";
+import SanctioningProcessesTable from './components/SanctioningProcessesTable';
+import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
+import SanctioningProcessesReport from './components/SanctioningProcessesReport';
+
+// TODO: Este es en archivo temporal, eliminar despues
 import sanctioningProcessesTableData from './temp/sanctioningProcessesTableData.temp.json';
 
 const tableHandlers = {
@@ -70,11 +75,18 @@ const handleActionClick = (actionData, setOpenSpeedDial) => {
 
 function SanctioningProcesses() {
   const { i18n } = useTranslation();
+
   const dispatch = useDispatch();
+
   const headersResponse = useSelector((state) => state?.sanctioningProcessesTableHeaders?.data || {});
+
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
+  
+  const [selectedView, setSelectedView] = useState('table'); // ['table', 'report']
+  const viewTabArray = ['table', 'report'];
+  
   const [tableColumnConfig, setTableColumnConfig] = useState([]);
   const [initialVisibleFields, setInitialVisibleFields] = useState([]);
 
@@ -121,22 +133,23 @@ function SanctioningProcesses() {
         sortable: true
       };
 
-      if (column_type === 'number') {
-        columnProps.type = 'number';
-      }
-
-      if (column_type === 'status') {
-        columnProps.cellClass = 'font-semibold';
-      }
+      if (column_type === 'number') columnProps.type = 'number';
+      if (column_type === 'status') columnProps.cellClass = 'font-semibold';
 
       return columnProps;
     });
   };
 
+  const changeView = (view) => {
+    setSelectedView(view);
+  };
+
+  // Cargar encabezados
   useEffect(() => {
     dispatch(fetchSanctioningProcessesTableHeaders(i18n.language || 'es'));
   }, [dispatch, i18n.language]);
-
+  
+  // Transformar los datos crudos de la API en la configuración utilizada
   useEffect(() => {
     const tableData = headersResponse?.data ?? {};
     const headers = tableData?.headers ?? headersResponse?.headers ?? {};
@@ -165,51 +178,49 @@ function SanctioningProcesses() {
 
   return (
     <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa', p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            fontSize: '0.875rem',
-            color: '#6c757d',
-            mb: 0.5,
-            fontWeight: 500
-          }}
-        >
-          Módulo de Control
-        </Typography>
-
-        <Typography
-          variant="h4"
-          sx={{
-            fontSize: '1.75rem',
-            fontWeight: 700,
-            color: '#212529',
-            fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif'
-          }}
-        >
-          Procesos Sancionatorios
-        </Typography>
-      </Box>
       
-      {/* Estadísticas */}
-      <SanctioningStatsList
-        stats={statsData}
-        spacing={3}
-        columns={{ xs: 12, md: 4 }}
-      />
+      {/* Header con filtros y controles de vista */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        alignItems: 'center', 
+        p: 2, 
+        bgcolor: 'background.paper',
+        borderRadius: 1,
+        mb: 2
+      }}>
+        {/* Filtros: negocio, compañía, región, ubicación */}
+        <OrganizationFilter />
+        
+        {/* Controles de vista: Table / reports */}
+        <ViewControls
+          viewTabArray={viewTabArray}
+          selectedView={selectedView}
+          onViewChange={changeView}
+        />
+      </Box>
 
-      {/* Tabla de Procesos Sancionatorios */}
-      <SanctioningProcessesTable
-        data={sanctioningRows}
-        columnDefs={tableColumnConfig}
-        initialVisibleFields={initialVisibleFields}
-        paginationData={sanctioningProcessesTableData?.meta?.pagination}
-        onRowClick={tableHandlers.handleRowClick}
-        onView={(row) => tableHandlers.handleView(row, setOpenDrawer, setSelectedProcess)}
-        onEdit={tableHandlers.handleEdit}
-        onAttach={tableHandlers.handleAttach}
-        onRefresh={tableHandlers.handleRefresh}
-      />
+      {/* Contenido dinámico según vista */}
+      {selectedView === 'table' && (
+        <SanctioningProcessesTable
+          data={sanctioningRows}
+          columnDefs={tableColumnConfig}
+          initialVisibleFields={initialVisibleFields}
+          paginationData={sanctioningProcessesTableData?.meta?.pagination}
+          onRowClick={tableHandlers.handleRowClick}
+          onView={(row) => tableHandlers.handleView(row, setOpenDrawer, setSelectedProcess)}
+          onEdit={tableHandlers.handleEdit}
+          onAttach={tableHandlers.handleAttach}
+          onRefresh={tableHandlers.handleRefresh}
+        />
+      )}
+      
+      {selectedView === 'report' && (
+        <SanctioningProcessesReport
+          data={sanctioningRows}
+          columnDefs={tableColumnConfig}
+        />
+      )}
 
       {/* (+) para iniciar nuevos procesos */}
       <SpeedDialComponent
