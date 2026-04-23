@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Button, FormControl, InputLabel, Select, MenuItem, useTheme } from '@mui/material';
+import { Button, Box, FormControl, InputLabel, Select, MenuItem, useTheme } from '@mui/material';
 
 // Mock de datos para simular endpoints
 const mockLevelData = {
@@ -208,7 +208,7 @@ const OrganizationFilter = () => {
   };
 
   return (
-    <>
+    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexGrow: 1 }}>
       {/* Sección de filtros de organización */}
       {filters.map((filter) => (
         <FormControl key={filter.id} size="small" sx={{ minWidth: 140 }}>
@@ -260,7 +260,7 @@ const OrganizationFilter = () => {
       >
         {t('ClearFilters')}
       </Button>
-    </>
+    </Box>
   );
 };
 

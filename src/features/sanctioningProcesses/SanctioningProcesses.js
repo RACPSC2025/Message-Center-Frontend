@@ -7,10 +7,12 @@ import { Add, Description, Assignment } from '@mui/icons-material';
 import { fetchSanctioningProcessesTableHeaders } from '../../stores/sanctioningProcesses/fetchSanctioningProcessesTableHeadersSlice';
 
 import SpeedDialComponent from '../../components/SpeedDialComponent';
+import ViewControls from '../../components/ViewControls';
 
 import OrganizationFilter from "./components/OrganizationFilter";
 import SanctioningProcessesTable from './components/SanctioningProcessesTable';
 import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
+import SanctioningProcessesReport from './components/SanctioningProcessesReport';
 
 // TODO: Este es en archivo temporal, eliminar despues
 import sanctioningProcessesTableData from './temp/sanctioningProcessesTableData.temp.json';
@@ -82,6 +84,9 @@ function SanctioningProcesses() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
   
+  const [selectedView, setSelectedView] = useState('table'); // ['table', 'report']
+  const viewTabArray = ['table', 'report'];
+  
   const [tableColumnConfig, setTableColumnConfig] = useState([]);
   const [initialVisibleFields, setInitialVisibleFields] = useState([]);
 
@@ -135,6 +140,10 @@ function SanctioningProcesses() {
     });
   };
 
+  const changeView = (view) => {
+    setSelectedView(view);
+  };
+
   // Cargar encabezados
   useEffect(() => {
     dispatch(fetchSanctioningProcessesTableHeaders(i18n.language || 'es'));
@@ -170,7 +179,7 @@ function SanctioningProcesses() {
   return (
     <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa', p: 3 }}>
       
-      {/* Filtros: negocio, compañía, región, ubicación */}
+      {/* Header con filtros y controles de vista */}
       <Box sx={{ 
         display: 'flex', 
         gap: 2, 
@@ -180,21 +189,38 @@ function SanctioningProcesses() {
         borderRadius: 1,
         mb: 2
       }}>
+        {/* Filtros: negocio, compañía, región, ubicación */}
         <OrganizationFilter />
+        
+        {/* Controles de vista: Table / reports */}
+        <ViewControls
+          viewTabArray={viewTabArray}
+          selectedView={selectedView}
+          onViewChange={changeView}
+        />
       </Box>
 
-      {/* Tabla de Procesos Sancionatorios */}
-      <SanctioningProcessesTable
-        data={sanctioningRows}
-        columnDefs={tableColumnConfig}
-        initialVisibleFields={initialVisibleFields}
-        paginationData={sanctioningProcessesTableData?.meta?.pagination}
-        onRowClick={tableHandlers.handleRowClick}
-        onView={(row) => tableHandlers.handleView(row, setOpenDrawer, setSelectedProcess)}
-        onEdit={tableHandlers.handleEdit}
-        onAttach={tableHandlers.handleAttach}
-        onRefresh={tableHandlers.handleRefresh}
-      />
+      {/* Contenido dinámico según vista */}
+      {selectedView === 'table' && (
+        <SanctioningProcessesTable
+          data={sanctioningRows}
+          columnDefs={tableColumnConfig}
+          initialVisibleFields={initialVisibleFields}
+          paginationData={sanctioningProcessesTableData?.meta?.pagination}
+          onRowClick={tableHandlers.handleRowClick}
+          onView={(row) => tableHandlers.handleView(row, setOpenDrawer, setSelectedProcess)}
+          onEdit={tableHandlers.handleEdit}
+          onAttach={tableHandlers.handleAttach}
+          onRefresh={tableHandlers.handleRefresh}
+        />
+      )}
+      
+      {selectedView === 'report' && (
+        <SanctioningProcessesReport
+          data={sanctioningRows}
+          columnDefs={tableColumnConfig}
+        />
+      )}
 
       {/* (+) para iniciar nuevos procesos */}
       <SpeedDialComponent
