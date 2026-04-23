@@ -35,7 +35,8 @@ import FormBuilder from '../../../components/FormBuilder';
 const DETAIL_TABS = {
   FORM: 'formulario',
   PHASES: 'fases',
-  LOG: 'bitacora'
+  LOG: 'bitacora',
+  NEW_LOG: 'nueva-bitacora'
 };
 
 const PHASE_OPTIONS = [
@@ -560,13 +561,7 @@ export default function SanctioningProcessesDrawer({
       open={open}
       onClose={handleClose}
       PaperProps={{
-        sx: {
-          width: {
-            xs: '100vw',
-            md: '70vw'
-          },
-          bgcolor: '#ffffff'
-        }
+        sx: { width: { xs: '100vw', md: '70vw' }, bgcolor: '#ffffff' }
       }}
     >
       <Box
@@ -586,6 +581,7 @@ export default function SanctioningProcessesDrawer({
             <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: '#191c1d' }}>
               Historial Detallado del Proceso
             </Typography>
+            
             <Typography sx={{ color: '#3c494c', mt: 0.5 }}>
               Estado consolidado: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
             </Typography>
@@ -609,11 +605,13 @@ export default function SanctioningProcessesDrawer({
             <Tab label="Formulario" value={DETAIL_TABS.FORM} />
             <Tab label="Fases" value={DETAIL_TABS.PHASES} />
             <Tab label="Bitacora" value={DETAIL_TABS.LOG} />
+            <Tab label="Nueva Actuación" value={DETAIL_TABS.NEW_LOG} />
           </Tabs>
         </Box>
       </Box>
 
       <Box sx={{ p: 3, overflowY: 'auto' }}>
+        {/* Formulario */}
         {activeDetailTab === DETAIL_TABS.FORM && (
           <Box
             sx={{
@@ -645,6 +643,7 @@ export default function SanctioningProcessesDrawer({
           </Box>
         )}
 
+        {/* Fases */}
         {activeDetailTab === DETAIL_TABS.PHASES && (
           <Box>
             <Box
@@ -682,8 +681,19 @@ export default function SanctioningProcessesDrawer({
           </Box>
         )}
 
+        {/* Bitacora */}
         {activeDetailTab === DETAIL_TABS.LOG && (
           <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setActiveDetailTab(DETAIL_TABS.NEW_LOG)}
+              >
+                Nueva actuacion
+              </Button>
+            </Box>
+
             {showBitacoraFilters && (
               <Box
                 sx={{
@@ -722,19 +732,6 @@ export default function SanctioningProcessesDrawer({
                     sx={{ minWidth: 180 }}
                   />
                 </Box>
-
-                <Button
-                  variant="contained"
-                  size="small"
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    bgcolor: '#006971',
-                    '&:hover': { bgcolor: '#00545a' }
-                  }}
-                >
-                  Nueva actuacion
-                </Button>
               </Box>
             )}
 
@@ -753,6 +750,82 @@ export default function SanctioningProcessesDrawer({
                 )}
               </AccordionDetails>
             </Accordion>
+          </Box>
+        )}
+
+        {/* Formulario para nueva bitácora */}
+        {activeDetailTab === DETAIL_TABS.NEW_LOG && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: '#f2f4f5',
+              border: '1px solid rgba(187, 201, 204, 0.35)',
+              minHeight: 220
+            }}
+          >
+            <Typography sx={{ fontWeight: 700, color: '#191c1d', mb: 2 }}>
+              Crear Nueva Entrada de Bitácora
+            </Typography>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Actuación"
+                multiline
+                rows={3}
+                placeholder='Ej: "Auto de inicio de apertura de proceso administrativo de Carácter Ambiental. Auto No. 02221 de 18/04/2016"'
+              />
+
+              <TextField
+                fullWidth
+                label="Observación"
+                multiline
+                rows={6}
+                placeholder='Ej: "Resolución No. 03256000559 de 5 MAR. 2025 Por la cual se resuelve una solicitud de cesación..."'
+              />
+
+              <FormControl fullWidth>
+                <InputLabel id="recipients-label">Destinatario</InputLabel>
+                <Select
+                  labelId="recipients-label"
+                  id="recipients"
+                  label="Destinatario"
+                  defaultValue=""
+                >
+                  <MenuItem value="">Seleccionar destinatario</MenuItem>
+                  <MenuItem value="autoridad">Autoridad Competente</MenuItem>
+                  <MenuItem value="interesado">Interesado/Parte</MenuItem>
+                  <MenuItem value="interno">Interno (Equipo Legal)</MenuItem>
+                  <MenuItem value="secretaria">Secretaría Distrital</MenuItem>
+                  <MenuItem value="procuraduria">Procuraduría</MenuItem>
+                  <MenuItem value="otro">Otro</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<AttachFile />}
+                  sx={{ flex: 1 }}
+                >
+                  Agregar Adjuntos
+                </Button>
+                <Typography variant="caption" color="text.secondary">
+                  {0} archivos seleccionados
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                <Button variant="contained" color="primary">
+                  Guardar Entrada
+                </Button>
+
+                <Button variant="outlined" color="secondary">
+                  Cancelar
+                </Button>
+              </Box>
+            </Box>
           </Box>
         )}
       </Box>
