@@ -245,6 +245,7 @@ export default function SanctioningProcessesDrawer({
   const [bitacoraDateFilter, setBitacoraDateFilter] = useState('');
   const [showBitacoraFilters] = useState(false);
   const [formValues, setFormValues] = useState({});
+  const [newLogAttachments, setNewLogAttachments] = useState([]);
 
   const currentProcessPhase = useMemo(
     () => detectPhaseBucket(selectedProcess?.current_legal_phase || ''),
@@ -252,6 +253,37 @@ export default function SanctioningProcessesDrawer({
   );
 
   const isOpeningPhase = currentProcessPhase === 'FASE I';
+
+  // Función para manejar la selección de archivos
+  const handleSelectNewLogFiles = (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    if (!selectedFiles.length) return;
+
+    setNewLogAttachments((prevFiles) => {
+      const nextFiles = [...prevFiles];
+
+      selectedFiles.forEach((newFile) => {
+        const fileExists = nextFiles.some(
+          (existingFile) => 
+          existingFile.name === newFile.name && 
+          existingFile.size === newFile.size
+        );
+
+        if (!fileExists) {
+          nextFiles.push(newFile);
+        }
+      });
+
+      return nextFiles;
+    });
+  };
+
+  // Función para eliminar un archivo
+  const handleRemoveNewLogFile = (fileIndex) => {
+    setNewLogAttachments((prevFiles) => 
+      prevFiles.filter((_, index) => index !== fileIndex)
+    );
+  };
 
   useEffect(() => {
     setActiveDetailTab(DETAIL_TABS.FORM);
@@ -805,16 +837,54 @@ export default function SanctioningProcessesDrawer({
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button
+                  component="label"
                   variant="outlined"
-                  startIcon={<AttachFile />}
-                  sx={{ flex: 1 }}
+                  size="small"
+                  sx={{ width: 'auto' }}
                 >
                   Agregar Adjuntos
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/png, image/jpg, image/jpeg, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    onChange={handleSelectNewLogFiles}
+                    style={{ display: 'none' }}
+                  />
                 </Button>
                 <Typography variant="caption" color="text.secondary">
-                  {0} archivos seleccionados
+                  {newLogAttachments.length} archivos seleccionados
                 </Typography>
               </Box>
+
+              {newLogAttachments.length > 0 && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {newLogAttachments.map((file, index) => (
+                    <Box
+                      key={`${file.name}-${file.size}-${file.lastModified}`}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        px: 1.5,
+                        py: 1,
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ pr: 2 }}>
+                        {file.name}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveNewLogFile(index)}
+                        aria-label="remove-file"
+                      >
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+              )}
 
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                 <Button variant="contained" color="primary">
