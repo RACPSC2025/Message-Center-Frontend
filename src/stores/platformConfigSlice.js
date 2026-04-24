@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../lib/axios';
 import defaultConfig from '../config/defaultConfig.json';
+import { deepMerge } from '../config/generalConfig';
 
 const initialState = {
   loading: false,
@@ -50,7 +51,7 @@ const platformConfigSlice = createSlice({
         state.loading = false;
         // Si hay datos de la API, usar esos; si no, mantener el default
         if (action.payload) {
-          state.data = action.payload;
+          state.data = deepMerge(JSON.parse(JSON.stringify(defaultConfig)), action.payload);
           state.fetchedFromApi = true;
         }
       })

@@ -3,6 +3,7 @@ import {
   AssignmentTurnedIn,
   CalendarToday,
   CheckCircleOutline,
+  Forum,
   Gavel,
   MailOutline,
   Search
@@ -60,6 +61,13 @@ const MODULE_DEFINITIONS = [
     key: 'sanctioning_processes',
     fallbackLabel: 'Sanctioning Processes',
     icon: <Gavel fontSize="small" />
+  },
+  {
+    configKey: 'legal_comunications',
+    moduleName: 'legal_comunications',
+    key: 'legal_comunications',
+    fallbackLabel: 'Legal Communications',
+    icon: <Forum fontSize="small" />
   }
 ];
 

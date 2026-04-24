@@ -28,6 +28,7 @@ const AmbientalPermit = lazy(() => import('../features/ambientalPermit/Ambiental
 const Tasks = lazy(() => import('../features/tasks/Tasks'));
 const Actions = lazy(() => import('../features/actions/Actions'));
 const Inspections = lazy(() => import('../features/inspections/Inspections'));
+const LegalComunications = lazy(() => import('../features/legalComunications/LegalComunications'));
 
 export const GlobalConfig = createContext();
 
@@ -102,7 +103,8 @@ export default function RoutesFile() {
     LegalMatriz: <MessageCenterLegalMatriz />,
     permit_manager: <PermitManager />,
     ambiental_permit: <AmbientalPermit />,
-    sanctioning_processes: <SanctioningProcesses />
+    sanctioning_processes: <SanctioningProcesses />,
+    legal_comunications: <LegalComunications />
   };
 
   return (

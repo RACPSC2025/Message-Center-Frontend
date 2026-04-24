@@ -8,7 +8,8 @@
       "order": 1,
       "enable": true,
       "modules": {
-        "legal_matrix": true
+        "legal_matrix": true,
+        "legal_comunications": true
       }
     },
     "task_group": {
@@ -156,6 +157,16 @@
         "change_reviewer": true,
         "create_action": true
       },
+      "features": {},
+      "catalogs": {}
+    },
+    "legal_comunications": {
+      "enabled": true,
+      "title_es": "Comunicaciones Legales",
+      "title_en": "Legal Communications",
+      "description": "Módulo de comunicaciones legales",
+      "order": "5",
+      "permissions": {},
       "features": {},
       "catalogs": {}
     }
