@@ -1,4 +1,4 @@
-import { CheckCircle, Edit, TableChart, ViewWeek, Visibility } from '@mui/icons-material';
+import { Add, CheckCircle, Edit, TableChart, ViewWeek, Visibility } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -16,6 +16,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
+import SpeedDialComponent from '../../components/SpeedDialComponent';
 import TableComponent from '../../components/TableComponent';
 import { selectAppliedFilterModel } from '../../stores/filterSlice';
 import {
@@ -25,6 +26,7 @@ import {
   STATUS_META
 } from './permitManagerData';
 import PermitManagerDrawer from './PermitManagerDrawer';
+import PermitManagerFormDrawer from './PermitManagerFormDrawer';
 import PermitManagerKanban from './PermitManagerKanban';
 
 const PAGE_OPTIONS = [20, 50, 100];
@@ -55,15 +57,29 @@ function formatTableDate(dateValue) {
   return parsedDate.format('DD MMM, YYYY');
 }
 
+function buildNextRecordId(records) {
+  const maxId = records.reduce((currentMax, record) => {
+    const numericPart = Number(String(record.recordId ?? '').replace(/\D/g, '')) || 0;
+    return Math.max(currentMax, numericPart);
+  }, 0);
+
+  return `PMR-${String(maxId + 1).padStart(4, '0')}`;
+}
+
 function PermitManager() {
   const { t } = useTranslation();
   const [selectedView, setSelectedView] = useState('kanban');
+  const [permits, setPermits] = useState(() => PERMIT_ROWS.map((row) => ({ ...row })));
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedPermit, setSelectedPermit] = useState(null);
+  const [selectedPermitId, setSelectedPermitId] = useState(null);
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false);
+  const [formMode, setFormMode] = useState('create');
+  const [editingPermit, setEditingPermit] = useState(null);
+  const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const filterData = useSelector((state) => selectAppliedFilterModel(state, 'permit_manager'));
 
   const filteredPermits = useMemo(() => {
-    let result = PERMIT_ROWS;
+    let result = permits;
 
     const keyword = normalizeText(filterData?.filter_keywords);
     if (keyword) {
@@ -105,9 +121,13 @@ function PermitManager() {
     }
 
     return result;
-  }, [filterData]);
+  }, [filterData, permits]);
 
   const permitCount = filteredPermits.length;
+  const selectedPermit = useMemo(
+    () => permits.find((permit) => permit.recordId === selectedPermitId) ?? null,
+    [permits, selectedPermitId]
+  );
 
   const columnDefs = useMemo(
     () =>
@@ -176,9 +196,55 @@ function PermitManager() {
   );
 
   const handleOpenDrawer = (permit) => {
-    setSelectedPermit(permit);
+    setSelectedPermitId(permit.recordId);
     setDrawerOpen(true);
   };
+
+  const handleOpenCreateDrawer = () => {
+    setFormMode('create');
+    setEditingPermit(null);
+    setFormDrawerOpen(true);
+    setOpenSpeedDial(false);
+  };
+
+  const handleOpenEditDrawer = (permit) => {
+    setFormMode('edit');
+    setEditingPermit(permit);
+    setFormDrawerOpen(true);
+  };
+
+  const handleCloseFormDrawer = () => {
+    setFormDrawerOpen(false);
+    setEditingPermit(null);
+  };
+
+  const handleSubmitPermit = (formValues) => {
+    setPermits((previous) => {
+      if (formMode === 'edit' && editingPermit?.recordId) {
+        return previous.map((record) =>
+          record.recordId === editingPermit.recordId
+            ? {
+                ...record,
+                ...formValues,
+                recordId: editingPermit.recordId
+              }
+            : record
+        );
+      }
+
+      return [
+        {
+          ...formValues,
+          recordId: buildNextRecordId(previous)
+        },
+        ...previous
+      ];
+    });
+
+    handleCloseFormDrawer();
+  };
+
+  const speedDialActions = [{ icon: <Add />, name: 'Crear permiso ambiental' }];
 
   return (
     <BaseFeaturePageLayout>
@@ -337,12 +403,24 @@ function PermitManager() {
                           cellRenderer: (params) => (
                             <Stack direction="row" spacing={0.25} alignItems="center">
                               <Tooltip title={t('permit_manager_view', { defaultValue: 'Ver detalle' })}>
-                                <IconButton size="small" onClick={() => handleOpenDrawer(params.data)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleOpenDrawer(params.data);
+                                  }}
+                                >
                                   <Visibility fontSize="small" sx={{ color: '#0B7A84' }} />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title={t('permit_manager_edit', { defaultValue: 'Editar permiso' })}>
-                                <IconButton size="small">
+                                <IconButton
+                                  size="small"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleOpenEditDrawer(params.data);
+                                  }}
+                                >
                                   <Edit fontSize="small" sx={{ color: '#52627A' }} />
                                 </IconButton>
                               </Tooltip>
@@ -382,7 +460,28 @@ function PermitManager() {
         <PermitManagerDrawer
           open={drawerOpen}
           item={selectedPermit}
-          onClose={() => setDrawerOpen(false)}
+          onClose={() => {
+            setDrawerOpen(false);
+            setSelectedPermitId(null);
+          }}
+        />
+
+        <PermitManagerFormDrawer
+          open={formDrawerOpen}
+          mode={formMode}
+          item={editingPermit}
+          records={permits}
+          onClose={handleCloseFormDrawer}
+          onSubmit={handleSubmitPermit}
+        />
+
+        <SpeedDialComponent
+          openSpeedDial={openSpeedDial}
+          handleOpenSpeedDial={() => setOpenSpeedDial(true)}
+          handleCloseSpeedDial={() => setOpenSpeedDial(false)}
+          speedDialActions={speedDialActions}
+          handleClick={() => {}}
+          handleActionClick={handleOpenCreateDrawer}
         />
       </Box>
     </BaseFeaturePageLayout>
