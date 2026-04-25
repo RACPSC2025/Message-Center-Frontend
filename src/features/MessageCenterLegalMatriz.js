@@ -542,12 +542,8 @@ export function Component() {
           handleSetFilterItemValue('LegalMatriz', 'id_requisito_actual', params?.data.id);
           handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', params?.data.id);
           handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-          
-          // Abrir OptionsDrawer en LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS
-          setOptinDrawerData(params?.data);
-          setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
-          setActiveTabId(LEGAL_MATRIX_TAB_IDS.REGULATORY_COMMUNICATIONS);
-          handleOpenOptionsDrawer();
+
+          navigate('/view/legal_comunications');
         };
         
         return (

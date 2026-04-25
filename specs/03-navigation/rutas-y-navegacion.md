@@ -170,7 +170,7 @@ Tab IDs compartidos:
 
 Redirecciones desde la tabla de requerimientos:
 
-- Columna comunications -> regulatory_communications
+- Columna comunications -> `/view/legal_comunications`
 - Columna analysis_with_amatia -> analysis_of_regulation
 - Columna articles -> articles
 - Columna tasks:
@@ -188,6 +188,17 @@ Notas de filtro frontend en tasks:
 - `selected_legal_task_ids` es frontend-only.
 - No se envia al backend de tasks.
 - El backend sigue entregando la lista base y el recorte se realiza en cliente (`task.id` vs `selected_legal_task_ids`).
+
+Contrato LegalMatriz -> LegalComunications:
+
+- Al hacer click en la columna `comunications` de `src/features/MessageCenterLegalMatriz.js`, el frontend navega a `/view/legal_comunications`.
+- Antes de navegar, persiste en Redux bajo `filter.modules.LegalMatriz.filterData`:
+  - `requisito_actual`
+  - `id_requisito_actual`
+  - `selected_requisito_id`
+  - `isSelected_requisito_id = true`
+- `src/features/legalComunications/LegalComunicationsLedger.js` consume `id_requisito_actual` y ejecuta `POST /message_center_api/legal_api/get_request_from_legal` con `{ id_requisito }`.
+- Si no existe `id_requisito_actual`, el modulo muestra estado vacio pidiendo seleccionar un requisito primero.
 
 Reglas de visibilidad en UI (legal_matrix):
 
