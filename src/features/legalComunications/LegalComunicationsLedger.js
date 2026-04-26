@@ -19,13 +19,9 @@ import {
   Chip,
   CircularProgress,
   Collapse,
-  FormControl,
   Grid,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -33,7 +29,6 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  TextField,
   Tooltip,
   Typography
 } from '@mui/material';
@@ -41,18 +36,13 @@ import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import axiosInstance from '../../lib/axios';
-import { selectFilterItemValue } from '../../stores/filterSlice';
+import { selectAppliedFilterModel, selectFilterItemValue } from '../../stores/filterSlice';
 import { showErrorMsg } from '../../utils/others';
-import CreateRequestDialog from './CreateRequestDialog';
-
-const EMPTY_FILTERS = {
-  status: '',
-  source_type: '',
-  mode: '',
-  searchText: ''
-};
-
-export default function LegalComunicationsLedger() {
+export default function LegalComunicationsLedger({
+  refreshKey = 0,
+  onFilteredCountChange = () => {},
+  onOpenCreateRequest = () => {}
+}) {
   const { t } = useTranslation();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,14 +50,13 @@ export default function LegalComunicationsLedger() {
   const [expandedNestedItems, setExpandedNestedItems] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [openCreateDialog, setOpenCreateDialog] = useState(false);
-  const [selectedParentForNew, setSelectedParentForNew] = useState(null);
   const [autoRefreshingUrls, setAutoRefreshingUrls] = useState(false);
   const [lastSignedUrlRefreshAt, setLastSignedUrlRefreshAt] = useState(0);
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
-
   const requisitoActual = useSelector((state) =>
     selectFilterItemValue(state, 'LegalMatriz', 'requisito_actual')
+  );
+  const filterData = useSelector((state) =>
+    selectAppliedFilterModel(state, 'legal_comunications')
   );
   const idRequisitoActual = useSelector((state) =>
     selectFilterItemValue(state, 'LegalMatriz', 'id_requisito_actual')
@@ -81,7 +70,7 @@ export default function LegalComunicationsLedger() {
     }
 
     fetchRequests();
-  }, [idRequisitoActual]);
+  }, [idRequisitoActual, refreshKey]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -140,23 +129,28 @@ export default function LegalComunicationsLedger() {
 
   const applyFilters = (requestsList) => {
     let filtered = requestsList;
+    const keywordFilter = String(filterData?.filter_keywords || '')
+      .trim()
+      .toLowerCase();
+    const statusFilter = filterData?.filter_status || '';
+    const sourceTypeFilter = filterData?.filter_source_type || '';
+    const modeFilter = filterData?.filter_mode || '';
 
-    if (filters.status) {
-      filtered = filtered.filter((request) => request.status === filters.status);
+    if (statusFilter) {
+      filtered = filtered.filter((request) => request.status === statusFilter);
     }
-    if (filters.source_type) {
-      filtered = filtered.filter((request) => request.source_type === filters.source_type);
+    if (sourceTypeFilter) {
+      filtered = filtered.filter((request) => request.source_type === sourceTypeFilter);
     }
-    if (filters.mode) {
-      filtered = filtered.filter((request) => request.mode === filters.mode);
+    if (modeFilter) {
+      filtered = filtered.filter((request) => request.mode === modeFilter);
     }
-    if (filters.searchText) {
-      const searchLower = filters.searchText.toLowerCase();
+    if (keywordFilter) {
       filtered = filtered.filter(
         (request) =>
-          request.description?.toLowerCase().includes(searchLower) ||
-          request.source_name?.toLowerCase().includes(searchLower) ||
-          request.source_reference?.toLowerCase().includes(searchLower)
+          request.description?.toLowerCase().includes(keywordFilter) ||
+          request.source_name?.toLowerCase().includes(keywordFilter) ||
+          request.source_reference?.toLowerCase().includes(keywordFilter)
       );
     }
 
@@ -339,6 +333,19 @@ export default function LegalComunicationsLedger() {
     page * rowsPerPage + rowsPerPage
   );
 
+  useEffect(() => {
+    onFilteredCountChange(filteredRequests.length);
+  }, [filteredRequests.length, onFilteredCountChange]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [
+    filterData?.filter_keywords,
+    filterData?.filter_status,
+    filterData?.filter_source_type,
+    filterData?.filter_mode
+  ]);
+
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
   };
@@ -386,94 +393,7 @@ export default function LegalComunicationsLedger() {
             }`}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          sx={{ textTransform: 'none' }}
-          onClick={() => setOpenCreateDialog(true)}
-        >
-          {t('new_filing_request')}
-        </Button>
       </Box>
-
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label={t('search')}
-            size="small"
-            value={filters.searchText}
-            onChange={(event) =>
-              setFilters((currentFilters) => ({
-                ...currentFilters,
-                searchText: event.target.value
-              }))
-            }
-            sx={{ minWidth: 200 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>{t('status')}</InputLabel>
-            <Select
-              value={filters.status}
-              label={t('status')}
-              onChange={(event) =>
-                setFilters((currentFilters) => ({
-                  ...currentFilters,
-                  status: event.target.value
-                }))
-              }
-            >
-              <MenuItem value="">{t('Todos')}</MenuItem>
-              <MenuItem value="open">{t('open')}</MenuItem>
-              <MenuItem value="in_progress">{t('in_progress')}</MenuItem>
-              <MenuItem value="expired">{t('expired')}</MenuItem>
-              <MenuItem value="resolved">{t('resolved')}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>{t('source_type')}</InputLabel>
-            <Select
-              value={filters.source_type}
-              label={t('source_type')}
-              onChange={(event) =>
-                setFilters((currentFilters) => ({
-                  ...currentFilters,
-                  source_type: event.target.value
-                }))
-              }
-            >
-              <MenuItem value="">{t('all')}</MenuItem>
-              <MenuItem value="GOVT">{t('government')}</MenuItem>
-              <MenuItem value="USER">{t('user_community')}</MenuItem>
-              <MenuItem value="INTERNAL">{t('internal')}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>{t('communication_mode')}</InputLabel>
-            <Select
-              value={filters.mode}
-              label={t('communication_mode')}
-              onChange={(event) =>
-                setFilters((currentFilters) => ({
-                  ...currentFilters,
-                  mode: event.target.value
-                }))
-              }
-            >
-              <MenuItem value="">{t('all')}</MenuItem>
-              <MenuItem value="LETTER">{t('letter')}</MenuItem>
-              <MenuItem value="EMAIL">{t('email')}</MenuItem>
-              <MenuItem value="PORTAL">{t('portal')}</MenuItem>
-              <MenuItem value="IN_PERSON">{t('in_person')}</MenuItem>
-              <MenuItem value="PHONE">{t('phone')}</MenuItem>
-            </Select>
-          </FormControl>
-          {(filters.status || filters.source_type || filters.mode || filters.searchText) && (
-            <Button size="small" onClick={() => setFilters(EMPTY_FILTERS)}>
-              {t('clear_filters')}
-            </Button>
-          )}
-        </Box>
-      </Paper>
 
       <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
         <Table>
@@ -1552,7 +1472,7 @@ export default function LegalComunicationsLedger() {
                                                       color="success"
                                                       sx={{ textTransform: 'none' }}
                                                       onClick={() => {
-                                                        setSelectedParentForNew({
+                                                        onOpenCreateRequest({
                                                           id: nestedRequest.id_request,
                                                           type: 'response',
                                                           order:
@@ -1561,7 +1481,6 @@ export default function LegalComunicationsLedger() {
                                                               10
                                                             ) + 1
                                                         });
-                                                        setOpenCreateDialog(true);
                                                       }}
                                                     >
                                                       {t('add_response')}
@@ -1573,7 +1492,7 @@ export default function LegalComunicationsLedger() {
                                                       color="warning"
                                                       sx={{ textTransform: 'none' }}
                                                       onClick={() => {
-                                                        setSelectedParentForNew({
+                                                        onOpenCreateRequest({
                                                           id: nestedRequest.id_request,
                                                           type: 'reminder',
                                                           order:
@@ -1582,7 +1501,6 @@ export default function LegalComunicationsLedger() {
                                                               10
                                                             ) + 1
                                                         });
-                                                        setOpenCreateDialog(true);
                                                       }}
                                                     >
                                                       {t('add_reminder')}
@@ -1630,19 +1548,6 @@ export default function LegalComunicationsLedger() {
         />
       </TableContainer>
 
-      <CreateRequestDialog
-        open={openCreateDialog}
-        parentContext={selectedParentForNew}
-        onClose={() => {
-          setOpenCreateDialog(false);
-          setSelectedParentForNew(null);
-        }}
-        onSuccess={() => {
-          fetchRequests();
-          setOpenCreateDialog(false);
-          setSelectedParentForNew(null);
-        }}
-      />
     </Box>
   );
 }
