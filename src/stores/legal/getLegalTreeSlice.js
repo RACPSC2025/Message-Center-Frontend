@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -11,7 +11,7 @@ export const getLegalTree = createAsyncThunk(
   'legal/get_legal_tree',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/get_legal_tree', data);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/get_legal_tree', data);
       return response?.data;
     } catch (error) {
       if (error.response && error.response.data.message) {

@@ -1,4 +1,4 @@
-
+﻿
 
 import React, { useEffect, useState } from 'react';
 import { CompactPicker } from 'react-color';
@@ -60,7 +60,7 @@ const AddTagDialog = ({ open, setIsOpen, taskId, onTagsSaved }) => {
   useEffect(() => {
     if (open) {
       setLoading(true);
-      axiosInstance.get('/tasklist_api/list_tags').then(res => {
+      axiosInstance.get('/message_center_api/tasklist_api/list_tags').then(res => {
         setTags(res.data.data || []);
         setLoading(false);
       }).catch(() => {
@@ -97,7 +97,7 @@ const AddTagDialog = ({ open, setIsOpen, taskId, onTagsSaved }) => {
       if (createdTags.length > 0) {
         payload.new_tags = createdTags;
       }
-      await axiosInstance.post('/tasklist_api/add_tag_to_task', payload);
+      await axiosInstance.post('/message_center_api/tasklist_api/add_tag_to_task', payload);
       if (setIsOpen) setIsOpen(false);
       // Refrescar la lista de tareas al guardar
       dispatch(fetchListTaskNew());

@@ -1,4 +1,4 @@
-//import { useTranslation } from 'react-i18next';
+﻿//import { useTranslation } from 'react-i18next';
 //const { t } = useTranslation();
 import i18n from 'i18next';
 import {
@@ -184,7 +184,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/list_task_status'
+        api_url: '/message_center_api/tasklist_api/list_task_status'
       },
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
@@ -208,7 +208,7 @@ export const filterConfigs = {
       //options: [],
       options: [],
       api_details: {
-        api_url: '/tasklist_api/list_tags'
+        api_url: '/message_center_api/tasklist_api/list_tags'
       },
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
@@ -273,7 +273,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_task_status'
+        api_url: '/message_center_api/tasklist_api/list_task_status'
       }
     },
     {
@@ -289,7 +289,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_level1'
+        api_url: '/message_center_api/tasklist_api/list_level1'
       },
       level: 1
     },
@@ -300,7 +300,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/get_level2 '
+        api_url: '/message_center_api/tasklist_api/get_level2 '
       },
       level: 2
     },
@@ -311,7 +311,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_level1'
+        api_url: '/message_center_api/tasklist_api/list_level1'
       },
       level: 1
     },
@@ -322,7 +322,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     }
   ],
@@ -337,7 +337,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -347,7 +347,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -357,7 +357,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -367,7 +367,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -377,7 +377,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -387,7 +387,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -397,7 +397,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     dateRangeField,
@@ -408,7 +408,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     },
     {
@@ -418,7 +418,7 @@ export const filterConfigs = {
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/tasklist_api/tasklist_api/list_location'
+        api_url: '/message_center_api/tasklist_api/list_location'
       }
     }
   ],

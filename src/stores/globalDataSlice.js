@@ -1,4 +1,4 @@
-// features/globalDataSlice.js
+﻿// features/globalDataSlice.js
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import axiosInstance from '../lib/axios';
@@ -10,7 +10,7 @@ export const fetchUserDetails = createAsyncThunk(
   'globalData/fetchUserDetails',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/getUserDetails');
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/getUserDetails');
       const data = response.data.data;
       return data;
     } catch (error) {
@@ -25,7 +25,7 @@ export const fetchUserDetails = createAsyncThunk(
   'globalData/fetchUserDetails',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('/tasklist_api/getUserDetails', {
+      const response = await axiosInstance.get('/message_center_api/tasklist_api/getUserDetails', {
         headers: {
           //'Auth-Token': localStorage.getItem('token') // o tu método de obtener token
           'Auth-Token': '$2y$10$HYG/Oj2NUm2wKLquLxct7.CBHw4.B2p3Hs67vimGaWZldraKmwcSa'
@@ -71,7 +71,7 @@ export const fetchListOfUsers = createAsyncThunk(
   'globalData/fetchListOfUsers',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/list_administradores');
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/list_administradores');
       const data = response.data.data;
       return data;
     } catch (error) {
@@ -84,7 +84,7 @@ export const fetchRegions = createAsyncThunk(
   'globalData/fetchRegions',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/list_level1');
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/list_level1');
       const data = response.data.data;
       return data;
     } catch (error) {
@@ -101,7 +101,7 @@ export const fetchNewMessageCount = createAsyncThunk(
       const formData = new FormData();
       formData.append('timestamp', normalizeTimestamp(timestamp));
 
-      const response = await axiosInstance.post('/tasklist_api/check_new_message_counts', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/check_new_message_counts', formData);
       const data = response.data.data;
       return data;
     } catch (error) {

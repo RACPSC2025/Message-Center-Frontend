@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -54,7 +54,7 @@ const provisionalResponse = {
           "level_4"
         ],
         "api_details": {
-          "api_url": "tasklist_api/get_level2",
+          "api_url": "/message_center_api/tasklist_api/get_level2",
           "param_key": "id_level1",
           "parent_element": "level_1"
         }
@@ -71,7 +71,7 @@ const provisionalResponse = {
           "level_4"
         ],
         "api_details": {
-          "api_url": "tasklist_api/get_level3",
+          "api_url": "/message_center_api/tasklist_api/get_level3",
           "param_key": "id_level2",
           "parent_element": "level_2"
         }
@@ -85,7 +85,7 @@ const provisionalResponse = {
         "gridSize": "6",
         "options": [],
         "api_details": {
-          "api_url": "tasklist_api/get_level4",
+          "api_url": "/message_center_api/tasklist_api/get_level4",
           "param_key": "id_level3",
           "parent_element": "level_3"
         }

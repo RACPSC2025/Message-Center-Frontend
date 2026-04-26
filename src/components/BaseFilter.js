@@ -1,4 +1,4 @@
-import FilterListOffIcon from '@mui/icons-material/FilterListOff';
+﻿import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, IconButton, InputAdornment, Typography } from '@mui/material';
 import { isEmpty } from 'radash';
@@ -292,7 +292,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
   }
 
   // const handleChangeFilterItemValue = (value, level) => {
-  //   const apiUrl = `/tasklist_api/tasklist_api/get_level${level + 1}`;
+  //   const apiUrl = `/message_center_api/tasklist_api/get_level${level + 1}`;
   //   const formData = new FormData();
   //   formData.append(`id_level${level}`, value);
 
@@ -386,7 +386,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
     }
 
     const nextFieldId = nextFieldConfig.name; // Get the ID for Level 2 (e.g., "filter_company")
-    const apiUrl = `/tasklist_api/tasklist_api/get_level${nextLevel}`;
+    const apiUrl = `/message_center_api/tasklist_api/get_level${nextLevel}`;
     const formData = new FormData();
     formData.append(`id_level${level}`, value);
 

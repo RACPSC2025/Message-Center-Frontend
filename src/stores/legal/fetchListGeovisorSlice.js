@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -11,7 +11,7 @@ export const fetchListGeovisor = createAsyncThunk(
   'legal/list_geovisor',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/list_geovisor');
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/list_geovisor');
       return response?.data;
     } catch (error) {
       if (error.response && error.response.data.message) {

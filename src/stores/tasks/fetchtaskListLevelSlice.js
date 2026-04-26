@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -18,7 +18,7 @@ export const fetchTaskListLevel = createAsyncThunk(
     const levelUrl = level == 1 ? 'list_level1' : `get_level${level}`;
 
     try {
-      const response = await axiosInstance.post(`/tasklist_api/${levelUrl}`, formData);
+      const response = await axiosInstance.post(`/message_center_api/tasklist_api/${levelUrl}`, formData);
       return {
         level,
         data: response?.data || []

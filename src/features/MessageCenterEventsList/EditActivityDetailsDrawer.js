@@ -1,4 +1,4 @@
-import CloseIcon from '@mui/icons-material/Close';
+﻿import CloseIcon from '@mui/icons-material/Close';
 import { AppBar, Box, Button, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +60,7 @@ function EditActivityDetailsDrawer({
       formData.append('tags', activity.tags);
       // dispatch(updateTaskDetails(formData)).then((data) => {});
       // const response = await axiosInstance.post(
-      //   '/tasklist_api/update_task_basic_details',
+      //   '/message_center_api/tasklist_api/update_task_basic_details',
       //   formData
       // );
       setPostStatus('success');

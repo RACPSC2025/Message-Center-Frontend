@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -9,7 +9,7 @@ const initialState = {
 
 export const fetchTaskListStatus = createAsyncThunk('task/count', async (id, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post('/tasklist_api/list_task_status');
+    const response = await axiosInstance.post('/message_center_api/tasklist_api/list_task_status');
     return response?.data;
   } catch (error) {
     return rejectWithValue(error.message);

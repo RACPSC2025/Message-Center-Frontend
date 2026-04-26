@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -17,7 +17,7 @@ export const fetchModuleNavigationIds = createAsyncThunk(
       formData.append('module_table_record_id', params.module_table_record_id);
 
       const response = await axiosInstance.post(
-        '/tasklist_api/get_module_navigation_ids_amatia_express',
+        '/message_center_api/tasklist_api/get_module_navigation_ids_amatia_express',
         formData
       );
       return response.data;

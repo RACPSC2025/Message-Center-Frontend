@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance, { fileHeader } from '../../lib/axios';
 
 const initialState = {
@@ -13,7 +13,7 @@ export const fetchMessageFormFields = createAsyncThunk(
     const { formData, file } = data;
     try {
       const response = await axiosInstance.post(
-        '/tasklist_api/message_form_fields',
+        '/message_center_api/tasklist_api/message_form_fields',
         formData,
         file && fileHeader
       );

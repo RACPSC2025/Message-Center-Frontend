@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -19,7 +19,7 @@ export const uploadCommentAttachments = createAsyncThunk(
   'comments/upload_comment_attachments',
   async (data = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('tasklist_api/upload_comment_attachments', data);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/upload_comment_attachments', data);
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -33,7 +33,7 @@ export const uploadCommentAttachments = createAsyncThunk(
   async (data = {}, { rejectWithValue }) => {
     try {
       const payload = data?.formData ?? data;
-      const response = await axiosInstance.post('tasklist_api/upload_comment_attachments_amatia_express', payload);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/upload_comment_attachments_amatia_express', payload);
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);

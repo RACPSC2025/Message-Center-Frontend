@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../lib/axios';
 
 export const fetchTaskTags = createAsyncThunk(
   'taskCreation/fetchTaskTags',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('tasklist_api/list_tags');
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/list_tags');
       const data = response.data.data;
       return data;
     } catch (error) {

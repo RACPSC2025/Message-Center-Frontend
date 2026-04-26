@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -12,7 +12,7 @@ export const fetchGetCountries = createAsyncThunk(
   'legal/get_active_countries',
   async (formData = {}, { rejectWithValue }) => {
     try {
-      //const response = await axiosInstance.post('/tasklist_api/get_active_countries', formData);
+      //const response = await axiosInstance.post('/message_center_api/tasklist_api/get_active_countries', formData);
       const response = await axiosInstance.get(`/message_center_api/legal_api/get_active_countries`);
       console.log("responseCountry");
       console.log(response);
@@ -27,7 +27,7 @@ export const fetchListTaskNew = createAsyncThunk(
   'task/list_tasks_new_complete_amatia_express',
   async (formData = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/list_tasks_new_complete_amatia_express', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/list_tasks_new_complete_amatia_express', formData);
       
       console.log("responseTask");
       console.log(response);
@@ -40,7 +40,7 @@ export const fetchListTaskNew = createAsyncThunk(
 
 /*
 export const updateTaskProgress = createAsyncThunk(
-  'tasklist_api/update_task_progress_post',
+  '/message_center_api/tasklist_api/update_task_progress_post',
   async ({ id, progress }, { rejectWithValue }) => {
     try {
       // Preparar datos para el backend
@@ -50,7 +50,7 @@ export const updateTaskProgress = createAsyncThunk(
       };
 
       // Llamada al API
-      const response = await axiosInstance.post('/tasklist_api/update_task_progress_post', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/update_task_progress_post', formData);
 
       console.log("responseUpdateTaskProgress: ", response);
 
@@ -63,7 +63,7 @@ export const updateTaskProgress = createAsyncThunk(
 );
 */
 export const updateTaskProgress = createAsyncThunk(
-  'tasklist_api/update_task_progress_post',
+  '/message_center_api/tasklist_api/update_task_progress_post',
   async ({ id, progress }, { rejectWithValue }) => {
     try {
       // Usar FormData para enviar al backend
@@ -73,7 +73,7 @@ export const updateTaskProgress = createAsyncThunk(
 
       // Llamada al API
       const response = await axiosInstance.post(
-        '/tasklist_api/update_task_progress_post',
+        '/message_center_api/tasklist_api/update_task_progress_post',
         formData
       );
 

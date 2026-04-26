@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -11,7 +11,7 @@ export const submitMessageData = createAsyncThunk(
   'dashboard/message_form_data_submit',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/message_form_data_submit', data);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/message_form_data_submit', data);
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);

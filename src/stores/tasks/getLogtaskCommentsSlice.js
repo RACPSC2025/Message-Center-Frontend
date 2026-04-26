@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -13,7 +13,7 @@ export const getLogtaskComments = createAsyncThunk(
     const { logtask_id, formData } = data;
     try {
       const response = await axiosInstance.post(
-        `/amatia/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
+        `/message_center_api/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
         formData
       );
       return response?.data;

@@ -6,7 +6,7 @@ const storage = {
     return window.localStorage.getItem('Auth-Token');
   },
   clearToken: () => {
-    window.localStorage.removeItem(`${storagePrefix}token`);
+    window.localStorage.removeItem('Auth-Token');
   },
   getSystemToken: () => {
     return window.localStorage.getItem('selectedGroup');

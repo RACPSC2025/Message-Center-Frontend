@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField, Typography } from '@mui/material';
 import {
   Lock as CloseActionIcon,
@@ -615,7 +615,7 @@ export default function ActionTable({
   
   const fetchUserName = async (user_id) => {
     try {
-      const response = await axiosInstance.post(`/tasklist_api/list_administradores/`);
+      const response = await axiosInstance.post(`/message_center_api/tasklist_api/list_administradores/`);
       const filteredId = response.data.data.filter(
         (user) => parseInt(user.value) === parseInt(user_id)
       );
@@ -629,7 +629,7 @@ export default function ActionTable({
   useEffect(() => {
     const fetchAdministradores = async () => {
       try {
-        const response = await axiosInstance.post(`/tasklist_api/list_administradores/`);
+        const response = await axiosInstance.post(`/message_center_api/tasklist_api/list_administradores/`);
         if (response.data.status === 200) {
           setAdministradores(response.data.data);
         }

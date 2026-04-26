@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 import qs from "qs"; // Para formatear los datos como application/x-www-form-urlencoded
 
@@ -46,7 +46,7 @@ export const fetchListLegalsComplete = createAsyncThunk(
       ///message_center_api/legal_api/list_legals
       ///message_center_api/legal_api/get_legal_details
       //get_legal_tree
-      ///tasklist_api/list_tasks
+      ///message_center_api/tasklist_api/list_tasks
       //dashboard_tasks
       /*
       const response = await axiosInstance.post('/message_center_api/legal_api/get_data_requisito', {
@@ -138,7 +138,7 @@ export const evalWithIA = createAsyncThunk(
         //'/tasklegal/legal/invoke',
         //'/message_center_api/tasklegal/legal/get_requirements_ia',
         '/message_center_api/legal_api/get_requirements_ia',
-        //'/tasklist_api/get_requirements_ia',
+        //'/message_center_api/tasklist_api/get_requirements_ia',
         { dato: text } // ← aquí solo se envía el texto
       );
       //console.log("TestResponseIA");
@@ -285,7 +285,7 @@ export const evalAnalysis = createAsyncThunk(
         //'/tasklegal/legal/invoke',
         //'/message_center_api/tasklegal/legal/get_requirements_ia',
         '/message_center_api/legal_api/get_standard_analysis',
-        //'/tasklist_api/get_requirements_ia',
+        //'/message_center_api/tasklist_api/get_requirements_ia',
         { dato: text } // ← aquí solo se envía el texto
       );
       //console.log("TestResponseIA");
@@ -475,12 +475,12 @@ export const get_articles_knowledge_base = createAsyncThunk(
 );
 
 export const evalpdfAnalysisStandard = createAsyncThunk(
-  '/tasklist_api/get_pdfstandard_analysis',
+  '/message_center_api/tasklist_api/get_pdfstandard_analysis',
   async (formData, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
         '/message_center_api/legal_api/get_pdfstandard_analysis',
-        //'/tasklist_api/get_requirements_attachments_ia', 
+        //'/message_center_api/tasklist_api/get_requirements_attachments_ia', 
         formData, 
       );
       //console.log("TestResponseIA");
@@ -501,7 +501,7 @@ export const obtenerRequisitoData = createAsyncThunk(
     console.log("ID");
     console.log(id);
   try {
-    const response = await axiosInstance.get(`/tasklegal/legal/get_data_requisito_amatia_express/${id}`);
+    const response = await axiosInstance.get(`/message_center_api/tasklegal/legal/get_data_requisito_amatia_express/${id}`);
     /*
     const response = await axiosInstance.post(
       "/message_center_api/legal_api/get_data_requisito", // Ruta del backend

@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -12,7 +12,7 @@ export const fetchLogtaskList = createAsyncThunk(
   async (data = {}, { rejectWithValue }) => {
     const { task_id } = data;
     try {
-      const response = await axiosInstance.post(`/tasklist_api/list_logtasks/${parseInt(task_id)}`);
+      const response = await axiosInstance.post(`/message_center_api/tasklist_api/list_logtasks/${parseInt(task_id)}`);
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);

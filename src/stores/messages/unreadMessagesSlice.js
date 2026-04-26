@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 // Thunk para obtener el contador de mensajes no leídos
@@ -12,7 +12,7 @@ export const fetchUnreadMessagesCount = createAsyncThunk(
       }
       
       const response = await axiosInstance.post(
-        'tasklist_api/get_unread_messages_count',
+        '/message_center_api/tasklist_api/get_unread_messages_count',
         formData
       );
       

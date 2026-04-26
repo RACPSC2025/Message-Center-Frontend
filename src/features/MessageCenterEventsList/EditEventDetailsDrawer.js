@@ -1,4 +1,4 @@
-import { AccessTime, ChatBubbleOutline, InsertDriveFile, MoreVert } from '@mui/icons-material';
+﻿import { AccessTime, ChatBubbleOutline, InsertDriveFile, MoreVert } from '@mui/icons-material';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import CloseIcon from '@mui/icons-material/Close';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -437,7 +437,7 @@ function EditEventDetailsDrawer({
 
   const fetchUserName = async (user_id) => {
     try {
-      const response = await axiosInstance.post(`/tasklist_api/list_administradores/`);
+      const response = await axiosInstance.post(`/message_center_api/tasklist_api/list_administradores/`);
       const filteredId = response.data.data.filter(
         (user) => parseInt(user.value) === parseInt(user_id)
       );
@@ -454,7 +454,7 @@ function EditEventDetailsDrawer({
       let formData = new FormData();
       formData.append('comment_type', 'executed');
       const response = await axiosInstance.post(
-        `/tasklist_api/get_logtask_comments/${logtask_id}`,
+        `/message_center_api/tasklist_api/get_logtask_comments/${logtask_id}`,
         formData
       );
       console.log('responseComments', response.data);
@@ -496,7 +496,7 @@ function EditEventDetailsDrawer({
       formData.append('comment_type', 'executed');
 
       const response = await axiosInstance.post(
-        `/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
+        `/message_center_api/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
         formData
       );
 
@@ -528,7 +528,7 @@ function EditEventDetailsDrawer({
       formData.append("comment_type", "revisor");
 
       const response = await axiosInstance.post(
-        `/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
+        `/message_center_api/tasklist_api/get_logtask_comments_amatia_express/${logtask_id}`,
         formData
       );
 
@@ -569,7 +569,7 @@ function EditEventDetailsDrawer({
     const formData = new FormData();
     formData.append('comment_id', comment_id);
     try {
-      const response = await axiosInstance.post('/tasklist_api/delete_logtask_comment', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/delete_logtask_comment', formData);
       setDeleteCommentReponse(response.data.data);
       return response.data.data;
     } catch (error) {
@@ -579,7 +579,7 @@ function EditEventDetailsDrawer({
     }
   };
 
-  // TODO: revisar ese fetch, endpoint /tasklist_api/get_logtask_comments_amatia_express/{id}
+  // TODO: revisar ese fetch, endpoint /message_center_api/tasklist_api/get_logtask_comments_amatia_express/{id}
 
   useEffect(() => {
     const currentLogTaskId = logTaskDetails?.id;
@@ -703,7 +703,7 @@ function EditEventDetailsDrawer({
       formData.append('comment_type', commentType);
       formData.append('user_id', userData.id_administradores);
       formData.append('user_name', userData.fullname);
-      const response = await axiosInstance.post('tasklist_api/add_logtask_comments_messagecenter', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/add_logtask_comments_messagecenter', formData);
       return response.data;
     } catch (error) {
       console.error('Error posting comment ', error);
@@ -718,7 +718,7 @@ function EditEventDetailsDrawer({
     formData.append('sharepoint_link', addCommentForm.sharepoint_link);
     formData.append('comment', addCommentForm.comment);
     try {
-      const response = await axiosInstance.post('tasklist_api/edit_logtask_comment', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/edit_logtask_comment', formData);
       setLogtaskExecutedComments([]);
       setLogtaskRevisorComments([]);
       fetchLogtaskComments(logTaskDetails.id);
@@ -788,7 +788,7 @@ function EditEventDetailsDrawer({
     formData.append('logtask_id', logTaskDetails.id);
     formData.append('percentage', parseInt(percentage));
     try {
-      const response = await axiosInstance.post('tasklist_api/update_logtask_progress', formData);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/update_logtask_progress', formData);
       setProgressUpdated(true);
       return response.data.data;
     } catch (error) {

@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+﻿import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../../lib/axios';
 
 const initialState = {
@@ -11,7 +11,7 @@ export const getPositionUserList = createAsyncThunk(
   'task/get_position_user_list',
   async (data = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/tasklist_api/get_position_user_list');
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/get_position_user_list');
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);
