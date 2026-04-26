@@ -1,6 +1,6 @@
 {
-  "apiUrl": "http://ocensa-ambiental/",
-  "baseName": "/",
-  "environment": "development",
+  "apiUrl": "http://localhost:8080/",
+  "baseName": "/message-center",
+  "environment": "local",
   "version": "0.3.6"
 }
