@@ -1,10 +1,8 @@
 // Runtime configuration loader
-// Expected config.json structure:
-// { "apiUrl": string, "baseName": string, "environment": string, "version": string }
-//
+// Primary source: public/config.js IIFE loaded via <script> in index.html — sets window.__APP_CONFIG__ synchronously.
+// Fallback: DEFAULT_CONFIG (used only if config.js fails to load).
 // Config is stored in window.__APP_CONFIG__ for synchronous access from any module.
 
-const REQUIRED_FIELDS = ['apiUrl', 'baseName', 'environment', 'version'];
 
 const DEFAULT_CONFIG = {
   apiUrl: '',
@@ -16,39 +14,18 @@ const DEFAULT_CONFIG = {
 /**
  * Validate that config has all required fields
  */
-const validateConfig = (config) => {
-  const missing = REQUIRED_FIELDS.filter((field) => config[field] == null);
-  if (missing.length > 0) {
-    console.warn(`⚠️ Config missing fields: ${missing.join(', ')}. Using defaults for those.`);
-    return { ...DEFAULT_CONFIG, ...config };
-  }
-  return config;
-};
-
 /**
- * Load configuration from public/config.json and store in window.__APP_CONFIG__
- * This allows changing config without rebuilding the app
+ * Load configuration — reads window.__APP_CONFIG__ set by public/config.js IIFE.
  */
 export const loadRuntimeConfig = async () => {
   if (window.__APP_CONFIG__) {
     return window.__APP_CONFIG__;
   }
 
-  try {
-    const response = await fetch(`${process.env.PUBLIC_URL}/config.json?t=${Date.now()}`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to load config: ${response.status}`);
-    }
-
-    const config = await response.json();
-    window.__APP_CONFIG__ = Object.freeze(validateConfig(config));
-    console.log('✅ Runtime configuration loaded:', window.__APP_CONFIG__);
-    return window.__APP_CONFIG__;
-  } catch (error) {
-    console.error('❌ Error loading runtime config:', error);
-    throw error;
-  }
+  // config.js IIFE did not run — use DEFAULT_CONFIG so the app still starts.
+  console.warn('⚠️ window.__APP_CONFIG__ not set by config.js. Using default configuration.');
+  window.__APP_CONFIG__ = Object.freeze(DEFAULT_CONFIG);
+  return window.__APP_CONFIG__;
 };
 
 /**

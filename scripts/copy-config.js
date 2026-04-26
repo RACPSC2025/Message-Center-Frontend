@@ -1,18 +1,18 @@
 const fs = require('fs');
 const path = require('path');
 
-// Copy config.production.json to build/config.json so local dev URLs don't leak into builds
-const sourcePath = path.join(__dirname, '../public/config.production.json');
-const destPath = path.join(__dirname, '../build/config.json');
+// config.js (IIFE) es copiado automáticamente por CRA desde public/ → build/.
+// Este script verifica que llegó y reporta su presencia.
+const configJsPath = path.join(__dirname, '../build/config.js');
 
 try {
-  if (fs.existsSync(sourcePath)) {
-    fs.copyFileSync(sourcePath, destPath);
-    console.log('✅ config.production.json copied to build/config.json');
+  if (fs.existsSync(configJsPath)) {
+    console.log('✅ config.js presente en build/');
   } else {
-    console.warn('⚠️  config.production.json not found in public folder');
+    console.warn('⚠️  config.js no encontrado en build/ — verifica public/config.js');
+    process.exit(1);
   }
 } catch (error) {
-  console.error('❌ Error copying config.json:', error);
+  console.error('❌ Error verificando config.js:', error);
   process.exit(1);
 }
