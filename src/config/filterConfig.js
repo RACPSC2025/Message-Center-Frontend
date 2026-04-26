@@ -174,6 +174,62 @@ export const filterConfigs = {
       group_by_label: 'FilterBy'
     }
   ],
+  legal_comunications: [
+    {
+      labelKey: 'search',
+      type: 'text-search-field',
+      name: 'filter_keywords',
+      default_value: '',
+      group_by_key: 'search_by',
+      group_by_label: 'SearchBy',
+      fieldStyle: {
+        width: '100%',
+        borderRadius: '5px'
+      }
+    },
+    {
+      labelKey: 'status',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_status',
+      default_value: '',
+      options: [
+        { value: 'open', label: i18n.t('open') },
+        { value: 'in_progress', label: i18n.t('in_progress') },
+        { value: 'expired', label: i18n.t('expired') },
+        { value: 'resolved', label: i18n.t('resolved') }
+      ],
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'source_type',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_source_type',
+      default_value: '',
+      options: [
+        { value: 'GOVT', label: i18n.t('government') },
+        { value: 'USER', label: i18n.t('user_community') },
+        { value: 'INTERNAL', label: i18n.t('internal') }
+      ],
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'communication_mode',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_mode',
+      default_value: '',
+      options: [
+        { value: 'LETTER', label: i18n.t('letter') },
+        { value: 'EMAIL', label: i18n.t('email') },
+        { value: 'PORTAL', label: i18n.t('portal') },
+        { value: 'IN_PERSON', label: i18n.t('in_person') },
+        { value: 'PHONE', label: i18n.t('phone') }
+      ],
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    }
+  ],
   events: [
     textSearchField,
     // Configuration for events filters

@@ -70,6 +70,18 @@ Importante:
   - no se envia al backend de tasks;
   - se aplica en `TasksListView`, `TaskTableList` y calendario de `Tasks` para filtrar localmente los registros cargados.
 
+## Nota de contrato LegalMatriz -> LegalComunications
+
+- La columna `comunications` de `LegalMatriz` ya no abre el drawer interno `regulatory_communications`.
+- Ahora navega a `/view/legal_comunications` y mantiene el contexto del requisito en Redux usando el modulo `LegalMatriz`.
+- Antes de navegar, el frontend guarda:
+  - `filter.modules.LegalMatriz.filterData.requisito_actual = <row completa>`
+  - `filter.modules.LegalMatriz.filterData.id_requisito_actual = <id_requisito>`
+  - `filter.modules.LegalMatriz.filterData.selected_requisito_id = <id_requisito>`
+  - `filter.modules.LegalMatriz.filterData.isSelected_requisito_id = true`
+- `src/features/legalComunications/LegalComunicationsLedger.js` lee `id_requisito_actual` desde Redux y usa ese valor para consultar comunicaciones legales.
+- Este contexto es compartido con otros tabs/flows de matriz legal (`Articles`, `AnalysisRegulation`, `CreateRequestDialog`), por lo que no se creo un nuevo slice.
+
 Banner de contexto en tasks:
 
 - Cuando el filtro por requisito esta activo, `Tasks` muestra una etiqueta superior con:

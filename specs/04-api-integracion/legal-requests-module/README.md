@@ -19,20 +19,27 @@ Aplica al consumo frontend de las APIs del modulo:
 - Auth: header Auth-Token (JWT)
 - Idioma: header Selected-Language con valores es o en
 - Cliente frontend: axiosInstance (src/lib/axios.js)
-- Vista principal frontend: src/features/MessageCenterLegalMatriz/ComunicationsLedger.js
+- Vista principal frontend actual: src/features/legalComunications/LegalComunicationsLedger.js
+- Implementacion legacy de referencia: src/features/MessageCenterLegalMatriz/ComunicationsLedger.js
 
 ## Entrada desde tabla LegalMatriz
 
 Integracion de navegacion frontend:
 
 - Archivo origen: src/features/MessageCenterLegalMatriz.js (columna comunications)
-- Destino: src/features/MessageCenterLegalMatriz/OptionsDrawer.js
-- Tab destino: regulatory_communications
+- Ruta destino: `/view/legal_comunications`
+- Componente destino: src/features/legalComunications/LegalComunications.js
 
 Regla de implementacion:
 
-- La apertura del drawer usa tabId (regulatory_communications), no indice numerico.
-- El tabId esta centralizado en src/features/MessageCenterLegalMatriz/tabIds.js.
+- Antes de navegar, LegalMatriz persiste en Redux el requisito seleccionado bajo `filter.modules.LegalMatriz.filterData`.
+- Claves requeridas:
+  - `requisito_actual`
+  - `id_requisito_actual`
+  - `selected_requisito_id`
+  - `isSelected_requisito_id = true`
+- `LegalComunicationsLedger` usa `id_requisito_actual` para consultar la API de comunicaciones.
+- El drawer `regulatory_communications` de `OptionsDrawer` permanece como flujo legacy/referencia, pero la navegacion principal ya apunta al modulo dedicado.
 
 ## Modelo de datos funcional
 Una solicitud legal vive dentro de una cadena de relacion:
@@ -144,6 +151,7 @@ export const getFileDownloadUrl = (file) =>
 
 ## Checklist de implementacion
 - [ ] El listado usa get_request_from_legal con id_requisito.
+- [ ] El modulo dedicado `/view/legal_comunications` depende de `LegalMatriz.id_requisito_actual` en Redux.
 - [ ] La UI agrupa por id_request_parent y order.
 - [ ] Preview abre preview_url.
 - [ ] Download usa download_url cuando exista.
@@ -159,6 +167,10 @@ Cuando una IA actualice este modulo, debe:
 5. Documentar cambios de contrato API en este archivo.
 
 ## Historial de cambios
+### 2026-04-25
+- La navegacion desde la columna `comunications` de LegalMatriz cambia del drawer `regulatory_communications` al modulo dedicado `/view/legal_comunications`.
+- El frontend mantiene el contexto del requisito seleccionado en Redux (`LegalMatriz.id_requisito_actual`) y el ledger nuevo reutiliza ese estado para consultar `get_request_from_legal`.
+
 ### 2026-03-18
 - Se documenta soporte backend para preview_url y download_url en archivos adjuntos.
 - Se define estrategia de consumo frontend con fallback por compatibilidad.
