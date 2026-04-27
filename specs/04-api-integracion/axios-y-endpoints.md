@@ -11,12 +11,60 @@ Archivo: src/lib/axios.js
   - System-Token
 - Response interceptor maneja 401 con redirect_url cuando aplica.
 
+## Autenticación — Auth-Token requerido en TODOS los endpoints
+
+**Todos los endpoints bajo `/message_center_api/*` exigen JWT.**
+El interceptor de axios lo agrega automáticamente al header `Auth-Token`.
+
+```
+Auth-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+El JWT se obtiene de `localStorage['Auth-Token']` — debe ser guardado por
+`login-amatia-express` inmediatamente después del login exitoso (ver `07-auth/`).
+
+**Sin JWT válido → PHP devuelve 401** con body:
+```json
+{ "status": 401, "messages": "Unauthenticated Access", "redirect_url": "...logout" }
+```
+El interceptor de axios captura el 401 y redirige a `redirect_url` automáticamente.
+
+### Fallback de cookie
+
+Los controladores PHP verifican dos fuentes de JWT **en orden**:
+
+```
+1. Header Auth-Token: <jwt>   ← axios interceptor
+2. Cookie token_message_center  ← browser envía automáticamente (HTTPOnly)
+```
+
+`login_secure` establece la cookie al hacer login. En mismo dominio (`localhost:8080` o
+`ocensacentral.sofacto.info`), el browser la envía en todos los requests incluyendo AJAX.
+
+| Escenario | Auth-Token header | Cookie | Resultado |
+|---|---|---|---|
+| JWT en localStorage | ✅ presente | ✅ presente | OK — header tiene prioridad |
+| JWT no guardado (bug login-express) | ❌ vacío | ✅ presente | OK — fallback cookie |
+| Dev: localStorage vacío, cookie ausente | ❌ vacío | ❌ ausente | **401** — necesita `.env` |
+| Token expirado en ambos | JWT inválido | JWT expirado | **401** — re-login |
+
+El header `Auth-Token` tiene prioridad cuando está presente. La cookie es fallback seguro
+en mismo dominio, pero no reemplaza el fix pendiente en `login-amatia-express` de guardar
+el JWT en `localStorage['Auth-Token']`. Ver análisis completo en `07-auth/jwt-integration.md §4`.
+
 ## Tokens
 
 Fuente:
 
-- Desarrollo: LOCAL_AUTH_TOKEN y SYSTEM_TOKEN desde src/config/constants.js
-- Produccion: storage.getToken() y storage.getSystemToken() desde src/utils/storage.js
+- Desarrollo: `LOCAL_AUTH_TOKEN` desde `src/config/constants.js` — **ATENCIÓN:** el bypass
+  hardcodeado (`$2y$10$HYG/...`) fue eliminado de los controladores PHP. En dev, configurar:
+  ```
+  # .env.development.local
+  REACT_APP_ADMIN_AUTH_TOKEN=<JWT real obtenido via POST /auth_service/login_secure>
+  ```
+- Producción: `storage.getToken()` y `storage.getSystemToken()` desde `src/utils/storage.js`
+  - `getToken()` lee `localStorage['Auth-Token']`
+  - Debe estar guardado por `login-amatia-express` tras el login exitoso
 
 ## Proxy en desarrollo
 

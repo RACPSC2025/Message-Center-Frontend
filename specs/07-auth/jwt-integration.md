@@ -18,7 +18,7 @@ export const LOCAL_AUTH_TOKEN =
 
 **Problema:** `$2y$10$HYG/Oj2NUm2wKLquLxct7.CBHw4.B2p3Hs67vimGaWZldraKmwcSa` era el bypass
 token hardcodeado en los controladores PHP. Fue **eliminado de todos los controladores de
-`message_center_api`**. Cualquier request en dev devuelve **401**.
+`message_center_api`**. Cualquier request en dev devuelve **401** si no hay JWT real.
 
 `ADMIN_AUTH_TOKEN` puede sobreescribirlo via `REACT_APP_ADMIN_AUTH_TOKEN` en `.env.development.local`.
 Ese archivo actualmente tiene:
@@ -27,7 +27,7 @@ REACT_APP_API_URL=http://ocensa-ambiental/
 REACT_APP_BASE_NAME=/message-center
 REACT_APP_DEFAULT_LANGUAGE=es
 ```
-`REACT_APP_ADMIN_AUTH_TOKEN` **no está definido** → cae al fallback del bypass.
+`REACT_APP_ADMIN_AUTH_TOKEN` **no está definido** → cae al fallback del bypass = JWT inválido en todos los endpoints.
 
 ### En production (`NODE_ENV === 'production'`)
 
@@ -38,7 +38,13 @@ src/lib/axios.js (línea 36-37)
 ```
 
 **Problema:** `login-amatia-express` no guarda el JWT en `localStorage['Auth-Token']` tras
-el login. La key queda vacía → axios envía request sin `Auth-Token` → **401 en todos los endpoints**.
+el login. La key queda vacía → axios envía request sin `Auth-Token`.
+
+**Mitigación parcial activa:** Los controladores PHP de `message_center_api` ahora aceptan
+la cookie HTTPOnly `token_message_center` como fallback cuando `Auth-Token` header está vacío.
+El browser envía esta cookie automáticamente — requests de navegación inicial funcionan.
+Pero **requests AJAX donde no se envía la cookie** (ej: cross-origin, expiración) siguen
+necesitando el header `Auth-Token` desde localStorage.
 
 ---
 
@@ -186,9 +192,40 @@ está logueado en la misma URL local) y el `.env` solo actúa como fallback expl
 
 ---
 
-## 4. Lo que ya funciona correctamente — no requiere cambios
+## 4. Cookie fallback — mecanismo de autenticación secundario
 
-### 4.1 Header `Auth-Token` — correcto
+Los controladores PHP en `message_center_api` verifican dos fuentes de JWT en orden:
+
+```
+1. Header Auth-Token: <jwt>   ← React vía axios interceptor
+2. Cookie token_message_center  ← Browser envía automáticamente (HTTPOnly)
+```
+
+El servidor (`login_secure`) establece la cookie al hacer login exitoso. Si React no guardó
+el JWT en localStorage, el browser igual autentica vía cookie en la primera carga.
+
+**Implicaciones para el desarrollo React:**
+
+| Escenario | Auth-Token header | Cookie | Resultado |
+|---|---|---|---|
+| login-express guardó JWT en localStorage | ✅ presente | ✅ presente | OK — header tiene prioridad |
+| login-express NO guardó JWT (bug actual) | ❌ vacío | ✅ presente (mismo dominio) | OK — fallback cookie |
+| Dev: localStorage vacío, cookie ausente | ❌ vacío | ❌ ausente | **401** — necesita JWT en `.env` |
+| Token expirado en ambos lados | JWT inválido | JWT expirado | **401** — re-login |
+
+**La cookie solo funciona si React y PHP están en el mismo dominio/subdominio.** En local
+(`http://localhost:8080/`), React y PHP comparten dominio → cookie funciona. En producción,
+ambos están en el mismo host (`ocensacentral.sofacto.info`) → cookie funciona.
+
+**Para requests AJAX (axios):** la cookie se envía automáticamente si es mismo dominio y
+`withCredentials` está habilitado (o no hay restricción CORS). El header `Auth-Token` tiene
+prioridad cuando está presente — no depender solo de cookie para flujos críticos AJAX.
+
+---
+
+## 5. Lo que ya funciona correctamente — no requiere cambios
+
+### 5.1 Header `Auth-Token` — correcto
 
 `src/lib/axios.js` línea 46:
 ```javascript
@@ -201,7 +238,7 @@ $auth_token = $this->input->get_request_header('Auth-Token', TRUE);
 ```
 Nombre del header coincide exactamente.
 
-### 4.2 Manejo de 401 — correcto
+### 5.2 Manejo de 401 — correcto
 
 `src/lib/axios.js` líneas 72-77:
 ```javascript
@@ -219,7 +256,7 @@ Los controladores PHP retornan exactamente:
 ```
 El handler de axios captura correctamente y redirige.
 
-### 4.3 Rutas `message_center_api/*` — correctas
+### 5.3 Rutas `message_center_api/*` — correctas
 
 Ejemplos verificados en el codebase:
 - `GET /message_center_api/legal_api/get_configuration_amatia_express`
@@ -229,13 +266,15 @@ Ejemplos verificados en el codebase:
 
 Todos apuntan a controladores que ya tienen JWT activado.
 
-### 4.4 Runtime config (API URL) — correcto
+### 5.4 Runtime config (API URL) — correcto
 
-`public/config.json` → `window.__APP_CONFIG__.apiUrl` → `getAPIUrl()` → `axios.baseURL`
+`public/config.js` (IIFE) → `window.__APP_CONFIG__.apiUrl` → `getAPIUrl()` → `axios.baseURL`
 
-No se necesita ningún cambio para que la URL base funcione.
+La URL base se determina en runtime según `window.location.hostname` — no requiere rebuild
+para cambiar de entorno. `src/config/runtimeConfig.js` lee `window.__APP_CONFIG__` directamente
+(síncrono); el fetch a `config.json` fue eliminado.
 
-### 4.5 `System-Token` — sin impacto en auth
+### 5.5 `System-Token` — sin impacto en auth
 
 `src/lib/axios.js` línea 47:
 ```javascript
@@ -248,7 +287,7 @@ bloquea el acceso si está vacío o incorrecto.
 
 ---
 
-## 5. Consideración futura — URLs `tasklist_api/tasklist_api/*`
+## 6. Consideración futura — URLs `tasklist_api/tasklist_api/*`
 
 En `src/components/BaseFilter.js` (y otros), el app llama:
 ```javascript
@@ -269,7 +308,7 @@ llamadas deben migrar a:
 
 ---
 
-## 6. Inconsistencia en `storage.clearToken()`
+## 7. Inconsistencia en `storage.clearToken()`
 
 `src/utils/storage.js`:
 ```javascript
@@ -293,22 +332,26 @@ clearToken: () => {
 
 ---
 
-## 7. Checklist de verificación post-cambios
+## 8. Checklist de verificación
 
 ```
-login-amatia-express:
-[ ] PasswordPage.tsx guarda localStorage['Auth-Token'] tras login exitoso
-[ ] auth.types.ts refleja estructura real del response (token y redirect_url en root)
+login-amatia-express (PENDIENTE — cambios no aplicados aún):
+[ ] PasswordPage.tsx guarda localStorage['Auth-Token'] = response.token tras login exitoso
+[ ] auth.types.ts refleja estructura real: token y redirect_url en root, no en data{}
 [ ] Login exitoso → localStorage['Auth-Token'] contiene JWT válido
-[ ] Reload de message-center → token presente → no redirige a logout
+[ ] Reload de message-center → storage.getToken() retorna JWT → axios lo incluye en Auth-Token
 
-message-center (development):
-[ ] .env.development.local tiene REACT_APP_ADMIN_AUTH_TOKEN=<JWT real>
-[ ] O src/lib/axios.js usa storage.getToken() como primera opción en dev
+message-center desarrollo (PENDIENTE):
+[ ] .env.development.local tiene REACT_APP_ADMIN_AUTH_TOKEN=<JWT real obtenido por login>
 [ ] GET /message_center_api/events_api/dashboard_events → 200 (no 401)
 
-message-center (production):
-[ ] Flujo completo: login → redirect → message-center carga con token
-[ ] storage.getToken() retorna JWT no-null
-[ ] Logout: localStorage['Auth-Token'] se limpia (fix clearToken también)
+message-center producción (verificar):
+[ ] Flujo: login → redirect → message-center carga → endpoints API devuelven 200
+[ ] Si carga inicial OK (cookie) pero recarga falla (sin header): pendiente fix localStorage
+[ ] Logout: clearToken() borra 'Auth-Token' (ver bug sección 6)
+
+PHP controllers (APLICADO):
+[x] Todos los controladores message_center_api aceptan header Auth-Token
+[x] Todos los controladores message_center_api aceptan cookie token_message_center como fallback
+[x] 401 responde con JSON {status:401, messages, redirect_url} y HTTP 401 correcto
 ```
