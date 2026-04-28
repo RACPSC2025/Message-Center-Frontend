@@ -14,9 +14,17 @@
 
   // Localhost — Docker local (puerto 8080)
   if (host === 'localhost' || host === '127.0.0.1') {
-    apiUrl      = 'http://localhost:8080/';
-    baseName    = '/message-center';
+    apiUrl      = 'http://ocensa-ambiental/';
+    baseName    = '/';
     environment = 'local';
+
+    //apiUrl      = 'http://localhost:8080/';
+    //baseName    = '/message-center';
+    //environment = 'local';
+
+    //apiUrl      = 'https://ocensacentral.dev.sofacto.info/ambiental/';
+    //baseName    = '/ambiental/message-center';
+    //environment = 'development';
   }
 
   // Ocensa Ambiental — DEV
