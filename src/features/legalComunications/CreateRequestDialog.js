@@ -91,7 +91,7 @@ export default function CreateRequestDialog({
 
   // Cargar artículos y destinatarios disponibles
   useEffect(() => {
-    if (open && id_requisito_actual) {
+    if (open) {
       fetchAvailableData();
       
       // Si hay contexto de padre, actualizar formData
@@ -116,28 +116,31 @@ export default function CreateRequestDialog({
 
   const fetchAvailableData = async () => {
     try {
-      // Obtener artículos del requisito actual
-      const articlesResponse = await axiosInstance.post(
-        '/message_center_api/legal_api/get_child_requisito_amatia_express',
-        {
-          requisito: id_requisito_actual,
-          node: '',
-          page: 1,
-          rows: 100,
-          sidx: 'id_articulo',
-          sord: 'asc'
+      if (id_requisito_actual) {
+        const articlesResponse = await axiosInstance.post(
+          '/message_center_api/legal_api/get_child_requisito_amatia_express',
+          {
+            requisito: id_requisito_actual,
+            node: '',
+            page: 1,
+            rows: 100,
+            sidx: 'id_articulo',
+            sord: 'asc'
+          }
+        );
+
+        if (articlesResponse.data?.rows) {
+          setAvailableArticles(articlesResponse.data.rows);
         }
-      );
-      
-      if (articlesResponse.data?.rows) {
-        setAvailableArticles(articlesResponse.data.rows);
+      } else {
+        setAvailableArticles([]);
       }
 
-      // Obtener lista de usuarios/administradores disponibles
       const usersResult = await dispatch(fetchAdministratorsList()).unwrap();
       if (usersResult?.status === 200 && usersResult?.data) {
-        // Mantener formato {value, label} compatible con Select múltiple
         setAvailableRecipients(usersResult.data);
+      } else {
+        setAvailableRecipients([]);
       }
     } catch (error) {
       console.error('Error fetching available data:', error);
@@ -311,8 +314,18 @@ export default function CreateRequestDialog({
   const generalInfoContent = (
     <Paper sx={{ p: 2, minHeight: 520, display: 'flex', flexDirection: 'column' }}>
       {renderSectionHeader(<Info color="primary" fontSize="small" />, t('general_info'))}
-      <Box sx={{ mt: 2, overflowY: 'auto', pr: 1 }} className="custom-scrollbar">
-        <FormControl fullWidth sx={{ mb: 2 }}>
+      <Box
+        sx={{
+          mt: 2,
+          overflowY: 'auto',
+          pr: 1,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+          gap: 2
+        }}
+        className="custom-scrollbar"
+      >
+        <FormControl fullWidth>
           <InputLabel size="small">{t('source_type')}</InputLabel>
           <Select
             size="small"
@@ -329,10 +342,23 @@ export default function CreateRequestDialog({
         <TextField
           fullWidth
           size="small"
+          label={t('status')}
+          value={formData.status}
+          select
+          onChange={(e) => handleFormChange('status', e.target.value)}
+        >
+          <MenuItem value="open">{t('open_status')}</MenuItem>
+          <MenuItem value="in_progress">{t('in_progress_status')}</MenuItem>
+          <MenuItem value="resolved">{t('resolved_status')}</MenuItem>
+          <MenuItem value="expired">{t('expired_status')}</MenuItem>
+        </TextField>
+
+        <TextField
+          fullWidth
+          size="small"
           label={t('source_name')}
           value={formData.source_name}
           onChange={(e) => handleFormChange('source_name', e.target.value)}
-          sx={{ mb: 2 }}
           required
         />
 
@@ -342,24 +368,8 @@ export default function CreateRequestDialog({
           label={t('source_reference')}
           value={formData.source_reference}
           onChange={(e) => handleFormChange('source_reference', e.target.value)}
-          sx={{ mb: 2 }}
           placeholder="RAD-2026-001"
         />
-
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel size="small">{t('status')}</InputLabel>
-          <Select
-            size="small"
-            value={formData.status}
-            label={t('status')}
-            onChange={(e) => handleFormChange('status', e.target.value)}
-          >
-            <MenuItem value="open">{t('open_status')}</MenuItem>
-            <MenuItem value="in_progress">{t('in_progress_status')}</MenuItem>
-            <MenuItem value="resolved">{t('resolved_status')}</MenuItem>
-            <MenuItem value="expired">{t('expired_status')}</MenuItem>
-          </Select>
-        </FormControl>
 
         <TextField
           fullWidth
@@ -369,7 +379,6 @@ export default function CreateRequestDialog({
           value={formData.filing_date}
           onChange={(e) => handleFormChange('filing_date', e.target.value)}
           InputLabelProps={{ shrink: true }}
-          sx={{ mb: 2 }}
           required
         />
 
@@ -381,7 +390,6 @@ export default function CreateRequestDialog({
           value={formData.expected_response_date}
           onChange={(e) => handleFormChange('expected_response_date', e.target.value)}
           InputLabelProps={{ shrink: true }}
-          sx={{ mb: 2 }}
           required
         />
 
@@ -393,10 +401,9 @@ export default function CreateRequestDialog({
           value={formData.due_date}
           onChange={(e) => handleFormChange('due_date', e.target.value)}
           InputLabelProps={{ shrink: true }}
-          sx={{ mb: 2 }}
         />
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
+        <FormControl fullWidth>
           <InputLabel size="small">{t('communication_mode')}</InputLabel>
           <Select
             size="small"
@@ -569,79 +576,78 @@ export default function CreateRequestDialog({
             </Select>
           </FormControl>
         </Box>
-      </Box>
-    </Paper>
-  );
+        <Divider sx={{ my: 3 }} />
 
-  const supportingDocumentationContent = (
-    <Paper sx={{ p: 2, minHeight: 520, display: 'flex', flexDirection: 'column' }}>
-      {renderSectionHeader(<UploadFile color="primary" fontSize="small" />, t('supporting_documentation'))}
-      <Paper
-        sx={{
-          mt: 2,
-          p: 3,
-          border: 2,
-          borderStyle: 'dashed',
-          borderColor: 'primary.light',
-          bgcolor: 'primary.lighter',
-          cursor: 'pointer',
-          '&:hover': { borderColor: 'primary.main' }
-        }}
-        onClick={() => document.getElementById('file-upload-input').click()}
-      >
-        <input
-          id="file-upload-input"
-          type="file"
-          multiple
-          hidden
-          onChange={handleFileUpload}
-        />
-        <Box display="flex" alignItems="center" gap={3}>
-          <Box
+        <Box>
+          <Typography variant="caption" fontWeight="600" display="block" mb={1}>
+            {t('supporting_documentation')}
+          </Typography>
+          <Paper
             sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              bgcolor: 'background.paper',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'primary.main'
+              p: 3,
+              border: 2,
+              borderStyle: 'dashed',
+              borderColor: 'primary.light',
+              bgcolor: 'primary.lighter',
+              cursor: 'pointer',
+              '&:hover': { borderColor: 'primary.main' }
             }}
+            onClick={() => document.getElementById('file-upload-input').click()}
           >
-            <UploadFile />
-          </Box>
-          <Box flex={1}>
-            <Typography variant="body2" fontWeight="bold">
-              {t('supporting_documentation')}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {t('drag_files_or_browse')}
-            </Typography>
+            <input
+              id="file-upload-input"
+              type="file"
+              multiple
+              hidden
+              onChange={handleFileUpload}
+            />
+            <Box display="flex" alignItems="center" gap={3}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  bgcolor: 'background.paper',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'primary.main'
+                }}
+              >
+                <UploadFile />
+              </Box>
+              <Box flex={1}>
+                <Typography variant="body2" fontWeight="bold">
+                  {t('supporting_documentation')}
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  {t('drag_files_or_browse')}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+
+          <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
+            {attachedFiles.map((file, index) => (
+              <Chip
+                key={index}
+                icon={file.name.endsWith('.pdf') ? <PictureAsPdf /> : <Description />}
+                label={file.name}
+                onDelete={() => removeFile(index)}
+                size="small"
+                sx={{ maxWidth: 220 }}
+              />
+            ))}
           </Box>
         </Box>
-      </Paper>
-
-      <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
-        {attachedFiles.map((file, index) => (
-          <Chip
-            key={index}
-            icon={file.name.endsWith('.pdf') ? <PictureAsPdf /> : <Description />}
-            label={file.name}
-            onDelete={() => removeFile(index)}
-            size="small"
-            sx={{ maxWidth: 220 }}
-          />
-        ))}
       </Box>
     </Paper>
   );
 
   const tabItems = [
-    { label: 'general_info', skipTranslation: false, component: generalInfoContent },
-    { label: 'narrative_and_context', skipTranslation: false, component: narrativeContent },
-    { label: 'compliance_entities', skipTranslation: false, component: complianceEntitiesContent },
-    { label: 'supporting_documentation', skipTranslation: false, component: supportingDocumentationContent }
+    { label: 'Información General', skipTranslation: true, component: generalInfoContent },
+    { label: 'Narrativa', skipTranslation: true, component: narrativeContent },
+    { label: 'Entidades', skipTranslation: true, component: complianceEntitiesContent }
   ];
 
   const content = (
@@ -719,13 +725,20 @@ export default function CreateRequestDialog({
             activeTab={activeTab}
             tabContainerProps={{
               onChange: (_, newValue) => setActiveTab(newValue),
-              variant: 'scrollable',
-              scrollButtons: 'auto',
               sx: {
                 bgcolor: 'background.paper',
                 borderRadius: 1,
-                px: 2,
-                pt: 1
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'space-between'
+                }
+              }
+            }}
+            tabItemProps={{
+              sx: {
+                flex: 1,
+                minWidth: 0,
+                px: 1,
+                fontSize: '0.85rem'
               }
             }}
           />
@@ -790,7 +803,7 @@ export default function CreateRequestDialog({
               xs: '100vw',
               sm: '80vw',
               md: '60vw',
-              lg: '45vw'
+              lg: '35vw'
             }
           }
         }}
