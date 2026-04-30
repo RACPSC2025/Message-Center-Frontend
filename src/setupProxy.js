@@ -1,26 +1,14 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function (app) {
-  // Lee la URL del API desde variables de entorno
-  // Fallback a la URL de desarrollo por defecto
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://ocensacentral.dev.sofacto.info/ambiental/';
-  
-  console.log('🔄 Configurando proxy de desarrollo hacia:', apiUrl);
-  
+  const target = process.env.REACT_APP_API_URL || 'http://ocensa-ambiental/';
+
+  // pathFilter en http-proxy-middleware v3 — conserva el prefijo en la URL reenviada
   app.use(
-    '/api', // Match the route prefix for API calls
     createProxyMiddleware({
-      target: apiUrl,
+      pathFilter: '/message_center_api/**',
+      target,
       changeOrigin: true,
-      onProxyReq: (proxyReq, req, res) => {
-        console.log('📤 Proxy request:', req.method, req.path, '→', apiUrl);
-      },
-      onProxyRes: (proxyRes, req, res) => {
-        console.log('📥 Proxy response:', proxyRes.statusCode, req.path);
-      },
-      onError: (err, req, res) => {
-        console.error('❌ Proxy error:', err.message);
-      }
     })
   );
 };

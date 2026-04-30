@@ -12,19 +12,15 @@
   var environment;
   var version = '0.3.6';
 
-  // Localhost — Docker local (puerto 8080)
+  // Localhost — usa proxy del dev server hacia http://ocensa-ambiental/ (sin CORS)
   if (host === 'localhost' || host === '127.0.0.1') {
-    apiUrl      = 'http://ocensa-ambiental/';
-    baseName    = '/';
-    environment = 'local';
-
-    //apiUrl      = 'http://localhost:8080/';
-    //baseName    = '/message-center';
+    //apiUrl      = 'http://localhost:3000/';
+    //baseName    = '/';
     //environment = 'local';
 
-    //apiUrl      = 'https://ocensacentral.dev.sofacto.info/ambiental/';
-    //baseName    = '/ambiental/message-center';
-    //environment = 'development';
+    apiUrl      = 'https://ocensacentral.dev.sofacto.info/ambiental/';
+    baseName    = '/ambiental/message-center';
+    environment = 'development';
   }
 
   // Ocensa Ambiental — DEV
