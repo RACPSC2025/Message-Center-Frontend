@@ -81,9 +81,7 @@ export function Component() {
   const [openDetallesDrawer, setOpenDetallesDrawer] = useState(false);
   const [openCreateTask, setOpenCreateTask] = useState(false);
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
-  const [selectedView, setSelectedView] = useState('requirements');
-  const [requirementIconColor, setRequirementIconColor] = useState('warning');
-  const [listaIconColor, setListaIconColor] = useState('action');
+  const selectedView = useSelector((state) => selectFilterItemValue(state, 'LegalMatriz', 'selectedLegalView') ?? 'requirements');
   const [country, setCountry] = useState('CO');
   const [legals, setLegals] = useState([]);
   let [legalsFilters, setLegalsFilters] = useState([]);
@@ -868,18 +866,6 @@ export function Component() {
     ? [{ icon: <AddCircleOutline />, name: t('create_legal_requirement') }]
     : [];
 
-  const viewTab = [
-    {
-      name: 'requirements',
-      icon: <CalendarMonth color={requirementIconColor} fontSize="medium" />
-    },
-  ];
-
-  const adjustmensts = {
-    name: 'adjustments',
-    icon: <Tune fontSize="medium" />
-  };
-
   const getTypeFilterLegalsByTypeOfRule = (
     legalsFiltersTemp,
     actionStatusTypeOfRule,
@@ -1274,115 +1260,6 @@ export function Component() {
           backgroundColor: 'white'
         }}
       >
-        <Box className="xl:flex items-center justify-between gap-6 w-full py-2 mb-2">
-          <Box className="flex items-center justify-center gap-6">
-            {
-            <Box display="flex" justifyContent="start" gap={1} alignItems="center" flexGrow={1}>
-              {filterArray?.map((filter, filterIndex) => {
-                return (
-                  <FormControl sx={{ minWidth: 100 }} size="small" key={filterIndex}>
-                    <InputLabel id={filter?.id}>{t(filter?.label)}</InputLabel>
-                    <Select
-                      labelId={filter?.id}
-                      id={filter?.id}
-                      value={filter?.value}
-                      disabled={filter?.isDisabled}
-                      onChange={(e) => handleCascadingFilterChange(filter?.id, e.target.value)}
-                    >
-                      {filter?.options.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                );
-              })}
-
-              <Button variant="outlined" color="primary" onClick={handleClearFilters}>
-                {t('clear_filters')}
-              </Button>
-            </Box>
-          }
-          </Box>
-
-          {showTopActionButtons && (
-            <Box className="flex gap-6 mt-2 xl:mt-0">
-              {viewTab.map((tab, tabIndex) => {
-                return (
-                  <Box
-                    key={tabIndex}
-                    sx={{
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    onClick={(e) => {
-                      setSelectedView(tab.name);
-                      if (tab.name === 'requirements') {
-                        setRequirementIconColor('warning');
-                        setListaIconColor('action');
-                      } else if (tab.name === 'list') {
-                        setRequirementIconColor('action');
-                        setListaIconColor('warning');
-                      }
-                    }}
-                  >
-                    {tab.icon}
-                    {<Typography variant="h8">{t(tab.name)}</Typography>}
-                  </Box>
-                );
-              })}
-              <Box
-                key={'adjustmensts'}
-                sx={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                onClick={(e) => {
-                  handleOpenAdjustments(e);
-                }}
-              >
-                {adjustmensts.icon}
-                {<Typography variant="h8">{t(adjustmensts.name)}</Typography>}
-              </Box>
-            </Box>
-          )}
-        </Box>
-
-        <Menu
-          anchorEl={adjustmentAnchorEl}
-          open={Boolean(adjustmentAnchorEl)}
-          onClose={handleCloseAdjustments}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'center'
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'center'
-          }}
-        >
-          <MenuItem disableRipple>
-            <div className="flex items-center cursor-default">
-              <Checkbox
-                checked={selectedColumns}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSetFilterItemValue('task', 'selectedColumns', !selectedColumns);
-                }}
-                className="mr-2 cursor-pointer"
-              />
-              <span>{t('Select_columns')}</span>
-            </div>
-          </MenuItem>
-        </Menu>
-
         <Box sx={{ flexGrow: 1, minHeight: 0 }}>
           {selectedView === 'requirements' ? (
             <TableComponent 

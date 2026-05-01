@@ -67,6 +67,31 @@ function MessageCenterNotifications() {
   const [selectedSortOrder, setSelectedSortOrder] = useState('Newest on top');
   const [showArchivedMessages, setShowArchivedMessages] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const [leftPanelPct, setLeftPanelPct] = useState(35);
+  const containerRef = useRef(null);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const pct = ((e.clientX - rect.left) / rect.width) * 100;
+      setLeftPanelPct(Math.min(Math.max(pct, 20), 65));
+    };
+    const onUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState(0);
   const [tabKey, setTabKey] = useState(0); // Key para forzar remount de tabs
   const [focusedMessageByTab, setFocusedMessageByTab] = useState({
@@ -162,12 +187,9 @@ function MessageCenterNotifications() {
     );
 
     dispatch(fetchDashboardMessageDetails(formData)).then((data) => {
-      if (data?.payload?.messages === 'Success') {
-        const msgDetails = data?.payload?.data ?? null;
-        setMessageDetails(msgDetails);
-        // 🔹 REMOVER ESTA LÍNEA - No marcar automáticamente como leído
-        // if (msgDetails.is_read === '0') markMessageAsRead(msgDetails.id_message);
-      }
+      const msgDetails = data?.payload?.data ?? null;
+      setMessageDetails(msgDetails);
+      setIsFetchingDetails(false);
     });
   };
 
@@ -434,7 +456,7 @@ function MessageCenterNotifications() {
 
   return (
     <>
-      <BaseFeaturePageLayout statsConfig={statsConfig}>
+      <BaseFeaturePageLayout statsConfig={statsConfig} ref={containerRef}>
         {/* Sidebar de navegación */}
         {showSidebar && (
           <Box
@@ -557,35 +579,26 @@ function MessageCenterNotifications() {
         {/* Panel de mensajes */}
         <Box
           sx={{
-            width: {
-              lg: '35%',
-              xl: '40%',
-              xxl: '45%'
-            },
+            width: `${leftPanelPct}%`,
+            flexShrink: 0,
             height: '100%',
             backgroundColor: '#fff',
-            borderRight: '1px solid #ccc',
             display: 'flex',
             flexDirection: 'column'
           }}
         >
-          {/* Título de Notificaciones */}
-          <Box
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              {/*t('notifications')*/}
-              CENTRO DE NOTIFICACIONES
-            </Typography>
-            {showHeaderActions && (
+          {showHeaderActions && (
+            <Box
+              sx={{
+                px: 2,
+                py: 1,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end'
+              }}
+            >
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <BaseSortPopper
                   sortOrderOptions={sortOrderOptions}
@@ -598,10 +611,10 @@ function MessageCenterNotifications() {
                   </IconButton>
                 </Tooltip>
               </Box>
-            )}
-          </Box>
+            </Box>
+          )}
 
-          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
             {/* Tabs para categorías de mensajes */}
             <Tabs
               value={activeTab}
@@ -641,6 +654,7 @@ function MessageCenterNotifications() {
             </Tabs>
 
             {/* Contenido del tab activo con componentes separados */}
+            <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {activeTab === 0 && (
               <MessageCenterImportantTab
                 key={`important-${tabKey}`}
@@ -721,20 +735,37 @@ function MessageCenterNotifications() {
                 onMessagesLoaded={(firstMessage) => handleMessagesLoaded('read', firstMessage)}
               />
             )}
+            </Box>
           </Box>
         </Box>
+
+        {/* Resize handle */}
+        <Box
+          onMouseDown={() => {
+            isDragging.current = true;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+          }}
+          sx={{
+            width: '5px',
+            flexShrink: 0,
+            height: '100%',
+            cursor: 'col-resize',
+            backgroundColor: '#e0e0e0',
+            transition: 'background-color 0.15s',
+            '&:hover': { backgroundColor: '#19AABB' },
+          }}
+        />
+
+        {/* Panel de detalles */}
         <Box
           sx={{
-            flexGrow: 1,
+            flex: 1,
             minWidth: 0,
-            maxWidth: {
-              lg: '60%',
-              xl: '55%',
-              xxl: '50%'
-            },
-            px: 2,
-            pt: 2,
-            overflowY: 'auto'
+            height: '100%',
+            backgroundColor: '#f5f5f5',
+            overflowY: 'auto',
+            boxSizing: 'border-box'
           }}
         >
           {showLoaderForMessageDetails ? (

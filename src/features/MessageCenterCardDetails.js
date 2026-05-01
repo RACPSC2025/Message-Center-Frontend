@@ -240,9 +240,6 @@ function MessageCenterCardDetails({
       <Box
         sx={{
           minHeight: '100%',
-          backgroundColor: '#fff',
-          border: '1px solid #ccc',
-          borderRadius: '10px',
           p: 2
         }}
       >
@@ -254,7 +251,7 @@ function MessageCenterCardDetails({
             justifyContent: 'space-between'
           }}
         >
-          <Typography variant="h5" sx={{ width: '90%' }}>
+          <Typography variant="h5" sx={{ width: '90%', color: '#1a3a5c', fontWeight: 400 }}>
             {messageDetails[singleNotificationMessageKey]}
           </Typography>
           <Box sx={{ ml: 3, display: 'flex' }}>

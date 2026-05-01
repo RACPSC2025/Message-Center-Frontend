@@ -126,7 +126,7 @@ const MessageCenterUnreadTab = ({
   }, new Map());
 
   return (
-    <Box ref={scrollContainerRef} sx={{ maxHeight: '600px', overflowY: 'auto' }}>
+    <Box ref={scrollContainerRef} sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
       {Array.from(groupedMessages).map(([dateKey, msgs]) => (
         <Box key={`unread-${dateKey}`} sx={{ my: 0.5 }}>
           <Typography variant="body2" color="text.primary" sx={{ ml: 1, mb: 0.5 }}>

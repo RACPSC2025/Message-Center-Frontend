@@ -1,32 +1,26 @@
 import { Box, Container } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  backgroundColor,
-  headerHeight,
-  navbarCollapsedWidth,
-  navbarWidth
-} from '../config/constants';
+import { backgroundColor, headerHeight } from '../config/constants';
 import { usePageVisibility } from '../hooks/usePageVisibility';
 import { fetchNewMessageCount } from '../stores/globalDataSlice';
 import { getPastTimestamp } from '../utils/dateTimeFunctions';
 import TheFullPageLoader from './TheFullPageLoader';
 import TheLayoutHeader from './TheLayoutHeader';
-import TheLayoutNavbar from './TheLayoutNavbar';
+import Sidebar from './Sidebar';
+import FilterSidebar from './FilterSidebar';
+import ModuleBand, { MODULE_BAND_HEIGHT } from './ModuleBand';
 
 function Layout({ children }) {
   const isPageVisible = usePageVisibility();
   const timerIdRef = useRef(null);
   const [isPollingEnabled, setIsPollingEnabled] = useState(true);
   const dispatch = useDispatch();
-  const [navbarExpanded, setNavbarExpanded] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(72);
+  const [filterSidebarWidth, setFilterSidebarWidth] = useState(40);
+  const [filterPanelExpanded, setFilterPanelExpanded] = useState(false);
 
-  // Use useSelector to access the loading from the global data in the Redux store
   const isVisibleFullPageLoader = useSelector((state) => state.globalData.loading);
-
-  const toggleNavbar = () => {
-    setNavbarExpanded(!navbarExpanded);
-  };
 
   useEffect(() => {
     const INTERVAL = 5 * 60 * 1000;
@@ -43,7 +37,6 @@ function Layout({ children }) {
     };
 
     const startPolling = () => {
-      // Polling every 5 minutes
       timerIdRef.current = setInterval(pollNewMessages, INTERVAL);
     };
 
@@ -75,18 +68,21 @@ function Layout({ children }) {
             overflow: 'hidden'
           }}
         >
-          <TheLayoutNavbar expanded={navbarExpanded} onToggle={toggleNavbar} />
+          <Sidebar onWidthChange={setSidebarWidth} filterPanelExpanded={filterPanelExpanded} />
+          <FilterSidebar sidebarWidth={sidebarWidth} onWidthChange={setFilterSidebarWidth} onExpandedChange={setFilterPanelExpanded} />
           <Box
             sx={{
-              width: `calc(100% - ${!navbarExpanded ? navbarCollapsedWidth : navbarWidth}px)`,
+              ml: `${sidebarWidth + filterSidebarWidth}px`,
+              width: `calc(100% - ${sidebarWidth + filterSidebarWidth}px)`,
               height: '100%',
-              ml: `${!navbarExpanded ? navbarCollapsedWidth : navbarWidth}px`
+              transition: 'margin-left 0.2s ease-in-out, width 0.2s ease-in-out'
             }}
           >
             <TheLayoutHeader />
+            <ModuleBand />
             <Box
               component="main"
-              sx={{ height: `calc(100vh - ${headerHeight}px)`, overflowY: 'auto' }}
+              sx={{ height: `calc(100vh - ${headerHeight}px - ${MODULE_BAND_HEIGHT}px)`, overflowY: 'auto' }}
             >
               {children}
             </Box>

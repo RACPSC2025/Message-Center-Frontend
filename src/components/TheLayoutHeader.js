@@ -1,200 +1,124 @@
 import { ExpandMore, NotificationsNone } from '@mui/icons-material';
-import { Badge, Box, Button, IconButton, Menu, MenuItem } from '@mui/material';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { Badge, Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { headerHeight } from '../config/constants';
 import { useLanguage } from '../providers/languageProvider';
-import { GlobalConfig } from '../routes/RoutesFile';
+import { useNavConfig } from '../hooks/useNavConfig';
 import { dashboardMessage } from '../stores/messages/dashboardMessageSlice';
 import TheLayoutHeaderActionDropdown from './TheLayoutHeaderActionDropdown';
 import { useUnreadMessagesPolling } from '../hooks/useUnreadMessagesPolling';
 import { fetchUnreadMessagesCount } from '../stores/messages/unreadMessagesSlice';
+
+const SYSTEM_MODULES = {
+  notifications: { es: 'Centro de Notificaciones', en: 'Notification Center' },
+};
 
 function LayoutHeader() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { modulePermissions, moduleGroups } = useContext(GlobalConfig);
   const { language, changeLanguage } = useLanguage();
-  const [activeTab, setActiveTab] = useState('notifications');
   const [anchorEl, setAnchorEl] = useState(null);
-  const [groupAnchorEls, setGroupAnchorEls] = useState({});
 
-  const languageLabel = language === 'en' ? 'EN' : 'ES';
   const user = useSelector((state) => state.globalData.userDetails ?? {});
   const unreadCount = useSelector((state) => state.unreadMessages?.count ?? 0);
+  const activeModule = useSelector((state) => state.globalData.activeModule);
+  const { workareas, modules } = useNavConfig();
+
+  const { workareaName, moduleName } = useMemo(() => {
+    const mod = modules.find((m) => m.routeKey === activeModule);
+    const wa = mod ? workareas.find((w) => w.modules?.includes(mod.slug)) : null;
+    return {
+      workareaName: wa ? (language === 'en' ? wa.name?.en : wa.name?.es) : '',
+      moduleName: mod
+        ? (language === 'en' ? mod.name?.en : mod.name?.es)
+        : (SYSTEM_MODULES[activeModule]?.[language] ?? ''),
+    };
+  }, [modules, workareas, activeModule, language]);
   const { refreshCount } = useUnreadMessagesPolling(30000, true);
 
-  const permitTabs = modulePermissions?.filter((tabs) => tabs?.visibility !== false);
-  const notificationTab = permitTabs?.find((module) => module?.moduleName === 'notifications');
-
-  const activeGroupKey = useMemo(() => {
-    if (!moduleGroups?.length || !activeTab) return null;
-    const group = moduleGroups.find((g) => g.modules.some((m) => m.key === activeTab));
-    return group?.groupKey ?? null;
-  }, [moduleGroups, activeTab]);
-
-  const handleGroupClick = (groupKey, event) => {
-    setGroupAnchorEls((prev) => ({ ...prev, [groupKey]: event.currentTarget }));
-  };
-
-  const handleGroupClose = (groupKey) => {
-    setGroupAnchorEls((prev) => ({ ...prev, [groupKey]: null }));
-  };
-
-  const handleModuleNavigate = (groupKey, moduleKey) => {
-    handleGroupClose(groupKey);
-    navigate(`view/${moduleKey}`);
-    setActiveTab(moduleKey);
-  };
-
-  const handleFetchDashboardMessages = () => {
-    dispatch(dashboardMessage({}));
-  };
+  const isNotificationsActive = location.pathname.includes('/notifications');
 
   const handleOpen = (event) => setAnchorEl(event.currentTarget);
-
   const handleClose = (lang) => {
     setAnchorEl(null);
     if (lang) changeLanguage(lang);
   };
 
   useEffect(() => {
+    dispatch(dashboardMessage({}));
+    refreshCount();
+  }, [location]); // eslint-disable-line
+
+  useEffect(() => {
     const handleMessageCreated = () => {
-      console.log('New message created, refreshing unread count');
       dispatch(fetchUnreadMessagesCount('1'));
-      if (user?.id_administradores) {
-        dispatch(fetchUnreadMessagesCount('1'));
-      }
     };
     window.addEventListener('dashboard-message-created', handleMessageCreated);
     return () => window.removeEventListener('dashboard-message-created', handleMessageCreated);
-  }, [dispatch, user?.id_administradores]);
-
-  useEffect(() => {
-    const { pathname } = location;
-    const pathnameArr = pathname.split('/');
-    setActiveTab(pathnameArr.pop().trim());
-    handleFetchDashboardMessages();
-    refreshCount();
-  }, [location]);
+  }, [dispatch]);
 
   return (
     <Box
       component="header"
       sx={{
-        position: 'relative',
         width: '100%',
         height: headerHeight,
-        pl: 2,
         backgroundColor: '#fff',
         borderBottom: '1px solid rgba(224, 224, 224, 0.7)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        px: 2,
+        gap: 1
       }}
     >
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 0,
-          bottom: 0,
-          display: 'flex',
-          height: '100%',
-          alignItems: 'flex-end'
-        }}
+      {/* Breadcrumb — left side */}
+      <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
+        {workareaName && (
+          <>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, whiteSpace: 'nowrap' }}>
+              {workareaName}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>/</Typography>
+          </>
+        )}
+        {moduleName && (
+          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {moduleName}
+          </Typography>
+        )}
+      </Box>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={handleOpen}
+        endIcon={<ExpandMore />}
       >
-        {(moduleGroups ?? []).map((group) => (
-          <Box key={group.groupKey}>
-            <Button
-              onClick={(e) => handleGroupClick(group.groupKey, e)}
-              endIcon={<ExpandMore sx={{ fontSize: '18px !important' }} />}
-              sx={{
-                height: 48,
-                borderRadius: 0,
-                px: 2,
-                textTransform: 'none',
-                fontSize: '0.875rem',
-                fontWeight: activeGroupKey === group.groupKey ? 600 : 400,
-                borderBottom:
-                  activeGroupKey === group.groupKey
-                    ? '2px solid #19aabb'
-                    : '2px solid transparent',
-                color: activeGroupKey === group.groupKey ? '#19aabb' : 'text.secondary',
-                '&:hover': {
-                  backgroundColor: 'rgba(0,0,0,0.04)',
-                  borderBottomColor:
-                    activeGroupKey === group.groupKey ? '#19aabb' : 'rgba(0,0,0,0.2)'
-                }
-              }}
-            >
-              {group.title}
-            </Button>
-            <Menu
-              anchorEl={groupAnchorEls[group.groupKey]}
-              open={Boolean(groupAnchorEls[group.groupKey])}
-              onClose={() => handleGroupClose(group.groupKey)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-              slotProps={{ paper: { sx: { minWidth: 220 } } }}
-            >
-              {group.modules.map((mod) => (
-                <MenuItem
-                  key={mod.key}
-                  onClick={() => handleModuleNavigate(group.groupKey, mod.key)}
-                  selected={activeTab === mod.key}
-                  sx={{ gap: 1, py: 1 }}
-                >
-                  {mod.icon}
-                  <span>{mod.skipTranslation ? mod.label : t(mod.label)}</span>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-        ))}
-      </Box>
+        {language === 'en' ? 'EN' : 'ES'}
+      </Button>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => handleClose()}>
+        <MenuItem onClick={() => handleClose('en')}>{t('english')}</MenuItem>
+        <MenuItem onClick={() => handleClose('es')}>{t('spanish')}</MenuItem>
+      </Menu>
 
-      <Box sx={{ ml: 'auto', mr: '1rem' }}>
-        <Button variant="outlined" size="small" onClick={handleOpen}>
-          {languageLabel}
-          <ExpandMore />
-        </Button>
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => handleClose()}>
-          <MenuItem onClick={() => handleClose('en')}>{t('english')}</MenuItem>
-          <MenuItem onClick={() => handleClose('es')}>{t('spanish')}</MenuItem>
-        </Menu>
-      </Box>
-
-      {notificationTab && (
-        <IconButton
-          aria-label="Notifications"
-          sx={{
-            mr: '1rem',
-            border: activeTab === 'notifications' ? '1px solid #19aabb' : 'none'
-          }}
-          onClick={() => {
-            navigate(`view/notifications`);
-            setActiveTab('notifications');
-          }}
-          color={activeTab === 'notifications' ? 'primary' : ''}
+      <IconButton
+        aria-label="Notifications"
+        sx={{ border: isNotificationsActive ? '1px solid #19aabb' : 'none' }}
+        onClick={() => navigate('view/notifications')}
+        color={isNotificationsActive ? 'primary' : 'default'}
+      >
+        <Badge
+          badgeContent={unreadCount}
+          max={999}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: 'rgb(220 38 38)', color: 'white' } }}
         >
-          <Badge
-            badgeContent={unreadCount}
-            max={999}
-            sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: 'rgb(220 38 38 / var(--tw-bg-opacity, 1))',
-                color: 'white'
-              }
-            }}
-          >
-            <NotificationsNone />
-          </Badge>
-        </IconButton>
-      )}
+          <NotificationsNone />
+        </Badge>
+      </IconButton>
 
       <TheLayoutHeaderActionDropdown userDetails={user || {}} />
     </Box>
