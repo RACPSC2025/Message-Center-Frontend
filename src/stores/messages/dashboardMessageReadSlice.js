@@ -11,7 +11,9 @@ export const dashboardMessageRead = createAsyncThunk(
   'dashboard/messagesRead',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/message_center_api/tasklist_api/dashboard_message_read_amatia_express', data);
+      const response = await axiosInstance.post('/message_center_api/tasklist_api/dashboard_message_read_amatia_express', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return response?.data;
     } catch (error) {
       return rejectWithValue(error.message);
