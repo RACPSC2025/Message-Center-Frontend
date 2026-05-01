@@ -1,14 +1,14 @@
 import { Cached, Check, FastForward, RemoveCircle, WatchLater } from '@mui/icons-material';
 
 export const statusColorObject = {
-  not_apply: '#929fba',
-  completed: '#00b2aa',
-  in_progress: '#438edf',
-  under_progress: '#438edf',
-  partially_completed: '#438edf',
-  delayed: '#e85b71',
-  not_completed: '#e85b71',
-  in_transition: '#d8cb6e'
+  not_apply:           '#E8E9EB',
+  completed:           '#769656',
+  in_progress:         '#6F86B3',
+  under_progress:      '#6F86B3',
+  partially_completed: '#6F86B3',
+  delayed:             '#B86672',
+  not_completed:       '#B86672',
+  in_transition:       '#C4B46E'
 };
 
 export const statusIconObject = {

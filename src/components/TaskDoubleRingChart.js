@@ -73,10 +73,10 @@ export const TaskDoubleRingChart = ({
   // --- 3. Preparación de Colores ---
   // Mapa base (defaults)
   const defaultColors = {
-    '1': '#00f57a', // Completed
-    '2': '#1a90ff', // In Progress
-    '3': '#fbc02d', // Open
-    '4': '#fb3d61'  // Expired
+    '1': '#769656', // Completed
+    '2': '#6F86B3', // In Progress
+    '3': '#C4B46E', // Open
+    '4': '#B86672'  // Expired
   };
 
   // Construir mapa final combinando defaults con Redux
