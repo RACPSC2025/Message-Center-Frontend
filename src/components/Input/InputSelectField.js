@@ -5,7 +5,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 
 const InputSelectField = ({ field, value, onChange, error, ...rest }) => {
   const labelID = `simple-select-${field.id}-label`;
-  const isDisabled = !field.options || field.options.length === 0;
+  const isDisabled = field.isDisabled ?? (!field.options || field.options.length === 0);
   const isMultiple = field.multiple || false;
   const selectRef = useRef(null);
   const [open, setOpen] = useState(false);

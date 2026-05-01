@@ -1,0 +1,116 @@
+{
+  "version": "1.1",
+  "sidebar": {
+    "collapsedWidth": 72,
+    "expandedWidth": 220,
+    "background": "#000e16"
+  },
+  "workareas": [
+    {
+      "slug": "legal_matriz_group",
+      "name": { "es": "Responsabilidad Legal", "en": "Legal Responsibility" },
+      "icon": "Scale",
+      "color": "#00bcd4"
+    },
+    {
+      "slug": "task_group",
+      "name": { "es": "Gestor de Actividades", "en": "Activities Manager" },
+      "icon": "CalendarDays",
+      "color": "#00bcd4"
+    },
+    {
+      "slug": "findings_group",
+      "name": { "es": "Hallazgos", "en": "Findings" },
+      "icon": "Search",
+      "color": "#00bcd4"
+    },
+    {
+      "slug": "actions_group",
+      "name": { "es": "Acciones", "en": "Actions" },
+      "icon": "CheckCircle",
+      "color": "#00bcd4"
+    }
+  ],
+  "modules": [
+    {
+      "platformKey": "legal_matrix",
+      "slug": "legal_matrix",
+      "routeKey": "LegalMatriz",
+      "dataId": "legals",
+      "name": { "es": "Matriz Legal", "en": "Legal Matrix" },
+      "icon": "Scale",
+      "route": "/view/LegalMatriz",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "task",
+      "slug": "tasks",
+      "routeKey": "events",
+      "dataId": "tasks",
+      "name": { "es": "Actividades", "en": "Tasks" },
+      "icon": "CalendarDays",
+      "route": "/view/events",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "actions",
+      "slug": "actions",
+      "routeKey": "actions",
+      "dataId": "actions",
+      "name": { "es": "Acciones", "en": "Actions" },
+      "icon": "CheckCircle",
+      "route": "/view/actions",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "permit_manager",
+      "slug": "permit_manager",
+      "routeKey": "permit_manager",
+      "dataId": null,
+      "name": { "es": "Permisos de Trabajo", "en": "Work Permits" },
+      "icon": "ClipboardCheck",
+      "route": "/view/permit_manager",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "ambiental_permit",
+      "slug": "ambiental_permit",
+      "routeKey": "ambiental_permit",
+      "dataId": null,
+      "name": { "es": "Trámites Ambientales", "en": "Environmental Permits" },
+      "icon": "Leaf",
+      "route": "/view/ambiental_permit",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "sanctioning_processes",
+      "slug": "sanctioning_processes",
+      "routeKey": "sanctioning_processes",
+      "dataId": null,
+      "name": { "es": "Procesos Sancionatorios", "en": "Sanctioning Processes" },
+      "icon": "Gavel",
+      "route": "/view/sanctioning_processes",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "findings",
+      "slug": "findings",
+      "routeKey": "findings",
+      "dataId": null,
+      "name": { "es": "Hallazgos", "en": "Findings" },
+      "icon": "Search",
+      "route": "/view/findings",
+      "color": "#00bcd4"
+    },
+    {
+      "platformKey": "legal_comunications",
+      "slug": "legal_comunications",
+      "routeKey": "legal_comunications",
+      "dataId": null,
+      "name": { "es": "Comunicaciones Legales", "en": "Legal Communications" },
+      "icon": "FileText",
+      "route": "/view/legal_comunications",
+      "color": "#00bcd4"
+    }
+  ]
+}

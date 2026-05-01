@@ -143,7 +143,7 @@ export const useCascadingFilters = ({ filterDefinitions, onFilterChange, initial
         updateFilter(filterId, {
           options,
           isLoading: false,
-          isDisabled: options.length === 0 // Disable if no options
+          isDisabled: false
         });
 
         return options;

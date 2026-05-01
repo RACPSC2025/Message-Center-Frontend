@@ -22,7 +22,7 @@ const FilterBar = ({ children, filters, onFilterChange, containerProps = {} }) =
     >
       {filters.map((filter, index) => (
         <InputSelectField
-          sx={{ maxWidth: 150 }}
+          sx={{ minWidth: 110 }}
           size="small"
           key={index}
           field={{
