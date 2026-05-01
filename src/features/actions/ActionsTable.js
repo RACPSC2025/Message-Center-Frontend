@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
+import { resolveStatusColor } from '../../config/statusColors';
 import { Badge, Box, Chip, IconButton, Select, MenuItem, TextField, Typography } from '@mui/material';
 import {
   Lock as CloseActionIcon,
@@ -783,7 +784,7 @@ export default function ActionTable({
                 top: 0,
                 height: '100%',
                 width: '5px',
-                bgcolor: color_code || '#ccc'
+                bgcolor: resolveStatusColor(data.action_status, color_code || '#ccc')
               }}
             />
             {data.action_id} 
@@ -824,7 +825,7 @@ export default function ActionTable({
                           label={statusData.label}
                           size="small"
                           sx={{
-                            backgroundColor: statusData.color_code || '#ccc',
+                            backgroundColor: resolveStatusColor(statusKey, statusData.color_code || '#ccc'),
                             color: 'white',
                             minWidth: 100
                           }}
@@ -852,7 +853,7 @@ export default function ActionTable({
                 label={label || 'Sin estado'}
                 size="small"
                 sx={{
-                  backgroundColor: color_code || '#ccc',
+                  backgroundColor: resolveStatusColor(value, color_code || '#ccc'),
                   color: 'white',
                   minWidth: 100
                 }}

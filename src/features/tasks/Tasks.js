@@ -115,10 +115,7 @@ export default function Component() {
   const [openCreateCycleDrawer, setOpenCreateCycleDrawer] = useState(false);
   const [refreshTasksKey, setRefreshTasksKey] = useState(0);
   
-  // selectedView have "report" as default value
-  const [selectedView, setSelectedView] = useState('list'); // ['calendar', 'list', 'table', 'report', 'insights', 'settings'
-  
-  const selectedTaskView = useSelector((state) => 
+  const selectedTaskView = useSelector((state) =>
     selectFilterItemValue(state, 'task', 'selectedTaskView')
   );
   const selectedLegalTaskIds =
@@ -164,18 +161,11 @@ export default function Component() {
   };
 
   const changeView = (view) => {
-    setSelectedView(view);
     if(view === 'list') {
       handleSetFilterItemValue('task', 'isSelectedTask', false);
     }
     handleSetFilterItemValue('task', 'selectedTaskView', view);
   };
-  
-  useEffect(() => {
-    if (selectedTaskView != undefined) {
-      setSelectedView(selectedTaskView);
-    }    
-  }, [selectedTaskView]); // Se ejecuta cuando cambian las variables de los filtros
   
   const [country, setCountry] = useState('Colombia');
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
@@ -719,99 +709,6 @@ export default function Component() {
   
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', pt: 1 }}>
-      {/* Barra de Filtros y Navegación de Vistas (Estilo Imagen 1 & 2) */}
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        px: 3, 
-        py: 1,
-        bgcolor: 'white',
-        borderBottom: '1px solid #edf2f4',
-        mb: 0.5
-      }}>
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-          {filterArray.map((filter, index) => (
-            <FormControl key={index} size="small" sx={{ minWidth: 140 }}>
-              <Select
-                id={filter.id}
-                value={filter.value}
-                displayEmpty
-                disabled={filter.isDisabled}
-                onChange={(e) => handleCascadingFilterChange(filter.id, e.target.value)}
-                sx={{ 
-                  height: '40px', 
-                  borderRadius: '6px',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e0e6ed' },
-                  color: filter.value ? '#263238' : '#90a4ae',
-                  fontSize: '0.85rem'
-                }}
-                renderValue={(selected) => {
-                  if (!selected) return <span style={{ color: '#90a4ae' }}>{t(filter.label)}</span>;
-                  return filter.options.find(opt => opt.value === selected)?.label || selected;
-                }}
-              >
-                {filter.options.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          ))}
-          <Button 
-            variant="outlined" 
-            size="small" 
-            onClick={handleClearFilters}
-            sx={{ 
-              fontWeight: 800, 
-              color: '#00bcd4', 
-              borderColor: '#00bcd480', 
-              textTransform: 'none',
-              px: 2,
-              height: '40px',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              '&:hover': { borderColor: '#00bcd4', bgcolor: 'rgba(0,188,212,0.04)' }
-            }}
-          >
-            {t('LIMPIAR FILTROS')}
-          </Button>
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-end', pb: 0.5 }}>
-          {viewTabArray.map((viewTab) => {
-            const isActive = selectedView === viewTab;
-            return (
-              <Box
-                key={viewTab}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': { opacity: 1 }
-                }}
-                onClick={() => changeView(viewTab)}
-              >
-                <Box sx={{ color: isActive ? '#f57c00' : '#b0bec5', mb: 0.2 }}>
-                  {iconMapping(viewTab, selectedView)}
-                </Box>
-                <Typography sx={{ 
-                  fontSize: '0.7rem', 
-                  fontWeight: 800, 
-                  color: isActive ? '#263238' : '#b0bec5',
-                  textTransform: 'capitalize' 
-                }}>
-                  {t(viewTab)}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-
       {isLegalTaskFilterActive && (
         <Box
           sx={{
@@ -839,9 +736,9 @@ export default function Component() {
       )}
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        {selectedView === 'report' ? (
+        {(selectedTaskView ?? 'list') === 'report' ? (
           <TaskReportTremor />
-        ) : selectedView === 'calendar' ? (
+        ) : (selectedTaskView ?? 'list') === 'calendar' ? (
           <Box className="w-full px-1 py-3 overflow-hidden">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="w-full lg:w-1/2">
@@ -876,17 +773,15 @@ export default function Component() {
                   overflow: 'hidden'
                 }}
               >
-                {selectedView === 'list' ? (
+                {(selectedTaskView ?? 'list') === 'list' ? (
                   <TasksListView
                     refreshKey={refreshTasksKey}
                     onCreateTask={(taskType) => {
-                      // Guardamos el tipo de tarea seleccionado
                       setSelectedTaskType(taskType);
-                      // Abrimos el formulario de creación
                       setOpenCreateTask(true);
                     }}
                   />
-                ) : selectedView === 'table' ? (
+                ) : (selectedTaskView ?? 'list') === 'table' ? (
                   <TaskTableList />
                 ) : (
                   <TaskCalender

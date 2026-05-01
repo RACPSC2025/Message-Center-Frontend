@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { selectListOptions } from '../stores/filterSlice';
 
-import { STATUS } from '../config/constants';
+import { STATUS_COLORS } from '../config/statusColors';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -17,52 +17,21 @@ function StatusDoughnutChart({
   }
 }) {
   const { t } = useTranslation();
-  
-  // Obtener los colores desde el filterSlice para diferentes módulos
+
   const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
-  const taskStatusList = useSelector((state) => selectListOptions(state, 'task', 'task_list_status'));
-  const legalStatusList = useSelector((state) => selectListOptions(state, 'LegalMatriz', 'legal_list_status'));
+  const taskStatusList   = useSelector((state) => selectListOptions(state, 'task', 'task_list_status'));
+  const legalStatusList  = useSelector((state) => selectListOptions(state, 'LegalMatriz', 'legal_list_status'));
 
-  // Combinar todas las listas de estado en un solo mapa de colores
   const colorMap = {};
-  
-  // Agregar colores de acciones
-  actionStatusList.forEach(status => {
-    colorMap[status.value] = status.color_code;
-  });
-  
-  // Agregar colores de tareas
-  taskStatusList.forEach(status => {
-    colorMap[status.value] = status.color_code;
-  });
-  
-  // Agregar colores de legales
-  legalStatusList.forEach(status => {
-    colorMap[status.value] = status.color_code;
-  });
-
-  // Mapeo estático como fallback
-  const STATUS_TO_COLOR_MAPPING = {
-    [STATUS.completed]: 'rgba(33,239,136, 1)',
-    [STATUS.delayed]: 'rgba(240, 98, 125, 1)',
-    [STATUS.pending]: 'rgba(214, 203, 111, 1)',
-    [STATUS.in_progress]: 'rgba(22, 185, 172, 1)',
-    // Actions module keys
-    'open': 'rgba(253, 253, 150, 1)',
-    'closed': 'rgba(33,239,136, 1)',
-    'cancelled': 'rgba(156, 163, 175, 1)',
-    'delayed': 'rgba(240, 98, 125, 1)'
-  };
+  actionStatusList.forEach((s) => { colorMap[s.value] = s.color_code; });
+  taskStatusList.forEach((s)   => { colorMap[s.value] = s.color_code; });
+  legalStatusList.forEach((s)  => { colorMap[s.value] = s.color_code; });
 
   const chartDataValue = dataSet.map(({ value }) => value);
   const chartDataColors = dataSet.map(({ key, color }) => {
-    const datasetColor = String(color || '').trim();
-    if (datasetColor) {
-      return datasetColor;
-    }
-
-    // Primero intentar usar el color desde Redux, luego el mapeo estático
-    return colorMap[key] || STATUS_TO_COLOR_MAPPING[key] || '#ccc';
+    // STATUS_COLORS is authoritative — frontend palette owns the visual language.
+    // API / Redux colors are fallback for any key not defined in STATUS_COLORS.
+    return STATUS_COLORS[key] || String(color || '').trim() || colorMap[key] || '#ccc';
   });
 
   const chartData = {

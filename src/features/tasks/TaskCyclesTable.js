@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { resolveStatusColor, resolveOpportunityColor } from '../../config/statusColors';
 import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -43,20 +44,14 @@ const TaskCyclesTable = ({
     return new Date(dateString);
   };
 
-  // ✅ DETERMINAR COLOR DE OPORTUNIDAD
-  const getOpportunityColor = (days) => {
-    if (days > 5) return '#00f57a'; // Verde - Muy bueno
-    if (days > 0) return '#fbc02d'; // Amarillo - Aceptable
-    if (days === 0) return '#ff9800'; // Naranja - Justo a tiempo
-    return '#fb3d61'; // Rojo - Retrasado
-  };
+  const getOpportunityColor = resolveOpportunityColor;
 
   const statusMetaByCode = useMemo(() => {
     const fallback = {
-      '1': { label: 'Cerrado', color: '#28a745' },
-      '2': { label: 'Permanente', color: '#348fe2' },
-      '3': { label: 'Abierto', color: '#ffc107' },
-      '4': { label: 'Vencido', color: '#dc3545' }
+      '1': { label: 'Cerrado',    color: '#769656' },
+      '2': { label: 'Permanente', color: '#6F86B3' },
+      '3': { label: 'Abierto',    color: '#C4B46E' },
+      '4': { label: 'Vencido',    color: '#B86672' }
     };
 
     const mapped = Array.isArray(taskStatusCatalog)
@@ -76,7 +71,7 @@ const TaskCyclesTable = ({
   }, [taskStatusCatalog]);
 
   const getCycleStatusColor = (statusValue) =>
-    statusMetaByCode[String(statusValue)]?.color || '#90a4ae';
+    resolveStatusColor(statusValue, statusMetaByCode[String(statusValue)]?.color || '#90a4ae');
 
   const getCycleStatusLabel = (statusValue) =>
     statusMetaByCode[String(statusValue)]?.label || '-';

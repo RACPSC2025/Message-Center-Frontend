@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { resolveStatusColor, resolveProgressColor, resolveOpportunityColor } from '../../config/statusColors';
 import { Box, Typography, Chip, LinearProgress, IconButton, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AttachFile as AttachFileIcon, VisibilityOutlined as FollowUpIcon } from '@mui/icons-material';
@@ -26,22 +27,8 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelec
   const statusColor = task.status_color || '#90a4ae';
   const statusLabel = task.status_label || 'Desconocido';
   
-  // ✅ DETERMINAR COLOR DE OPORTUNIDAD
-  const getOpportunityColor = (days) => {
-    if (days > 5) return '#00f57a'; // Verde - Muy bueno
-    if (days > 0) return '#fbc02d'; // Amarillo - Aceptable
-    if (days === 0) return '#ff9800'; // Naranja - Justo a tiempo
-    return '#fb3d61'; // Rojo - Retrasado
-  };
-
-  // ✅ DETERMINAR COLOR DE PROGRESO
-  const getProgressColor = (progress) => {
-    if (progress === 100) return '#00f57a';
-    if (progress >= 75) return '#4caf50';
-    if (progress >= 50) return '#ff9800';
-    if (progress >= 25) return '#fbc02d';
-    return '#fb3d61';
-  };
+  const getOpportunityColor = resolveOpportunityColor;
+  const getProgressColor = resolveProgressColor;
 
   // ✅ MANEJAR CLIC EN ATTACH FILE
   const handleAttachFileClick = (e) => {
@@ -63,23 +50,7 @@ const TaskCycleRow = ({ task, index, statuses, onSelect, onOpenFollowup, isSelec
     }
   };
 
-  // ✅ OBTENER EL COLOR DEL ESTADO DEL CICLO (basado en lógica de dashboard)
-  const getCycleStatusColor = (statusValue) => {
-    // Asegurarse de que el statusValue es un número o una cadena convertible
-    const numericStatusValue = Number(statusValue);
-    switch (numericStatusValue) {
-      case 1: // Completado
-        return '#00f57a';
-      case 2: // En Progreso
-        return '#1a90ff';
-      case 3: // Abierto
-        return '#fbc02d';
-      case 4: // Vencido
-        return '#fb3d61';
-      default:
-        return '#90a4ae'; // Gris por defecto
-    }
-  };
+  const getCycleStatusColor = resolveStatusColor;
 
   // Usar el estado del logtask directamente, con fallback a task_status
   const cycleStatusColor = getCycleStatusColor(task.logtask_status || task.task_status || task.status);

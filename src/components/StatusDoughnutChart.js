@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { selectListOptions } from '../stores/filterSlice';
+import { STATUS_COLORS } from '../config/statusColors';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -12,55 +13,45 @@ function StatusDoughnutChart({
   chartOptions = {}
 }) {
   const { t } = useTranslation();
-  
-  // Obtener los colores desde el filterSlice
+
+  // Same 3-list resolution as StatusDoughnutChartNavbar for color consistency
   const actionStatusList = useSelector((state) => selectListOptions(state, 'actions', 'filter_status'));
+  const taskStatusList   = useSelector((state) => selectListOptions(state, 'task', 'task_list_status'));
+  const legalStatusList  = useSelector((state) => selectListOptions(state, 'LegalMatriz', 'legal_list_status'));
+
+  const colorMap = {};
+  actionStatusList.forEach((s) => { colorMap[s.value] = s.color_code; });
+  taskStatusList.forEach((s)   => { colorMap[s.value] = s.color_code; });
+  legalStatusList.forEach((s)  => { colorMap[s.value] = s.color_code; });
 
   const labelMap = dataSet.reduce((acc, item) => {
-    if (item?.key) {
-      acc[item.key] = item.label || item.key;
-    }
+    if (item?.key) acc[item.key] = item.label || item.key;
     return acc;
   }, {});
 
-  // Configuración por defecto con tooltip personalizado
   const defaultOptions = {
     cutout: '80%',
     plugins: {
-      legend: {
-        display: false
-      },
+      legend: { display: false },
       tooltip: {
         callbacks: {
-          label: function(context) {
-            const value = context.parsed;
-            const dataIndex = context.dataIndex;
-            const statusKey = dataSet[dataIndex]?.key;
-            const statusLabel =
-              labelMap[statusKey]
-              || actionStatusList.find(status => status.value === statusKey)?.label
+          label: (context) => {
+            const statusKey = dataSet[context.dataIndex]?.key;
+            const label = labelMap[statusKey]
+              || actionStatusList.find((s) => s.value === statusKey)?.label
               || statusKey;
-            return `${value} ${statusLabel}`;
+            return `${context.parsed} ${label}`;
           }
         }
       }
     }
   };
 
-  // Combinar opciones por defecto con opciones personalizadas
   const finalChartOptions = { ...defaultOptions, ...chartOptions };
-
-  const colorMap = actionStatusList.reduce((acc, status) => {
-    acc[status.value] = status.color_code;
-    return acc;
-  }, {});
 
   const chartDataValue = dataSet.map(({ value }) => value);
   const chartDataColors = dataSet.map(({ key, color }) => {
-    const datasetColor = String(color || '').trim();
-    const colorFromFilter = colorMap[key];
-    const finalColor = datasetColor || colorFromFilter || '#ccc';
-    return finalColor;
+    return STATUS_COLORS[key] || String(color || '').trim() || colorMap[key] || '#ccc';
   });
 
   const chartData = {

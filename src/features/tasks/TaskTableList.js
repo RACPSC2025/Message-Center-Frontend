@@ -157,7 +157,7 @@ export default function TaskTableList({ refreshTrigger }) {
   */
   const getSquareIcon = (params) => {
     const tempStatus = String(params.data.task_status); // Puede venir como string o número
-    const matchedStatus = listTaskStatus.find(
+    const matchedStatus = (listTaskStatus ?? []).find(
       (status) => status.value_number === tempStatus || status.value_number === String(tempStatus)
     );
 
@@ -194,9 +194,9 @@ export default function TaskTableList({ refreshTrigger }) {
     return null; 
   };
 
-  const paginationLegendElement = listTaskStatus.length > 0 && (
+  const paginationLegendElement = (listTaskStatus?.length ?? 0) > 0 && (
     <div className="flex items-center space-x-4 text-sm text-gray-700">
-      {listTaskStatus.map((status) => (
+      {(listTaskStatus ?? []).map((status) => (
         <div key={status.value} className="flex items-center space-x-1">
           
           <span 
@@ -253,7 +253,7 @@ export default function TaskTableList({ refreshTrigger }) {
   };
 
   const getColorStatus = (status) => {
-    const matchedStatus = listTaskStatus.find(
+    const matchedStatus = (listTaskStatus ?? []).find(
       (item) => item.value_number === String(status) || Number(item.value_number) === Number(status)
     );
 

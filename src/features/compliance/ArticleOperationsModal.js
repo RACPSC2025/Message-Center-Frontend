@@ -1,4 +1,5 @@
 import CloseIcon from '@mui/icons-material/Close';
+import { resolveStatusColor } from '../../config/statusColors';
 import {
   AppBar,
   Box,
@@ -328,15 +329,7 @@ export default function ArticleOperationsModal({
       }
     };
 
-    const getStatusColor = (status) => {
-      const colors = {
-        '1': '#21ef88',
-        '2': '#16b9ac',
-        '3': '#d6cb6f',
-        '4': '#f0627d'
-      };
-      return colors[status] || '#645f5f';
-    };
+    const getStatusColor = (status) => resolveStatusColor(status);
 
     const getStatusLabel = (status) => {
       const labels = {

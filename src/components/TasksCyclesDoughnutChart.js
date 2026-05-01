@@ -3,9 +3,8 @@ import { ArcElement, Chart as ChartJS, Legend, Tooltip } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import {
-  selectFilterItemValue,
-} from '../stores/filterSlice';
+import { selectFilterItemValue } from '../stores/filterSlice';
+import { STATUS_COLORS } from '../config/statusColors';
 
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
@@ -151,8 +150,8 @@ function TaskCyclesDoughnutChart({
     });
 
   const colors = hasDynamicStatusData
-    ? dataSetTasks.taskStatusData.map((status) => status.color)
-    : listTaskStatus.map((status) => status.color_code);
+    ? dataSetTasks.taskStatusData.map((s) => STATUS_COLORS[s.code] || s.color)
+    : listTaskStatus.map((s) => STATUS_COLORS[s.value] || s.color_code);
 
   const chartData = {
     labels,

@@ -27,7 +27,7 @@ import { fetchTableColumns } from '../../stores/actions/fetchTableColumnsSlice';
 import { fetchActionListLevel } from '../../stores/actions/fetchActionListLevelSlice';
 import { getActionDetails } from '../../stores/actions/getActionDetailsSlice';
 import { submitActionForm } from '../../stores/actions/submitActionFormSlice';
-import { removeFilter, selectAppliedFilterModel, selectListOptions, setFilter } from '../../stores/filterSlice';
+import { removeFilter, selectAppliedFilterModel, selectFilterItemValue, selectListOptions, setFilter } from '../../stores/filterSlice';
 import { toggleShouldCreateNewAction } from '../../stores/globalDataSlice';
 import { convertString, not, showErrorMsg, showSuccessMsg } from '../../utils/others';
 import ActionTable from './ActionsTable';
@@ -60,23 +60,7 @@ export function Component() {
   const [initialCommentTab, setInitialCommentTab] = useState('list'); // Nuevo estado
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [organizationFilterState, setOrganizationFilterState] = useState({});
-  const [selectedView, setSelectedView] = useState('table');
-
-  const viewTabArray = ['table', 'report'];
-
-  const iconMapping = (viewTab, currentView) => {
-    const iconProps = {
-      color: currentView === viewTab ? 'warning' : 'action',
-      fontSize: 'medium'
-    };
-
-    const icons = {
-      table: <TableChart {...iconProps} />,
-      report: <Insights {...iconProps} />
-    };
-
-    return icons[viewTab] || null;
-  };
+  const selectedView = useSelector((state) => selectFilterItemValue(state, 'actions', 'selectedActionsView') ?? 'table');
 
   const filterData = useAppliedFilterModel('actions');
 
@@ -627,96 +611,6 @@ export function Component() {
         }}
       >
         
-        <Box
-          sx={{
-            pt: 2,
-            px: 4,
-            mb: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2
-          }}
-        >
-          <Box display="flex" justifyContent="start" gap={1} alignItems="center" flexGrow={1}>
-            {filterArray?.map((filter, filterIndex) => {
-              return (
-                <FormControl sx={{ minWidth: 100 }} size="small" key={filterIndex}>
-                  <InputLabel id={filter?.id}>{t(filter?.label)}</InputLabel>
-                  <Select
-                    labelId={filter?.id}
-                    id={filter?.id}
-                    value={filter?.value}
-                    disabled={filter?.isDisabled}
-                    onChange={(e) => handleCascadingFilterChange(filter?.id, e.target.value)}
-                  >
-                    {filter?.options.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              );
-            })}
-
-            <Button variant="outlined" color="primary" onClick={handleClearFilters}>
-              {t('clear_filters')}
-            </Button>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
-            <CheckCircle sx={{ fontSize: '1.2rem', color: 'text.secondary' }} />
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
-                fontWeight: 600,
-                fontSize: '1rem',
-                fontStyle: 'italic'
-              }}
-            >
-              {actionCountLoading ? 'Cargando...' : (
-                filteredActions.length !== actionList.length 
-                  ? `${filteredActions.length} de ${actionCount} acciones (filtrado)`
-                  : `${actionCount} acciones encontradas`
-              )}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-end', pb: 0.5 }}>
-            {viewTabArray.map((viewTab) => {
-              const isActive = selectedView === viewTab;
-              return (
-                <Box
-                  key={viewTab}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': { opacity: 1 }
-                  }}
-                  onClick={() => setSelectedView(viewTab)}
-                >
-                  <Box sx={{ color: isActive ? '#f57c00' : '#b0bec5', mb: 0.2 }}>
-                    {iconMapping(viewTab, selectedView)}
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      color: isActive ? '#263238' : '#b0bec5',
-                      textTransform: 'capitalize'
-                    }}
-                  >
-                    {t(viewTab)}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-        </Box>
         <Box sx={{ flexGrow: 1, minHeight: 0, px: 1 }}>
           {selectedView === 'report' ? (
             <ActionsReportTremos actions={filteredActions} isLoading={actionListLoading} />
