@@ -800,7 +800,7 @@ export default function AnalysisRegulation({
     setUserText('');
 
     try {
-      const result = await queryLibrary(question);
+      const result = await queryLibrary(question, 10, currentPdfName || null);
 
       replaceLastMsg('assistant', result.answer, {
         sources: result.source_docs || [],

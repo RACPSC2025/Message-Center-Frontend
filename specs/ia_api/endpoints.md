@@ -38,7 +38,7 @@ Token expira en 30 minutos. Al recibir `401`: descartar token y re-autenticar un
 
 ## Envelope de respuesta
 
-Todas las respuestas JSON siguen:
+Los endpoints de **autenticación e ingest** siguen este envelope:
 
 ```json
 {
@@ -48,7 +48,9 @@ Todas las respuestas JSON siguen:
 }
 ```
 
-Leer siempre `data.api_response`. Un `status: 200` con `error_description` poblado indica fallback controlado.
+Leer `data.api_response`. Un `status: 200` con `error_description` poblado indica fallback controlado.
+
+> **Excepción:** los endpoints de **consulta** (`query/library`, `query/direct-pdf`, `query/image`) retornan la respuesta **flat** — sin envelope. Leer `data` directamente, no `data.api_response`.
 
 ---
 
@@ -104,7 +106,8 @@ Usar **después** de `/v1/documents/ingest`.
   "question": "¿Cuáles son las obligaciones del contratista?",
   "top_k": 10,
   "model": null,
-  "user_prompt": null
+  "user_prompt": null,
+  "source_filter": "contrato_2024.pdf"
 }
 ```
 
@@ -114,37 +117,36 @@ Usar **después** de `/v1/documents/ingest`.
 | `top_k` | int | — | `10` | Chunks relevantes a recuperar (1–50) |
 | `model` | string | — | `null` | ARN o model ID; si se omite, selección automática |
 | `user_prompt` | string | — | `null` | Prompt adicional (pasa validación de seguridad) |
+| `source_filter` | string | — | `null` | Nombre exacto del archivo (igual a `processed_files` del ingest). Si es `null`, busca en toda la colección. **Siempre pasar** para evitar mezclar contenido de documentos distintos. |
 
-**Response `200`**
+**Response `200`** — flat, sin envelope
+
 ```json
 {
-  "status": 200,
-  "error_description": "",
-  "api_response": {
-    "answer": "El contratista debe entregar informes mensualmente...",
-    "source_docs": ["Cláusula 3.2: El contratista se obliga a...", "Artículo 8..."],
-    "grade": "USEFUL",
-    "hallucination_detected": false,
-    "hallucination_score": 0.05,
-    "attempts": 1,
-    "mode": "rag_library",
-    "cache_hit": false,
-    "cache_layer": null,
-    "model_used": "arn:aws:bedrock:..."
-  }
+  "answer": "El contratista debe entregar informes mensualmente...",
+  "source_docs": ["Cláusula 3.2: El contratista se obliga a...", "Artículo 8..."],
+  "grade": "útil",
+  "hallucination_detected": false,
+  "hallucination_score": 0.0,
+  "attempts": 1,
+  "mode": "library",
+  "cache_hit": false,
+  "cache_layer": null,
+  "model_used": "arn:aws:bedrock:us-east-2:762233737662:inference-profile/..."
 }
 ```
 
 | Campo | Descripción |
 |---|---|
 | `answer` | Respuesta generada por el modelo |
-| `source_docs` | Fragmentos del documento usados como contexto |
-| `grade` | `"USEFUL"` / `"NOT_USEFUL"` — evaluación de relevancia |
+| `source_docs` | Fragmentos usados como contexto; puede ser `["unknown"]` cuando el backend no retorna metadata de fuente |
+| `grade` | Evaluación de relevancia en español — ej: `"útil"` / `"no útil"` |
 | `hallucination_detected` | `true` si el modelo detectó alucinación |
-| `hallucination_score` | Confianza (0.0–1.0) |
+| `hallucination_score` | Confianza (0.0–1.0); `0.0` = sin alucinación detectada |
+| `mode` | `"library"` para consultas sobre ChromaDB |
 | `cache_hit` | `true` si la respuesta vino de caché semántica |
 
-> **Scope:** `query/library` busca en **toda la colección ChromaDB**. Si hay múltiples documentos indexados, las respuestas pueden mezclar contenido. Para Q&A aislado a un documento, asegurarse de que la colección solo contiene ese documento.
+> **Scope:** `query/library` busca en **toda la colección ChromaDB** si `source_filter` es `null`. Pasar `source_filter` con el nombre exacto del archivo para aislar la búsqueda a un solo documento. El filtro aplica a todos los pasos del pipeline: vector search, HyDE, Multi-Query y BM25.
 
 ### `POST /v1/query/direct-pdf`
 
@@ -158,7 +160,7 @@ Consulta un PDF sin indexación persistente. El archivo se procesa en memoria y 
 | `files` | `File[]` | ✅ | Uno o más PDFs |
 | `question` | string | ✅ | Pregunta en lenguaje natural |
 
-**Response** — mismo envelope que `query/library`.
+**Response** — misma estructura flat que `query/library` (sin envelope).
 
 > Para múltiples preguntas sobre el mismo PDF usar **ingest + query/library** — `direct-pdf` re-procesa el archivo en cada llamada.
 
@@ -262,11 +264,13 @@ Genera resumen estructurado desde transcripciones o texto largo.
 
 | Export | Descripción |
 |---|---|
-| `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart |
-| `queryLibrary(question, topK?)` | `POST /v1/query/library` — JSON |
+| `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart; retorna `api_response` (envelope) |
+| `queryLibrary(question, topK?, sourceFilter?)` | `POST /v1/query/library` — JSON; retorna `data` directo (flat, sin envelope) |
 
 Token cache a nivel de módulo. Auto-refresh en 401 (re-autentica una vez y reintenta).
 Lanza `Error` con texto `HTTP <status>: <body>` si el servidor responde `text/plain` (ej. 500).
+
+`sourceFilter` debe ser el nombre del archivo tal como fue ingresado (`file.name`). Pasar `null` para buscar en toda la colección.
 
 ---
 
@@ -300,7 +304,7 @@ Respuesta → historicTextIA → ChatInterface (columna izquierda, viewMode='cha
 1. `setViewMode('chat')` — fuerza vista chat para que `ChatInterface` sea visible
 2. Push mensaje `user` a `historicTextIA`
 3. Push placeholder `assistant` "🔍 Consultando norma..."
-4. `await queryLibrary(question)`
+4. `await queryLibrary(question, 10, currentPdfName || null)` — `currentPdfName` = `file.name` del PDF cargado; acota la búsqueda al documento activo
 5. Reemplaza el placeholder con `result.answer` + `source_docs`, `grade`, `hallucination_detected`, `cache_hit`
 6. Scroll al final del chat
 

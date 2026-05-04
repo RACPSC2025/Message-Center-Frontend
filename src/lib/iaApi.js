@@ -46,13 +46,11 @@ export async function ingestPDF(file) {
   return data.api_response;
 }
 
-export async function queryLibrary(question, topK = 10) {
+export async function queryLibrary(question, topK = 10, sourceFilter = null) {
   const res = await _authFetch('/v1/query/library', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, top_k: topK }),
+    body: JSON.stringify({ question, top_k: topK, source_filter: sourceFilter }),
   });
-  const data = await _parseResponse(res);
-  if (data.status !== 200) throw new Error(data.error_description || 'Error en consulta');
-  return data.api_response;
+  return _parseResponse(res);
 }
