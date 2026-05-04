@@ -6,6 +6,7 @@ import { useCascadingFilters } from '../hooks/useCascadingFilters';
 import { fetchTaskListLevel } from '../stores/tasks/fetchtaskListLevelSlice';
 import { setFilter, removeFilter, selectAppliedFilterModel, selectFilterItemValue } from '../stores/filterSlice';
 import FilterBar from './FilterBar';
+import { accentColor } from '../config/constants';
 
 export const MODULE_BAND_HEIGHT = 48;
 
@@ -56,8 +57,8 @@ function ViewToggles({ moduleKey, bandColor }) {
 
   return (
     <div
-      className="flex items-center gap-4 shrink-0 self-stretch px-4"
-      style={{ backgroundColor: `${bandColor}0D` }}
+      className="flex items-center gap-7 shrink-0 self-stretch px-5"
+      style={{ backgroundColor: `${bandColor}08`, borderTop: `1.5px solid ${accentColor}4D` }}
     >
       {cfg.views.map((view) => {
         const { Icon, label } = VIEW_META[view];
@@ -182,7 +183,7 @@ function OrgBandFilters({ moduleKey }) {
 function EventsBandContent({ bandColor }) {
   return (
     <>
-      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}40` }}>
+      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}1A` }}>
         <OrgBandFilters moduleKey="events" />
       </div>
       <ViewToggles moduleKey="events" bandColor={bandColor} />
@@ -193,7 +194,7 @@ function EventsBandContent({ bandColor }) {
 function ActionsBandContent({ bandColor }) {
   return (
     <>
-      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}40` }}>
+      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}1A` }}>
         <OrgBandFilters moduleKey="actions" />
       </div>
       <ViewToggles moduleKey="actions" bandColor={bandColor} />
@@ -204,7 +205,7 @@ function ActionsBandContent({ bandColor }) {
 function LegalMatrizBandContent({ bandColor }) {
   return (
     <>
-      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}40` }}>
+      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}1A` }}>
         <OrgBandFilters moduleKey="LegalMatriz" />
       </div>
       <ViewToggles moduleKey="LegalMatriz" bandColor={bandColor} />

@@ -8,6 +8,7 @@ export const navbarWidth = 320;
 export const navbarCollapsedWidth = 70;
 export const footerHeight = 35;
 export const backgroundColor = '#ffffff';
+export const accentColor = '#EA580C';
 export const maxFileSizeAllowedInBytes = 5 * 1024 * 1024;
 
 // ============================================================================

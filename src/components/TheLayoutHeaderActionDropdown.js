@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { Box, Menu, MenuItem, Typography, Tooltip } from '@mui/material';
-import { deepOrange } from '@mui/material/colors';
-
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Box, Menu, MenuItem, Typography } from '@mui/material';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import { useTranslation } from 'react-i18next';
 import { getAPIUrl, shouldShowBackToDashboard } from '../config/constants';
 import storage from '../utils/storage';
@@ -34,17 +31,15 @@ const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
     const normalizedBase = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
     window.location.href = `${normalizedBase}dashboard`;
   };
-  
-  const truncateText = (text, maxLength = 8) => {
-    //console.log("userDetails", userDetails);
-    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
-  };
-  
+
+  const truncateText = (text, maxLength = 12) =>
+    text && text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+
   return (
     <>
       <Box
         sx={{
-          maxWidth: '175px',
+          maxWidth: '240px',
           height: '100%',
           px: 1,
           display: 'flex',
@@ -53,13 +48,12 @@ const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
           cursor: 'pointer',
           outline: 'none',
           border: 'none',
-          borderBottom: `solid 2px ${deepOrange[700]}`,
           backgroundColor: 'transparent'
         }}
         component="button"
         onClick={handleClick}
       >
-        <AccountCircleIcon />
+        <AccountCircleOutlinedIcon />
         <Box
           sx={{
             mx: 0.5,
@@ -68,15 +62,12 @@ const TheLayoutHeaderActionDropdown = ({ userDetails }) => {
           }}
           textAlign="left"
         >
-          <Typography variant="subtitle2" className="mc-text-overflow">
-            {userDetails.fullname}
+          <Typography variant="subtitle2">
+            {truncateText(userDetails.fullname)}
           </Typography>
-  
-          <Tooltip title="Superadmin">
-            <Typography variant="body2">
-              {truncateText('Superadmin', 8)}
-            </Typography>
-          </Tooltip>
+          <Typography variant="body2">
+            {truncateText('Superadmin')}
+          </Typography>
         </Box>
       </Box>
   

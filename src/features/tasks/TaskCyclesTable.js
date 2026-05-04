@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { resolveStatusColor, resolveOpportunityColor } from '../../config/statusColors';
+import { resolveStatusColor, resolveOpportunityColor, STATUS_COLORS } from '../../config/statusColors';
 import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -13,15 +13,16 @@ import TableComponent from '../../components/TableComponent';
 import FileUploadDialog from '../../components/FileUploadDialog';
 import EditResponsablesDrawer from '../MessageCenterEventsList/EditResponsablesDrawer';
 
-const TaskCyclesTable = ({ 
-  logtasks = [], 
+const TaskCyclesTable = ({
+  logtasks = [],
   isLoading = false,
   taskStatusCatalog = [],
   onSelectCycle,
   onOpenFollowup,
   onCloseCycle,
   selectedLogtaskId = null,
-  onAttachmentUploaded
+  onAttachmentUploaded,
+  paginationLegendElement = null
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -48,10 +49,10 @@ const TaskCyclesTable = ({
 
   const statusMetaByCode = useMemo(() => {
     const fallback = {
-      '1': { label: 'Cerrado',    color: '#769656' },
-      '2': { label: 'Permanente', color: '#6F86B3' },
-      '3': { label: 'Abierto',    color: '#C4B46E' },
-      '4': { label: 'Vencido',    color: '#B86672' }
+      '1': { label: 'Cerrado',    color: STATUS_COLORS['1'] },
+      '2': { label: 'Permanente', color: STATUS_COLORS['2'] },
+      '3': { label: 'Abierto',    color: STATUS_COLORS['3'] },
+      '4': { label: 'Vencido',    color: STATUS_COLORS['4'] },
     };
 
     const mapped = Array.isArray(taskStatusCatalog)
@@ -472,7 +473,7 @@ const TaskCyclesTable = ({
           autoHeight={false}
           onRefresh={null}
           onResetFilters={null}
-          // AG Grid specific props
+          paginationLegendElement={paginationLegendElement}
           getRowStyle={getRowStyle}
           onRowClicked={onRowClicked}
         />

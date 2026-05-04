@@ -4,38 +4,45 @@ import { STATUS } from './constants';
 // This takes PRIORITY over API-provided colors so the frontend controls
 // the visual language regardless of what the backend sends.
 //
-// Philosophy: calm, desaturated, harmonious. Sufficient contrast on both
-// light and dark/colored backgrounds. No neon, no alarm — these users
-// already live surrounded by alerts.
-//
-// Lightness ~55–65%, saturation ~28–44% across all colors for visual balance.
+// Midpoint palette — exactly halfway between the original desaturated tones
+// and a fully vivid version. Comfortable for long reading sessions,
+// clearly distinguishable from one another.
 
 export const STATUS_COLORS = {
   // ── Generic status keys (tasks, legals, cycles) ──────────────────────
-  [STATUS.completed]:   '#769656',  // verde liquen   — done, calm confirmation
-  [STATUS.delayed]:     '#B86672',  // terracota suave — needs attention, not alarm
-  [STATUS.pending]:     '#C4B46E',  // dorado mate    — open, waiting
-  [STATUS.in_progress]: '#6F86B3',  // azul sereno    — working, progress
+  [STATUS.completed]:   '#589a53',  // verde medio    — done
+  [STATUS.delayed]:     '#c74d5b',  // rojo medio     — needs attention
+  [STATUS.pending]:     '#d5ae37',  // ámbar medio    — open, waiting
+  [STATUS.in_progress]: '#5481bd',  // azul medio     — working, progress
 
   // ── String aliases ────────────────────────────────────────────────────
-  in_progress:          '#6F86B3',  // underscore variant
-  open:                 '#C4B46E',  // same as pending
-  closed:               '#769656',  // same as completed
-  done:                 '#769656',
-  cancelled:            '#E8E9EB',  // gris ceniza — not applicable / neutral
-  not_apply:            '#E8E9EB',
-  not_completed:        '#B86672',
-  under_progress:       '#6F86B3',
-  partially_completed:  '#6F86B3',
-  permanent:            '#6F86B3',  // "Permanente" in tasks
-  in_transition:        '#C4B46E',
-  delayed:              '#B86672',
+  in_progress:          '#5481bd',
+  open:                 '#d5ae37',
+  closed:               '#589a53',
+  done:                 '#589a53',
+  cancelled:            '#c3c3c4',  // gris medio — not applicable / neutral
+  not_apply:            '#c3c3c4',
+  not_completed:        '#c74d5b',
+  under_progress:       '#5481bd',
+  partially_completed:  '#5481bd',
+  permanent:            '#5481bd',  // "Permanente" in tasks
+  in_transition:        '#d5ae37',
+  delayed:              '#c74d5b',
 
   // ── Numeric code aliases (1=closed/done, 2=in_progress, 3=open, 4=delayed) ──
-  '1': '#769656',
-  '2': '#6F86B3',
-  '3': '#C4B46E',
-  '4': '#B86672',
+  '1': '#589a53',
+  '2': '#5481bd',
+  '3': '#d5ae37',
+  '4': '#c74d5b',
+};
+
+// Desaturated/muted variant — for use in charts on light backgrounds where
+// the vivid midpoint palette draws too much attention.
+export const STATUS_COLORS_MUTED = {
+  '1': '#769656',  // muted green  — completed / closed
+  '2': '#6F86B3',  // muted blue   — in progress / permanent
+  '3': '#C4B46E',  // muted amber  — open / pending
+  '4': '#B86672',  // muted red    — delayed / expired
 };
 
 /**
@@ -57,11 +64,11 @@ export function resolveStatusColor(key, fallback = '#90a4ae') {
  */
 export function resolveProgressColor(progress) {
   const p = Number(progress) || 0;
-  if (p >= 100) return '#769656';
-  if (p >= 75)  return '#769656';
-  if (p >= 50)  return '#6F86B3';
-  if (p >= 25)  return '#C4B46E';
-  return '#B86672';
+  if (p >= 100) return '#589a53';
+  if (p >= 75)  return '#589a53';
+  if (p >= 50)  return '#5481bd';
+  if (p >= 25)  return '#d5ae37';
+  return '#c74d5b';
 }
 
 /**
@@ -70,8 +77,8 @@ export function resolveProgressColor(progress) {
  */
 export function resolveOpportunityColor(days) {
   const d = Number(days) || 0;
-  if (d > 5)  return '#769656';
-  if (d > 0)  return '#C4B46E';
-  if (d === 0) return '#B86672';
-  return '#B86672';
+  if (d > 5)  return '#589a53';
+  if (d > 0)  return '#d5ae37';
+  if (d === 0) return '#c74d5b';
+  return '#c74d5b';
 }

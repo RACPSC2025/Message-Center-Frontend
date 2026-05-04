@@ -1,6 +1,6 @@
-import { ExpandMore, NotificationsNone } from '@mui/icons-material';
-import { Badge, Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { NotificationsNone } from '@mui/icons-material';
+import { Badge, Box, IconButton, Typography } from '@mui/material';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -21,8 +21,7 @@ function LayoutHeader() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { language, changeLanguage } = useLanguage();
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { language } = useLanguage();
 
   const user = useSelector((state) => state.globalData.userDetails ?? {});
   const unreadCount = useSelector((state) => state.unreadMessages?.count ?? 0);
@@ -42,12 +41,6 @@ function LayoutHeader() {
   const { refreshCount } = useUnreadMessagesPolling(30000, true);
 
   const isNotificationsActive = location.pathname.includes('/notifications');
-
-  const handleOpen = (event) => setAnchorEl(event.currentTarget);
-  const handleClose = (lang) => {
-    setAnchorEl(null);
-    if (lang) changeLanguage(lang);
-  };
 
   useEffect(() => {
     dispatch(dashboardMessage({}));
@@ -92,19 +85,6 @@ function LayoutHeader() {
           </Typography>
         )}
       </Box>
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={handleOpen}
-        endIcon={<ExpandMore />}
-      >
-        {language === 'en' ? 'EN' : 'ES'}
-      </Button>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => handleClose()}>
-        <MenuItem onClick={() => handleClose('en')}>{t('english')}</MenuItem>
-        <MenuItem onClick={() => handleClose('es')}>{t('spanish')}</MenuItem>
-      </Menu>
-
       <IconButton
         aria-label="Notifications"
         sx={{ border: isNotificationsActive ? '1px solid #19aabb' : 'none' }}

@@ -384,13 +384,15 @@ export function Sidebar({ onWidthChange, filterPanelExpanded = false }) {
             type="button"
             onClick={() => changeLanguage(language === 'en' ? 'es' : 'en')}
             className={cn(
-              'flex items-center gap-2 rounded-md py-1.5 transition-colors text-slate-400 hover:text-white',
-              expanded ? 'px-2 w-full' : 'justify-center w-10 h-10'
+              'flex items-center rounded-md py-1.5 transition-colors text-slate-400 hover:text-white',
+              expanded ? 'gap-2 px-2 w-full' : 'flex-col gap-0.5 justify-center w-10'
             )}
             title={language === 'en' ? 'Cambiar a español' : 'Switch to English'}
           >
             <Globe size={16} className="shrink-0" />
-            {expanded && <span className="text-[11px]">{language === 'en' ? 'EN' : 'ES'}</span>}
+            <span className={cn('font-bold uppercase', expanded ? 'text-[11px]' : 'text-[8px] tracking-widest')}>
+              {language === 'en' ? 'EN' : 'ES'}
+            </span>
           </button>
         </div>
       </aside>

@@ -202,10 +202,36 @@ function FilterSidebarChart({ activeModule, moduleData }) {
 
   const SIZE = 220;
 
+  const holeSize = Math.round(SIZE * 0.72);
+
   return (
     <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', padding: '16px 0 12px' }}>
-      <div style={{ position: 'relative', width: SIZE, height: SIZE }}>
+      <div style={{ position: 'relative', width: SIZE, height: SIZE, isolation: 'isolate' }}>
+
+        {/* Imagen de fondo en el hueco del donut (z:-1 queda detrás del canvas transparente) */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: holeSize,
+          height: holeSize,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          zIndex: -1,
+          pointerEvents: 'none',
+        }}>
+          <img
+            src="/assets/chart_background.png"
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+
+        {/* Doughnut sin wrapper — Chart.js usa directamente el contenedor 220×220 */}
         <Doughnut options={{ ...DONUT_OPTIONS, maintainAspectRatio: false }} data={chartData} />
+
+        {/* Texto central */}
         <div
           style={{
             position: 'absolute',
@@ -214,7 +240,8 @@ function FilterSidebarChart({ activeModule, moduleData }) {
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            zIndex: 1,
           }}
         >
           {payload.centerLines.map((line, i) => (

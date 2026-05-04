@@ -849,15 +849,18 @@ export default function ActionTable({
                 )}
               </>
             ) : (
-              <Chip
-                label={label || 'Sin estado'}
-                size="small"
-                sx={{
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Box sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
                   backgroundColor: resolveStatusColor(value, color_code || '#ccc'),
-                  color: 'white',
-                  minWidth: 100
-                }}
-              />
+                  flexShrink: 0,
+                }} />
+                <Typography variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1 }}>
+                  {label || 'Sin estado'}
+                </Typography>
+              </Box>
             )}
           </Box>
         );

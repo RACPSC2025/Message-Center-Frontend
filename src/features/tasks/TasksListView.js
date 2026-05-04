@@ -55,6 +55,7 @@ import TaskDoubleRingChart from '../../components/TaskDoubleRingChart';
 import EditEventDetailsDrawer from '../MessageCenterEventsList/EditEventDetailsDrawer';
 import ExpandableText from '../../components/ExpandableText';
 import { normalizeStatusCode, stripHtmlTags } from '../../utils/others';
+import { STATUS_COLORS } from '../../config/statusColors';
 
 const TASKS_PER_PAGE = 10;
 
@@ -206,10 +207,10 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
   const TASK_STATUS_FALLBACK = useMemo(
     () => [
-      { code: 'pending', numeric_code: 3, label: 'Abierto', color: '#ffc107' },
-      { code: 'completed', numeric_code: 1, label: 'Cerrado', color: '#28a745' },
-      { code: 'delayed', numeric_code: 4, label: 'Vencido', color: '#dc3545' },
-      { code: 'permanent', numeric_code: 2, label: 'Permanente', color: '#348fe2' }
+      { code: 'pending',   numeric_code: 3, label: 'Abierto',    color: STATUS_COLORS['3'] },
+      { code: 'completed', numeric_code: 1, label: 'Cerrado',    color: STATUS_COLORS['1'] },
+      { code: 'delayed',   numeric_code: 4, label: 'Vencido',    color: STATUS_COLORS['4'] },
+      { code: 'permanent', numeric_code: 2, label: 'Permanente', color: STATUS_COLORS['2'] },
     ],
     []
   );
@@ -816,6 +817,51 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     [normalizedTaskStatusCatalog, statsByStatusCode]
   );
 
+  const statusFilterElement = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Typography sx={{ textTransform: 'uppercase', fontWeight: 800, color: '#90a4ae', fontSize: '0.7rem', letterSpacing: 1.5, whiteSpace: 'nowrap' }}>
+        {t('FilterBy') + ' ' + t('Status')}
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+        {statusFilters.map((status) => {
+          const isActive = normalizedSelectedStatus === status.code;
+          return (
+            <Tooltip key={status.code} title={t(status.label)}>
+              <Box
+                onClick={() => {
+                  const newValue = isActive ? -1 : status.code;
+                  dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: newValue } }));
+                }}
+                sx={{
+                  width: isActive ? 14 : 10,
+                  height: isActive ? 14 : 10,
+                  borderRadius: '50%',
+                  bgcolor: status.color,
+                  cursor: 'pointer',
+                  border: isActive ? '2px solid #fff' : 'none',
+                  outline: isActive ? `2px solid ${status.color}` : 'none',
+                  transition: 'all 0.2s ease',
+                  '&:hover': { transform: 'scale(1.3)' }
+                }}
+              />
+            </Tooltip>
+          );
+        })}
+        {normalizedSelectedStatus && (
+          <Tooltip title={t('Limpiar filtro')}>
+            <IconButton
+              size="small"
+              onClick={() => dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: -1 } }))}
+              sx={{ color: '#90a4ae', p: 0.25 }}
+            >
+              <DeleteOutline sx={{ fontSize: '1rem' }} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    </Box>
+  );
+
   return (
     <Box sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
 
@@ -1170,63 +1216,6 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           </Box>
         )}
         
-        {/* Barra de Filtros Contextual */}
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1,
-          bgcolor: 'white',
-          borderBottom: '1px solid #edf2f4',
-          flexShrink: 0
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Filtrado por estado */}
-            <Typography sx={{ textTransform: 'uppercase', fontWeight: 800, color: '#90a4ae', fontSize: '0.75rem', letterSpacing: 1.5 }}>
-              {t('FilterBy') + ' ' + t('Status')}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-              {statusFilters.map((status) => {
-                const isActive = normalizedSelectedStatus === status.code;
-                return (
-                  <Tooltip key={status.code} title={t(status.label)}>
-                    <Box
-                      onClick={() => {
-                        const newValue = isActive ? -1 : status.code;
-                        dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: newValue } }));
-                      }}
-                      sx={{
-                        width: isActive ? 16 : 12,
-                        height: isActive ? 16 : 12,
-                        borderRadius: '50%',
-                        bgcolor: status.color,
-                        cursor: 'pointer',
-                        border: isActive ? '2px solid #fff' : 'none',
-                        outline: isActive ? `2px solid ${status.color}` : 'none',
-                        transition: 'all 0.2s ease',
-                        '&:hover': { transform: 'scale(1.3)' }
-                      }}
-                    />
-                  </Tooltip>
-                );
-              })}
-              {normalizedSelectedStatus && (
-                <Tooltip title={t('Limpiar filtro')}>
-                  <IconButton
-                    size="small"
-                    onClick={() => dispatch(setFilter({ module: 'task', updatedFilter: { selectedStatus: -1 } }))}
-                    sx={{ color: '#90a4ae', ml: 1, p: 0.5 }}
-                  >
-                    <DeleteOutline sx={{ fontSize: '1.2rem' }} />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Box>
-          </Box>
-        </Box>
-
         {/* Contenido Scrollable: Dashboard + Tabla */}
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', p: 2 }}>
           {/* Card de Cabecera (Dashboard) */}
@@ -1303,8 +1292,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                     label: item.label
                   }))}
                   size={88}
-                  strokeWidth={9}
-                  taskState={getTaskPriorityStatus(selectedTask)} // Pasamos el estado (código '1', '2', '3' o '4')
+                  strokeWidth={5}
+                  taskState={getTaskPriorityStatus(selectedTask)}
                 />
 
                 {/* Estados de los ciclos en formato vertical */}
@@ -1327,6 +1316,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
             logtasks={filteredLogtasks}
             isLoading={logtaskListLoading}
             taskStatusCatalog={normalizedTaskStatusCatalog}
+            paginationLegendElement={statusFilterElement}
             onSelectCycle={(cycle) => {
               setSelectedLogtask(cycle);
               setFocusedCommentId(null);

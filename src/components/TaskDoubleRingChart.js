@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { selectFilterItemValue } from '../stores/filterSlice';
+import { STATUS_COLORS_MUTED } from '../config/statusColors';
 
 /**
  * Componente de Gráfico de Doble Anillo.
@@ -15,10 +16,10 @@ export const TaskDoubleRingChart = ({
   taskState,
   chartData,
   
-  size = 80, 
-  strokeWidth = 8,
-  innerStrokeWidth = 6,
-  gap = 2
+  size = 80,
+  strokeWidth = 5,
+  innerStrokeWidth = 4,
+  gap = 3
 }) => {
   // 1. Obtener estados y colores desde Redux
   const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
@@ -73,10 +74,10 @@ export const TaskDoubleRingChart = ({
   // --- 3. Preparación de Colores ---
   // Mapa base (defaults)
   const defaultColors = {
-    '1': '#769656', // Completed
-    '2': '#6F86B3', // In Progress
-    '3': '#C4B46E', // Open
-    '4': '#B86672'  // Expired
+    '1': STATUS_COLORS_MUTED['1'],
+    '2': STATUS_COLORS_MUTED['2'],
+    '3': STATUS_COLORS_MUTED['3'],
+    '4': STATUS_COLORS_MUTED['4'],
   };
 
   // Construir mapa final combinando defaults con Redux
@@ -156,18 +157,16 @@ export const TaskDoubleRingChart = ({
   const center = size / 2;
   const transitionStyle = { transition: 'stroke-dasharray 2s ease-out, stroke-dashoffset 2s ease-out' };
 
-  //console.log("Mostrando estadísticas de la tarea", stats);
-  //console.log("Mostrando estado de la tarea", taskState);
-  //console.log("Color seleccionado para estado", taskState, ":", innerRingColor);
   const finalValueToShow = displayPercentage > 0 ? displayPercentage : percentage;
+
   return (
-    
     <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }}>
       {/* SVG Container: Rotado -90deg para empezar desde arriba */}
       <svg
         style={{ transform: 'rotate(-90deg)', width: '100%', height: '100%' }}
         viewBox={`0 0 ${size} ${size}`}
       >
+
         {/* === ANILLO INTERIOR (Progreso Tarea) === */}
         {/* Fondo Gris */}
         <circle
