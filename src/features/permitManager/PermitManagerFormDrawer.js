@@ -1,4 +1,8 @@
-import FormDrawer from '../../components/FormDrawer';
+import CloseIcon from '@mui/icons-material/Close';
+import { AppBar, Box, Button, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
+import BaseTab from '../../components/BaseTab';
+import FormBuilder from '../../components/FormBuilder';
 import { PERMIT_COLUMN_DEFINITIONS } from './permitManagerData';
 
 const STATUS_KEY_BY_LABEL = Object.freeze({
@@ -23,7 +27,8 @@ const DATE_FIELDS = new Set([
   'fechaProyectadaOtorgamiento',
   'fechaRealOtorgamiento',
   'fechaEjecucionVisitaTecnica',
-  'fechaRespuestaRequerimientos'
+  'fechaRespuestaRequerimientos',
+  'fechaProyectadaEjecucion'
 ]);
 
 const DROPDOWN_FIELDS = new Set([
@@ -37,6 +42,59 @@ const DROPDOWN_FIELDS = new Set([
 ]);
 
 const FORM_FIELDS = PERMIT_COLUMN_DEFINITIONS.filter((column) => !column.uiOnly);
+
+const TAB_GROUPS = Object.freeze([
+  {
+    key: 'general',
+    label: 'Información General',
+    fields: [
+      'unidad',
+      'sede',
+      'tipoPermiso',
+      'tipoTramite',
+      'actoAdministrativoInicial',
+      'expediente',
+      'autoridad',
+      'justificacionSolicitud'
+    ]
+  },
+  {
+    key: 'filing',
+    label: 'Radicación y Pago',
+    fields: [
+      'fechaProyectadaEjecucion',
+      'valorPagoEvaluacionAmbiental',
+      'fechaReportePagoEvaluacionAmbiental',
+      'numeroRadicadoReportePago',
+      'fechaRadicacionPermiso',
+      'numeroRadicadoSolicitudAutoridad'
+    ]
+  },
+  {
+    key: 'tracking',
+    label: 'Seguimiento',
+    fields: [
+      'fechaProyectadaOtorgamiento',
+      'fechaRealOtorgamiento',
+      'duracionTramiteMeses',
+      'semaforoAmbiental',
+      'autoInicioTramite',
+      'fechaEjecucionVisitaTecnica',
+      'estadoTramite'
+    ]
+  },
+  {
+    key: 'requirements',
+    label: 'Requerimientos',
+    fields: [
+      'datosContactoAutoridadAmbiental',
+      'actoAdministrativoRequerimientos',
+      'descripcionRequerimientosAdicionales',
+      'fechaRespuestaRequerimientos',
+      'numeroRadicadoRespuestaAutoridad'
+    ]
+  }
+]);
 
 const EMPTY_FORM_VALUES = FORM_FIELDS.reduce(
   (accumulator, field) => ({
@@ -120,7 +178,7 @@ function mapFieldToInput(field, fieldOptions) {
     label: field.headerName,
     type: isDropdown ? 'dropdown' : isMultiline ? 'textarea' : isDate ? 'date' : 'text',
     options: isDropdown ? fieldOptions[field.field] || [] : undefined,
-    gridSize: isMultiline ? 12 : field.field === 'sede' || field.field === 'tipoPermiso' ? 12 : 6,
+    gridSize: isMultiline ? 12 : 6,
     required: false,
     formatValue: isDate ? 'YYYY-MM-DD' : undefined,
     inputProps: isNumber ? { min: 0 } : undefined
@@ -135,22 +193,121 @@ export default function PermitManagerFormDrawer({
   onClose = () => {},
   onSubmit = () => {}
 }) {
-  const fieldOptions = buildFieldOptions(records);
-  const inputFields = FORM_FIELDS.map((field) => mapFieldToInput(field, fieldOptions));
-  const initialValues = buildInitialValues(item, mode);
+  const [activeTab, setActiveTab] = useState(0);
+  const fieldOptions = useMemo(() => buildFieldOptions(records), [records]);
+  const initialValues = useMemo(() => buildInitialValues(item, mode), [item, mode]);
+  const [formValues, setFormValues] = useState(initialValues);
+
+  useEffect(() => {
+    if (open) {
+      setFormValues(initialValues);
+      setActiveTab(0);
+    }
+  }, [initialValues, open]);
+
+  const inputFieldsByTab = useMemo(
+    () =>
+      TAB_GROUPS.map((group) => ({
+        ...group,
+        inputs: group.fields
+          .map((fieldName) => FORM_FIELDS.find((field) => field.field === fieldName))
+          .filter(Boolean)
+          .map((field) => mapFieldToInput(field, fieldOptions))
+      })),
+    [fieldOptions]
+  );
+
+  const handleFieldChange = (fieldId, value) => {
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      [fieldId]: value
+    }));
+  };
+
+  const handleSubmit = () => {
+    onSubmit(buildPayload(formValues));
+  };
 
   return (
-    <FormDrawer
-      key={`${mode}-${item?.recordId || 'new'}`}
+    <Drawer
+      anchor="right"
       open={open}
-      handleClose={onClose}
-      title={mode === 'edit' ? 'Editar permiso ambiental' : 'Crear permiso ambiental'}
-      inputFields={inputFields}
-      initialValues={initialValues}
-      submitForm={(values, callback) => {
-        onSubmit(buildPayload(values));
-        callback();
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: {
+            xs: '100vw',
+            sm: '80vw',
+            md: '62vw',
+            lg: '42vw'
+          }
+        }
       }}
-    />
+    >
+      <AppBar position="static">
+        <Toolbar>
+          <Typography color="white" variant="h6" sx={{ flexGrow: 1 }}>
+            {mode === 'edit' ? 'Editar permiso ambiental' : 'Crear permiso ambiental'}
+          </Typography>
+          <IconButton edge="end" onClick={onClose} aria-label="close">
+            <CloseIcon sx={{ color: 'white' }} />
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0, flex: 1 }}>
+        <BaseTab
+          items={inputFieldsByTab.map((group) => ({
+            label: group.label,
+            skipTranslation: true
+          }))}
+          activeTab={activeTab}
+          tabContainerProps={{
+            onChange: (_, newValue) => setActiveTab(newValue),
+            sx: {
+              bgcolor: 'background.paper',
+              borderRadius: 1,
+              '& .MuiTabs-flexContainer': {
+                justifyContent: 'space-between'
+              }
+            }
+          }}
+          tabItemProps={{
+            sx: {
+              flex: 1,
+              minWidth: 0,
+              px: 1,
+              fontSize: '0.82rem'
+            }
+          }}
+        />
+
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflow: 'auto',
+            pr: 1
+          }}
+        >
+          <FormBuilder
+            inputFields={inputFieldsByTab[activeTab]?.inputs || []}
+            initialValues={formValues}
+            controlled={true}
+            onChange={handleFieldChange}
+            showActionButton={false}
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, pt: 1 }}>
+          <Button variant="contained" color="inherit" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>
+            Guardar
+          </Button>
+        </Box>
+      </Box>
+    </Drawer>
   );
 }
