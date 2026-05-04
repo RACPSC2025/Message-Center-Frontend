@@ -74,6 +74,33 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   // Ref para scroll de lista de tareas
   const listRef = useRef(null);
 
+  // Panel resizer — left task list vs central cycle panel
+  const [leftPanelWidth, setLeftPanelWidth] = useState(340);
+  const [isResizing, setIsResizing] = useState(false);
+  const isDragging = useRef(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setLeftPanelWidth(Math.min(Math.max(e.clientX - rect.left, 200), 520));
+    };
+    const onUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
   // States
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedLogtask, setSelectedLogtask] = useState(null);
@@ -863,21 +890,20 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   );
 
   return (
-    <Box sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
+    <Box ref={containerRef} sx={{ display: 'flex', height: '100%', width: '100%', bgcolor: '#f5f7f9', overflow: 'hidden' }}>
 
       {/* Sidebar Izquierda - Tareas (Mini Sidebar) */}
       <Box
         sx={{
-          width: isCollapsed ? 70 : 340,
-          borderRight: '1px solid #e0e0e0',
+          width: isCollapsed ? 70 : leftPanelWidth,
           bgcolor: 'white',
           display: 'flex',
           flexDirection: 'column',
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: isResizing ? 'none' : 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
           flexShrink: 0,
-          height: '100%', // Ensure sidebar fills parent height
-          minHeight: 0 // Prevent overflow issues
+          height: '100%',
+          minHeight: 0
         }}
       >
         <Box sx={{ p: '12px 0 8px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
@@ -1204,6 +1230,27 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
           )}
         </List>
       </Box>
+
+      {/* Divisor redimensionable */}
+      {!isCollapsed && (
+        <Box
+          onMouseDown={() => {
+            isDragging.current = true;
+            setIsResizing(true);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+          }}
+          sx={{
+            width: '5px',
+            flexShrink: 0,
+            height: '100%',
+            cursor: 'col-resize',
+            backgroundColor: '#e0e0e0',
+            transition: 'background-color 0.15s',
+            '&:hover': { backgroundColor: '#19aabb' },
+          }}
+        />
+      )}
 
       {/* Panel Central con Filtro Superior */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
