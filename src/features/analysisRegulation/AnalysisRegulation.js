@@ -60,6 +60,7 @@ import ChatInputBox from '../../components/Input/lexicalWYSWYG/ChatInputBox';
 import PDFViewerComponent from '../../components/Input/lexicalWYSWYG/PDFViewerComponent';
 
 import axios from 'axios';
+import { queryLibrary } from '../../lib/iaApi';
 import { 
   evalWithIA, 
   evalWithIAComplete,
@@ -759,138 +760,62 @@ export default function AnalysisRegulation({
       });
     });
   };
-  // FUNCIÓN: Consulta con concatenación del último mensaje
+  // FUNCIÓN: Consulta al backend IA (ingest + query/library)
   const handleCustomQuery = async () => {
-    try {
-      if (!userText || userText.trim() === '') {
-        alert('Por favor ingresa una pregunta');
-        return;
-      }
+    const question = userText?.trim();
+    if (!question) {
+      alert('Por favor ingresa una pregunta');
+      return;
+    }
 
-      const currentConversation = historicTextIA[currentHistoricIAPosition];
-      
-      if (!currentConversation || currentConversation.contenido.length === 0) {
-        alert('No hay contenido previo en el chat para analizar');
-        return;
-      }
+    setViewMode('chat');
+    setLoadingQueryWithContext(true);
 
-      const lastMessage = currentConversation.contenido[currentConversation.contenido.length - 1];
-      const lastMessageText = lastMessage.text;
-
-      const fullPrompt = `${userText} y esta revisión aplicada al contenido de: ${lastMessageText}`;
-
-      console.log('🔍 Prompt completo:', fullPrompt.substring(0, 200) + '...');
-
-      setLoadingQueryWithContext(true);
-
-      const updatedHistoric = [...historicTextIA];
-      
-      const updatedConversation = {
-        ...updatedHistoric[currentHistoricIAPosition],
-        contenido: [...updatedHistoric[currentHistoricIAPosition].contenido]
-      };
-      
-      updatedConversation.contenido.push({
-        role: 'user',
-        text: userText,
-        timestamp: new Date()
+    const pushMsg = (role, text, extra = {}) => {
+      setHistoricTextIA((prev) => {
+        const updated = [...prev];
+        updated[currentHistoricIAPosition] = {
+          ...updated[currentHistoricIAPosition],
+          contenido: [
+            ...updated[currentHistoricIAPosition].contenido,
+            { role, text, timestamp: new Date(), ...extra }
+          ]
+        };
+        return updated;
       });
-      
-      updatedHistoric[currentHistoricIAPosition] = updatedConversation;
-      setHistoricTextIA(updatedHistoric);
+    };
 
-      addMessageToCurrentChat('assistant', '🔍 Revisando con IA...');
+    const replaceLastMsg = (role, text, extra = {}) => {
+      setHistoricTextIA((prev) => {
+        const updated = [...prev];
+        const contenido = [...updated[currentHistoricIAPosition].contenido];
+        contenido[contenido.length - 1] = { role, text, timestamp: new Date(), ...extra };
+        updated[currentHistoricIAPosition] = { ...updated[currentHistoricIAPosition], contenido };
+        return updated;
+      });
+    };
 
-      const response = await dispatch(
-        bedrock_query_deep({
-          prompt: fullPrompt,
-          sessionId: null
-        })
-      ).unwrap();
+    pushMsg('user', question);
+    pushMsg('assistant', '🔍 Consultando norma...');
+    setUserText('');
 
-      console.log('✅ Respuesta de Bedrock:', response);
+    try {
+      const result = await queryLibrary(question);
 
-      if (response.success && response.answer) {
-        const updatedHistoric2 = [...historicTextIA];
-        
-        const updatedConversation2 = {
-          ...updatedHistoric2[currentHistoricIAPosition],
-          contenido: [...updatedHistoric2[currentHistoricIAPosition].contenido]
-        };
-        
-        updatedConversation2.contenido.pop();
-        
-        updatedConversation2.contenido.push({
-          role: 'assistant',
-          text: response.answer,
-          timestamp: new Date(),
-          sources: response.sources || [],
-          sessionId: response.sessionId,
-          citations: response.citations || []
-        });
-        
-        updatedHistoric2[currentHistoricIAPosition] = updatedConversation2;
-        
-        setHistoricTextIA(updatedHistoric2);
-        setResult(response);
+      replaceLastMsg('assistant', result.answer, {
+        sources: result.source_docs || [],
+        grade: result.grade,
+        hallucination: result.hallucination_detected,
+        cacheHit: result.cache_hit,
+      });
 
-        setUserText('');
-
-        setTimeout(() => {
-          const chatArea = document.querySelector('.overflow-y-auto.bg-gray-50');
-          if (chatArea) {
-            chatArea.scrollTop = chatArea.scrollHeight;
-          }
-        }, 100);
-
-      } else {
-        console.error('Error en la respuesta:', response);
-        
-        const updatedHistoric2 = [...historicTextIA];
-        
-        const updatedConversation2 = {
-          ...updatedHistoric2[currentHistoricIAPosition],
-          contenido: [...updatedHistoric2[currentHistoricIAPosition].contenido]
-        };
-        
-        updatedConversation2.contenido.pop();
-        
-        updatedConversation2.contenido.push({
-          role: 'assistant',
-          text: '❌ Lo siento, hubo un error al consultar la base de conocimiento. Por favor, intenta nuevamente.',
-          timestamp: new Date()
-        });
-        
-        updatedHistoric2[currentHistoricIAPosition] = updatedConversation2;
-        setHistoricTextIA(updatedHistoric2);
-      }
+      setTimeout(() => {
+        const chatArea = document.querySelector('.overflow-y-auto.bg-gray-50');
+        if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+      }, 100);
 
     } catch (error) {
-      console.error('❌ Error al consultar:', error);
-      
-      const updatedHistoric = [...historicTextIA];
-      
-      const updatedConversation = {
-        ...updatedHistoric[currentHistoricIAPosition],
-        contenido: [...updatedHistoric[currentHistoricIAPosition].contenido]
-      };
-
-      if (updatedConversation.contenido.length > 0) {
-        const lastMsg = updatedConversation.contenido[updatedConversation.contenido.length - 1];
-        if (lastMsg.role === 'assistant' && lastMsg.text.includes('Revisando')) {
-          updatedConversation.contenido.pop();
-        }
-      }
-      
-      updatedConversation.contenido.push({
-        role: 'assistant',
-        text: `❌ Error: ${error.message || 'Error desconocido al procesar la consulta'}`,
-        timestamp: new Date()
-      });
-      
-      updatedHistoric[currentHistoricIAPosition] = updatedConversation;
-      setHistoricTextIA(updatedHistoric);
-      
+      replaceLastMsg('assistant', `❌ Error: ${error.message || 'Error desconocido'}`);
     } finally {
       setLoadingQueryWithContext(false);
     }

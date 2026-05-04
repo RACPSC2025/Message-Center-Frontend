@@ -1,15 +1,23 @@
 # API integration, axios y endpoints
 
-## Cliente HTTP base
+## Clientes HTTP
 
-Archivo: src/lib/axios.js
+### Cliente principal — `src/lib/axios.js`
 
 - Timeout: 600000 ms
-- baseURL: window.__APP_CONFIG__.apiUrl (fallback REACT_APP_API_URL)
-- Request interceptor agrega:
-  - Auth-Token
-  - System-Token
-- Response interceptor maneja 401 con redirect_url cuando aplica.
+- baseURL: `window.__APP_CONFIG__.apiUrl` (fallback `REACT_APP_API_URL`)
+- Request interceptor agrega: `Auth-Token`, `System-Token`
+- Response interceptor maneja 401 con `redirect_url` cuando aplica
+- Usado por **todos los thunks Redux** de la app (PHP backend)
+
+### Cliente IA — `src/lib/iaApi.js`
+
+- baseURL: `window.__APP_CONFIG__.api_url_ia` (default `http://localhost:8000/`)
+- Autenticación: Bearer token propio (`/auth/dev-token`) — **independiente del Auth-Token PHP**
+- Token cache a nivel de módulo; auto-refresh en 401
+- Usa `fetch` nativo (no axios)
+- Exports: `ingestPDF(file)`, `queryLibrary(question, topK?)`
+- Documentación completa: [specs/ia_api/endpoints.md](../ia_api/endpoints.md)
 
 ## Autenticación — Auth-Token requerido en TODOS los endpoints
 

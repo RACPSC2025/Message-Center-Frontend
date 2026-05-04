@@ -8,6 +8,7 @@
 (function () {
   var host = window.location.hostname;
   var apiUrl;
+  var api_url_ia = 'http://localhost:8000/';
   var baseName;
   var environment;
   var version = '0.3.6';
@@ -46,6 +47,7 @@
 
   window.__APP_CONFIG__ = {
     apiUrl:      apiUrl,
+    api_url_ia:  api_url_ia,
     baseName:    baseName,
     environment: environment,
     version:     version

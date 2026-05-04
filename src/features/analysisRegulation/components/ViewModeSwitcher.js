@@ -1,18 +1,29 @@
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { ChatRounded, PictureAsPdfRounded, UploadFileRounded, SettingsRounded } from '@mui/icons-material';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { ingestPDF } from '../../../lib/iaApi';
 
 const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPdf, toolbarVisible, onToggleToolbar }) => {
   const fileInputRef = useRef(null);
+  const [ingestStatus, setIngestStatus] = useState('idle'); // idle | loading | done | error
+  const [ingestInfo,   setIngestInfo]   = useState(null);
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      if (onUploadPdf) {
-        onUploadPdf(file);
-      }
+    if (!file || file.type !== 'application/pdf') return;
+
+    if (onUploadPdf) onUploadPdf(file);
+
+    setIngestStatus('loading');
+    setIngestInfo(null);
+    try {
+      const result = await ingestPDF(file);
+      setIngestStatus('done');
+      setIngestInfo(result);
+    } catch {
+      setIngestStatus('error');
     }
-    // Reset input
+
     event.target.value = '';
   };
   return (
@@ -54,15 +65,30 @@ const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPd
       <Button
         variant="outlined"
         onClick={() => fileInputRef.current?.click()}
-        startIcon={<UploadFileRounded />}
+        disabled={ingestStatus === 'loading'}
+        startIcon={
+          ingestStatus === 'loading'
+            ? <CircularProgress size={14} />
+            : <UploadFileRounded />
+        }
         sx={{
           textTransform: 'none',
           minWidth: '120px',
           marginLeft: 'auto'
         }}
       >
-        Cargar PDF
+        {ingestStatus === 'loading' ? 'Indexando...' : 'Cargar PDF'}
       </Button>
+      {ingestStatus === 'done' && (
+        <Chip
+          label={`${ingestInfo?.indexed_chunks} chunks`}
+          color="success"
+          size="small"
+        />
+      )}
+      {ingestStatus === 'error' && (
+        <Chip label="Error al indexar" color="error" size="small" />
+      )}
       {viewMode === 'pdf' && pdfAvailable && onToggleToolbar && (
         <Tooltip title={toolbarVisible ? "Ocultar herramientas" : "Mostrar herramientas"}>
           <IconButton

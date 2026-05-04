@@ -18,12 +18,20 @@ Archivo: src/config/runtimeConfig.js
 - Fuente principal: public/config.json
 - Campos esperados:
   - apiUrl
+  - api_url_ia
   - baseName
   - environment
   - version
 - Se guarda en: window.__APP_CONFIG__ (Object.freeze)
 - Si falla la carga:
   - fallback a variables de entorno REACT_APP_*
+
+### `api_url_ia`
+
+URL base del backend IA (FastAPI/uvicorn). Separado del backend principal PHP.
+Default en todos los entornos: `http://localhost:8000/`.
+Consumido por `src/lib/iaApi.js` — cliente independiente del axios principal.
+Para cambiar por entorno, editar el bloque correspondiente en `public/config.js`.
 
 ## Razones de este enfoque
 

@@ -3,17 +3,17 @@ import { SendRounded } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import LexicalInput from '../../../components/Input/lexicalWYSWYG/LexicalInput';
 
-const ChatNormaTab = ({ 
-  userText, 
-  setUserText, 
-  onSend, 
-  loading 
+const ChatNormaTab = ({
+  userText,
+  setUserText,
+  onSend,
+  loading
 }) => {
   const { t } = useTranslation();
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
-      <Box 
+      <Box
         sx={{
           border: '1px solid #e0e0e0',
           borderRadius: 2,
@@ -21,13 +21,13 @@ const ChatNormaTab = ({
           backgroundColor: '#fafafa'
         }}
       >
-        <LexicalInput 
-          placeholder={t('Consulta sobre el documento')} 
+        <LexicalInput
+          placeholder={t('Consulta sobre el documento')}
           JSONData={setUserText}
           minRows={8}
           maxRows={15}
         />
-        
+
         <Box display="flex" justifyContent="flex-end" mt={2}>
           <Tooltip title="Enviar consulta sobre el documento">
             <IconButton
