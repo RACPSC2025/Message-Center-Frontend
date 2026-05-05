@@ -347,19 +347,22 @@ const FASE_FIELDS = {
     }
   ],
   'FASE V': [
+    // Fase 5 – Periodo probatorio
     {
-      id: 'resolucion_primera_instancia',
-      label: 'Resolución de Primera Instancia',
-      type: 'textarea',
-      required: true,
-      gridSize: '12'
+      id: 'probatory_documents',
+      label: 'Documentos adjuntos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 5 – Periodo probatorio'
     },
     {
-      id: 'notificacion_resolucion',
-      label: 'Notificación de Resolución',
+      id: 'probatory_observations',
+      label: 'Observaciones',
       type: 'textarea',
-      required: true,
-      gridSize: '12'
+      required: false,
+      gridSize: '12',
+      section: 'Fase 5 – Periodo probatorio'
     }
   ],
   'FASE VI': [
