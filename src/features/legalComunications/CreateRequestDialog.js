@@ -2,12 +2,8 @@ import {
   Add,
   Close,
   Description,
-  Gavel,
-  HelpOutline,
-  Info,
   PictureAsPdf,
   UploadFile,
-  Group,
   CheckCircle,
   Circle
 } from '@mui/icons-material';
@@ -16,17 +12,14 @@ import {
   Button,
   Chip,
   Dialog,
-  DialogContent,
   FormControl,
   IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   TextField,
   Typography,
   Avatar,
-  Divider,
   CircularProgress,
   AppBar,
   Toolbar,
@@ -88,6 +81,8 @@ export default function CreateRequestDialog({
   const [availableRecipients, setAvailableRecipients] = useState([]); // Array de {value, label}
   const [recipientsMenuOpen, setRecipientsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const isFirstTab = activeTab === 0;
+  const isLastTab = activeTab === 2;
 
   // Cargar artículos y destinatarios disponibles
   useEffect(() => {
@@ -302,346 +297,278 @@ export default function CreateRequestDialog({
     onClose();
   };
 
-  const renderSectionHeader = (icon, label) => (
-    <Box display="flex" alignItems="center" gap={1} pb={2} borderBottom={1} borderColor="divider">
-      {icon}
-      <Typography variant="caption" fontWeight="bold" textTransform="uppercase" color="textSecondary">
-        {label}
-      </Typography>
+  const handlePreviousTab = () => {
+    setActiveTab((currentTab) => Math.max(currentTab - 1, 0));
+  };
+
+  const handleNextTab = () => {
+    setActiveTab((currentTab) => Math.min(currentTab + 1, 2));
+  };
+
+  const generalInfoContent = (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+        gap: 2
+      }}
+    >
+      <FormControl fullWidth>
+        <InputLabel size="small">{t('source_type')}</InputLabel>
+        <Select
+          size="small"
+          value={formData.source_type}
+          label={t('source_type')}
+          onChange={(e) => handleFormChange('source_type', e.target.value)}
+        >
+          <MenuItem value="GOVT">{t('government')}</MenuItem>
+          <MenuItem value="USER">{t('user_community')}</MenuItem>
+          <MenuItem value="INTERNAL">{t('internal')}</MenuItem>
+        </Select>
+      </FormControl>
+
+      <TextField
+        fullWidth
+        size="small"
+        label={t('status')}
+        value={formData.status}
+        select
+        onChange={(e) => handleFormChange('status', e.target.value)}
+      >
+        <MenuItem value="open">{t('open_status')}</MenuItem>
+        <MenuItem value="in_progress">{t('in_progress_status')}</MenuItem>
+        <MenuItem value="resolved">{t('resolved_status')}</MenuItem>
+        <MenuItem value="expired">{t('expired_status')}</MenuItem>
+      </TextField>
+
+      <TextField
+        fullWidth
+        size="small"
+        label={t('source_name')}
+        value={formData.source_name}
+        onChange={(e) => handleFormChange('source_name', e.target.value)}
+        required
+      />
+
+      <TextField
+        fullWidth
+        size="small"
+        label={t('source_reference')}
+        value={formData.source_reference}
+        onChange={(e) => handleFormChange('source_reference', e.target.value)}
+      />
+
+      <TextField
+        fullWidth
+        size="small"
+        type="date"
+        label={t('filing_date')}
+        value={formData.filing_date}
+        onChange={(e) => handleFormChange('filing_date', e.target.value)}
+        InputLabelProps={{ shrink: true }}
+        required
+      />
+
+      <TextField
+        fullWidth
+        size="small"
+        type="date"
+        label={t('expected_response_date')}
+        value={formData.expected_response_date}
+        onChange={(e) => handleFormChange('expected_response_date', e.target.value)}
+        InputLabelProps={{ shrink: true }}
+        required
+      />
+
+      <TextField
+        fullWidth
+        size="small"
+        type="date"
+        label={t('due_date')}
+        value={formData.due_date}
+        onChange={(e) => handleFormChange('due_date', e.target.value)}
+        InputLabelProps={{ shrink: true }}
+      />
+
+      <FormControl fullWidth>
+        <InputLabel size="small">{t('communication_mode')}</InputLabel>
+        <Select
+          size="small"
+          value={formData.mode}
+          label={t('communication_mode')}
+          onChange={(e) => handleFormChange('mode', e.target.value)}
+        >
+          <MenuItem value="LETTER">{t('letter')}</MenuItem>
+          <MenuItem value="EMAIL">{t('email')}</MenuItem>
+          <MenuItem value="PORTAL">{t('portal')}</MenuItem>
+          <MenuItem value="IN_PERSON">{t('in_person')}</MenuItem>
+          <MenuItem value="PHONE">{t('phone')}</MenuItem>
+        </Select>
+      </FormControl>
     </Box>
   );
 
-  const generalInfoContent = (
-    <Paper sx={{ p: 2, minHeight: 520, display: 'flex', flexDirection: 'column' }}>
-      {renderSectionHeader(<Info color="primary" fontSize="small" />, t('general_info'))}
-      <Box
-        sx={{
-          mt: 2,
-          overflowY: 'auto',
-          pr: 1,
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-          gap: 2
-        }}
-        className="custom-scrollbar"
-      >
-        <FormControl fullWidth>
-          <InputLabel size="small">{t('source_type')}</InputLabel>
-          <Select
-            size="small"
-            value={formData.source_type}
-            label={t('source_type')}
-            onChange={(e) => handleFormChange('source_type', e.target.value)}
-          >
-            <MenuItem value="GOVT">{t('government')}</MenuItem>
-            <MenuItem value="USER">{t('user_community')}</MenuItem>
-            <MenuItem value="INTERNAL">{t('internal')}</MenuItem>
-          </Select>
-        </FormControl>
-
-        <TextField
-          fullWidth
-          size="small"
-          label={t('status')}
-          value={formData.status}
-          select
-          onChange={(e) => handleFormChange('status', e.target.value)}
-        >
-          <MenuItem value="open">{t('open_status')}</MenuItem>
-          <MenuItem value="in_progress">{t('in_progress_status')}</MenuItem>
-          <MenuItem value="resolved">{t('resolved_status')}</MenuItem>
-          <MenuItem value="expired">{t('expired_status')}</MenuItem>
-        </TextField>
-
-        <TextField
-          fullWidth
-          size="small"
-          label={t('source_name')}
-          value={formData.source_name}
-          onChange={(e) => handleFormChange('source_name', e.target.value)}
-          required
-        />
-
-        <TextField
-          fullWidth
-          size="small"
-          label={t('source_reference')}
-          value={formData.source_reference}
-          onChange={(e) => handleFormChange('source_reference', e.target.value)}
-          placeholder="RAD-2026-001"
-        />
-
-        <TextField
-          fullWidth
-          size="small"
-          type="date"
-          label={t('filing_date')}
-          value={formData.filing_date}
-          onChange={(e) => handleFormChange('filing_date', e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          required
-        />
-
-        <TextField
-          fullWidth
-          size="small"
-          type="date"
-          label={t('expected_response_date')}
-          value={formData.expected_response_date}
-          onChange={(e) => handleFormChange('expected_response_date', e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          required
-        />
-
-        <TextField
-          fullWidth
-          size="small"
-          type="date"
-          label={t('due_date')}
-          value={formData.due_date}
-          onChange={(e) => handleFormChange('due_date', e.target.value)}
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <FormControl fullWidth>
-          <InputLabel size="small">{t('communication_mode')}</InputLabel>
-          <Select
-            size="small"
-            value={formData.mode}
-            label={t('communication_mode')}
-            onChange={(e) => handleFormChange('mode', e.target.value)}
-          >
-            <MenuItem value="LETTER">{t('letter')}</MenuItem>
-            <MenuItem value="EMAIL">{t('email')}</MenuItem>
-            <MenuItem value="PORTAL">{t('portal')}</MenuItem>
-            <MenuItem value="IN_PERSON">{t('in_person')}</MenuItem>
-            <MenuItem value="PHONE">{t('phone')}</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-    </Paper>
-  );
-
   const narrativeContent = (
-    <Paper sx={{ p: 2, minHeight: 520, display: 'flex', flexDirection: 'column' }}>
-      {renderSectionHeader(<Description color="primary" fontSize="small" />, t('narrative_and_context'))}
-      <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2, minHeight: 0 }}>
-        <Box flex={1} display="flex" flexDirection="column">
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography variant="caption" fontWeight="600">
-              {t('legal_observation')}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {formData.description.length} / 2000
-            </Typography>
-          </Box>
-          <TextField
-            multiline
-            rows={10}
-            fullWidth
-            value={formData.description}
-            onChange={(e) => handleFormChange('description', e.target.value)}
-            placeholder={t('provide_detailed_background')}
-            required
-            sx={{ flex: 1 }}
-          />
-        </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <TextField
+        multiline
+        rows={8}
+        fullWidth
+        size="small"
+        label={t('legal_observation')}
+        value={formData.description}
+        onChange={(e) => handleFormChange('description', e.target.value)}
+        required
+      />
 
-        <Box flex={1} display="flex" flexDirection="column">
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography variant="caption" fontWeight="600">
-              {t('internal_comments')}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {formData.comment.length} / 1000
-            </Typography>
-          </Box>
-          <TextField
-            multiline
-            rows={8}
-            fullWidth
-            value={formData.comment}
-            onChange={(e) => handleFormChange('comment', e.target.value)}
-            placeholder={t('notes_for_internal_review')}
-            sx={{ flex: 1 }}
-          />
-        </Box>
-      </Box>
-    </Paper>
+      <TextField
+        multiline
+        rows={6}
+        fullWidth
+        size="small"
+        label={t('internal_comments')}
+        value={formData.comment}
+        onChange={(e) => handleFormChange('comment', e.target.value)}
+      />
+    </Box>
   );
 
   const complianceEntitiesContent = (
-    <Paper sx={{ p: 2, minHeight: 520, display: 'flex', flexDirection: 'column' }}>
-      {renderSectionHeader(<Group color="primary" fontSize="small" />, t('compliance_entities'))}
-      <Box sx={{ mt: 2, overflowY: 'auto', pr: 1 }} className="custom-scrollbar">
-        <Box mb={3}>
-          <Typography variant="caption" fontWeight="600" display="block" mb={1}>
-            {t('regulatory_articles')}
-          </Typography>
-          <Box display="flex" flexWrap="wrap" gap={1}>
-            {selectedArticles.map((art) => (
-              <Chip
-                key={art.id_articulo}
-                label={art.numero_articulo}
-                onDelete={() => toggleArticle(art)}
-                color="primary"
-                size="small"
-              />
-            ))}
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box>
+        <Typography variant="caption" fontWeight={600} display="block" mb={1}>
+          {t('regulatory_articles')}
+        </Typography>
+        <Box display="flex" flexWrap="wrap" gap={1}>
+          {selectedArticles.map((art) => (
             <Chip
-              icon={<Add />}
-              label={t('add_article')}
-              onClick={() => {}}
-              variant="outlined"
+              key={art.id_articulo}
+              label={art.numero_articulo}
+              onDelete={() => toggleArticle(art)}
+              color="primary"
               size="small"
-              sx={{ borderStyle: 'dashed' }}
             />
-          </Box>
+          ))}
+          <Chip
+            icon={<Add />}
+            label={t('add_article')}
+            onClick={() => {}}
+            variant="outlined"
+            size="small"
+            sx={{ borderStyle: 'dashed' }}
+          />
+        </Box>
 
-          {availableArticles.length > 0 && (
-            <Box mt={2} maxHeight={150} overflow="auto">
-              {availableArticles.slice(0, 5).map((art) => {
-                const isSelected = selectedArticles.find((a) => a.id_articulo === art.id_articulo);
+        {availableArticles.length > 0 && (
+          <Box mt={1} maxHeight={132} overflow="auto" className="custom-scrollbar">
+            {availableArticles.slice(0, 5).map((art) => {
+              const isSelected = selectedArticles.find((a) => a.id_articulo === art.id_articulo);
+              return (
+                <Box
+                  key={art.id_articulo}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  px={1}
+                  py={0.75}
+                  borderRadius={1}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: 'action.hover' }
+                  }}
+                  onClick={() => toggleArticle(art)}
+                >
+                  <Typography variant="caption">{art.numero_articulo}</Typography>
+                  {isSelected ? (
+                    <CheckCircle color="primary" fontSize="small" />
+                  ) : (
+                    <Circle color="disabled" fontSize="small" />
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+      </Box>
+
+      <FormControl fullWidth size="small">
+        <InputLabel>{t('select_recipients')}</InputLabel>
+        <Select
+          multiple
+          open={recipientsMenuOpen}
+          onOpen={() => setRecipientsMenuOpen(true)}
+          onClose={() => setRecipientsMenuOpen(false)}
+          value={selectedRecipients}
+          onChange={handleRecipientsChange}
+          label={t('select_recipients')}
+          renderValue={(selected) => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selected.map((value) => {
+                const user = availableRecipients.find((r) => r.value === value);
                 return (
-                  <Box
-                    key={art.id_articulo}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    p={1}
-                    borderRadius={1}
-                    sx={{
-                      cursor: 'pointer',
-                      '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                    onClick={() => toggleArticle(art)}
-                  >
-                    <Typography variant="caption">{art.numero_articulo}</Typography>
-                    {isSelected ? (
-                      <CheckCircle color="primary" fontSize="small" />
-                    ) : (
-                      <Circle color="disabled" fontSize="small" />
-                    )}
-                  </Box>
+                  <Chip
+                    key={value}
+                    label={user?.label || value}
+                    size="small"
+                    onDelete={(e) => handleRemoveRecipient(value, e)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
                 );
               })}
             </Box>
           )}
-        </Box>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Box>
-          <Typography variant="caption" fontWeight="600" display="block" mb={1}>
-            {t('recipients_and_stakeholders')}
-          </Typography>
-
-          <FormControl fullWidth size="small">
-            <InputLabel>{t('select_recipients')}</InputLabel>
-            <Select
-              multiple
-              open={recipientsMenuOpen}
-              onOpen={() => setRecipientsMenuOpen(true)}
-              onClose={() => setRecipientsMenuOpen(false)}
-              value={selectedRecipients}
-              onChange={handleRecipientsChange}
-              label={t('select_recipients')}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => {
-                    const user = availableRecipients.find((r) => r.value === value);
-                    return (
-                      <Chip
-                        key={value}
-                        label={user?.label || value}
-                        size="small"
-                        onDelete={(e) => handleRemoveRecipient(value, e)}
-                        onMouseDown={(e) => e.stopPropagation()}
-                      />
-                    );
-                  })}
-                </Box>
-              )}
-            >
-              {availableRecipients.map((recipient) => (
-                <MenuItem key={recipient.value} value={recipient.value}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar sx={{ width: 24, height: 24, fontSize: 10 }}>
-                      {recipient.label.substring(0, 2).toUpperCase()}
-                    </Avatar>
-                    <Typography variant="body2">{recipient.label}</Typography>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-        <Divider sx={{ my: 3 }} />
-
-        <Box>
-          <Typography variant="caption" fontWeight="600" display="block" mb={1}>
-            {t('supporting_documentation')}
-          </Typography>
-          <Paper
-            sx={{
-              p: 3,
-              border: 2,
-              borderStyle: 'dashed',
-              borderColor: 'primary.light',
-              bgcolor: 'primary.lighter',
-              cursor: 'pointer',
-              '&:hover': { borderColor: 'primary.main' }
-            }}
-            onClick={() => document.getElementById('file-upload-input').click()}
-          >
-            <input
-              id="file-upload-input"
-              type="file"
-              multiple
-              hidden
-              onChange={handleFileUpload}
-            />
-            <Box display="flex" alignItems="center" gap={3}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  bgcolor: 'background.paper',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'primary.main'
-                }}
-              >
-                <UploadFile />
+        >
+          {availableRecipients.map((recipient) => (
+            <MenuItem key={recipient.value} value={recipient.value}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Avatar sx={{ width: 24, height: 24, fontSize: 10 }}>
+                  {recipient.label.substring(0, 2).toUpperCase()}
+                </Avatar>
+                <Typography variant="body2">{recipient.label}</Typography>
               </Box>
-              <Box flex={1}>
-                <Typography variant="body2" fontWeight="bold">
-                  {t('supporting_documentation')}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {t('drag_files_or_browse')}
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-          <Box display="flex" gap={1} flexWrap="wrap" mt={2}>
-            {attachedFiles.map((file, index) => (
-              <Chip
-                key={index}
-                icon={file.name.endsWith('.pdf') ? <PictureAsPdf /> : <Description />}
-                label={file.name}
-                onDelete={() => removeFile(index)}
-                size="small"
-                sx={{ maxWidth: 220 }}
-              />
-            ))}
-          </Box>
+      <Box
+        sx={{
+          p: 2,
+          border: 1,
+          borderStyle: 'dashed',
+          borderColor: 'primary.light',
+          borderRadius: 1,
+          cursor: 'pointer',
+          '&:hover': { borderColor: 'primary.main' }
+        }}
+        onClick={() => document.getElementById('file-upload-input').click()}
+      >
+        <input
+          id="file-upload-input"
+          type="file"
+          multiple
+          hidden
+          onChange={handleFileUpload}
+        />
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <UploadFile color="primary" fontSize="small" />
+          <Typography variant="body2">{t('supporting_documentation')}</Typography>
         </Box>
       </Box>
-    </Paper>
+
+      <Box display="flex" gap={1} flexWrap="wrap">
+        {attachedFiles.map((file, index) => (
+          <Chip
+            key={index}
+            icon={file.name.endsWith('.pdf') ? <PictureAsPdf /> : <Description />}
+            label={file.name}
+            onDelete={() => removeFile(index)}
+            size="small"
+            sx={{ maxWidth: 220 }}
+          />
+        ))}
+      </Box>
+    </Box>
   );
 
   const tabItems = [
@@ -650,76 +577,25 @@ export default function CreateRequestDialog({
     { label: 'Entidades', skipTranslation: true, component: complianceEntitiesContent }
   ];
 
+  const drawerTitle = parentContext
+    ? (parentContext.type === 'response' ? t('new_response') : t('new_reminder'))
+    : t('new_legal_request');
+
   const content = (
     <>
-      {/* Header personalizado */}
-      <AppBar position="static" elevation={0}>
+      <AppBar position="static">
         <Toolbar>
-          <Box display="flex" alignItems="center" gap={2} flex={1}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: 'primary.main',
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white'
-              }}
-            >
-              <Gavel fontSize="small" />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight="bold">
-                {t('legal_compliance_manager')}
-              </Typography>
-              <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
-                {t('regulatory_portal')}
-              </Typography>
-            </Box>
-          </Box>
-          <Chip
-            icon={<Box sx={{ width: 8, height: 8, bgcolor: 'success.main', borderRadius: '50%' }} />}
-            label={t('system_online')}
-            size="small"
-            sx={{ mr: 2 }}
-          />
+          <Typography color="white" variant="h6" sx={{ flexGrow: 1 }}>
+            {drawerTitle}
+          </Typography>
           <IconButton edge="end" onClick={handleClose} sx={{ color: 'white' }}>
             <Close />
           </IconButton>
         </Toolbar>
       </AppBar>
 
-      <DialogContent sx={{ p: 3, bgcolor: 'grey.50' }}>
-        {/* Page Heading */}
-        <Box display="flex" justifyContent="space-between" alignItems="flex-end" mb={3}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              {parentContext 
-                ? (parentContext.type === 'response' ? t('new_response') : t('new_reminder'))
-                : t('new_legal_request')
-              }
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {t('draft_id')}: REQ-{new Date().getFullYear()}-{String(Date.now()).slice(-4)}-D
-              {parentContext && ` • ${t('parent')}: #${parentContext.id}`}
-            </Typography>
-          </Box>
-          <Box display="flex" gap={1}>
-            <Chip label={t('creation_phase')} color="primary" size="small" />
-            {parentContext && (
-              <Chip 
-                label={`${t('type')}: ${t(parentContext.type)}`} 
-                color={parentContext.type === 'response' ? 'success' : 'warning'}
-                size="small" 
-              />
-            )}
-            <Chip label={t('auto_save_2m_ago')} variant="outlined" size="small" />
-          </Box>
-        </Box>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minHeight: 'calc(95vh - 280px)' }}>
+      <Box sx={{ px: 2, py: 2, flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <BaseTab
             items={tabItems}
             activeTab={activeTab}
@@ -742,49 +618,49 @@ export default function CreateRequestDialog({
               }
             }}
           />
-          <Box sx={{ flex: 1, minHeight: 0 }}>
+          <Box>
             {tabItems[activeTab]?.component}
           </Box>
         </Box>
-      </DialogContent>
+      </Box>
 
-      {/* Fixed Bottom Action Bar */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 3,
-          py: 2,
+          justifyContent: 'flex-end',
+          gap: 1,
+          px: 2,
+          py: 1.5,
           borderTop: 1,
           borderColor: 'divider',
           bgcolor: 'background.paper'
         }}
       >
-        <Box display="flex" alignItems="center" gap={1}>
-          <HelpOutline fontSize="small" color="action" />
-          <Typography variant="caption" color="textSecondary">
-            {t('need_help')} <Button size="small" sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}>{t('view_guidelines')}</Button>
-          </Typography>
-        </Box>
-        <Box display="flex" gap={2}>
-          <Button
-            onClick={handleClose}
-            sx={{ minWidth: 100, textTransform: 'none' }}
-            disabled={loading}
-          >
+        {!isFirstTab && (
+          <Button onClick={handlePreviousTab} color="inherit" disabled={loading}>
+            {t('back')}
+          </Button>
+        )}
+        {isFirstTab && (
+          <Button onClick={handleClose} color="inherit" disabled={loading}>
             {t('cancel')}
           </Button>
+        )}
+        {isLastTab ? (
           <Button
             variant="contained"
             onClick={handleSubmit}
-            sx={{ minWidth: 140, textTransform: 'none' }}
             disabled={loading}
             startIcon={loading ? <CircularProgress size={16} /> : null}
           >
             {loading ? t('saving') : t('save_request')}
           </Button>
-        </Box>
+        ) : (
+          <Button variant="contained" onClick={handleNextTab} disabled={loading}>
+            {t('next')}
+          </Button>
+        )}
       </Box>
     </>
   );
@@ -799,6 +675,8 @@ export default function CreateRequestDialog({
           sx: {
             height: '100vh',
             maxHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
             width: {
               xs: '100vw',
               sm: '80vw',
@@ -820,7 +698,12 @@ export default function CreateRequestDialog({
       maxWidth="xl"
       fullWidth
       PaperProps={{
-        sx: { height: '95vh', maxHeight: '95vh' }
+        sx: {
+          height: '95vh',
+          maxHeight: '95vh',
+          display: 'flex',
+          flexDirection: 'column'
+        }
       }}
     >
       {content}
