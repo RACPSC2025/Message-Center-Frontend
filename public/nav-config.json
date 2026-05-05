@@ -67,19 +67,9 @@
       "slug": "permit_manager",
       "routeKey": "permit_manager",
       "dataId": null,
-      "name": { "es": "Permisos de Trabajo", "en": "Work Permits" },
+      "name": { "es": "Trámites Ambientales", "en": "Environmental Permits" },
       "icon": "ClipboardCheck",
       "route": "/view/permit_manager",
-      "color": "#00bcd4"
-    },
-    {
-      "platformKey": "ambiental_permit",
-      "slug": "ambiental_permit",
-      "routeKey": "ambiental_permit",
-      "dataId": null,
-      "name": { "es": "Trámites Ambientales", "en": "Environmental Permits" },
-      "icon": "Leaf",
-      "route": "/view/ambiental_permit",
       "color": "#00bcd4"
     },
     {
@@ -107,7 +97,7 @@
       "slug": "legal_comunications",
       "routeKey": "legal_comunications",
       "dataId": null,
-      "name": { "es": "Comunicaciones Legales", "en": "Legal Communications" },
+      "name": { "es": "Correspondencia gestión ambiental", "en": "Environmental Management Correspondence" },
       "icon": "FileText",
       "route": "/view/legal_comunications",
       "color": "#00bcd4"

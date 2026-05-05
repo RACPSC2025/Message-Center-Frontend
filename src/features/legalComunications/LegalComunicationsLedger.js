@@ -377,9 +377,11 @@ export default function LegalComunicationsLedger({
     <Box sx={{ width: '100%', p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} gap={2}>
         <Box>
+          {/*
           <Typography variant="h5" fontWeight="bold">
             {t('regulatory_communications_ledger')}
           </Typography>
+          */}
           <Typography
             variant="caption"
             color="textSecondary"
