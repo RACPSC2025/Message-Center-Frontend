@@ -417,19 +417,22 @@ const FASE_FIELDS = {
     }
   ],
   'FASE VII': [
+    // Fase 7 – Presentación de alegatos de conclusión
     {
-      id: 'decision_apelacion',
-      label: 'Decisión de Apelación',
-      type: 'textarea',
-      required: true,
-      gridSize: '12'
+      id: 'conclusion_presentation_documents',
+      label: 'Documentos adjuntos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 7 – Presentación de alegatos de conclusión'
     },
     {
-      id: 'confirmacion_revocacion',
-      label: 'Confirmación o Revocación',
+      id: 'conclusion_presentation_observations',
+      label: 'Observaciones',
       type: 'textarea',
-      required: true,
-      gridSize: '12'
+      required: false,
+      gridSize: '12',
+      section: 'Fase 7 – Presentación de alegatos de conclusión'
     }
   ],
   'FASE VIII': [
