@@ -487,19 +487,54 @@ const FASE_FIELDS = {
     }
   ],
   'FASE IX': [
+    // Fase 9 – Resolución para los recursos en vía gubernativa
     {
-      id: 'decision_queja',
-      label: 'Decisión de Queja',
-      type: 'textarea',
+      id: 'resource_administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
       required: true,
-      gridSize: '12'
+      gridSize: '6',
+      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
     },
     {
-      id: 'notificacion_final',
-      label: 'Notificación Final',
-      type: 'textarea',
+      id: 'resource_administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
       required: true,
-      gridSize: '12'
+      gridSize: '6',
+      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+    },
+    {
+      id: 'resource_notification_date',
+      label: 'Fecha de notificación',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+    },
+    {
+      id: 'resource_execution_date',
+      label: 'Fecha de ejecutoria',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+    },
+    {
+      id: 'resource_documents',
+      label: 'Documentos adjuntos (resolución de recursos, actas de trámite)',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+    },
+    {
+      id: 'resource_observations',
+      label: 'Observaciones',
+      type: 'textarea',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
     }
   ],
   'FASE X': [
