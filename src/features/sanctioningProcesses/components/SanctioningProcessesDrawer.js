@@ -538,19 +538,22 @@ const FASE_FIELDS = {
     }
   ],
   'FASE X': [
+    // Fase 10 – Etapa de cumplimiento de órdenes
     {
-      id: 'ejecucion_sentencia',
-      label: 'Ejecución de Sentencia',
-      type: 'textarea',
-      required: true,
-      gridSize: '12'
+      id: 'compliance_documents',
+      label: 'Documentos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 10 – Etapa de cumplimiento de órdenes'
     },
     {
-      id: 'medidas_cautelares',
-      label: 'Medidas Cautelares',
+      id: 'compliance_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 10 – Etapa de cumplimiento de órdenes'
     }
   ],
   'FASE XI': [
