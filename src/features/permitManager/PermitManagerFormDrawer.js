@@ -197,6 +197,8 @@ export default function PermitManagerFormDrawer({
   const fieldOptions = useMemo(() => buildFieldOptions(records), [records]);
   const initialValues = useMemo(() => buildInitialValues(item, mode), [item, mode]);
   const [formValues, setFormValues] = useState(initialValues);
+  const isFirstTab = activeTab === 0;
+  const isLastTab = activeTab === TAB_GROUPS.length - 1;
 
   useEffect(() => {
     if (open) {
@@ -226,6 +228,14 @@ export default function PermitManagerFormDrawer({
 
   const handleSubmit = () => {
     onSubmit(buildPayload(formValues));
+  };
+
+  const handlePreviousTab = () => {
+    setActiveTab((currentTab) => Math.max(currentTab - 1, 0));
+  };
+
+  const handleNextTab = () => {
+    setActiveTab((currentTab) => Math.min(currentTab + 1, TAB_GROUPS.length - 1));
   };
 
   return (
@@ -300,12 +310,25 @@ export default function PermitManagerFormDrawer({
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, pt: 1 }}>
-          <Button variant="contained" color="inherit" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
-            Guardar
-          </Button>
+          {!isFirstTab && (
+            <Button variant="text" color="inherit" onClick={handlePreviousTab}>
+              Atrás
+            </Button>
+          )}
+          {isFirstTab && (
+            <Button variant="contained" color="inherit" onClick={onClose}>
+              Cancelar
+            </Button>
+          )}
+          {isLastTab ? (
+            <Button variant="contained" color="primary" onClick={handleSubmit}>
+              Guardar
+            </Button>
+          ) : (
+            <Button variant="contained" color="primary" onClick={handleNextTab}>
+              Siguiente
+            </Button>
+          )}
         </Box>
       </Box>
     </Drawer>
