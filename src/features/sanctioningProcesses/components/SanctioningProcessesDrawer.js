@@ -645,34 +645,55 @@ export default function SanctioningProcessesDrawer({
       <Box sx={{ p: 3, overflowY: 'auto' }}>
         {/* Formulario */}
         {activeDetailTab === DETAIL_TABS.FORM && (
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              bgcolor: '#f2f4f5',
-              border: '1px solid rgba(187, 201, 204, 0.35)',
-              minHeight: 220
-            }}
-          >
-            <Typography sx={{ fontWeight: 700, color: '#191c1d', mb: 0.5 }}>
-              Fase actual: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
-            </Typography>
+          <>  
+            {/* Selector de fases */}
+            <FormControl size="small" sx={{ minWidth: 240 }}>
+              <InputLabel id="phase-selector-label">Fase</InputLabel>
 
-            <Box sx={{ mt: 2 }}>
-              <FormBuilder
-                inputFields={formFields}
-                controlled={true}
-                initialValues={formValues}
-                onChange={(id, value) =>
-                  setFormValues((prevState) => ({
-                    ...prevState,
-                    [id]: value
-                  }))
-                }
-                showActionButton={false}
-              />
+              <Select
+                labelId="phase-selector-label"
+                value={normalizedPhase}
+                label="Fase"
+                onChange={(event) => setSelectedPhase(event.target.value)}
+              >
+                {PHASE_OPTIONS.map((phaseOption) => (
+                  <MenuItem key={phaseOption} value={phaseOption}>
+                    {phaseOption}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: '#f2f4f5',
+                border: '1px solid rgba(187, 201, 204, 0.35)',
+                minHeight: 220
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, color: '#191c1d', mb: 0.5 }}>
+                Fase actual: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
+              </Typography>
+
+              <Box sx={{ mt: 2 }}>
+                <FormBuilder
+                  inputFields={formFields}
+                  controlled={true}
+                  initialValues={formValues}
+                  onChange={(id, value) =>
+                    setFormValues((prevState) => ({
+                      ...prevState,
+                      [id]: value
+                    }))
+                  }
+                  showActionButton={false}
+                />
+              </Box>
             </Box>
-          </Box>
+          </>
         )}
 
         {/* Fases */}
