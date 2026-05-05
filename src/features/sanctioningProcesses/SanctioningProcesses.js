@@ -177,17 +177,16 @@ function SanctioningProcesses() {
   }, [headersResponse, i18n.language]);
 
   return (
-    <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa', p: 3 }}>
+    <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa'}}>
       
       {/* Header con filtros y controles de vista */}
       <Box sx={{ 
         display: 'flex', 
         gap: 2, 
         alignItems: 'center', 
-        p: 2, 
+        p: 1, 
         bgcolor: 'background.paper',
-        borderRadius: 1,
-        mb: 2
+        borderRadius: 1
       }}>
         {/* Filtros: negocio, compañía, región, ubicación */}
         <OrganizationFilter />

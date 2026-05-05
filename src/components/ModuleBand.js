@@ -242,6 +242,7 @@ const MODULE_CONTENT = {
   actions:       ActionsBandContent,
   LegalMatriz:   LegalMatrizBandContent,
   notifications: NotificationsBandContent,
+  sanctioning_processes: null, // No band content for sanctioning processes
 };
 
 // ── ModuleBand ────────────────────────────────────────────────────────────────
@@ -262,12 +263,17 @@ export function ModuleBand() {
   const bandColor = activeWorkarea?.color ?? '#00bcd4';
   const BandContent = MODULE_CONTENT[activeModule] ?? null;
 
+  // Don't render anything if there's no band content
+  if (!BandContent) {
+    return null;
+  }
+
   return (
     <div
       style={{ width: '100%', height: MODULE_BAND_HEIGHT, flexShrink: 0 }}
       className="flex overflow-hidden"
     >
-      {BandContent && <BandContent bandColor={bandColor} />}
+      <BandContent bandColor={bandColor} />
     </div>
   );
 }
