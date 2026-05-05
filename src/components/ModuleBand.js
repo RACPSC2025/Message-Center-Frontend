@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { CalendarDays, List, Table2, BarChart2, Filter, ClipboardList, Mail, MailOpen, Star, Archive } from 'lucide-react';
+import { CalendarDays, List, Table2, BarChart2, ClipboardList, Mail, MailOpen, Star, Archive, Kanban } from 'lucide-react';
 import { useNavConfig } from '../hooks/useNavConfig';
 import { useCascadingFilters } from '../hooks/useCascadingFilters';
 import { fetchTaskListLevel } from '../stores/tasks/fetchtaskListLevelSlice';
@@ -30,6 +30,18 @@ const VIEW_CONFIG = {
     reduxKey: 'selectedLegalView',
     defaultView: 'requirements',
   },
+  permit_manager: {
+    views: ['kanban', 'table'],
+    reduxModule: 'permit_manager',
+    reduxKey: 'selectedPermitView',
+    defaultView: 'kanban',
+  },
+  legal_comunications: {
+    views: ['list', 'report'],
+    reduxModule: 'legal_comunications',
+    reduxKey: 'selectedLegalComunicationsView',
+    defaultView: 'list',
+  },
 };
 
 const VIEW_META = {
@@ -38,6 +50,7 @@ const VIEW_META = {
   table:        { Icon: Table2,        label: 'Tabla'        },
   report:       { Icon: BarChart2,     label: 'Reporte'      },
   requirements: { Icon: ClipboardList, label: 'Requisitos'   },
+  kanban:       { Icon: Kanban,        label: 'Kanban'       },
 };
 
 // ── Org filter config per module ──────────────────────────────────────────────
@@ -45,6 +58,7 @@ const ORG_FILTER_CONFIG = {
   events:      { module: 'events',      keyPrefix: ''    },
   actions:     { module: 'actions',     keyPrefix: 'id_' },
   LegalMatriz: { module: 'LegalMatriz', keyPrefix: ''    },
+  permit_manager: { module: 'permit_manager', keyPrefix: '' },
 };
 
 // ── ViewToggles ───────────────────────────────────────────────────────────────
@@ -213,6 +227,26 @@ function LegalMatrizBandContent({ bandColor }) {
   );
 }
 
+function PermitManagerBandContent({ bandColor }) {
+  return (
+    <>
+      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}40` }}>
+        <OrgBandFilters moduleKey="permit_manager" />
+      </div>
+      <ViewToggles moduleKey="permit_manager" bandColor={bandColor} />
+    </>
+  );
+}
+
+function LegalComunicationsBandContent({ bandColor }) {
+  return (
+    <>
+      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}40` }} />
+      <ViewToggles moduleKey="legal_comunications" bandColor={bandColor} />
+    </>
+  );
+}
+
 // ── NotificationsBandContent ──────────────────────────────────────────────────
 function NotificationsBandContent({ bandColor }) {
   const stats = useSelector((state) => state.dashboardMessageStatistics?.data ?? {});
@@ -241,6 +275,8 @@ const MODULE_CONTENT = {
   events:        EventsBandContent,
   actions:       ActionsBandContent,
   LegalMatriz:   LegalMatrizBandContent,
+  permit_manager: PermitManagerBandContent,
+  legal_comunications: LegalComunicationsBandContent,
   notifications: NotificationsBandContent,
   sanctioning_processes: null, // No band content for sanctioning processes
 };

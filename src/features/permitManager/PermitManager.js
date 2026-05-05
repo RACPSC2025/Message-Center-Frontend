@@ -1,12 +1,8 @@
-import { Add, CheckCircle, Edit, TableChart, ViewWeek, Visibility } from '@mui/icons-material';
+import { Add, Edit, Visibility } from '@mui/icons-material';
 import {
   Box,
-  Button,
-  FormControl,
   IconButton,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Tooltip,
   Typography
@@ -18,7 +14,7 @@ import { useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
 import TableComponent from '../../components/TableComponent';
-import { selectAppliedFilterModel } from '../../stores/filterSlice';
+import { selectAppliedFilterModel, selectFilterItemValue } from '../../stores/filterSlice';
 import {
   PERMIT_INITIAL_VISIBLE_COLUMNS,
   PERMIT_ROWS,
@@ -30,11 +26,6 @@ import PermitManagerFormDrawer from './PermitManagerFormDrawer';
 import PermitManagerKanban from './PermitManagerKanban';
 
 const PAGE_OPTIONS = [20, 50, 100];
-const VIEW_TABS = [
-  { id: 'kanban', label: 'Kanban', Icon: ViewWeek },
-  { id: 'tabla', label: 'Tabla', Icon: TableChart }
-];
-const HEADER_PLACEHOLDER_FILTERS = ['Negocio', 'Compañía', 'Región', 'Ubicación'];
 
 function normalizeText(value) {
   return String(value ?? '')
@@ -68,7 +59,6 @@ function buildNextRecordId(records) {
 
 function PermitManager() {
   const { t } = useTranslation();
-  const [selectedView, setSelectedView] = useState('kanban');
   const [permits, setPermits] = useState(() => PERMIT_ROWS.map((row) => ({ ...row })));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedPermitId, setSelectedPermitId] = useState(null);
@@ -77,6 +67,9 @@ function PermitManager() {
   const [editingPermit, setEditingPermit] = useState(null);
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const filterData = useSelector((state) => selectAppliedFilterModel(state, 'permit_manager'));
+  const selectedView = useSelector(
+    (state) => selectFilterItemValue(state, 'permit_manager', 'selectedPermitView') ?? 'kanban'
+  );
 
   const filteredPermits = useMemo(() => {
     let result = permits;
@@ -123,7 +116,6 @@ function PermitManager() {
     return result;
   }, [filterData, permits]);
 
-  const permitCount = filteredPermits.length;
   const selectedPermit = useMemo(
     () => permits.find((permit) => permit.recordId === selectedPermitId) ?? null,
     [permits, selectedPermitId]
@@ -260,128 +252,17 @@ function PermitManager() {
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: { xs: 2, md: 3 },
-            py: 1,
-            bgcolor: '#FFFFFF',
-            borderBottom: '1px solid #EDF2F4',
-            flexWrap: 'wrap',
-            gap: 1,
-            flexShrink: 0
-          }}
-        >
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-            {HEADER_PLACEHOLDER_FILTERS.map((label) => (
-              <FormControl key={label} size="small" sx={{ minWidth: 94 }}>
-                <Select
-                  value=""
-                  displayEmpty
-                  onChange={() => {}}
-                  sx={{
-                    height: '40px',
-                    borderRadius: '4px',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#C7D1DB' },
-                    color: '#5E6B78',
-                    fontSize: '0.88rem',
-                    bgcolor: '#FFFFFF'
-                  }}
-                  renderValue={() => <span style={{ color: '#5E6B78' }}>{label}</span>}
-                >
-                  <MenuItem value="">{label}</MenuItem>
-                </Select>
-              </FormControl>
-            ))}
-
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => {}}
-              sx={{
-                height: '40px',
-                px: 2,
-                borderRadius: '4px',
-                borderColor: '#62D5F5',
-                color: '#00BCD4',
-                fontWeight: 800,
-                fontSize: '0.75rem',
-                textTransform: 'uppercase',
-                '&:hover': {
-                  borderColor: '#62D5F5',
-                  bgcolor: 'rgba(98,213,245,0.05)'
-                }
-              }}
-            >
-              Limpiar filtros
-            </Button>
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, ml: 'auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircle sx={{ fontSize: '1.1rem', color: 'text.secondary' }} />
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  fontWeight: 500,
-                  fontSize: '0.98rem',
-                  fontStyle: 'italic',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {permitCount} trámite{permitCount !== 1 ? 's' : ''} encontrados
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 3.5, alignItems: 'flex-end', pb: 0.5 }}>
-              {VIEW_TABS.map(({ id, label, Icon }) => {
-                const isActive = selectedView === id;
-
-                return (
-                  <Box
-                    key={id}
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      '&:hover': { opacity: 1 }
-                    }}
-                    onClick={() => setSelectedView(id)}
-                  >
-                    <Box sx={{ color: isActive ? '#F57C00' : '#B0BEC5', mb: 0.2 }}>
-                      <Icon color={isActive ? 'warning' : 'action'} fontSize="medium" />
-                    </Box>
-                    <Typography
-                      sx={{
-                        fontSize: '0.7rem',
-                        fontWeight: 800,
-                        color: isActive ? '#263238' : '#B0BEC5',
-                        textTransform: 'capitalize'
-                      }}
-                    >
-                      {label}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
             flexGrow: 1,
             minHeight: 0,
             px: { xs: 2, md: 3 },
-            py: 2,
+            pt: 0.5,
+            pb: 2,
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
           }}
         >
-          {selectedView === 'tabla' ? (
+          {selectedView === 'table' ? (
             <Paper
               elevation={0}
               sx={{
