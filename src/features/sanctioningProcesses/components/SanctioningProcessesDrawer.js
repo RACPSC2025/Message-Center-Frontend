@@ -436,19 +436,54 @@ const FASE_FIELDS = {
     }
   ],
   'FASE VIII': [
+    // Fase 8 – Resolución del proceso
     {
-      id: 'recurso_queja',
-      label: 'Recurso de Queja',
-      type: 'textarea',
+      id: 'resolution_administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
       required: true,
-      gridSize: '12'
+      gridSize: '6',
+      section: 'Fase 8 – Resolución del proceso'
     },
     {
-      id: 'argumentos_queja',
-      label: 'Argumentos de Queja',
+      id: 'resolution_administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 8 – Resolución del proceso'
+    },
+    {
+      id: 'resolution_notification_date',
+      label: 'Fecha de notificación',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 8 – Resolución del proceso'
+    },
+    {
+      id: 'resolution_execution_date',
+      label: 'Fecha de ejecutoria',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 8 – Resolución del proceso'
+    },
+    {
+      id: 'resolution_documents',
+      label: 'Documentos adjuntos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 8 – Resolución del proceso'
+    },
+    {
+      id: 'resolution_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 8 – Resolución del proceso'
     }
   ],
   'FASE IX': [
