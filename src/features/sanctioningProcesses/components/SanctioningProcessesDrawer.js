@@ -103,6 +103,306 @@ const ATTACHMENT_CYCLE = [
   ]
 ];
 
+const FASE_FIELDS = {
+  'FASE I': [
+    // Fase 1 – Auto de inicio
+    {
+      id: 'administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 1 – Auto de inicio'
+    },
+    {
+      id: 'administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 1 – Auto de inicio'
+    },
+    {
+      id: 'notification_date',
+      label: 'Fecha de notificación',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 1 – Auto de inicio'
+    },
+    {
+      id: 'attached_document',
+      label: 'Documento Adjunto',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 1 – Auto de inicio'
+    },
+    {
+      id: 'opening_observations',
+      label: 'Observaciones',
+      type: 'textarea',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 1 – Auto de inicio'
+    },
+    
+    // A. Gestión de diligencias administrativas
+    {
+      id: 'administrative_diligences_observations',
+      label: 'Observaciones',
+      type: 'textarea',
+      required: false,
+      gridSize: '12',
+      section: 'A. Gestión de diligencias administrativas'
+    },
+    
+    // B. Solicitud de cesación
+    {
+      id: 'cessation_request_office',
+      label: 'Oficio de solicitud de cesación',
+      type: 'text',
+      required: false,
+      gridSize: '6',
+      section: 'B. Solicitud de cesación'
+    },
+    {
+      id: 'cessation_request_date',
+      label: 'Fecha',
+      type: 'date',
+      required: false,
+      gridSize: '6',
+      section: 'B. Solicitud de cesación'
+    },
+    {
+      id: 'cessation_request_number',
+      label: 'Número de Radicado',
+      type: 'text',
+      required: false,
+      gridSize: '6',
+      section: 'B. Solicitud de cesación'
+    },
+    {
+      id: 'cessation_request_observations',
+      label: 'Observaciones',
+      type: 'textarea',
+      required: false,
+      gridSize: '12',
+      section: 'B. Solicitud de cesación'
+    },
+    
+    // C. Respuesta a solicitud de cesación
+    {
+      id: 'cessation_response_office',
+      label: 'Oficio de respuesta de la cesación',
+      type: 'text',
+      required: false,
+      gridSize: '6',
+      section: 'C. Respuesta a solicitud de cesación'
+    },
+    {
+      id: 'cessation_response_date',
+      label: 'Fecha',
+      type: 'date',
+      required: false,
+      gridSize: '6',
+      section: 'C. Respuesta a solicitud de cesación'
+    },
+    {
+      id: 'cessation_response_number',
+      label: 'Número de Radicado',
+      type: 'text',
+      required: false,
+      gridSize: '6',
+      section: 'C. Respuesta a solicitud de cesación'
+    },
+    {
+      id: 'cessation_response_observations',
+      label: 'Observaciones',
+      type: 'textarea',
+      required: false,
+      gridSize: '12',
+      section: 'C. Respuesta a solicitud de cesación'
+    }
+  ],
+  'FASE II': [
+    {
+      id: 'pliego_cargos',
+      label: 'Pliego de Cargos',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'descargos',
+      label: 'Descargos',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE III': [
+    {
+      id: 'pruebas',
+      label: 'Pruebas',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'alegatos',
+      label: 'Alegatos',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE IV': [
+    {
+      id: 'evaluacion_pruebas',
+      label: 'Evaluación de Pruebas',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'informe_tecnico',
+      label: 'Informe Técnico',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE V': [
+    {
+      id: 'resolucion_primera_instancia',
+      label: 'Resolución de Primera Instancia',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'notificacion_resolucion',
+      label: 'Notificación de Resolución',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    }
+  ],
+  'FASE VI': [
+    {
+      id: 'recurso_apelacion',
+      label: 'Recurso de Apelación',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'sustentacion_recurso',
+      label: 'Sustentación del Recurso',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE VII': [
+    {
+      id: 'decision_apelacion',
+      label: 'Decisión de Apelación',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'confirmacion_revocacion',
+      label: 'Confirmación o Revocación',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    }
+  ],
+  'FASE VIII': [
+    {
+      id: 'recurso_queja',
+      label: 'Recurso de Queja',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'argumentos_queja',
+      label: 'Argumentos de Queja',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE IX': [
+    {
+      id: 'decision_queja',
+      label: 'Decisión de Queja',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'notificacion_final',
+      label: 'Notificación Final',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    }
+  ],
+  'FASE X': [
+    {
+      id: 'ejecucion_sentencia',
+      label: 'Ejecución de Sentencia',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'medidas_cautelares',
+      label: 'Medidas Cautelares',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE XI': [
+    {
+      id: 'seguimiento_ejecucion',
+      label: 'Seguimiento de Ejecución',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'informe_cumplimiento',
+      label: 'Informe de Cumplimiento',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ],
+  'FASE XII': [
+    {
+      id: 'archivo_proceso',
+      label: 'Archivo del Proceso',
+      type: 'textarea',
+      required: true,
+      gridSize: '12'
+    },
+    {
+      id: 'observaciones_finales',
+      label: 'Observaciones Finales',
+      type: 'textarea',
+      required: false,
+      gridSize: '12'
+    }
+  ]
+};
+
 const normalizeText = (value) => String(value ?? '').split('\u000b').join(' ').trim();
 
 const detectPhaseBucket = (textValue = '') => {
@@ -262,8 +562,7 @@ export default function SanctioningProcessesDrawer({
     [selectedProcess]
   );
 
-  const isOpeningPhase = selectedPhase === 'FASE I';
-
+  
   // Función para manejar la selección de archivos
   const handleSelectNewLogFiles = (event) => {
     const selectedFiles = Array.from(event.target.files || []);
@@ -343,57 +642,21 @@ export default function SanctioningProcessesDrawer({
     return phaseFiltered.filter((entry) => entry.timestamp === expectedDate);
   }, [generalLogEntries, bitacoraPhaseFilter, bitacoraDateFilter]);
 
-  const formFields = useMemo(() => {
-    const sharedFields = [
-      {
-        id: 'process_statement',
-        label: 'Por medio del cual se apertura tal...',
-        type: 'textarea',
-        required: true,
-        gridSize: '12'
+  const groupedFormFields = useMemo(() => {
+    const fields = FASE_FIELDS[selectedPhase] || FASE_FIELDS['FASE I'];
+    
+    const groups = {};
+    fields.forEach(field => {
+      const sectionName = field.section || 'Sin Sección';
+      if (!groups[sectionName]) {
+        groups[sectionName] = [];
       }
-    ];
-
-    if (!isOpeningPhase) {
-      return sharedFields;
-    }
-
-    return [
-      {
-        id: 'administrative_act',
-        label: 'Acto administrativo',
-        type: 'text',
-        required: true,
-        gridSize: '6'
-      },
-      {
-        id: 'headquarters',
-        label: 'Sede',
-        type: 'text',
-        required: true,
-        gridSize: '6'
-      },
-      {
-        id: 'origin',
-        label: 'De donde es',
-        type: 'text',
-        required: true,
-        gridSize: '6'
-      },
-      {
-        id: 'opening_reason',
-        label: 'Motivo de la apertura',
-        type: 'textarea',
-        required: true,
-        gridSize: '12'
-      },
-      ...sharedFields
-    ];
+      groups[sectionName].push(field);
+    });
+    return groups;
   }, [selectedPhase]);
 
-  if (!selectedProcess) {
-    return null;
-  }
+  if (!selectedProcess) return null;
 
   const renderTimeline = (
     entries = [],
@@ -690,18 +953,34 @@ export default function SanctioningProcessesDrawer({
               </Typography>
 
               <Box sx={{ mt: 2 }}>
-                <FormBuilder
-                  inputFields={formFields}
-                  controlled={true}
-                  initialValues={formValues}
-                  onChange={(id, value) =>
-                    setFormValues((prevState) => ({
-                      ...prevState,
-                      [id]: value
-                    }))
-                  }
-                  showActionButton={false}
-                />
+                {Object.entries(groupedFormFields).map(([sectionTitle, sectionFields]) => (
+                  <Box key={sectionTitle} sx={{ mb: 4 }}>
+                    <Typography 
+                      sx={{ 
+                        fontWeight: 700, 
+                        color: '#191c1d', 
+                        mb: 2, 
+                        fontSize: '1.1rem',
+                        borderBottom: '2px solid #006971',
+                        pb: 1
+                      }}
+                    >
+                      {sectionTitle}
+                    </Typography>
+                    <FormBuilder
+                      inputFields={sectionFields}
+                      controlled={true}
+                      initialValues={formValues}
+                      onChange={(id, value) =>
+                        setFormValues((prevState) => ({
+                          ...prevState,
+                          [id]: value
+                        }))
+                      }
+                      showActionButton={false}
+                    />
+                  </Box>
+                ))}
               </Box>
             </Box>
           </>
