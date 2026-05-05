@@ -366,19 +366,54 @@ const FASE_FIELDS = {
     }
   ],
   'FASE VI': [
+    // Fase 6 – Auto de alegatos de conclusión
     {
-      id: 'recurso_apelacion',
-      label: 'Recurso de Apelación',
-      type: 'textarea',
+      id: 'conclusion_administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
       required: true,
-      gridSize: '12'
+      gridSize: '6',
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     },
     {
-      id: 'sustentacion_recurso',
-      label: 'Sustentación del Recurso',
+      id: 'conclusion_administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 6 – Auto de alegatos de conclusión'
+    },
+    {
+      id: 'conclusion_notification_date',
+      label: 'Fecha de notificación',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 6 – Auto de alegatos de conclusión'
+    },
+    {
+      id: 'conclusion_execution_date',
+      label: 'Fecha de ejecutoria',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 6 – Auto de alegatos de conclusión'
+    },
+    {
+      id: 'conclusion_documents',
+      label: 'Documentos adjuntos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 6 – Auto de alegatos de conclusión'
+    },
+    {
+      id: 'conclusion_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     }
   ],
   'FASE VII': [
