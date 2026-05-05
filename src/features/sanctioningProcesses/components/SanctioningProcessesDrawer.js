@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Close,
   ExpandMore,
@@ -40,18 +41,18 @@ const DETAIL_TABS = {
 };
 
 const PHASE_OPTIONS = [
-  'FASE I',
-  'FASE II',
-  'FASE III',
-  'FASE IV',
-  'FASE V',
-  'FASE VI',
-  'FASE VII',
-  'FASE VIII',
-  'FASE IX',
-  'FASE X',
-  'FASE XI',
-  'FASE XII'
+  'FASE 0',
+  'FASE 1',
+  'FASE 2',
+  'FASE 3',
+  'FASE 4',
+  'FASE 5',
+  'FASE 6',
+  'FASE 7',
+  'FASE 8',
+  'FASE 9',
+  'FASE 10',
+  'FASE 11'
 ];
 
 const ALL_PHASES_OPTION = 'Todas';
@@ -104,15 +105,15 @@ const ATTACHMENT_CYCLE = [
 ];
 
 const FASE_FIELDS = {
-  'FASE I': [
-    // Fase 1 – Indagación preliminar
+  'FASE 0': [
+    // Fase 0 – Indagación preliminar
     {
       id: 'preliminary_attachment',
       label: 'Adjunto',
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 1 – Indagación preliminar'
+      section: 'Fase 0 – Indagación preliminar'
     },
     {
       id: 'preliminary_observations',
@@ -120,18 +121,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 1 – Indagación preliminar'
+      section: 'Fase 0 – Indagación preliminar'
     }
   ],
-  'FASE II': [
-    // Fase 2 – Auto de inicio
+  'FASE 1': [
+    // Fase 1 – Auto de inicio
     {
       id: 'administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: true,
       gridSize: '6',
-      section: 'Fase 2 – Auto de inicio'
+      section: 'Fase 1 – Auto de inicio'
     },
     {
       id: 'administrative_act_date',
@@ -139,7 +140,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 2 – Auto de inicio'
+      section: 'Fase 1 – Auto de inicio'
     },
     {
       id: 'notification_date',
@@ -147,7 +148,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 2 – Auto de inicio'
+      section: 'Fase 1 – Auto de inicio'
     },
     {
       id: 'attached_document',
@@ -155,7 +156,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 2 – Auto de inicio'
+      section: 'Fase 1 – Auto de inicio'
     },
     {
       id: 'opening_observations',
@@ -163,7 +164,7 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 2 – Auto de inicio'
+      section: 'Fase 1 – Auto de inicio'
     },
     // A. Gestión de diligencias administrativas
     {
@@ -241,15 +242,15 @@ const FASE_FIELDS = {
       section: 'C. Respuesta a solicitud de cesación'
     }
   ],
-  'FASE III': [
-    // Fase 3 – Auto de formulación de cargos
+  'FASE 2': [
+    // Fase 2 – Auto de formulación de cargos
     {
       id: 'formulation_administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: true,
       gridSize: '6',
-      section: 'Fase 3 – Auto de formulación de cargos'
+      section: 'Fase 2 – Auto de formulación de cargos'
     },
     {
       id: 'formulation_administrative_act_date',
@@ -257,7 +258,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 3 – Auto de formulación de cargos'
+      section: 'Fase 2 – Auto de formulación de cargos'
     },
     {
       id: 'formulation_notification_date',
@@ -265,7 +266,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 3 – Auto de formulación de cargos'
+      section: 'Fase 2 – Auto de formulación de cargos'
     },
     {
       id: 'formulation_execution_date',
@@ -273,7 +274,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 3 – Auto de formulación de cargos'
+      section: 'Fase 2 – Auto de formulación de cargos'
     },
     {
       id: 'formulation_documents',
@@ -281,7 +282,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 3 – Auto de formulación de cargos'
+      section: 'Fase 2 – Auto de formulación de cargos'
     },
     {
       id: 'formulation_observations',
@@ -289,18 +290,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 3 – Auto de formulación de cargos'
+      section: 'Fase 2 – Auto de formulación de cargos'
     }
   ],
-  'FASE IV': [
-    // Fase 4 – Descargos
+  'FASE 3': [
+    // Fase 3 – Descargos
     {
       id: 'discharge_documents',
       label: 'Documentos adjuntos (escrito de descargos, anexos técnicos o jurídicos)',
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 4 – Descargos'
+      section: 'Fase 3 – Descargos'
     },
     {
       id: 'discharge_observations',
@@ -308,18 +309,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 4 – Descargos'
+      section: 'Fase 3 – Descargos'
     }
   ],
-  'FASE V': [
-    // Fase 5 – Auto de pruebas
+  'FASE 4': [
+    // Fase 4 – Auto de pruebas
     {
       id: 'test_administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: true,
       gridSize: '6',
-      section: 'Fase 5 – Auto de pruebas'
+      section: 'Fase 4 – Auto de pruebas'
     },
     {
       id: 'test_administrative_act_date',
@@ -327,7 +328,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 5 – Auto de pruebas'
+      section: 'Fase 4 – Auto de pruebas'
     },
     {
       id: 'test_notification_date',
@@ -335,7 +336,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 5 – Auto de pruebas'
+      section: 'Fase 4 – Auto de pruebas'
     },
     {
       id: 'test_execution_date',
@@ -343,7 +344,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 5 – Auto de pruebas'
+      section: 'Fase 4 – Auto de pruebas'
     },
     {
       id: 'test_documents',
@@ -351,7 +352,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 5 – Auto de pruebas'
+      section: 'Fase 4 – Auto de pruebas'
     },
     {
       id: 'test_observations',
@@ -359,18 +360,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 5 – Auto de pruebas'
+      section: 'Fase 4 – Auto de pruebas'
     }
   ],
-  'FASE VI': [
-    // Fase 6 – Periodo probatorio
+  'FASE 5': [
+    // Fase 5 – Periodo probatorio
     {
       id: 'probatory_documents',
       label: 'Documentos adjuntos',
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 6 – Periodo probatorio'
+      section: 'Fase 5 – Periodo probatorio'
     },
     {
       id: 'probatory_observations',
@@ -378,18 +379,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 6 – Periodo probatorio'
+      section: 'Fase 5 – Periodo probatorio'
     }
   ],
-  'FASE VII': [
-    // Fase 7 – Auto de alegatos de conclusión
+  'FASE 6': [
+    // Fase 6 – Auto de alegatos de conclusión
     {
       id: 'conclusion_administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: true,
       gridSize: '6',
-      section: 'Fase 7 – Auto de alegatos de conclusión'
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     },
     {
       id: 'conclusion_administrative_act_date',
@@ -397,7 +398,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 7 – Auto de alegatos de conclusión'
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     },
     {
       id: 'conclusion_notification_date',
@@ -405,7 +406,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 7 – Auto de alegatos de conclusión'
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     },
     {
       id: 'conclusion_execution_date',
@@ -413,7 +414,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 7 – Auto de alegatos de conclusión'
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     },
     {
       id: 'conclusion_documents',
@@ -421,7 +422,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 7 – Auto de alegatos de conclusión'
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     },
     {
       id: 'conclusion_observations',
@@ -429,18 +430,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 7 – Auto de alegatos de conclusión'
+      section: 'Fase 6 – Auto de alegatos de conclusión'
     }
   ],
-  'FASE VIII': [
-    // Fase 8 – Presentación de alegatos de conclusión
+  'FASE 7': [
+    // Fase 7 – Presentación de alegatos de conclusión
     {
       id: 'conclusion_presentation_documents',
       label: 'Documentos adjuntos',
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 8 – Presentación de alegatos de conclusión'
+      section: 'Fase 7 – Presentación de alegatos de conclusión'
     },
     {
       id: 'conclusion_presentation_observations',
@@ -448,18 +449,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 8 – Presentación de alegatos de conclusión'
+      section: 'Fase 7 – Presentación de alegatos de conclusión'
     }
   ],
-  'FASE IX': [
-    // Fase 9 – Resolución para los recursos en vía gubernativa
+  'FASE 8': [
+    // Fase 8 – Resolución para los recursos en vía gubernativa
     {
       id: 'resource_administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: true,
       gridSize: '6',
-      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+      section: 'Fase 8 – Resolución para los recursos en vía gubernativa'
     },
     {
       id: 'resource_administrative_act_date',
@@ -467,7 +468,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+      section: 'Fase 8 – Resolución para los recursos en vía gubernativa'
     },
     {
       id: 'resource_notification_date',
@@ -475,7 +476,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+      section: 'Fase 8 – Resolución para los recursos en vía gubernativa'
     },
     {
       id: 'resource_execution_date',
@@ -483,7 +484,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+      section: 'Fase 8 – Resolución para los recursos en vía gubernativa'
     },
     {
       id: 'resource_documents',
@@ -491,7 +492,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+      section: 'Fase 8 – Resolución para los recursos en vía gubernativa'
     },
     {
       id: 'resource_observations',
@@ -499,18 +500,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 9 – Resolución para los recursos en vía gubernativa'
+      section: 'Fase 8 – Resolución para los recursos en vía gubernativa'
     }
   ],
-  'FASE X': [
-    // Fase 10 – Resolución que resuelve recursos en vía gubernativa
+  'FASE 9': [
+    // Fase 9 – Resolución que resuelve recursos en vía gubernativa
     {
       id: 'resolution_administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: true,
       gridSize: '6',
-      section: 'Fase 10 – Resolución que resuelve recursos en vía gubernativa'
+      section: 'Fase 9 – Resolución que resuelve recursos en vía gubernativa'
     },
     {
       id: 'resolution_administrative_act_date',
@@ -518,7 +519,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 10 – Resolución que resuelve recursos en vía gubernativa'
+      section: 'Fase 9 – Resolución que resuelve recursos en vía gubernativa'
     },
     {
       id: 'resolution_notification_date',
@@ -526,7 +527,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 10 – Resolución que resuelve recursos en vía gubernativa'
+      section: 'Fase 9 – Resolución que resuelve recursos en vía gubernativa'
     },
     {
       id: 'resolution_execution_date',
@@ -534,7 +535,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: true,
       gridSize: '6',
-      section: 'Fase 10 – Resolución que resuelve recursos en vía gubernativa'
+      section: 'Fase 9 – Resolución que resuelve recursos en vía gubernativa'
     },
     {
       id: 'resolution_documents',
@@ -542,7 +543,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 10 – Resolución que resuelve recursos en vía gubernativa'
+      section: 'Fase 9 – Resolución que resuelve recursos en vía gubernativa'
     },
     {
       id: 'resolution_observations',
@@ -550,18 +551,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 10 – Resolución que resuelve recursos en vía gubernativa'
+      section: 'Fase 9 – Resolución que resuelve recursos en vía gubernativa'
     }
   ],
-  'FASE XI': [
-    // Fase 11 – Etapa de cumplimiento de órdenes
+  'FASE 10': [
+    // Fase 10 – Etapa de cumplimiento de órdenes
     {
       id: 'compliance_documents',
       label: 'Documentos',
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 11 – Etapa de cumplimiento de órdenes'
+      section: 'Fase 10 – Etapa de cumplimiento de órdenes'
     },
     {
       id: 'compliance_observations',
@@ -569,18 +570,18 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 11 – Etapa de cumplimiento de órdenes'
+      section: 'Fase 10 – Etapa de cumplimiento de órdenes'
     }
   ],
-  'FASE XII': [
-    // Fase 12 – Cierre y archivo del expediente
+  'FASE 11': [
+    // Fase 11 – Cierre y archivo del expediente
     {
       id: 'closure_administrative_act',
       label: 'Acto administrativo',
       type: 'text',
       required: false,
       gridSize: '6',
-      section: 'Fase 12 – Cierre y archivo del expediente'
+      section: 'Fase 11 – Cierre y archivo del expediente'
     },
     {
       id: 'closure_administrative_act_date',
@@ -588,7 +589,7 @@ const FASE_FIELDS = {
       type: 'date',
       required: false,
       gridSize: '6',
-      section: 'Fase 12 – Cierre y archivo del expediente'
+      section: 'Fase 11 – Cierre y archivo del expediente'
     },
     {
       id: 'closure_documents',
@@ -596,7 +597,7 @@ const FASE_FIELDS = {
       type: 'file',
       required: false,
       gridSize: '12',
-      section: 'Fase 12 – Cierre y archivo del expediente'
+      section: 'Fase 11 – Cierre y archivo del expediente'
     },
     {
       id: 'closure_observations',
@@ -604,7 +605,7 @@ const FASE_FIELDS = {
       type: 'textarea',
       required: false,
       gridSize: '12',
-      section: 'Fase 12 – Cierre y archivo del expediente'
+      section: 'Fase 11 – Cierre y archivo del expediente'
     }
   ]
 };
@@ -615,23 +616,23 @@ const detectPhaseBucket = (textValue = '') => {
   const normalized = normalizeText(textValue).toUpperCase();
 
   if (normalized.includes('CIERRE')) {
-    return 'FASE XII';
+    return 'FASE 11';
   }
 
-  const phaseMatch = normalized.match(/FASE\s+(XII|XI|X|IX|VIII|VII|VI|V|IV|III|II|I)/i);
+  const phaseMatch = normalized.match(/FASE\s+(11|10|9|8|7|6|5|4|3|2|1|0)/i);
 
   if (phaseMatch) {
     const phaseKey = `FASE ${phaseMatch[1].toUpperCase()}`;
-    return PHASE_OPTIONS.includes(phaseKey) ? phaseKey : 'FASE I';
+    return PHASE_OPTIONS.includes(phaseKey) ? phaseKey : 'FASE 0';
   }
 
-  return 'FASE I';
+  return 'FASE 0';
 };
 
 const getPhaseFromAction = (actionText = '') => {
   const normalized = normalizeText(actionText).toUpperCase();
-  const phaseMatch = normalized.match(/FASE\s+(XII|XI|X|IX|VIII|VII|VI|V|IV|III|II|I)/i);
-  return phaseMatch ? `FASE ${phaseMatch[1].toUpperCase()}` : 'FASE I';
+  const phaseMatch = normalized.match(/FASE\s+(11|10|9|8|7|6|5|4|3|2|1|0)/i);
+  return phaseMatch ? `FASE ${phaseMatch[1].toUpperCase()}` : 'FASE 0';
 };
 
 const splitLines = (value = '') =>
@@ -706,7 +707,7 @@ const buildPhaseLogs = (selectedProcess) => {
 
   const responseLines = splitLines(responseContent);
   responseLines.forEach((line, index) => {
-    const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE I');
+    const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE 0');
     const metadata = getMockEntryMeta('respuesta', index);
 
     grouped[currentPhase].push({
@@ -720,7 +721,7 @@ const buildPhaseLogs = (selectedProcess) => {
   });
 
   if (normalizeText(selectedProcess?.estrategia)) {
-    const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE I');
+    const currentPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || 'FASE 0');
     const metadata = getMockEntryMeta('estrategia', 0);
 
     grouped[currentPhase].push({
@@ -741,6 +742,7 @@ export default function SanctioningProcessesDrawer({
   handleClose = () => {},
   selectedProcess = null
 }) {
+  const { t } = useTranslation();
   const processData = selectedProcess || {};
 
   const phaseLogs = useMemo(() => buildPhaseLogs(processData), [processData]);
@@ -754,20 +756,6 @@ export default function SanctioningProcessesDrawer({
   const [showBitacoraFilters] = useState(false);
   const [formValues, setFormValues] = useState({});
   const [newLogAttachments, setNewLogAttachments] = useState([]);
-
-  const currentProcessPhase = useMemo(
-    () => {
-      const detectedPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || '');
-      console.log('🔍 DEBUG Fase detectada:', {
-        input: selectedProcess?.current_legal_phase,
-        detected: detectedPhase,
-        isOpeningPhase: detectedPhase === 'FASE I'
-      });
-      return detectedPhase;
-    },
-    [selectedProcess]
-  );
-
   
   // Función para manejar la selección de archivos
   const handleSelectNewLogFiles = (event) => {
@@ -849,7 +837,7 @@ export default function SanctioningProcessesDrawer({
   }, [generalLogEntries, bitacoraPhaseFilter, bitacoraDateFilter]);
 
   const groupedFormFields = useMemo(() => {
-    const fields = FASE_FIELDS[selectedPhase] || FASE_FIELDS['FASE I'];
+    const fields = FASE_FIELDS[selectedPhase] || FASE_FIELDS['FASE 0'];
     
     const groups = {};
     fields.forEach(field => {
@@ -1187,6 +1175,17 @@ export default function SanctioningProcessesDrawer({
                     />
                   </Box>
                 ))}
+              </Box>
+              
+              {/* Botones */}
+              <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
+                <Button variant="outlined" color="secondary">
+                  {t('Cancel')}
+                </Button>
+                
+                <Button variant="contained" color="primary">
+                  {t('Save')}
+                </Button>
               </Box>
             </Box>
           </>
