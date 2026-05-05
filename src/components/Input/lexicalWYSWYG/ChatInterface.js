@@ -638,7 +638,7 @@ function ChatInterface({
                       )}
 
                       {/* Mostrar fuentes si existen */}
-                      {message.sources && message.sources.length > 0 && (
+                      {message.sources && message.sources.filter(s => s !== 'unknown').length > 0 && (
                         <Box mt={2} p={1.5} bgcolor="rgba(255,255,255,0.15)" borderRadius={1}>
                           <Box display="flex" alignItems="center" gap={1} mb={1}>
                             <SourceRounded 
@@ -659,11 +659,13 @@ function ChatInterface({
                           </Box>
                           
                           <Box display="flex" flexDirection="column" gap={0.5}>
-                            {message.sources.slice(0, 3).map((source, idx) => {
-                              const fileName = source.metadata?.['x-amz-bedrock-kb-source-uri']?.split('/').pop() 
-                                || source.location?.uri?.split('/').pop()
-                                || `Fuente ${idx + 1}`;
-                              
+                            {message.sources.filter(s => s !== 'unknown').slice(0, 3).map((source, idx) => {
+                              const fileName = typeof source === 'string'
+                                ? source
+                                : source.metadata?.['x-amz-bedrock-kb-source-uri']?.split('/').pop()
+                                  || source.location?.uri?.split('/').pop()
+                                  || `Fuente ${idx + 1}`;
+
                               return (
                                 <Chip
                                   key={idx}
@@ -673,8 +675,8 @@ function ChatInterface({
                                   sx={{
                                     height: '24px',
                                     fontSize: '11px',
-                                    backgroundColor: message.role === 'user' 
-                                      ? 'rgba(255,255,255,0.2)' 
+                                    backgroundColor: message.role === 'user'
+                                      ? 'rgba(255,255,255,0.2)'
                                       : 'rgba(0,0,0,0.08)',
                                     color: message.role === 'user' ? '#fff' : '#333',
                                     '& .MuiChip-icon': {
@@ -690,16 +692,16 @@ function ChatInterface({
                               );
                             })}
                             
-                            {message.sources.length > 3 && (
-                              <Typography 
-                                variant="caption" 
-                                sx={{ 
+                            {message.sources.filter(s => s !== 'unknown').length > 3 && (
+                              <Typography
+                                variant="caption"
+                                sx={{
                                   color: message.role === 'user' ? 'rgba(255,255,255,0.7)' : '#999',
                                   fontSize: '10px',
                                   fontStyle: 'italic'
                                 }}
                               >
-                                +{message.sources.length - 3} fuentes más
+                                +{message.sources.filter(s => s !== 'unknown').length - 3} fuentes más
                               </Typography>
                             )}
                           </Box>

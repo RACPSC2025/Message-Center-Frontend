@@ -134,7 +134,7 @@ Usar **después** de `/v1/documents/ingest`.
 | Campo | Descripción |
 |---|---|
 | `answer` | Respuesta generada por el modelo |
-| `source_docs` | Fragmentos usados como contexto; puede ser `["unknown"]` cuando el backend no retorna metadata de fuente |
+| `source_docs` | Array de strings con nombres de archivo fuente (ej. `["contrato.pdf"]`). Puede ser `["unknown"]` cuando el backend no retorna metadata. Cuando hay `source_filter` activo, contiene el nombre del archivo filtrado. |
 | `grade` | Evaluación de relevancia en español — ej: `"útil"` / `"no útil"` |
 | `hallucination_detected` | `true` si el modelo detectó alucinación |
 | `hallucination_score` | Confianza (0.0–1.0); `0.0` = sin alucinación detectada |
