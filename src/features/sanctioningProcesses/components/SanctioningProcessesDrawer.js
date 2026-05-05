@@ -240,7 +240,9 @@ export default function SanctioningProcessesDrawer({
   const phaseLogs = useMemo(() => buildPhaseLogs(processData), [processData]);
 
   const [activeDetailTab, setActiveDetailTab] = useState(DETAIL_TABS.FORM);
-  const [selectedPhase, setSelectedPhase] = useState(PHASE_OPTIONS[0]);
+  const [selectedPhase, setSelectedPhase] = useState(() => {
+    return selectedProcess ? detectPhaseBucket(selectedProcess?.current_legal_phase || '') : PHASE_OPTIONS[0];
+  });
   const [bitacoraPhaseFilter, setBitacoraPhaseFilter] = useState(ALL_PHASES_OPTION);
   const [bitacoraDateFilter, setBitacoraDateFilter] = useState('');
   const [showBitacoraFilters] = useState(false);
@@ -248,11 +250,19 @@ export default function SanctioningProcessesDrawer({
   const [newLogAttachments, setNewLogAttachments] = useState([]);
 
   const currentProcessPhase = useMemo(
-    () => detectPhaseBucket(selectedProcess?.current_legal_phase || ''),
+    () => {
+      const detectedPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || '');
+      console.log('🔍 DEBUG Fase detectada:', {
+        input: selectedProcess?.current_legal_phase,
+        detected: detectedPhase,
+        isOpeningPhase: detectedPhase === 'FASE I'
+      });
+      return detectedPhase;
+    },
     [selectedProcess]
   );
 
-  const isOpeningPhase = currentProcessPhase === 'FASE I';
+  const isOpeningPhase = selectedPhase === 'FASE I';
 
   // Función para manejar la selección de archivos
   const handleSelectNewLogFiles = (event) => {
@@ -287,7 +297,8 @@ export default function SanctioningProcessesDrawer({
 
   useEffect(() => {
     setActiveDetailTab(DETAIL_TABS.FORM);
-    setSelectedPhase(PHASE_OPTIONS[0]);
+    const detectedPhase = detectPhaseBucket(selectedProcess?.current_legal_phase || '');
+    setSelectedPhase(detectedPhase);
     setBitacoraPhaseFilter(ALL_PHASES_OPTION);
     setBitacoraDateFilter('');
     setFormValues({
@@ -378,7 +389,7 @@ export default function SanctioningProcessesDrawer({
       },
       ...sharedFields
     ];
-  }, [isOpeningPhase]);
+  }, [selectedPhase]);
 
   if (!selectedProcess) {
     return null;
@@ -675,7 +686,7 @@ export default function SanctioningProcessesDrawer({
               }}
             >
               <Typography sx={{ fontWeight: 700, color: '#191c1d', mb: 0.5 }}>
-                Fase actual: {normalizeText(selectedProcess?.current_legal_phase || 'Sin fase definida')}
+                Fase actual: {normalizeText(selectedPhase || 'Sin fase definida')}
               </Typography>
 
               <Box sx={{ mt: 2 }}>
