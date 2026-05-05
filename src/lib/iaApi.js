@@ -42,8 +42,8 @@ export async function ingestPDF(file) {
   form.append('force_reconvert', 'false');
   const res = await _authFetch('/v1/documents/ingest', { method: 'POST', body: form });
   const data = await _parseResponse(res);
-  if (data.status !== 200) throw new Error(data.error_description || 'Error al ingestar PDF');
-  return data.api_response;
+  if (data.status !== 'success') throw new Error(data.errors?.[0] || 'Error al ingestar PDF');
+  return data;
 }
 
 export async function queryLibrary(question, topK = 10, sourceFilter = null) {
