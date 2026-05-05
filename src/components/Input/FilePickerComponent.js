@@ -84,17 +84,6 @@ const FilePickerComponent = ({ field, value, onChange, returnType = 'binary' }) 
     }
   };
 
-  const filePickerStyle = {
-    border: '2px dashed #ccc',
-    borderRadius: '5px',
-    padding: '50px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    position: 'relative',
-    background: '#f9f9f9',
-    marginBottom: '10px'
-  };
-
   const primaryButtonStyle = {
     display: 'inline-block',
     padding: '8px 15px',
@@ -103,7 +92,6 @@ const FilePickerComponent = ({ field, value, onChange, returnType = 'binary' }) 
     color: '#fff',
     border: 'none',
     borderRadius: '5px',
-    marginTop: '10px',
     fontSize: '16px'
   };
 
@@ -111,17 +99,8 @@ const FilePickerComponent = ({ field, value, onChange, returnType = 'binary' }) 
 
   return (
     <BaseFormControl field={field} value={value}>
-      {/* {filePreview.current && selectedFile && (
-        <div>
-          <img
-            src={filePreview.current}
-            alt="Preview"
-            style={{ maxWidth: '100px', maxHeight: '100px' }}
-          />
-        </div>
-      )} */}
       {validationError && <p style={{ color: 'red' }}>{validationError}</p>}
-      <Box sx={filePickerStyle}>
+      <Box>
         <input
           type="file"
           id={field.id}
@@ -131,11 +110,13 @@ const FilePickerComponent = ({ field, value, onChange, returnType = 'binary' }) 
           style={{ display: 'none' }}
           ref={fileInputRef}
         />
-        <label htmlFor={field.id} style={primaryButtonStyle}>
+        <label 
+          htmlFor={field.id} 
+          style={primaryButtonStyle}
+          title={`${t('Maximum file size')}: ${getMaxFileSize()}\n${t('Allowed file types')}: .jpeg,.png,.jpg`}
+        >
           {t('Choose files')}
         </label>
-        <Box sx={{ my: 1 }}>{t('Maximum file size')}: {getMaxFileSize()}</Box>
-        <Box>{t('Allowed file types')}: .jpeg,.png,.jpg</Box>
       </Box>
       {selectedFile && (
         <Box sx={{ mt: 2 }}>
