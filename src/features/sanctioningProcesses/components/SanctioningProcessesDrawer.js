@@ -226,19 +226,54 @@ const FASE_FIELDS = {
     }
   ],
   'FASE II': [
+    // Fase 2 – Auto de formulación de cargos
     {
-      id: 'pliego_cargos',
-      label: 'Pliego de Cargos',
-      type: 'textarea',
+      id: 'formulation_administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
       required: true,
-      gridSize: '12'
+      gridSize: '6',
+      section: 'Fase 2 – Auto de formulación de cargos'
     },
     {
-      id: 'descargos',
-      label: 'Descargos',
+      id: 'formulation_administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 2 – Auto de formulación de cargos'
+    },
+    {
+      id: 'formulation_notification_date',
+      label: 'Fecha de notificación',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 2 – Auto de formulación de cargos'
+    },
+    {
+      id: 'formulation_execution_date',
+      label: 'Fecha de ejecutoria',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 2 – Auto de formulación de cargos'
+    },
+        {
+      id: 'formulation_documents',
+      label: 'Documentos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 2 – Auto de formulación de cargos'
+    },
+    {
+      id: 'formulation_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 2 – Auto de formulación de cargos'
     }
   ],
   'FASE III': [
