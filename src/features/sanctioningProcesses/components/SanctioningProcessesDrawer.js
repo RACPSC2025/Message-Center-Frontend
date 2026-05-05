@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Close,
   ExpandMore,
@@ -741,6 +742,7 @@ export default function SanctioningProcessesDrawer({
   handleClose = () => {},
   selectedProcess = null
 }) {
+  const { t } = useTranslation();
   const processData = selectedProcess || {};
 
   const phaseLogs = useMemo(() => buildPhaseLogs(processData), [processData]);
@@ -1173,6 +1175,17 @@ export default function SanctioningProcessesDrawer({
                     />
                   </Box>
                 ))}
+              </Box>
+              
+              {/* Botones */}
+              <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
+                <Button variant="outlined" color="secondary">
+                  {t('Cancel')}
+                </Button>
+                
+                <Button variant="contained" color="primary">
+                  {t('Save')}
+                </Button>
               </Box>
             </Box>
           </>
