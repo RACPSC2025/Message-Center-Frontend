@@ -38,7 +38,7 @@ Token expira en 30 minutos. Al recibir `401`: descartar token y re-autenticar un
 
 ## Envelope de respuesta
 
-Los endpoints de **autenticación e ingest** siguen este envelope:
+Solo el endpoint de **autenticación** (`/auth/dev-token`) sigue el envelope:
 
 ```json
 {
@@ -48,9 +48,7 @@ Los endpoints de **autenticación e ingest** siguen este envelope:
 }
 ```
 
-Leer `data.api_response`. Un `status: 200` con `error_description` poblado indica fallback controlado.
-
-> **Excepción:** los endpoints de **consulta** (`query/library`, `query/direct-pdf`, `query/image`) retornan la respuesta **flat** — sin envelope. Leer `data` directamente, no `data.api_response`.
+**Todos los demás endpoints** (`ingest`, `query/library`, `query/direct-pdf`, `query/image`, `get_summary_notes`) retornan respuesta **flat** — sin envelope. Leer `data` directamente.
 
 ---
 
@@ -67,22 +65,19 @@ Indexa uno o más PDFs en ChromaDB. Los chunks quedan persistentes hasta limpiar
 | `files` | `File[]` | ✅ | — | Uno o más archivos `.pdf` |
 | `force_reconvert` | boolean | — | `false` | Re-procesa archivos ya indexados |
 
-**Response `200`**
+**Response `200`** — flat, sin envelope
+
 ```json
 {
-  "status": 200,
-  "error_description": "",
-  "api_response": {
-    "status": "success",
-    "processed_files": ["norma.pdf"],
-    "total_chunks": 42,
-    "indexed_chunks": 42,
-    "errors": []
-  }
+  "status": "success",
+  "processed_files": ["norma.pdf"],
+  "total_chunks": 42,
+  "indexed_chunks": 42,
+  "errors": []
 }
 ```
 
-> `status` puede ser `"partial"` si hubo errores en algún archivo.
+> `status` puede ser `"partial"` si hubo errores en algún archivo. Validar `data.status === "success"`.
 
 ### `GET /v1/documents/count`
 
@@ -264,7 +259,7 @@ Genera resumen estructurado desde transcripciones o texto largo.
 
 | Export | Descripción |
 |---|---|
-| `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart; retorna `api_response` (envelope) |
+| `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart; retorna `data` directo (flat). `data.indexed_chunks` disponible. |
 | `queryLibrary(question, topK?, sourceFilter?)` | `POST /v1/query/library` — JSON; retorna `data` directo (flat, sin envelope) |
 
 Token cache a nivel de módulo. Auto-refresh en 401 (re-autentica una vez y reintenta).
