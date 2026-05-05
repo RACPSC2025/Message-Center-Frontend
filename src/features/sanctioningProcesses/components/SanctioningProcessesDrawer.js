@@ -277,19 +277,22 @@ const FASE_FIELDS = {
     }
   ],
   'FASE III': [
+    // Fase 3 – Descargos
     {
-      id: 'pruebas',
-      label: 'Pruebas',
-      type: 'textarea',
-      required: true,
-      gridSize: '12'
+      id: 'discharge_documents',
+      label: 'Documentos adjuntos (escrito de descargos, anexos técnicos o jurídicos)',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 3 – Descargos'
     },
     {
-      id: 'alegatos',
-      label: 'Alegatos',
+      id: 'discharge_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 3 – Descargos'
     }
   ],
   'FASE IV': [
