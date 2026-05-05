@@ -296,19 +296,54 @@ const FASE_FIELDS = {
     }
   ],
   'FASE IV': [
+    // Fase 4 – Auto de pruebas
     {
-      id: 'evaluacion_pruebas',
-      label: 'Evaluación de Pruebas',
-      type: 'textarea',
+      id: 'test_administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
       required: true,
-      gridSize: '12'
+      gridSize: '6',
+      section: 'Fase 4 – Auto de pruebas'
     },
     {
-      id: 'informe_tecnico',
-      label: 'Informe Técnico',
+      id: 'test_administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 4 – Auto de pruebas'
+    },
+    {
+      id: 'test_notification_date',
+      label: 'Fecha de notificación',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 4 – Auto de pruebas'
+    },
+    {
+      id: 'test_execution_date',
+      label: 'Fecha de ejecutoria',
+      type: 'date',
+      required: true,
+      gridSize: '6',
+      section: 'Fase 4 – Auto de pruebas'
+    },
+    {
+      id: 'test_documents',
+      label: 'Documentos adjuntos (auto de pruebas, listado de pruebas admitidas)',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 4 – Auto de pruebas'
+    },
+    {
+      id: 'test_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 4 – Auto de pruebas'
     }
   ],
   'FASE V': [
