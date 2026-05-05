@@ -557,19 +557,38 @@ const FASE_FIELDS = {
     }
   ],
   'FASE XI': [
+    // Fase 11 – Cierre y archivo del expediente
     {
-      id: 'seguimiento_ejecucion',
-      label: 'Seguimiento de Ejecución',
-      type: 'textarea',
-      required: true,
-      gridSize: '12'
+      id: 'closure_administrative_act',
+      label: 'Acto administrativo',
+      type: 'text',
+      required: false,
+      gridSize: '6',
+      section: 'Fase 11 – Cierre y archivo del expediente'
     },
     {
-      id: 'informe_cumplimiento',
-      label: 'Informe de Cumplimiento',
+      id: 'closure_administrative_act_date',
+      label: 'Fecha de acto administrativo',
+      type: 'date',
+      required: false,
+      gridSize: '6',
+      section: 'Fase 11 – Cierre y archivo del expediente'
+    },
+    {
+      id: 'closure_documents',
+      label: 'Documentos adjuntos',
+      type: 'file',
+      required: false,
+      gridSize: '12',
+      section: 'Fase 11 – Cierre y archivo del expediente'
+    },
+    {
+      id: 'closure_observations',
+      label: 'Observaciones',
       type: 'textarea',
       required: false,
-      gridSize: '12'
+      gridSize: '12',
+      section: 'Fase 11 – Cierre y archivo del expediente'
     }
   ],
   'FASE XII': [
