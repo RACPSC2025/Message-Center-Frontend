@@ -258,6 +258,58 @@ Cada evento: `data: { ...JSON... }\n\n`
 
 ---
 
+### `POST /analyze/pdf/stream`
+
+Extrae artículos/obligaciones estructurados de un PDF completo vía **SSE**. El backend convierte el PDF a texto y divide por patrones regex (artículos, capítulos, secciones).
+
+Usado por: `PDFViewerComponent.js` → `handleAnalyzePDF` (botón "Análisis PDF").
+
+**Request** — `multipart/form-data`
+
+| Campo | Tipo | Req | Descripción |
+|---|---|---|---|
+| `file` | `File` | ✅ | PDF. Máx. 50 MB |
+| `patterns` | string (JSON array) | — | Patrones regex de sección. Default: `["ARTÍCULO\\s+\\d+","CAPÍTULO\\s+\\d+","SECCIÓN\\s+\\d+"]` |
+| `context_lines` | int | — | Líneas de contexto previas a cada sección. Default: `5` |
+| `model` | string | — | ARN o model ID AWS Bedrock. Default: `us.anthropic.claude-3-5-sonnet-20240620-v1:0` |
+
+> No enviar `Content-Type` — el browser lo setea con boundary. Campo es `file` (singular), no `files`.
+
+**Response** — `text/event-stream` (SSE)
+
+| Evento | Cuándo | Campos clave |
+|---|---|---|
+| `start` | Primer evento | `total_sections` |
+| `obligation_detected` | Por sección analizada (N veces) | `analysis`, `section_index`, `section_id` |
+| `section_error` | Sección individual falla — stream continúa | `section_index`, `error` |
+| `complete` | Último evento (sin campos extra) | — |
+
+**Campos de `analysis` en `obligation_detected`:**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `article_number` | string | Título/número del artículo detectado |
+| `description` | string | Descripción breve de la obligación |
+| `subject` | string | Sujeto obligado |
+| `deadline` | string | Plazo: `"Mensual"`, `"30 días"`, `"Permanente"`, `"No aplica"` |
+| `priority` | string | `"Alta"` / `"Media"` / `"Baja"` |
+| `prob_task` | float | Probabilidad 0.0–1.0 de que genere tarea |
+| `segment_id` | int | Índice secuencial de la sección |
+| `page_start` | int | Página de inicio en el PDF original |
+| `page_end` | int | Página de fin en el PDF original |
+| `original_content` | string | Texto literal del segmento |
+| `tables_count` | int | Tablas detectadas en la sección |
+| `is_valid` | bool | `false` si hubo errores de validación |
+| `validation_errors` | string[] | Lista de errores (vacía si `is_valid: true`) |
+
+> Progreso: no hay campo `progress` en el stream. Calcular como `detectedArticles.length / total_sections * 100`.
+
+**Token:** `getToken()` de `src/lib/iaApi.js` (localStorage primero, dev-token fallback). `401` → throw "Sesión expirada".
+
+**Errores:** `400` si no es PDF o > 50 MB. `401` si token inválido.
+
+---
+
 ### `POST /v1/query/image`
 
 Analiza imágenes (JPEG, PNG, WEBP, GIF) con modelos multimodales.

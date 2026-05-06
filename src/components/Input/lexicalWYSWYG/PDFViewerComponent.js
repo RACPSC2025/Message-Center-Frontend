@@ -62,6 +62,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { selectFilterItemValue, setFilter } from '../../../stores/filterSlice';
 import { showErrorMsg, showSuccessMsg } from '../../../utils/others';
+import { getToken } from '../../../lib/iaApi';
 
 // Tipos de marcadores
 const MARKER_TYPES = {
@@ -574,132 +575,115 @@ const PDFViewerComponent = ({ pdfUrl, fileName = 'Documento', requisito_id, onIm
     setPdfAnalysisStatus('Iniciando análisis del PDF...');
     setPdfAnalysisResults([]);
 
-    // Notificar al padre que inició el análisis
-    onPdfAnalysis({
-      status: 'start',
-      message: 'Iniciando análisis del PDF...'
-    });
+    onPdfAnalysis({ status: 'start', message: 'Iniciando análisis del PDF...' });
 
     try {
-      // Obtener el archivo PDF como blob
-      const response = await fetch(pdfUrl);
-      const blob = await response.blob();
+      const token = await getToken();
+      if (!token) throw new Error('No autenticado — token no encontrado');
+
+      // Obtener el archivo PDF desde la URL cargada
+      const pdfResponse = await fetch(pdfUrl);
+      const blob = await pdfResponse.blob();
       const file = new File([blob], fileName || 'documento.pdf', { type: 'application/pdf' });
 
       const formData = new FormData();
       formData.append('file', file);
 
-      const token = process.env.REACT_APP_TOKEN_ANALYSIS_SERVICES;
-      const analysisResponse = await fetch('http://localhost:8000/analyze/pdf/stream', {
+      const iaBaseUrl = (window.__APP_CONFIG__?.api_url_ia || 'http://localhost:8000/').replace(/\/$/, '');
+      const analysisResponse = await fetch(`${iaBaseUrl}/analyze/pdf/stream`, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (!analysisResponse.ok) {
-        throw new Error(`HTTP error! status: ${analysisResponse.status}`);
-      }
+      if (analysisResponse.status === 401) throw new Error('Sesión expirada — vuelve a iniciar sesión');
+      if (!analysisResponse.ok) throw new Error(`Error del servidor: ${analysisResponse.status}`);
 
       const reader = analysisResponse.body.getReader();
       const decoder = new TextDecoder();
       let detectedArticles = [];
+      let totalSections = 0;
+      let sseBuffer = '';
 
       const processChunk = (chunk) => {
-        const lines = chunk.split('\n\n');
+        sseBuffer += chunk;
+        const lines = sseBuffer.split('\n\n');
+        sseBuffer = lines.pop();
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const jsonStr = line.replace('data: ', '');
-              const data = JSON.parse(jsonStr);
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.replace('data: ', '').trim());
 
-              console.log('Evento recibido:', data);
+            if (data.event === 'start') {
+              totalSections = data.total_sections || 0;
+              const message = `Iniciando análisis de ${totalSections} secciones...`;
+              setPdfAnalysisStatus(message);
+              onPdfAnalysis({ status: 'processing', message, totalSections });
 
-              if (data.event === 'start') {
-                const message = `🚀 Iniciando análisis de ${data.total_sections || 'múltiples'} secciones...`;
-                setPdfAnalysisStatus(message);
-                onPdfAnalysis({
-                  status: 'processing',
-                  message,
-                  totalSections: data.total_sections
-                });
-              } else if (data.event === 'obligation_detected') {
-                const article = data.analysis;
-                if (article) {
-                  detectedArticles.push(article);
-                  setPdfAnalysisResults(prev => [...prev, article]);
-                  
-                  // Crear nota automática para cada artículo detectado
-                  const noteId = Date.now() + detectedArticles.length;
-                  const newNote = {
-                    id: noteId,
-                    title: article.article_number || 'Artículo detectado',
-                    content: `${article.description}\n\nSujeto: ${article.subject || 'N/A'}\nPrioridad: ${article.priority || 'N/A'}`,
-                    quote: article.description,
-                    pageIndex: article.pageIndex || 0,
-                    highlightAreas: article.highlightAreas || [],
-                    markerType: MARKER_TYPES.PDF_ANALYSIS,
-                    color: MARKER_COLORS.GREEN.value,
-                    createdAt: new Date().toISOString(),
-                    analysisData: article
-                  };
-                  setNotes(prev => [...prev, newNote]);
+            } else if (data.event === 'obligation_detected') {
+              const article = data.analysis;
+              if (article) {
+                detectedArticles.push(article);
+                setPdfAnalysisResults(prev => [...prev, article]);
 
-                  // Notificar al padre con el artículo detectado
-                  onPdfAnalysis({
-                    status: 'article_detected',
-                    article: { ...article, id_requisito: requisito_id },
-                    totalDetected: detectedArticles.length
-                  });
+                // Progreso basado en secciones procesadas
+                if (totalSections > 0) {
+                  setPdfAnalysisProgress(Math.round((detectedArticles.length / totalSections) * 100));
                 }
-              } else if (data.event === 'complete') {
-                const message = `✅ Análisis completado. ${detectedArticles.length} artículos detectados.`;
-                setPdfAnalysisStatus(message);
-                setPdfAnalysisProgress(100);
-                showSuccessMsg(`Análisis completado: ${detectedArticles.length} artículos encontrados`);
-                
+
+                // Nota en el visor usando page_start del análisis
+                const noteId = Date.now() + detectedArticles.length;
+                setNotes(prev => [...prev, {
+                  id: noteId,
+                  title: article.article_number || 'Artículo detectado',
+                  content: `${article.description}\n\nSujeto: ${article.subject || 'N/A'}\nPrioridad: ${article.priority || 'N/A'}`,
+                  quote: article.original_content || article.description,
+                  pageIndex: article.page_start ? article.page_start - 1 : 0,
+                  highlightAreas: [],
+                  markerType: MARKER_TYPES.PDF_ANALYSIS,
+                  color: MARKER_COLORS.GREEN.value,
+                  createdAt: new Date().toISOString(),
+                  analysisData: article
+                }]);
+
                 onPdfAnalysis({
-                  status: 'complete',
-                  message,
+                  status: 'article_detected',
+                  article: { ...article, id_requisito: requisito_id },
                   totalDetected: detectedArticles.length
                 });
               }
 
-              if (data.progress) {
-                setPdfAnalysisProgress(data.progress);
-              }
-            } catch (error) {
-              console.error('Error al parsear chunk:', error);
+            } else if (data.event === 'section_error') {
+              console.warn(`Sección ${data.section_index} falló: ${data.error}`);
+
+            } else if (data.event === 'complete') {
+              const message = `Análisis completado. ${detectedArticles.length} artículos detectados.`;
+              setPdfAnalysisStatus(message);
+              setPdfAnalysisProgress(100);
+              showSuccessMsg(`Análisis completado: ${detectedArticles.length} artículos encontrados`);
+              onPdfAnalysis({ status: 'complete', message, totalDetected: detectedArticles.length });
             }
+
+          } catch (e) {
+            console.warn('Error parseando evento SSE:', e);
           }
         }
       };
 
-      let done = false;
-      while (!done) {
-        const result = await reader.read();
-        done = result.done;
-        
-        if (!done) {
-          const chunk = decoder.decode(result.value, { stream: true });
-          processChunk(chunk);
-        }
+      let streamDone = false;
+      while (!streamDone) {
+        const { value, done } = await reader.read();
+        streamDone = done;
+        if (!done) processChunk(decoder.decode(value, { stream: true }));
       }
-
-      console.log('✅ Análisis de PDF completo. Artículos detectados:', detectedArticles.length);
 
     } catch (error) {
       console.error('❌ Error al analizar PDF:', error);
       showErrorMsg(`Error al analizar PDF: ${error.message}`);
-      const errorMessage = `❌ Error en el análisis: ${error.message}`;
+      const errorMessage = `Error en el análisis: ${error.message}`;
       setPdfAnalysisStatus(errorMessage);
-      
-      onPdfAnalysis({
-        status: 'error',
-        message: errorMessage
-      });
+      onPdfAnalysis({ status: 'error', message: errorMessage });
     } finally {
       setAnalyzingPDF(false);
     }

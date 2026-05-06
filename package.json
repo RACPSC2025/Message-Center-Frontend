@@ -1,7 +1,7 @@
 {
   "name": "outlook-message-center",
   "version": "0.3.6",
-  "homepage": ".",
+  "homepage": "/ambiental/message-center",
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.13.1",

@@ -13,7 +13,7 @@ export function useNavConfig() {
   // nav-config.json is decoration only: icons, routes, routeKey, dataId, color, name overrides
   useEffect(() => {
     if (cache.data) return;
-    fetch('/nav-config.json')
+    fetch(`${process.env.PUBLIC_URL}/nav-config.json`)
       .then((r) => r.json())
       .then((data) => { cache.data = data; setConfig(data); })
       .catch(() => setConfig({ workareas: [], modules: [] }));
