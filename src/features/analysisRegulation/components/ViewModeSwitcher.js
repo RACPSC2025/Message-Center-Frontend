@@ -1,5 +1,5 @@
 import { Box, Button, Chip, CircularProgress, IconButton, Tooltip } from '@mui/material';
-import { ChatRounded, PictureAsPdfRounded, UploadFileRounded, SettingsRounded } from '@mui/icons-material';
+import { PictureAsPdfRounded, UploadFileRounded, SettingsRounded } from '@mui/icons-material';
 import { useRef, useState } from 'react';
 import { ingestPDF } from '../../../lib/iaApi';
 
@@ -58,19 +58,6 @@ const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPd
       >
         PDF Original
       </Button>
-      {
-      <Button
-        variant={viewMode === 'chat' ? 'contained' : 'outlined'}
-        onClick={() => onViewModeChange('chat')}
-        startIcon={<ChatRounded />}
-        sx={{
-          textTransform: 'none',
-          minWidth: '120px'
-        }}
-      >
-        Contenido extraído
-      </Button>
-      }
       <Button
         variant="outlined"
         onClick={() => fileInputRef.current?.click()}

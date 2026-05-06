@@ -54,7 +54,6 @@ import ContentPasteOffIcon from '@mui/icons-material/ContentPasteOff';
 import { Fragment, useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import LexicalInput from '../../components/Input/lexicalWYSWYG/LexicalInput';
-import ChatInterface from '../../components/Input/lexicalWYSWYG/ChatInterface';
 import ChatInputBox from '../../components/Input/lexicalWYSWYG/ChatInputBox';
 //import PDFViewerComponent from '../../components/PDFViewer/PDFViewerComponent';
 import PDFViewerComponent from '../../components/Input/lexicalWYSWYG/PDFViewerComponent';
@@ -85,8 +84,6 @@ import { $getSelection, $isRangeSelection } from 'lexical';
 import {
   ProcessingProgressBar,
   ViewModeSwitcher,
-  PDFProcessingStatus,
-  FileUploadButtons,
   ChatNormaTab,
   KnowledgeBaseTab,
   ArticlesList,
@@ -290,7 +287,6 @@ export default function AnalysisRegulation({
   ]);
   const [currentHistoricIAPosition, setCurrentHistoricIAPosition] = useState(0);
   const [loadingCorrection, setLoadingCorrection] = useState(false);
-  const chatInterfaceRef = useRef(null);
   const [pdfProgress, setPdfProgress] = useState(0);
 
   // 🆕 Estados para vista PDF
@@ -768,7 +764,7 @@ export default function AnalysisRegulation({
       return;
     }
 
-    setViewMode('chat');
+    setTabIndexArticle(2);
     setLoadingQueryWithContext(true);
 
     const pushMsg = (role, text, extra = {}) => {
@@ -808,11 +804,6 @@ export default function AnalysisRegulation({
         hallucination: result.hallucination_detected,
         cacheHit: result.cache_hit,
       });
-
-      setTimeout(() => {
-        const chatArea = document.querySelector('.overflow-y-auto.bg-gray-50');
-        if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
-      }, 100);
 
     } catch (error) {
       replaceLastMsg('assistant', `❌ Error: ${error.message || 'Error desconocido'}`);
@@ -2814,74 +2805,26 @@ export default function AnalysisRegulation({
                     onToggleToolbar={() => setPdfToolbarVisible(!pdfToolbarVisible)}
                   />
 
-                  {/* 🆕 VISTA CONDICIONAL */}
-                  {viewMode === 'chat' ? (
-                    // ========== VISTA CHAT ==========
-                    <div className="w-full bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex flex-row gap-3 relative">
-                      
-                      {/* Columna 1: ChatInterface */}
-                      <div className="flex-grow flex flex-col">
-                        <div>
-                          <ChatInterface
-                            ref={chatInterfaceRef}
-                            historicTextIA={historicTextIA}
-                            setHistoricTextIA={setHistoricTextIA}
-                            currentHistoricIAPosition={currentHistoricIAPosition}
-                            setCurrentHistoricIAPosition={setCurrentHistoricIAPosition}
-                            hideConversationList={true}
-                          >
-                            <div className="flex-grow flex flex-col">
-                              
-                              <PDFProcessingStatus
-                                selectedFile={selectedFile}
-                                loadingPDF={loadingPDF}
-                                progressPDF={progressPDF}
-                                processingStatusPDF={processingStatusPDF}
-                                pdfDataError={pdfDataError}
-                                resultFilesPDF={resultFilesPDF}
-                                onSend={handleUpload}
-                              />
-                            </div>
-                          </ChatInterface>
-                        </div>
-                      </div>
-
-                      {/* Columna 2: Botones verticales */}
-                      <FileUploadButtons
-                        onStreamingUpload={handleUploadPDFStreaming}
-                        onLocalUpload={handleFilePDFChange}
-                        onS3Upload={handleUploadPDFNewAPI}
-                        onArticlesAnalysis={handleGetArticlesWithObligations}
-                      />
-                
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                      />
-                    </div>
-                  ) : (
-                    // ========== VISTA PDF CON ANOTACIONES ==========
-                    <Box 
-                      sx={{ 
-                        width: '100%',
-                        height: '800px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        backgroundColor: '#fff'
-                      }}
-                    >
-                      <PDFViewerComponent 
-                        pdfUrl={currentPdfUrl}
-                        fileName={currentPdfName}
-                        requisito_id={id_requisito_actual}
-                        onImageAnalysis={handleImageAnalysis}
-                        onPdfAnalysis={handlePdfAnalysis}
-                        toolbarVisible={pdfToolbarVisible}
-                      />
-                    </Box>
-                  )}
+                  {/* VISTA PDF */}
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: '800px',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      backgroundColor: '#fff'
+                    }}
+                  >
+                    <PDFViewerComponent
+                      pdfUrl={currentPdfUrl}
+                      fileName={currentPdfName}
+                      requisito_id={id_requisito_actual}
+                      onImageAnalysis={handleImageAnalysis}
+                      onPdfAnalysis={handlePdfAnalysis}
+                      toolbarVisible={pdfToolbarVisible}
+                    />
+                  </Box>
                 </Box>
               </Box>
 
@@ -2945,17 +2888,13 @@ export default function AnalysisRegulation({
 
                   {/* ========== TAB 2: Chat norma ========== */}
                   {tabIndexArticle === 2 && (
-                    <>
-                      <Typography variant="h6" color="primary" mb={2}>
-                        Chat con la Norma
-                      </Typography>
-                      <ChatNormaTab
-                        userText={userText}
-                        setUserText={setUserText}
-                        onSend={handleCustomQuery}
-                        loading={loadingQueryWithContext}
-                      />
-                    </>
+                    <ChatNormaTab
+                      userText={userText}
+                      setUserText={setUserText}
+                      onSend={handleCustomQuery}
+                      loading={loadingQueryWithContext}
+                      messages={historicTextIA[currentHistoricIAPosition]?.contenido || []}
+                    />
                   )}
 
                   {/* ========== TAB 3: Análisis ampliado ========== */}
