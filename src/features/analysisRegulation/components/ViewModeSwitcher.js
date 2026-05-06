@@ -5,8 +5,10 @@ import { ingestPDF } from '../../../lib/iaApi';
 
 const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPdf, toolbarVisible, onToggleToolbar }) => {
   const fileInputRef = useRef(null);
-  const [ingestStatus, setIngestStatus] = useState('idle'); // idle | loading | done | error
-  const [ingestInfo,   setIngestInfo]   = useState(null);
+  const [ingestStatus,  setIngestStatus]  = useState('idle'); // idle | loading | done | error
+  const [ingestInfo,    setIngestInfo]    = useState(null);
+  const [ingestSeconds, setIngestSeconds] = useState(null);
+  const [showIngestTime] = useState(true);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -16,12 +18,19 @@ const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPd
 
     setIngestStatus('loading');
     setIngestInfo(null);
+    setIngestSeconds(null);
+
+    const start = performance.now();
     try {
       const result = await ingestPDF(file);
+      const elapsed = (performance.now() - start) / 1000;
       setIngestStatus('done');
       setIngestInfo(result);
+      setIngestSeconds(elapsed);
     } catch {
+      const elapsed = (performance.now() - start) / 1000;
       setIngestStatus('error');
+      setIngestSeconds(elapsed);
     }
 
     event.target.value = '';
@@ -88,6 +97,16 @@ const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPd
       )}
       {ingestStatus === 'error' && (
         <Chip label="Error al indexar" color="error" size="small" />
+      )}
+      {showIngestTime && ingestSeconds != null && (
+        <Tooltip title="Tiempo de respuesta del endpoint /v1/documents/ingest">
+          <Chip
+            label={`${ingestSeconds.toFixed(2)} s`}
+            color={ingestStatus === 'error' ? 'default' : 'info'}
+            variant="outlined"
+            size="small"
+          />
+        </Tooltip>
       )}
       {viewMode === 'pdf' && pdfAvailable && onToggleToolbar && (
         <Tooltip title={toolbarVisible ? "Ocultar herramientas" : "Mostrar herramientas"}>

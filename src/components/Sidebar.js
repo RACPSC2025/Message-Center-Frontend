@@ -18,7 +18,7 @@ import { getAPIUrl } from '../config/constants';
 
 const COLLAPSED_W = 72;
 const EXPANDED_W = 220;
-const MEGAMENU_W = 460;
+const MEGAMENU_W = 470;
 
 function cn(...classes) {
   return classes.filter(Boolean).join(' ');

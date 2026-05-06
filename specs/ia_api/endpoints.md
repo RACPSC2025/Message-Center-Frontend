@@ -102,7 +102,8 @@ Usar **después** de `/v1/documents/ingest`.
   "top_k": 10,
   "model": null,
   "user_prompt": null,
-  "source_filter": "contrato_2024.pdf"
+  "source_filter": "contrato_2024.pdf",
+  "prompt_type": "legal"
 }
 ```
 
@@ -113,6 +114,29 @@ Usar **después** de `/v1/documents/ingest`.
 | `model` | string | — | `null` | ARN o model ID; si se omite, selección automática |
 | `user_prompt` | string | — | `null` | Prompt adicional (pasa validación de seguridad) |
 | `source_filter` | string | — | `null` | Nombre exacto del archivo (igual a `processed_files` del ingest). Si es `null`, busca en toda la colección. **Siempre pasar** para evitar mezclar contenido de documentos distintos. |
+| `prompt_type` | enum | — | `"general"` | `"general"` \| `"legal"`. `legal` antepone contexto de analista legal senior antes del `user_prompt` |
+
+**Prompt types**
+
+| Valor | Comportamiento |
+|---|---|
+| `general` (default backend) | `user_prompt` aplicado tal cual. Sin contexto adicional |
+| `legal` | Antepone bloque "analista legal senior" desde `config/prompt_contexts.yaml` antes del `user_prompt`. Refuerza citación normativa, distinción técnica obligaciones/facultades, cadena de razonamiento jurídico, lenguaje formal |
+
+> **Esta app pasa `prompt_type: "legal"` por default** — `iaApi.queryLibrary` lo hardcodea ya que el caso de uso es "Análisis de la norma". Para overridear: pasar 4to arg.
+
+Composición del prompt final en modo `legal`:
+```
+[base system: Legal Agent + reglas estrictas]
+---
+CONTEXTO ESPECIALIZADO (legal):
+[bloque desde config/prompt_contexts.yaml → legal.system]
+---
+INSTRUCCIÓN ADICIONAL DEL USUARIO:
+[user_prompt]   ← solo si user_prompt != null
+```
+
+`config/prompt_contexts.yaml` es **hot-reload** en el backend — añadir nuevos tipos no requiere reinicio (sí requiere registrarlos en `Literal[...]` y `_VALID_TYPES`).
 
 **Response `200`** — flat, sin envelope
 
@@ -259,13 +283,24 @@ Genera resumen estructurado desde transcripciones o texto largo.
 
 | Export | Descripción |
 |---|---|
-| `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart; retorna `data` directo (flat). `data.indexed_chunks` disponible. |
-| `queryLibrary(question, topK?, sourceFilter?)` | `POST /v1/query/library` — JSON; retorna `data` directo (flat, sin envelope) |
+| `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart; retorna data flat. `result.indexed_chunks`, `result.processed_files`, `result.status` (`"success"` \| `"partial"`) |
+| `queryLibrary(question, topK?, sourceFilter?, promptType?)` | `POST /v1/query/library` — JSON; retorna data flat. `result.answer`, `result.source_docs`, `result.grade`, `result.hallucination_detected`, `result.cache_hit` |
 
 Token cache a nivel de módulo. Auto-refresh en 401 (re-autentica una vez y reintenta).
 Lanza `Error` con texto `HTTP <status>: <body>` si el servidor responde `text/plain` (ej. 500).
 
-`sourceFilter` debe ser el nombre del archivo tal como fue ingresado (`file.name`). Pasar `null` para buscar en toda la colección.
+**Manejo de respuesta flat vs envelope:**
+- Backend de IA retorna **flat** (sin `{status, error_description, api_response}`).
+- El helper desempaqueta con `data.api_response ?? data` — si llega envelope (raro, solo `/auth/dev-token`), se extrae; si llega flat, se usa directo.
+- `ingestPDF` valida `payload.status === "success"` o `"partial"`. Otro valor → throw.
+- `queryLibrary` valida `payload.answer` truthy. Si falta → throw.
+
+**Defaults de `queryLibrary`:**
+- `topK = 10`
+- `sourceFilter = null` → sin filtro, busca toda la colección
+- `promptType = 'legal'` → contexto de analista legal senior (caso de uso "Análisis de la Norma")
+
+`sourceFilter` debe ser el nombre exacto del archivo tal como fue ingresado (`file.name`).
 
 ---
 
@@ -289,7 +324,7 @@ Respuesta → historicTextIA → ChatInterface (columna izquierda, viewMode='cha
 
 | Archivo | Responsabilidad |
 |---|---|
-| [ViewModeSwitcher.js](../../src/features/analysisRegulation/components/ViewModeSwitcher.js) | Ingest al cargar PDF; muestra chip con chunks indexados |
+| [ViewModeSwitcher.js](../../src/features/analysisRegulation/components/ViewModeSwitcher.js) | Ingest al cargar PDF; chips con chunks indexados y tiempo de respuesta del endpoint |
 | [ChatNormaTab.js](../../src/features/analysisRegulation/components/ChatNormaTab.js) | Input de consulta (LexicalInput + botón send); presentacional puro |
 | [AnalysisRegulation.js](../../src/features/analysisRegulation/AnalysisRegulation.js) | `handleCustomQuery`: llama `queryLibrary`, escribe en `historicTextIA`, activa `viewMode='chat'` |
 | [ChatInterface](../../src/components/Input/lexicalWYSWYG/ChatInterface.js) | Renderiza `historicTextIA` en la columna izquierda |
@@ -299,10 +334,21 @@ Respuesta → historicTextIA → ChatInterface (columna izquierda, viewMode='cha
 1. `setViewMode('chat')` — fuerza vista chat para que `ChatInterface` sea visible
 2. Push mensaje `user` a `historicTextIA`
 3. Push placeholder `assistant` "🔍 Consultando norma..."
-4. `await queryLibrary(question, 10, currentPdfName || null)` — `currentPdfName` = `file.name` del PDF cargado; acota la búsqueda al documento activo
+4. `await queryLibrary(question, 10, currentPdfName || null)` — `currentPdfName` = `file.name` del PDF cargado; acota búsqueda al documento activo. `prompt_type='legal'` se aplica por default dentro de `queryLibrary`
 5. Reemplaza el placeholder con `result.answer` + `source_docs`, `grade`, `hallucination_detected`, `cache_hit`
 6. Scroll al final del chat
 
 ### Nota de persistencia ChromaDB
 
 `ingestPDF` indexa el documento de forma **persistente**. Un nuevo ingest del mismo archivo con `force_reconvert=false` es idempotente. Para limpiar la colección: borrar `data/legal_rag/storage/` en el backend y reiniciar.
+
+### Telemetría visible — tiempo de ingest
+
+`ViewModeSwitcher` mide el tiempo de respuesta de `ingestPDF` con `performance.now()` y lo muestra en un chip al lado del chip de chunks. Se mide en éxito y en error.
+
+| State | Default | Propósito |
+|---|---|---|
+| `showIngestTime` | `true` | Toggle visibilidad del chip de tiempo |
+| `ingestSeconds` | `null` | Segundos transcurridos (float, 2 decimales) |
+
+Para ocultar permanentemente: cambiar default a `false` o exponer como prop.

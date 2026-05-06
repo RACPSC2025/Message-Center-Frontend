@@ -10,7 +10,7 @@ async function _getToken() {
     body: 'username=devuser&password=devpass123',
   });
   const data = await res.json();
-  _token = data.api_response.access_token;
+  _token = data.access_token || data.api_response?.access_token;
   return _token;
 }
 
@@ -42,15 +42,32 @@ export async function ingestPDF(file) {
   form.append('force_reconvert', 'false');
   const res = await _authFetch('/v1/documents/ingest', { method: 'POST', body: form });
   const data = await _parseResponse(res);
-  if (data.status !== 'success') throw new Error(data.errors?.[0] || 'Error al ingestar PDF');
-  return data;
+  // Backend retorna flat: { status: "success" | "partial", processed_files, indexed_chunks, errors }
+  // Tolerar también envelope { status: 200, api_response: {...} } por compatibilidad.
+  const payload = data.api_response ?? data;
+  if (payload.status && payload.status !== 'success' && payload.status !== 'partial') {
+    throw new Error(payload.errors?.[0] || data.error_description || 'Error al ingestar PDF');
+  }
+  return payload;
 }
 
-export async function queryLibrary(question, topK = 10, sourceFilter = null) {
+export async function queryLibrary(question, topK = 10, sourceFilter = null, promptType = 'legal') {
+  const body = {
+    question,
+    top_k: topK,
+    source_filter: sourceFilter,
+    prompt_type: promptType,
+  };
   const res = await _authFetch('/v1/query/library', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, top_k: topK, source_filter: sourceFilter }),
+    body: JSON.stringify(body),
   });
-  return _parseResponse(res);
+  const data = await _parseResponse(res);
+  // Backend retorna flat con `answer`. Tolerar envelope por compatibilidad.
+  const payload = data.api_response ?? data;
+  if (!payload.answer) {
+    throw new Error(data.error_description || 'Error en consulta');
+  }
+  return payload;
 }
