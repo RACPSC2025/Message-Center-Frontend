@@ -1,17 +1,15 @@
-import { Box, IconButton, Tooltip, CircularProgress, Typography, Paper, Chip } from '@mui/material';
-import { SendRounded, SourceRounded } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
+import { Box, IconButton, Tooltip, CircularProgress, Typography, Paper, Chip, TextField } from '@mui/material';
+import { SendRounded, SourceRounded, DeleteSweepRounded } from '@mui/icons-material';
 import { useRef, useEffect } from 'react';
-import LexicalInput from '../../../components/Input/lexicalWYSWYG/LexicalInput';
 
 const ChatNormaTab = ({
   userText,
   setUserText,
   onSend,
+  onClear,
   loading,
   messages = [],
 }) => {
-  const { t } = useTranslation();
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -20,6 +18,20 @@ const ChatNormaTab = ({
 
   return (
     <Box display="flex" flexDirection="column" sx={{ height: '620px', border: '1px solid #e0e0e0', borderRadius: 2, overflow: 'hidden' }}>
+
+      {/* ── Header ── */}
+      <Box sx={{ px: 2, py: 0.75, borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>
+          Chat con la Norma
+        </Typography>
+        {messages.length > 0 && onClear && (
+          <Tooltip title="Borrar historial">
+            <IconButton size="small" onClick={onClear} color="error">
+              <DeleteSweepRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
 
       {/* ── Área de mensajes ── */}
       <Box
@@ -151,22 +163,37 @@ const ChatNormaTab = ({
           gap: 1,
         }}
       >
-        <Box flex={1}>
-          <LexicalInput
-            placeholder={t('Consulta sobre el documento')}
-            JSONData={setUserText}
-            minRows={2}
-            maxRows={6}
-          />
-        </Box>
-        <Tooltip title="Enviar consulta">
+        <TextField
+          fullWidth
+          multiline
+          minRows={1}
+          maxRows={4}
+          value={userText || ''}
+          onChange={(e) => setUserText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (!loading && userText?.trim()) onSend();
+            }
+          }}
+          placeholder="Pregunta sobre la norma... (Enter para enviar, Shift+Enter nueva línea)"
+          disabled={loading}
+          size="small"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 3,
+              backgroundColor: '#f8f9fa',
+            },
+          }}
+        />
+        <Tooltip title="Enviar (Enter)">
           <span>
             <IconButton
               onClick={onSend}
-              disabled={loading}
+              disabled={loading || !userText?.trim()}
               size="medium"
               sx={{
-                mb: 0.5,
+                mb: 0.25,
                 backgroundColor: '#2196f3',
                 color: 'white',
                 '&:hover': { backgroundColor: '#1976d2' },

@@ -757,6 +757,17 @@ export default function AnalysisRegulation({
     });
   };
   // FUNCIÓN: Consulta al backend IA (ingest + query/library)
+  const handleClearChatNorma = () => {
+    setHistoricTextIA((prev) => {
+      const updated = [...prev];
+      updated[currentHistoricIAPosition] = {
+        ...updated[currentHistoricIAPosition],
+        contenido: []
+      };
+      return updated;
+    });
+  };
+
   const handleCustomQuery = async () => {
     const question = userText?.trim();
     if (!question) {
@@ -2892,6 +2903,7 @@ export default function AnalysisRegulation({
                       userText={userText}
                       setUserText={setUserText}
                       onSend={handleCustomQuery}
+                      onClear={handleClearChatNorma}
                       loading={loadingQueryWithContext}
                       messages={historicTextIA[currentHistoricIAPosition]?.contenido || []}
                     />
