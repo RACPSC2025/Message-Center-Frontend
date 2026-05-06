@@ -647,9 +647,29 @@ const PDFViewerComponent = ({ pdfUrl, fileName = 'Documento', requisito_id, onIm
                   analysisData: article
                 }]);
 
+                // Normalizar campos al esquema que espera ArticlesList
+                const normalizedArticle = {
+                  id_process:           `pdf_${requisito_id}_${article.segment_id}`,
+                  number:               article.article_number,
+                  article_number:       article.article_number,
+                  description:          article.description,
+                  complete_description: article.original_content || article.description,
+                  subject:              article.subject     || '',
+                  deadline:             article.deadline    || '',
+                  priority:             article.priority    || '',
+                  prob_task:            article.prob_task   ?? 0,
+                  parent:               '',
+                  section_index:        article.segment_id,
+                  type:                 'artículo',
+                  page_start:           article.page_start,
+                  page_end:             article.page_end,
+                  id_requisito:         requisito_id,
+                  _source:              'pdf_stream',
+                };
+
                 onPdfAnalysis({
                   status: 'article_detected',
-                  article: { ...article, id_requisito: requisito_id },
+                  article: normalizedArticle,
                   totalDetected: detectedArticles.length
                 });
               }
