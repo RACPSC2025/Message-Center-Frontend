@@ -1,27 +1,38 @@
 const _base = () => (window.__APP_CONFIG__?.api_url_ia || 'http://localhost:8000/').replace(/\/$/, '');
 
-let _token = null;
+let _devToken = null;
 
-async function _getToken() {
-  if (_token) return _token;
+export async function getToken() {
+  // Producción: token puesto por login-amatia-express
+  const lsToken = localStorage.getItem('Auth-Token');
+  if (lsToken) return lsToken;
+
+  // Dev fallback: /auth/dev-token (solo ENVIRONMENT=DEV)
+  if (_devToken) return _devToken;
   const res = await fetch(`${_base()}/auth/dev-token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'username=devuser&password=devpass123',
   });
   const data = await res.json();
-  _token = data.access_token || data.api_response?.access_token;
-  return _token;
+  _devToken = data.api_response?.access_token || data.access_token;
+  return _devToken;
 }
 
 async function _authFetch(path, options = {}) {
-  const token = await _getToken();
+  const token = await getToken();
+  if (!token) throw new Error('No autenticado — token no encontrado');
   const res = await fetch(`${_base()}${path}`, {
     ...options,
     headers: { Authorization: `Bearer ${token}`, ...options.headers },
   });
   if (res.status === 401) {
-    _token = null;
+    if (localStorage.getItem('Auth-Token')) {
+      // Token de localStorage expiró — no se puede auto-renovar
+      throw new Error('Sesión expirada — vuelve a iniciar sesión');
+    }
+    // Token de dev-token expiró — limpiar y reintentar una vez
+    _devToken = null;
     return _authFetch(path, options);
   }
   return res;

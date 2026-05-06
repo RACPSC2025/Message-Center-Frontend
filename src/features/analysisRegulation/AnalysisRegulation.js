@@ -60,7 +60,7 @@ import ChatInputBox from '../../components/Input/lexicalWYSWYG/ChatInputBox';
 import PDFViewerComponent from '../../components/Input/lexicalWYSWYG/PDFViewerComponent';
 
 import axios from 'axios';
-import { queryLibrary } from '../../lib/iaApi';
+import { queryLibrary, getToken } from '../../lib/iaApi';
 import { 
   evalWithIA, 
   evalWithIAComplete,
@@ -1974,35 +1974,47 @@ export default function AnalysisRegulation({
         formData.append('files', blob, fileNames[index]);
       });
       
-      formData.append('note_reference', note_reference);
-      formData.append('note_title', noteTitle || '');
-      formData.append('note_description', noteDescription || '');
+      if (note_reference) {
+        formData.append('note_reference', note_reference);
+      }
       
-      const token = process.env.REACT_APP_TOKEN_ANALYSIS_SERVICES;
-      const response = await fetch('http://localhost:8000/analyze/image/stream', {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('No autenticado — token no encontrado');
+      }
+
+      const iaBaseUrl = (window.__APP_CONFIG__?.api_url_ia || 'http://localhost:8000/').replace(/\/$/, '');
+      const response = await fetch(`${iaBaseUrl}/analyze/image/stream`, {
         method: 'POST',
         body: formData,
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
+      if (response.status === 401) {
+        throw new Error('Sesión expirada — vuelve a iniciar sesión');
+      }
+
       if (!response.ok) {
         throw new Error(`Error del servidor: ${response.status}`);
       }
-      
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullResponseText = '';
       let detectedElements = [];
       let totalImagesProcessed = 0;
-      
+      let sseBuffer = '';
+
       const processChunk = (chunk) => {
-        const lines = chunk.split('\n\n');
-        
+        sseBuffer += chunk;
+        const lines = sseBuffer.split('\n\n');
+        sseBuffer = lines.pop(); // conservar fragmento incompleto
+
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
+          if (!line.startsWith('data: ')) continue;
+          try {
               const jsonStr = line.replace('data: ', '').trim();
               const data = JSON.parse(jsonStr);
               
@@ -2068,9 +2080,8 @@ export default function AnalysisRegulation({
                 return newHistory;
               });
               
-            } catch (e) {
-              console.warn('⚠️ Error parseando evento SSE:', e);
-            }
+          } catch (e) {
+            console.warn('⚠️ Error parseando evento SSE:', e);
           }
         }
       };

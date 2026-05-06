@@ -9,7 +9,33 @@ Swagger interactivo: `http://localhost:8000/docs`
 
 ## Autenticación
 
-Todos los endpoints excepto `/health` y `/v1/health` requieren Bearer token.
+Todos los endpoints excepto `/health` y `/v1/health` requieren Bearer token en el header `Authorization`.
+
+### Cómo obtener el token
+
+**Producción / integración con login-amatia** — leer directo de `localStorage`:
+
+```js
+const token = localStorage.getItem('Auth-Token')
+if (!token) throw new Error('No autenticado — redirigir a login')
+```
+
+`login-amatia-express` guarda el token en `localStorage['Auth-Token']` tras el login exitoso. Esta es la fuente canónica en la app.
+
+> **Bug frecuente:** Si `token` es `null`, el header queda `Bearer undefined` y el servidor responde `401`. Siempre validar antes del fetch.
+
+**Desarrollo local** — llamar a `/auth/dev-token` (solo disponible con `ENVIRONMENT=DEV`):
+
+```js
+const res = await fetch('http://localhost:8000/auth/dev-token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: 'username=devuser&password=devpass123',
+})
+const data = await res.json()
+const token = data.api_response.access_token  // extraer de api_response
+localStorage.setItem('Auth-Token', token)
+```
 
 ### `POST /auth/dev-token`
 
@@ -32,7 +58,7 @@ username=devuser&password=devpass123
 }
 ```
 
-Token expira en 30 minutos. Al recibir `401`: descartar token y re-autenticar una vez.
+Token expira en 30 minutos. Al recibir `401`: sesión expirada — redirigir a login.
 
 ---
 
@@ -183,6 +209,55 @@ Consulta un PDF sin indexación persistente. El archivo se procesa en memoria y 
 
 > Para múltiples preguntas sobre el mismo PDF usar **ingest + query/library** — `direct-pdf` re-procesa el archivo en cada llamada.
 
+### `POST /analyze/image/stream`
+
+Extrae elementos legales estructurados (artículos, parágrafos, numerales, literales) de una o más imágenes vía **SSE**. Múltiples imágenes se tratan como páginas secuenciales del mismo documento.
+
+Usado por: `AnalysisRegulation.js` → `handleImageAnalysis` (botón "Recorte IA" de `PDFViewerComponent`).
+
+**Request** — `multipart/form-data`
+
+| Campo | Tipo | Req | Descripción |
+|---|---|---|---|
+| `files` | `File[]` | ✅ | Imágenes PNG/JPEG/JPG/GIF/WEBP. Máx. 5 MB c/u |
+| `model` | string | — | ARN o model ID AWS Bedrock. Default: `us.anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| `note_reference` | string | — | Referencia que se añade a todos los elementos extraídos |
+
+> No enviar `Content-Type` — el browser lo setea con boundary.
+
+**Response** — `text/event-stream` (SSE)
+
+Cada evento: `data: { ...JSON... }\n\n`
+
+| Evento | Cuándo | Campos clave |
+|---|---|---|
+| `start` | Primer evento | `total_images`, `processing_mode` |
+| `obligation_detected` | Por cada elemento extraído (N veces) | `analysis` — ver tabla abajo |
+| `complete` | Último evento (éxito) | `stats.total_elements`, `stats.image_quality`, `stats.confidence` |
+| `fatal_error` | Error o timeout (300 s) | `error` |
+
+**Campos de `analysis` en `obligation_detected`:**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id_process` | string | ID único — prefijo (`art`/`par`/`lit`/`num`) + timestamp + índice |
+| `type` | string | `"artículo"` / `"parágrafo"` / `"numeral"` / `"literal"` |
+| `parent` | string | `id_process` del padre; `""` si es raíz |
+| `number` | string | Ej. `"Artículo 68"`, `"Parágrafo 1"` |
+| `description` | string | Descripción breve |
+| `complete_description` | string | Texto literal completo |
+| `subject` | string | Sujeto obligado |
+| `deadline` | string | Plazo: `"Inmediato"` / `"Permanente"` / `"30 días"` |
+| `priority` | string | `"Alta"` / `"Media"` / `"Baja"` |
+| `prob_task` | float | Probabilidad 0.0–1.0 de que genere tarea |
+| `note_reference` | string\|null | Referencia enviada en request |
+
+**Token:** leer de `localStorage.getItem('Auth-Token')`. Validar antes del fetch — si es `null`, error 401.
+
+**Errores:** `400` si formato no soportado o imagen > 5 MB. `401` si token inválido o expirado (sesión caducó — redirigir a login).
+
+---
+
 ### `POST /v1/query/image`
 
 Analiza imágenes (JPEG, PNG, WEBP, GIF) con modelos multimodales.
@@ -286,7 +361,14 @@ Genera resumen estructurado desde transcripciones o texto largo.
 | `ingestPDF(file)` | `POST /v1/documents/ingest` — multipart; retorna data flat. `result.indexed_chunks`, `result.processed_files`, `result.status` (`"success"` \| `"partial"`) |
 | `queryLibrary(question, topK?, sourceFilter?, promptType?)` | `POST /v1/query/library` — JSON; retorna data flat. `result.answer`, `result.source_docs`, `result.grade`, `result.hallucination_detected`, `result.cache_hit` |
 
-Token cache a nivel de módulo. Auto-refresh en 401 (re-autentica una vez y reintenta).
+**Obtención del token** (en orden):
+1. `localStorage.getItem('Auth-Token')` — token de login-amatia (producción)
+2. `/auth/dev-token` con `devuser/devpass123` — solo si localStorage vacío (dev local); resultado cacheado en `_devToken`
+
+**401 handling:**
+- Token de localStorage → throw `"Sesión expirada — vuelve a iniciar sesión"` (no se puede auto-renovar)
+- Token de dev-token → limpiar `_devToken` y reintentar una vez
+
 Lanza `Error` con texto `HTTP <status>: <body>` si el servidor responde `text/plain` (ej. 500).
 
 **Manejo de respuesta flat vs envelope:**
