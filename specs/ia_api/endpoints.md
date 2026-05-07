@@ -308,6 +308,22 @@ Usado por: `PDFViewerComponent.js` → `handleAnalyzePDF` (botón "Análisis PDF
 
 **Errores:** `400` si no es PDF o > 50 MB. `401` si token inválido.
 
+**Normalización de campos para `ArticlesList`**
+
+`ArticlesList` espera un esquema distinto al que devuelve este endpoint. `PDFViewerComponent.handleAnalyzePDF` normaliza antes de llamar `onPdfAnalysis`:
+
+| Campo PDF stream | → Campo ArticlesList | Nota |
+|---|---|---|
+| `article_number` | `number` + `article_number` | directo |
+| `segment_id` | `section_index` | para ordenamiento |
+| `original_content` | `complete_description` | texto literal |
+| *(generado)* | `id_process` | `pdf_<requisito_id>_<segment_id>` — único por documento |
+| *(hardcoded)* | `parent: ''` | todos artículos raíz (no hay jerarquía en PDF stream) |
+| *(hardcoded)* | `type: 'artículo'` | |
+| *(hardcoded)* | `_source: 'pdf_stream'` | distingue origen vs imagen IA |
+
+El patrón `pdf_<requisito_id>_<segment_id>` garantiza que no colisione con `id_process` de artículos de imagen (que usan prefijo `art`/`par`/`lit`/`num` + timestamp).
+
 ---
 
 ### `POST /v1/query/image`
