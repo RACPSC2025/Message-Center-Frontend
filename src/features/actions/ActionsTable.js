@@ -335,10 +335,6 @@ export default function ActionTable({
     return Math.floor(totalAbsoluteWidth * (relativeWidthPercent / 100));
   };
 
-  useEffect(() => {
-    setEditableActions(actions);
-  }, [actions]);
-
   const handleCellValueChanged = (params) => {
     const updatedRow = {
       ...params.data,
@@ -900,42 +896,25 @@ export default function ActionTable({
         );
       
       default:
-        // VERIFICAR SI ES CAMPO WHAT_DESCRIPTION PARA EDICIÓN
-        if (field === 'what_description') {
-          // VERIFICACIÓN DE MODO GLOBAL
-          const isGloballyEditing = globalEditMode.enabled && 
-                                 globalEditMode.actionId === data.action_id &&
-                                 globalEditMode.editableFields.includes('what_description');
-          const isEditing = isGloballyEditing;
-
+        if (field === 'causa_description') {
+          const hsCauses = data.hs_causes || [];
+          const displayValue = Array.isArray(hsCauses) && hsCauses.length > 0 ? hsCauses.join(', ') : '-';
+          
           return (
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center' }}>
-              {isEditing ? (
-                <EditableDescriptionField
-                  initialValue={value}
-                  actionId={data.action_id}
-                  onSave={handleDescriptionChange}
-                  onValueChange={(newValue) => {
-                    currentDescriptionValue.current = newValue;
-                  }}
-                />
-              ) : (
-                <Box sx={{ 
-                  flex: 1, 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap',
-                  px: 1
-                }}>
-                  {value || '-'}
-                </Box>
-              )}
+            <Box sx={{ 
+              flex: 1, 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis', 
+              whiteSpace: 'nowrap',
+              px: 1
+            }}>
+              {displayValue}
             </Box>
           );
         }
         
         // CELDA DE TEXTO ESTÁNDAR
-        return value;
+        return <Box sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</Box>;
     }
   };
 
