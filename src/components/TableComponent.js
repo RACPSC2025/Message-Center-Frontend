@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   CircularProgress,
@@ -140,7 +140,7 @@ export default function TableComponent({
   };
 
   // Filter visible columns
-  const filteredColumnDefs = columnDefs
+  const filteredColumnDefs = useMemo(() => columnDefs
     .filter((col) => visibleColumns.includes(col.field))
     .map((col) => ({
       ...col,
@@ -150,7 +150,7 @@ export default function TableComponent({
         ...child,
         headerName: t(child?.field, { defaultValue: child?.headerName })
       }))
-    }));
+    })), [columnDefs, visibleColumns, t]);
 
   // Handling column selection
   const handleChange = (event) => {
@@ -232,21 +232,6 @@ export default function TableComponent({
       }, 100);
     }
   }, [rowData]);
-
-  useEffect(() => {
-    // Skip validation if columnDefs is empty or changing
-    if (columnDefs.length === 0) return;
-
-    // Filter out any fields that don't exist in columnDefs
-    const validFields = visibleColumns.filter((field) =>
-      columnDefs.some((col) => col.field === field)
-    );
-
-    // If there are invalid fields, update the state
-    if (validFields.length !== visibleColumns.length) {
-      setVisibleColumns(validFields);
-    }
-  }, [visibleColumns, columnDefs]);
 
   const handleRowsPerPageChange = (event) => {
     const newPerPage = event.target.value;

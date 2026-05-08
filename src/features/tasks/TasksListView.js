@@ -1019,6 +1019,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                       {/* Título de la tarea */}
                       {!isCollapsed && (
                         <ListItemText
+                          primaryTypographyProps={{ component: 'div' }}
+                          secondaryTypographyProps={{ component: 'div' }}
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 1 }}>
                                 {showTaskTitleTooltip ? (
