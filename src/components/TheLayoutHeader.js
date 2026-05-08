@@ -12,6 +12,8 @@ import TheLayoutHeaderActionDropdown from './TheLayoutHeaderActionDropdown';
 import { useUnreadMessagesPolling } from '../hooks/useUnreadMessagesPolling';
 import { fetchUnreadMessagesCount } from '../stores/messages/unreadMessagesSlice';
 
+const EMPTY_OBJECT = {};
+
 const SYSTEM_MODULES = {
   notifications: { es: 'Centro de Notificaciones', en: 'Notification Center' },
 };
@@ -23,7 +25,7 @@ function LayoutHeader() {
   const location = useLocation();
   const { language } = useLanguage();
 
-  const user = useSelector((state) => state.globalData.userDetails ?? {});
+  const user = useSelector((state) => state.globalData.userDetails ?? EMPTY_OBJECT);
   const unreadCount = useSelector((state) => state.unreadMessages?.count ?? 0);
   const activeModule = useSelector((state) => state.globalData.activeModule);
   const { workareas, modules } = useNavConfig();

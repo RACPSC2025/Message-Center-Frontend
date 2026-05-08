@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 const cache = { data: null };
+const EMPTY_OBJECT = {};
 
 export function useNavConfig() {
   const [config, setConfig] = useState(cache.data);
 
   // API is the source of truth — both live in Redux after fetchPlatformConfig
-  const modulesGroup = useSelector((state) => state.platformConfig?.data?.modules_group ?? {});
-  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? {});
+  const modulesGroup = useSelector((state) => state.platformConfig?.data?.modules_group ?? EMPTY_OBJECT);
+  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? EMPTY_OBJECT);
 
   // nav-config.json is decoration only: icons, routes, routeKey, dataId, color, name overrides
   useEffect(() => {

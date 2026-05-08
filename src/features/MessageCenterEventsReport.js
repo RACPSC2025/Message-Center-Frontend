@@ -38,13 +38,15 @@ function CustomTabPanel(props) {
   );
 }
 
+const EMPTY_OBJECT = {};
+
 export function MessageCenterEventsReport() {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [filterPressed, setFilterPressed] = useState(false);
   const [tabValue, setTabValue] = useState('tareas');
-  const taskCounts = useSelector((state) => state?.fetchTaskCounts?.data?.data ?? {});
+  const taskCounts = useSelector((state) => state?.fetchTaskCounts?.data?.data ?? EMPTY_OBJECT);
   const taskCountLoading = useSelector((state) => state?.fetchTaskCounts?.loading ?? false);
   const taskStatusCatalog = useModuleCatalogs('task', 'status') || [];
 

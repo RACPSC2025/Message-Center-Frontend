@@ -5,6 +5,8 @@ import { fetchLegalCounts } from '../stores/legal/fetchLegalCountsSlice';
 import { setModuleData, setModuleLoading, setModuleError } from '../stores/moduleStatisticsSlice';
 import { normalizeStatusCode, showErrorMsg } from '../utils/others';
 
+const EMPTY_ARRAY = [];
+
 const toNumber = (value) => {
   const parsedValue = Number(value);
   return Number.isFinite(parsedValue) ? parsedValue : 0;
@@ -172,10 +174,10 @@ export const useModuleData = () => {
   const dispatch = useDispatch();
   const moduleData = useSelector((state) => state.moduleStatistics);
   const taskStatusCatalog = useSelector(
-    (state) => state.platformConfig?.data?.modules?.task?.catalogs?.status ?? []
+    (state) => state.platformConfig?.data?.modules?.task?.catalogs?.status ?? EMPTY_ARRAY
   );
   const actionStatusCatalog = useSelector(
-    (state) => state.platformConfig?.data?.modules?.actions?.catalogs?.status ?? []
+    (state) => state.platformConfig?.data?.modules?.actions?.catalogs?.status ?? EMPTY_ARRAY
   );
 
   const MODULE_CONFIG = [

@@ -496,12 +496,12 @@ export const evalpdfAnalysisStandard = createAsyncThunk(
 //export const obtenerRequisitoData = async (id) => {
   
 export const obtenerRequisitoData = createAsyncThunk(
-  'legal/get_data_requisito_amatia_express',
+  'legal_api/get_data_requisito_amatia_express',
   async (id, { rejectWithValue }) => {
     console.log("ID");
     console.log(id);
   try {
-    const response = await axiosInstance.get(`/message_center_api/tasklegal/legal/get_data_requisito_amatia_express/${id}`);
+    const response = await axiosInstance.get(`/message_center_api/legal_api/legal/get_data_requisito_amatia_express/${id}`);
     /*
     const response = await axiosInstance.post(
       "/message_center_api/legal_api/get_data_requisito", // Ruta del backend

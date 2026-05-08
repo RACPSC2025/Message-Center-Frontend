@@ -10,6 +10,8 @@ import { getSettings } from '../../stores/tasks/getSettingsSlice';
 import { updateLogtaskDetails } from '../../stores/tasks/updateLogtaskDetailsSlice';
 import { updateResponsibles } from '../../stores/tasks/updateResponsiblesSlice';
 
+const EMPTY_OBJECT = {};
+
 function EditCycleDetailsDrawer({
   openCycleDetailsDrawer,
   onCloseCycleDetailsDrawer,
@@ -35,7 +37,7 @@ function EditCycleDetailsDrawer({
   const [editFormResp, setEditFormResp] = useState('');
   const [openModalEditResp, setOpenModalEditResp] = useState(false);
 
-  const settings = useSelector((state) => state?.getSettings?.data?.data ?? {});
+  const settings = useSelector((state) => state?.getSettings?.data?.data ?? EMPTY_OBJECT);
 
   const handleGetSettings = () => {
     dispatch(getSettings());

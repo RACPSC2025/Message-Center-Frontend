@@ -9,6 +9,8 @@ import { fetchContractorList } from '../../stores/tasks/fetchContractorListSlice
 import { getPositionUserList } from '../../stores/tasks/getPositionUserListSlice';
 import { getSettings } from '../../stores/tasks/getSettingsSlice';
 
+const EMPTY_OBJECT = {};
+
 function TaskWhoStep({ onTaskWhoStepChange, taskWhoFormModel }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -18,7 +20,7 @@ function TaskWhoStep({ onTaskWhoStepChange, taskWhoFormModel }) {
   const [whoFormModel, setWhoFormModel] = useState({});
   const [setting, setSettings] = useState({});
 
-  const settings = useSelector((state) => state?.getSettings?.data?.data ?? {});
+  const settings = useSelector((state) => state?.getSettings?.data?.data ?? EMPTY_OBJECT);
 
   const handleGetSettings = () => {
     dispatch(getSettings());

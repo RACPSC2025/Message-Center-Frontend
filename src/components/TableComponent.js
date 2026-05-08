@@ -37,6 +37,8 @@ import ExcelJS from "exceljs";
 // Register all Community features
 ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
 
+const LoadingOverlay = ({ reactContainer, ...rest }) => <CircularProgress {...rest} />;
+
 export default function TableComponent({
   rowData = [],
   columnDefs = [],
@@ -105,18 +107,17 @@ export default function TableComponent({
   const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   const updatePaginationInfo = () => {
-    if (gridRef.current?.api) {
-      setTotalPages(gridRef.current.api.paginationGetTotalPages());
-      setCurrentPage(gridRef.current.api.paginationGetCurrentPage() + 1);
+    const api = gridRef.current?.api;
+    if (!api) return;
 
-      const displayedCount = gridRef.current.api.getDisplayedRowCount();
-      // Fallback to rowData.length if displayedCount is 0 but we have data (grid might be initializing)
-      if (displayedCount === 0 && rowData.length > 0) {
-        setTotalRows(rowData.length);
-      } else {
-        setTotalRows(displayedCount);
-      }
-    }
+    const nextTotalPages = api.paginationGetTotalPages();
+    const nextCurrentPage = api.paginationGetCurrentPage() + 1;
+    const displayedCount = api.getDisplayedRowCount();
+    const nextTotalRows = displayedCount === 0 && rowData.length > 0 ? rowData.length : displayedCount;
+
+    setTotalPages((prev) => (prev === nextTotalPages ? prev : nextTotalPages));
+    setCurrentPage((prev) => (prev === nextCurrentPage ? prev : nextCurrentPage));
+    setTotalRows((prev) => (prev === nextTotalRows ? prev : nextTotalRows));
   };
 
   const goToPage = (page) => {
@@ -127,7 +128,7 @@ export default function TableComponent({
   };
 
   // Large text configuration (for columns with 'largeText' property)
-  const largeTextConfig = {
+  const largeTextConfig = useMemo(() => ({
     cellEditor: 'agLargeTextCellEditor',
     cellEditorPopup: true,
     cellEditorParams: {
@@ -137,7 +138,7 @@ export default function TableComponent({
     },
     editable: true,
     singleClickEdit: true
-  };
+  }), []);
 
   // Filter visible columns
   const filteredColumnDefs = useMemo(() => columnDefs
@@ -150,7 +151,7 @@ export default function TableComponent({
         ...child,
         headerName: t(child?.field, { defaultValue: child?.headerName })
       }))
-    })), [columnDefs, visibleColumns, t]);
+    })), [columnDefs, largeTextConfig, visibleColumns, t]);
 
   // Handling column selection
   const handleChange = (event) => {
@@ -159,7 +160,7 @@ export default function TableComponent({
 
   const gridOptions = {
     loading: isLoading,
-    loadingOverlayComponent: CircularProgress,
+    loadingOverlayComponent: LoadingOverlay,
     loadingOverlayComponentParams: {},
     defaultColGroupDef: { headerClass: 'group-ag-header' },
     getRowClass: () => 'default-ag-header',
@@ -193,8 +194,9 @@ export default function TableComponent({
     },
     //domLayout: 'autoHeight',
     //domLayout: 'normal',
-    stopEditingWhenCellsLoseFocus: true,
-    singleClickEdit: true,
+    stopEditingWhenCellsLoseFocus: editable,
+    singleClickEdit: editable,
+    suppressClickEdit: !editable,
     pagination: pagination,
     //paginationPageSize: perPage,
     paginationPageSize: pageSize,
@@ -251,7 +253,7 @@ export default function TableComponent({
     }
   };
 
-  const defaultColDef = {
+  const defaultColDef = useMemo(() => ({
     flex: 1,
     minWidth: 150,
     filter: true, // ✅ Aplica filtros en todas las columnas con 'field'
@@ -260,7 +262,7 @@ export default function TableComponent({
     autoSizeStrategy: {
       type: 'fitGridWidth' // Ajusta el ancho de las columnas automáticamente
     }
-  };
+  }), []);
 
   /*
   const onCellValueChanged = (params) => {
@@ -292,8 +294,6 @@ export default function TableComponent({
     gridRef.current.api = params.api;
     updatePaginationInfo();
     params.api.autoSizeAllColumns();
-    setTotalPages(params.api.paginationGetTotalPages());
-    setTotalRows(params.api.getDisplayedRowCount());
 
     /*
     if (gridRef.current?.api) {
@@ -600,6 +600,7 @@ export default function TableComponent({
           suppressPaginationPanel={true}
           paginationPageSize={pageSize} // Se actualiza dinámicamente
           paginationPageSizeSelector={pageOption}
+          popupParent={typeof document !== 'undefined' ? document.body : undefined}
           onPaginationChanged={updatePaginationInfo}
           onModelUpdated={updatePaginationInfo}
           getRowStyle={getRowStyle}
