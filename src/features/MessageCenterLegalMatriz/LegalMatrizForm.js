@@ -1,7 +1,7 @@
 import { Box, InputLabel, MenuItem, Select, CircularProgress, Divider } from '@mui/material';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import { Suspense, lazy, useEffect, useState, useCallback } from 'react';
+import { Suspense, lazy, useEffect, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
@@ -603,6 +603,11 @@ export default function LegalMatrizForm({ onSuccess = () => {}, initialData = nu
     setSelectedVerticalNodes(nodes);
   }, []);
 
+  const verticalPreSelectPaths = useMemo(
+    () => (Array.isArray(initialData?.structures) ? initialData.structures : []),
+    [initialData]
+  );
+
   return (
     <Box sx={{ width: '100%', pb: 5 }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3, gap: 2 }}>
@@ -696,6 +701,7 @@ export default function LegalMatrizForm({ onSuccess = () => {}, initialData = nu
                         treeId="geography_structure"
                         data={verticalTreeData}
                         onSelectionChange={handleVerticalSelection}
+                        preSelectPaths={verticalPreSelectPaths}
                       />
                     </Box>
                   </Box>
