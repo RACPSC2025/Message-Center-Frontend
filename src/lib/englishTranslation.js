@@ -953,6 +953,10 @@ const en = {
   "tag_name": "Tag name",
   "select_color_palette": "Select color",
   "create_tag": "Create tag",
+  structure_business: 'Business',
+  structure_company: 'Company',
+  structure_region: 'Region',
+  structure_plant: 'Plant',
 };
 
 export default en;

@@ -51,7 +51,7 @@ export default function LegalMatrizForm({ onSuccess = () => {}, initialData = nu
 
   const validateRequiredFields = () => {
     const errors = {};
-    const data = whatFormModel;
+    const data = Object.keys(whatFormModel).length > 0 ? whatFormModel : formInitialValues;
     
     // Campos siempre obligatorios
     if (!data.numero?.trim()) errors.numero = true;
@@ -77,42 +77,44 @@ export default function LegalMatrizForm({ onSuccess = () => {}, initialData = nu
 
   const handleSaveLegal = async () => {
     try {
-      const { requisito_general: _, ...formDataWithoutRequisitoGeneral } = whatFormModel;
-      
+      const effectiveModel = Object.keys(whatFormModel).length > 0 ? whatFormModel : formInitialValues;
+      const { requisito_general: _, ...formDataWithoutRequisitoGeneral } = effectiveModel;
+
       const dataToSend = {
         ...formDataWithoutRequisitoGeneral,
         requisito_general: requisitoGeneral,
+        requisito_general_tipo: formType === 'general' ? '1' : '0',
         ...(initialData?.id ? { legal_id: initialData.id } : {})
       };
-      
+
       // Transformar estructura horizontal (selected_levels) - solo nodos hoja
       if (requisitoGeneral === '0' && selectedHorizontalNodes.length > 0) {
         const leafNodes = selectedHorizontalNodes.filter(node => {
           // Un nodo es hoja si ningún otro nodo seleccionado lo tiene como padre
-          return !selectedHorizontalNodes.some(otherNode => 
+          return !selectedHorizontalNodes.some(otherNode =>
             otherNode.id !== node.id && otherNode.parents.includes(node.id)
           );
         });
-        
+
         const selectedLevels = leafNodes.map(node => ({
           id: node.id,
           parents: node.parents.filter(p => p !== '#')
         }));
         dataToSend.selected_levels = JSON.stringify(selectedLevels);
       }
-      
+
       // Transformar estructura vertical (selected_structure) - solo nodos hoja
       if (requisitoGeneral === '0' && selectedVerticalNodes.length > 0) {
         const leafNodes = selectedVerticalNodes.filter(node => {
-          return !selectedVerticalNodes.some(otherNode => 
+          return !selectedVerticalNodes.some(otherNode =>
             otherNode.id !== node.id && otherNode.parents.includes(node.id)
           );
         });
-        
+
         const structurePaths = leafNodes.map(node => {
           const parts = [];
           const allParents = [...node.parents].reverse();
-          
+
           // Procesar padres
           allParents.forEach(parentId => {
             if (parentId !== '#') {
@@ -120,40 +122,40 @@ export default function LegalMatrizForm({ onSuccess = () => {}, initialData = nu
               if (type && ids) {
                 const idParts = ids.split('_');
                 const lastId = idParts[idParts.length - 1];
-                
+
                 const typeMap = {
                   'region': 'region',
                   'pais': 'country',
                   'negocio': 'business',
                   'plant': 'plant'
                 };
-                
+
                 const mappedType = typeMap[type] || type;
                 parts.push(`${mappedType}_${lastId}`);
               }
             }
           });
-          
+
           // Procesar nodo actual
           const [type, ids] = node.id.split('@');
           if (type && ids) {
             const idParts = ids.split('_');
             const lastId = idParts[idParts.length - 1];
-            
+
             const typeMap = {
               'region': 'region',
               'pais': 'country',
               'negocio': 'business',
               'plant': 'plant'
             };
-            
+
             const mappedType = typeMap[type] || type;
             parts.push(`${mappedType}_${lastId}`);
           }
-          
+
           return parts.join('@');
         }).filter(path => path.length > 0);
-        
+
         dataToSend.selected_structure = structurePaths.join(',');
       }
       

@@ -984,6 +984,10 @@ const es = {
   tag_name: 'Nombre de la etiqueta',
   select_color_palette: 'Seleccionar color',
   create_tag: 'Crear etiqueta',
+  structure_business: 'Negocio',
+  structure_company: 'Compañía',
+  structure_region: 'Región',
+  structure_plant: 'Planta',
 };
 
 export default es;

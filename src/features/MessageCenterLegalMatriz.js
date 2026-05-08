@@ -106,6 +106,10 @@ export function Component() {
   const actionEndDate = useFilterItemValue('LegalMatriz', 'filter_end_date');
   const actionStatusTypeOfRule = useFilterItemValue('LegalMatriz', 'filter_type_rule');
   const actionTipo = useFilterItemValue('LegalMatriz', 'filter_tipo');
+  const levelFilter1 = useFilterItemValue('LegalMatriz', 'level1');
+  const levelFilter2 = useFilterItemValue('LegalMatriz', 'level2');
+  const levelFilter3 = useFilterItemValue('LegalMatriz', 'level3');
+  const levelFilter4 = useFilterItemValue('LegalMatriz', 'level4');
 
   const selected_requisito_id = useSelector((state) =>
     selectFilterItemValue(state, 'LegalMatriz', 'selected_requisito_id')
@@ -304,7 +308,8 @@ export function Component() {
             gap: item.gap,
             url: item.url,
             apply_lto: item.apply_lto,
-            requisito_general: item.requisito_general
+            requisito_general: item.requisito_general,
+            structures: Array.isArray(item.structures) ? item.structures : []
           };
         });
         setLegals(mappedLegals);
@@ -889,6 +894,46 @@ export function Component() {
       headerName: t('modified_date'),
       filter: 'agDateColumnFilter',
       filterParams: dateFilterParams
+    },
+    {
+      field: 'structure_business',
+      headerName: t('structure_business'),
+      filter: 'agTextColumnFilter',
+      width: 140,
+      valueGetter: (params) => {
+        const s = params?.data?.structures;
+        return Array.isArray(s) ? s.map(e => e.region_text).filter(Boolean).join(', ') : '';
+      }
+    },
+    {
+      field: 'structure_company',
+      headerName: t('structure_company'),
+      filter: 'agTextColumnFilter',
+      width: 140,
+      valueGetter: (params) => {
+        const s = params?.data?.structures;
+        return Array.isArray(s) ? s.map(e => e.country_text).filter(Boolean).join(', ') : '';
+      }
+    },
+    {
+      field: 'structure_region',
+      headerName: t('structure_region'),
+      filter: 'agTextColumnFilter',
+      width: 140,
+      valueGetter: (params) => {
+        const s = params?.data?.structures;
+        return Array.isArray(s) ? s.map(e => e.business_text).filter(Boolean).join(', ') : '';
+      }
+    },
+    {
+      field: 'structure_plant',
+      headerName: t('structure_plant'),
+      filter: 'agTextColumnFilter',
+      width: 140,
+      valueGetter: (params) => {
+        const s = params?.data?.structures;
+        return Array.isArray(s) ? s.map(e => e.plant_text).filter(Boolean).join(', ') : '';
+      }
     }
   ]);
 
@@ -977,6 +1022,19 @@ export function Component() {
       return;
     }
 
+    if (levelFilter1 || levelFilter2 || levelFilter3 || levelFilter4) {
+      legalsFiltersTemp = legalsFiltersTemp.filter((item) => {
+        if (!Array.isArray(item.structures) || item.structures.length === 0) return false;
+        return item.structures.some((s) => {
+          if (levelFilter1 && String(s.region) !== String(levelFilter1)) return false;
+          if (levelFilter2 && String(s.country) !== String(levelFilter2)) return false;
+          if (levelFilter3 && String(s.business) !== String(levelFilter3)) return false;
+          if (levelFilter4 && String(s.plant) !== String(levelFilter4)) return false;
+          return true;
+        });
+      });
+    }
+
     if (actionTipo && actionTipo.trim() !== '') {
       legalsFiltersTemp = legalsFiltersTemp.filter(
         (item) => item.type === actionTipo
@@ -1015,7 +1073,11 @@ export function Component() {
     actionNameDateField,
     actionCategory,
     isSelected_requisito_id,
-    selected_requisito_id
+    selected_requisito_id,
+    levelFilter1,
+    levelFilter2,
+    levelFilter3,
+    levelFilter4
   ]);
 
   useEffect(() => {
@@ -1187,6 +1249,8 @@ export function Component() {
     // Primero desactivamos las banderas de selección para evitar que el useEffect filtre de nuevo
     handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', false);
     handleSetFilterItemValue('LegalMatriz', 'isSelected_articulo_id', false);
+
+    handleClearFilters();
 
     const filtersToClear = [
       'filter_business',
