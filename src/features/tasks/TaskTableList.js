@@ -30,6 +30,8 @@ const useListOptionsGlobal = (fieldName) =>
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
 
+const EMPTY_SELECTED_TASK_IDS = [];
+
 export default function TaskTableList({ refreshTrigger }) {
   const dispatch = useDispatch();
   // Año seleccionado para filtrar ciclos
@@ -87,15 +89,23 @@ export default function TaskTableList({ refreshTrigger }) {
   const taskListLoading = useSelector((state) => state?.fetchListTaskNew?.loading ?? false);
   const listTaskStatus = useFilterItemValue('task', 'task_list_status');
   const selectedLegalTaskIds =
-    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) ?? EMPTY_SELECTED_TASK_IDS;
+  const selectedLegalTaskIdKey = useMemo(
+    () =>
+      (Array.isArray(selectedLegalTaskIds) ? selectedLegalTaskIds : [])
+        .map((id) => String(id).trim())
+        .filter(Boolean)
+        .join('|'),
+    [selectedLegalTaskIds]
+  );
   const selectedLegalTaskIdSet = useMemo(
     () =>
       new Set(
-        (Array.isArray(selectedLegalTaskIds) ? selectedLegalTaskIds : [])
-          .map((id) => String(id).trim())
-          .filter(Boolean)
+        selectedLegalTaskIdKey
+          ? selectedLegalTaskIdKey.split('|')
+          : []
       ),
-    [selectedLegalTaskIds]
+    [selectedLegalTaskIdKey]
   );
 
 
@@ -673,7 +683,7 @@ export default function TaskTableList({ refreshTrigger }) {
   }, [
     actionKeyWords,
     tasks,
-    selectedLegalTaskIdSet,
+    selectedLegalTaskIdKey,
     currentStatus,
     actionStartDate,
     actionEndDate,
