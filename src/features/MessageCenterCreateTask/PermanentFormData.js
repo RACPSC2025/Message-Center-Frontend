@@ -47,6 +47,8 @@ function PermanentFormData({ formModel, onFormModelChange, alert }) {
 
   const definePeriodicityType = (periodicity) => {
     switch (periodicity) {
+      case 'daily':
+        return '1';
       case 'weekly':
         return '2';
       case 'monthly':
@@ -96,21 +98,19 @@ function PermanentFormData({ formModel, onFormModelChange, alert }) {
   ];
 
   const handlePeriodicityChange = (event) => {
-    setSelectedPeriodicity(event.target.value);
-    setPeriodicityTextLabel(
-      event.target.value === 'weekly'
-        ? t('weeks_in')
-        : event.target.value === 'monthly'
-          ? t('months_in')
-          : t('years_later')
-    );
-    setSelectedPeriodicityValue(
-      event.target.value === 'weekly'
-        ? weeklyLabels
-        : event.target.value === 'monthly'
-          ? monthlyLabels
-          : yearlyLabels
-    );
+    const val = event.target.value;
+    setSelectedPeriodicity(val);
+    if (val === 'daily') {
+      setPeriodicityTextLabel(t('days_in'));
+      setSelectedPeriodicityValue(null);
+    } else {
+      setPeriodicityTextLabel(
+        val === 'weekly' ? t('weeks_in') : val === 'monthly' ? t('months_in') : t('years_later')
+      );
+      setSelectedPeriodicityValue(
+        val === 'weekly' ? weeklyLabels : val === 'monthly' ? monthlyLabels : yearlyLabels
+      );
+    }
   };
 
   return (
@@ -122,7 +122,12 @@ function PermanentFormData({ formModel, onFormModelChange, alert }) {
           value={selectedPeriodicity}
           onChange={handlePeriodicityChange}
         >
-          <Box display="grid" margin="0 0 1.5rem 0" gridTemplateColumns="repeat(3, 1fr)" gap="20px">
+          <Box display="grid" margin="0 0 1.5rem 0" gridTemplateColumns="repeat(4, 1fr)" gap="20px">
+            <FormControlLabel
+              value="daily"
+              label={t('daily')}
+              control={<Radio value="daily" />}
+            />
             <FormControlLabel
               value="weekly"
               label={t('weekly')}
@@ -156,28 +161,30 @@ function PermanentFormData({ formModel, onFormModelChange, alert }) {
           ></Input>
           {periodicityTextLabel}
         </Typography>
-        <RadioGroup name="periodicity-d-m-y">
-          <Box display="grid" gridTemplateColumns="repeat(3, 1fr)">
-            {selectedPeriodicityValue?.map((label) => (
-              <FormControlLabel
-                key={label.value}
-                value={label.value}
-                label={label.label}
-                control={
-                  <Radio
-                    value={label.value}
-                    onChange={() =>
-                      setPermanentFormModel((prevState) => ({
-                        ...prevState,
-                        sub_plan: label.value
-                      }))
-                    }
-                  />
-                }
-              />
-            ))}
-          </Box>
-        </RadioGroup>
+        {selectedPeriodicity !== 'daily' && selectedPeriodicityValue && (
+          <RadioGroup name="periodicity-d-m-y">
+            <Box display="grid" gridTemplateColumns="repeat(3, 1fr)">
+              {selectedPeriodicityValue.map((label) => (
+                <FormControlLabel
+                  key={label.value}
+                  value={label.value}
+                  label={label.label}
+                  control={
+                    <Radio
+                      value={label.value}
+                      onChange={() =>
+                        setPermanentFormModel((prevState) => ({
+                          ...prevState,
+                          sub_plan: label.value
+                        }))
+                      }
+                    />
+                  }
+                />
+              ))}
+            </Box>
+          </RadioGroup>
+        )}
       </FormControl>
       <hr />
       <Typography>{t('range_of_recurrence')}</Typography>

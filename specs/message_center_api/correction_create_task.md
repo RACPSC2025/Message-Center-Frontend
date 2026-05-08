@@ -12,7 +12,8 @@ Endpoint: `POST /message_center_api/tasklist_api/save_task`
 | 2 | `_save_task_recure()` no existía en la clase | `activity_type = 5` |
 | 3 | `_generate_permanent_log_tasks()` llamada con firma incorrecta | `activity_type = 5` |
 | 4 | `insert_logtask()` no recibía `$post` | `activity_type = 5` |
-| 5 | `responsible` y `reviewer` comentados — no se guardaban | todos los tipos |
+| 5 | `responsible` y `reviewer` en `$data` → columna no existe en `tasks` | todos los tipos |
+| 6 | `todos_dias` verificado con `isset` en lugar de comparar valor → cualquier valor activa "todos los días" | `activity_type = 3` |
 
 ---
 
@@ -38,7 +39,6 @@ Endpoint: `POST /message_center_api/tasklist_api/save_task`
   "range": "0",
   "range_value": "",
   "id_alert": "189",
-  "activity_type": "5",
   "pma_id": "3",
   "program_id": "7",
   "sub_program_id": "5",
@@ -55,10 +55,54 @@ Endpoint: `POST /message_center_api/tasklist_api/save_task`
 ```
 
 Notas:
-- `responsible` y `reviewer`: ID numérico de `position_assignments`. Enviar como string.
+- `responsible` y `reviewer`: ID numérico de `position_assignments`. Enviar como string. **No se guardan en `tasks`** — el backend los mueve a la tabla `task_responsables` vinculados a cada logtask generado.
 - `region`, `country`, `business`, `plant`: **IDs numéricos** de las tablas `siso_regionales`, `siso_paises`, `siso_negocios`, `siso_plantas`.
 - `location`: ID numérico de nivel.
 - Si `fase` y `subfase` están vacíos, el backend asigna la fase "General Fase" automáticamente.
+
+---
+
+## Corrección crítica — `responsible` y `reviewer`
+
+El backend almacena los responsables en la tabla `task_responsables`, **no en `tasks`**.
+
+El frontend debe seguir enviando `responsible` y `reviewer` como campos top-level del payload:
+
+```json
+{
+  "responsible": "296",
+  "reviewer": "399"
+}
+```
+
+El campo `who` es un array opcional para asignar responsables por ubicación específica. Formato cuando se usa:
+
+```json
+"who": [
+  {
+    "location": 133,
+    "responsible": "296",
+    "reviewer": "399"
+  }
+]
+```
+
+Si `who` está vacío (`[]`), el backend usa `responsible` y `reviewer` top-level para todos los logtasks generados.
+
+---
+
+## Corrección crítica — `todos_dias` (solo `activity_type = 3`)
+
+**Bug**: el backend verifica presencia con `isset` en lugar de comparar el valor. Enviar `"0"` activa "todos los días" igual que `"1"` porque la clave existe en el payload.
+
+**Regla de envío:**
+
+| Intención | Qué enviar |
+|-----------|-----------|
+| Solo los días seleccionados en `losdias` | **Omitir** el campo `todos_dias` del payload |
+| Todos los días del mes | `"todos_dias": "1"` |
+
+No enviar `"todos_dias": "0"` — causa comportamiento incorrecto.
 
 ---
 
@@ -103,7 +147,7 @@ Formato de `losdias`, `losmeses`, `losanos`:
 - `losanos`: 20 posiciones. La mitad izquierda son años pasados, la mitad derecha futuros, centrado en el año actual. `1` = seleccionado.
 - Enviar como **strings**, no arrays.
 
-Campo opcional:
+Campo opcional — solo cuando se quieren todos los días del mes:
 
 ```json
 {
@@ -111,7 +155,7 @@ Campo opcional:
 }
 ```
 
-Cuando `todos_dias = 1`, se ignoran los bits de `losdias` y se usan todos los días del mes.
+> **IMPORTANTE**: Omitir `todos_dias` cuando se usan días específicos. No enviar `"0"` — ver sección "Corrección crítica — `todos_dias`".
 
 Las fechas resultantes son el producto cartesiano de días × meses × años seleccionados. El backend genera un `logtask` por cada fecha.
 

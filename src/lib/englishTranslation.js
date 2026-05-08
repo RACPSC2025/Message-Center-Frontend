@@ -224,6 +224,7 @@ const en = {
   weeks_in: 'Week(s) in',
   months_in: 'Month(s) in',
   years_later: 'Year(s) later',
+  daily: 'Daily',
   weekly: 'Weekly',
   monthly: 'Monthly',
   annually: 'Annually',

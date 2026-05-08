@@ -229,6 +229,7 @@ const es = {
   weeks_in: 'Semana(s) en',
   months_in: 'Mes(es) en',
   years_later: 'Año(s) después',
+  daily: 'Diariamente',
   weekly: 'Semanalmente',
   monthly: 'Mensualmente',
   annually: 'Anualmente',

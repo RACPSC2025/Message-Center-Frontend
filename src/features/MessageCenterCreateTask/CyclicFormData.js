@@ -11,7 +11,7 @@ function CyclicFormData({ formModel, onFormModelChange, alert }) {
   const { language } = useLanguage();
   const [cyclicFormModel, setCyclicFormModel] = useState({});
   const [selectedDayButtons, setSelectedDayButtons] = useState(
-    daysNumbers.reduce((acc, day) => ({ ...acc, [day.value]: false }), {})
+    daysNumbers.slice(0, 30).reduce((acc, day) => ({ ...acc, [day.value]: false }), {})
   );
   const [selectedMonthButtons, setSelectedMonthButtons] = useState(
     language === 'es'
@@ -60,28 +60,33 @@ function CyclicFormData({ formModel, onFormModelChange, alert }) {
   );
 
   useEffect(() => {
-    // TODO: pass this to the parent component
-    const selectedDays = Object.entries(selectedDayButtons)
-      .filter(([key, value]) => value)
-      .map(([key]) => key)
-      .join(',');
+    const currentYear = new Date().getFullYear();
 
-    const selectedMonths = Object.entries(selectedMonthButtons)
-      .filter(([key, value]) => value)
-      .map(([key]) => key)
-      .join(',');
+    const losdias = Array.from({ length: 30 }, (_, i) =>
+      selectedDayButtons[String(i + 1)] ? '1' : '0'
+    ).join(',');
 
-    const selectedYears = Object.entries(selectedYearButtons)
-      .filter(([key, value]) => value)
-      .map(([key]) => key)
-      .join(',');
+    const losmeses = Array.from({ length: 12 }, (_, i) =>
+      selectedMonthButtons[String(i + 1)] ? '1' : '0'
+    ).join(',');
 
-    setCyclicFormModel((prev) => ({
-      ...prev,
-      losdias: selectedDays,
-      losmeses: selectedMonths,
-      losanos: selectedYears
-    }));
+    // 20 positions: indices 0-19, year = currentYear - 10 + i
+    const losanos = Array.from({ length: 20 }, (_, i) => {
+      const year = currentYear - 10 + i;
+      return selectedYearButtons[String(year)] ? '1' : '0';
+    }).join(',');
+
+    const allDaysSelected = Object.values(selectedDayButtons).every((v) => v);
+
+    setCyclicFormModel((prev) => {
+      const next = { ...prev, losdias, losmeses, losanos };
+      if (allDaysSelected) {
+        next.todos_dias = '1';
+      } else {
+        delete next.todos_dias;
+      }
+      return next;
+    });
   }, [selectedDayButtons, selectedMonthButtons, selectedYearButtons]);
 
   return (
@@ -89,7 +94,7 @@ function CyclicFormData({ formModel, onFormModelChange, alert }) {
       <Box>
         <Typography variant="h5">{t('days')}</Typography>
         <Box display="grid" gap={1} gridTemplateColumns="repeat(7, 1fr)">
-          {daysNumbers.map((label) => (
+          {daysNumbers.slice(0, 30).map((label) => (
             <Button
               key={label.value}
               variant={selectedDayButtons[label.value] ? 'contained' : 'outlined'}
