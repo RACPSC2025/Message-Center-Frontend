@@ -581,96 +581,16 @@ export default function Articles({ optinDrawerData }) {
     {
       field: 'nombre',
       headerName: t('name'),
-      largeText: true,
       filter: 'agTextColumnFilter',
-      //cellRenderer: (params) => renderEditableField(params),
-      cellRenderer: (params) => {
-        return (
-          <Tooltip 
-            title={
-              <span style={{ fontSize: '1rem', fontWeight: 500 }}>
-                {params?.value || ''}
-              </span>
-            }
-            placement="top"
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  backgroundColor: 'rgba(97, 97, 97, 1)',
-                  borderRadius: 4,
-                  color: '#fff',
-                  fontFamily: 'Roboto, sans-serif',
-                  padding: '4px 8px',
-                  fontSize: '0.5rem',
-                  maxWidth: 300,
-                  margin: 2,
-                  wordWrap: 'break-word',
-                  fontWeight: 500
-                }
-              }
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'default'
-              }}
-            >
-              {params?.value}
-            </Typography>
-          </Tooltip>
-        );
-      }
+      editable: false,
+      cellRenderer: (params) => renderEditableField(params),
     },
     {
       field: 'descripcion',
       headerName: t('description'),
-      largeText: true,
+      editable: false,
       filter: 'agTextColumnFilter',
-      //cellRenderer: (params) => renderEditableField(params),
-      cellRenderer: (params) => {
-        return (
-          <Tooltip 
-            title={
-              <span style={{ fontSize: '1rem', fontWeight: 500 }}>
-                {params?.value || ''}
-              </span>
-            }
-            placement="top"
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  backgroundColor: 'rgba(97, 97, 97, 1)',
-                  borderRadius: 4,
-                  color: '#fff',
-                  fontFamily: 'Roboto, sans-serif',
-                  padding: '4px 8px',
-                  fontSize: '0.5rem',
-                  maxWidth: 300,
-                  margin: 2,
-                  wordWrap: 'break-word',
-                  fontWeight: 500
-                }
-              }
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                cursor: 'default'
-              }}
-            >
-              {params?.value}
-            </Typography>
-          </Tooltip>
-        );
-      }
+      cellRenderer: (params) => renderEditableField(params),
     },
     {
       field: 'parent_article_id',
