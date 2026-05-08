@@ -360,6 +360,7 @@ const en = {
   type_of_rule: 'Type of rule',
   legal_requirement_type: 'Legal requirement type',
   create_legal_requirement: 'Create legal requirement',
+  edit_requirement: 'Edit requirement',
   import_legal_requirement: 'Import legal requirement',
   check_legal_requirement: 'Check legal requirement',
   options: 'Options',

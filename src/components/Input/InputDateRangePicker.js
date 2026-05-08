@@ -1,4 +1,4 @@
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import InputDateField from './InputDateField';
@@ -6,7 +6,6 @@ import InputDateField from './InputDateField';
 const InputDateRangePicker = ({ value = [], field, direction = 'row', onChange, ...rest }) => {
   const [dateRange, setDateRange] = useState([null, null]);
   const { t } = useTranslation();
-
   const fieldsLocale = {
     start: t('StartDate'),
     end: t('EndDate')
@@ -60,16 +59,7 @@ const InputDateRangePicker = ({ value = [], field, direction = 'row', onChange, 
         gap: isTopDown ? 2 : 0
       }}
     >
-      <Box sx={{ position: 'absolute', right: '-10px', top: '-20px' }}>
-        <Button
-          size="small"
-          sx={{ color: 'background.paper', p: 0 }}
-          onClick={() => setDateRange([null, null])}
-        >
-          {t('Clear')}
-        </Button>
-      </Box>
-      <Box sx={{ width: isTopDown ? '100%' : '45%' }}>
+<Box sx={{ width: isTopDown ? '100%' : '45%' }}>
         <InputDateField
           field={{ id: 'start', label: fieldsLocale.start }}
           value={dateRange[0]}

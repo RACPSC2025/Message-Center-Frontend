@@ -6,7 +6,9 @@ import LegalMatrizForm from '../MessageCenterLegalMatriz/LegalMatrizForm';
 export default function Details({
   handleMenuOpen = () => {},
   setCompliancedata = () => {},
-  complianceData = {}
+  complianceData = {},
+  onSuccess = () => {},
+  initialData = null
 }) {
   const { t } = useTranslation();
 
@@ -42,7 +44,7 @@ export default function Details({
       */}
       <Divider />
       <Box sx={{ marginTop: '20px' }}>
-        <LegalMatrizForm />
+        <LegalMatrizForm onSuccess={onSuccess} initialData={initialData} />
       </Box>
     </Box>
   );

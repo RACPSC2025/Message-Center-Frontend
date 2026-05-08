@@ -10,7 +10,8 @@ import {
   ImportExport,
   ListAlt,
   Tune,
-  MoreVertOutlined
+  MoreVertOutlined,
+  VisibilityOutlined
 } from '@mui/icons-material';
 import {
   Box,
@@ -93,6 +94,9 @@ export function Component() {
   const [test, setTest] = useState([]);
   const canCreateRequirement = useHasPermission('legal_matrix', 'create_requirement');
   const canViewAnalysisIa = Boolean(useModuleFeature('legal_matrix', 'analysis_ia'));
+  const [showOptionsMenuButton, setShowOptionsMenuButton] = useState(false);
+  const [newlyCreatedLegalId, setNewlyCreatedLegalId] = useState(null);
+  const [editInitialData, setEditInitialData] = useState(null);
 
   const actionStatusItem = useFilterItemValue('LegalMatriz', 'filter_business');
   const actionKeyWords = useFilterItemValue('LegalMatriz', 'filter_keywords');
@@ -101,6 +105,7 @@ export function Component() {
   const actionStartDate = useFilterItemValue('LegalMatriz', 'filter_start_date');
   const actionEndDate = useFilterItemValue('LegalMatriz', 'filter_end_date');
   const actionStatusTypeOfRule = useFilterItemValue('LegalMatriz', 'filter_type_rule');
+  const actionTipo = useFilterItemValue('LegalMatriz', 'filter_tipo');
 
   const selected_requisito_id = useSelector((state) =>
     selectFilterItemValue(state, 'LegalMatriz', 'selected_requisito_id')
@@ -184,6 +189,13 @@ export function Component() {
   const handleCloseOptionsDrawer = () => {
     setOpenSpeedDial(false);
     setOpenOptionsDrawer(false);
+    setEditInitialData(null);
+  };
+
+  const handleCreateSuccess = (legalId) => {
+    handleCloseOptionsDrawer();
+    setLoadLegals(true);
+    setNewlyCreatedLegalId(legalId);
   };
 
   const handleOpenLegalFormDrawer = () => {
@@ -280,7 +292,19 @@ export function Component() {
             status: item.estado,
             comunications_files: item.comunications_files || 0,
             comunications_count: item.comunications_count || 0,
-            comunications_flag: item.comunications_flag || 'in_progress'
+            comunications_flag: item.comunications_flag || 'in_progress',
+            // raw fields preserved for edit form
+            numero: item.numero,
+            categoria_norma: item.categoria_norma,
+            emitidopor: item.emitidopor,
+            id_tipo_requisito: item.id_tipo_requisito,
+            id_tema_requisito: item.id_tema_requisito,
+            normas_relacionadas: item.normas_relacionadas,
+            observaciones: item.observaciones,
+            gap: item.gap,
+            url: item.url,
+            apply_lto: item.apply_lto,
+            requisito_general: item.requisito_general
           };
         });
         setLegals(mappedLegals);
@@ -456,23 +480,40 @@ export function Component() {
       cellRenderer: (params) => {
         return (
           <div>
-            <Tooltip title={t('options')}>
+            {showOptionsMenuButton && (
+              <Tooltip title={t('options')}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    handleOpenOptionsDrawer();
+                    setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+                    setOptinDrawerData(params?.data);
+                    setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+                  }}
+                >
+                  <MoreVertOutlined />
+                </IconButton>
+              </Tooltip>
+            )}
+            
+            <Tooltip title={t('edit_requirement')}>
               <IconButton
                 size="small"
                 color="primary"
                 onClick={() => {
-                  //handleOpenOptionsDrawer();
-                  //setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
-                  //setOptinDrawerData(params?.data);
-                  //setOptinDrawerTitle(`Id: ${params?.data.id} - ${params?.data.requirement_name}`);
-                  //setOptinDrawerTitle(`Requisito: ${params?.data.requirement_name} ID: ${params?.data.id}`);
+                  handleOpenOptionsDrawer();
+                  setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+                  setOptinDrawerData(params?.data);
+                  setOptinDrawerTitle('Editar requisito');
+                  setEditInitialData(params?.data);
                 }}
               >
-                <MoreVertOutlined />
+                <VisibilityOutlined />
               </IconButton>
             </Tooltip>
-            
-            {canViewAnalysisIa && ( 
+
+            {canViewAnalysisIa && (
               <Tooltip title={t('analysis_with_amatia')}>
                 <IconButton
                   size="small"
@@ -936,6 +977,12 @@ export function Component() {
       return;
     }
 
+    if (actionTipo && actionTipo.trim() !== '') {
+      legalsFiltersTemp = legalsFiltersTemp.filter(
+        (item) => item.type === actionTipo
+      );
+    }
+
     if (actionKeyWords && actionKeyWords.trim() !== '' && legals.length > 0) {
       legalsFiltersTemp = legalsFiltersTemp.filter(
         (item) =>
@@ -960,6 +1007,7 @@ export function Component() {
     }
   }, [
     actionKeyWords,
+    actionTipo,
     legals,
     actionStatusTypeOfRule,
     actionStartDate,
@@ -1148,6 +1196,7 @@ export function Component() {
       'filter_start_date',
       'filter_end_date',
       'filter_type_rule',
+      'filter_tipo',
       'selected_requisito_id',
       'selected_articulo_id',
       'id_requisito_actual',
@@ -1264,11 +1313,17 @@ export function Component() {
       >
         <Box sx={{ flexGrow: 1, minHeight: 0 }}>
           {selectedView === 'requirements' ? (
-            <TableComponent 
-              rowData={legalsFilters} 
+            <TableComponent
+              rowData={legalsFilters}
               columnDefs={columnDefs}
               onRefresh={() => setLoadLegals(true)}
               onResetFilters={handleResetFilters}
+              getRowStyle={(params) => {
+                if (newlyCreatedLegalId && String(params.data?.id) === String(newlyCreatedLegalId)) {
+                  return { outline: '2px solid #1976d2', outlineOffset: '-1px', backgroundColor: '#e3f2fd' };
+                }
+                return null;
+              }}
             />
           ) : selectedView === 'list' ? (
             <ListView legals={legalsFilters} />
@@ -1298,6 +1353,8 @@ export function Component() {
           optinDrawerData={optinDrawerData}
           Title={optinDrawerTitle}
           onlyShowCreateRequirementTab={activeTabId === LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT && optinDrawerTitle === t('create_legal_requirement')}
+          onCreateSuccess={handleCreateSuccess}
+          editInitialData={editInitialData}
         />
 
         <DetallesDrawer

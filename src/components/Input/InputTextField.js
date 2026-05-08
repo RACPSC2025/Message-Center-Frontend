@@ -9,6 +9,8 @@ const InputTextField = ({ field = {}, value, onChange = () => {}, error, ...rest
     error={Boolean(error)}
     helperText={error}
     onChange={(e) => onChange(field.id, e.target.value)}
+    autoComplete={field.autoComplete ?? 'off'}
+    inputProps={field.inputProps}
     {...rest}
   />
 );

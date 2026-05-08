@@ -367,6 +367,7 @@ const es = {
   type_of_rule: 'Tipo de norma',
   legal_requirement_type: 'Tipo de requisito legal',
   create_legal_requirement: 'Crear requisito legal',
+  edit_requirement: 'Editar requisito',
   import_legal_requirement: 'Importar requisito legal',
   check_legal_requirement: 'Marcar requisito legal',
   options: 'Opciones',

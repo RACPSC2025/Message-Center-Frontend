@@ -21,7 +21,7 @@ import {
  from '../../stores/legal/fetchLegalData';
  */
 
-export default function LegalMatrizForm() {
+export default function LegalMatrizForm({ onSuccess = () => {}, initialData = null }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [whatFormModel, setWhatFormModel] = useState({});
@@ -81,7 +81,8 @@ export default function LegalMatrizForm() {
       
       const dataToSend = {
         ...formDataWithoutRequisitoGeneral,
-        requisito_general: requisitoGeneral
+        requisito_general: requisitoGeneral,
+        ...(initialData?.id ? { legal_id: initialData.id } : {})
       };
       
       // Transformar estructura horizontal (selected_levels) - solo nodos hoja
@@ -167,9 +168,7 @@ export default function LegalMatrizForm() {
       });
 
       if (result?.legal_id) {
-        handleSetFilterItemValue('LegalMatriz', 'selected_requisito_id', result.legal_id);
-        handleSetFilterItemValue('LegalMatriz', 'isSelected_requisito_id', true);
-        //window.location.reload();
+        onSuccess(result.legal_id);
       }
 
       setValidationErrors({});
@@ -254,6 +253,8 @@ export default function LegalMatrizForm() {
       required: true,
       defaultValue: '',
       gridSize: 6,
+      autoComplete: 'off',
+      inputProps: { pattern: '[a-zA-Z0-9 ]*' },
       error: validationErrors.numero ? 'Campo requerido' : null
     },
     {
@@ -481,6 +482,51 @@ export default function LegalMatrizForm() {
   
 
   useEffect(() => {
+    if (!initialData || loadingOptions) return;
+
+    const data = initialData;
+
+    // emitidopor from API is a label string — find matching option value
+    const authorityOption = dropdownOptions.authorities?.find(
+      a => a.label === data.emitidopor || String(a.value) === String(data.emitidopor)
+    );
+
+    // id_tema_requisito comes as comma-separated string "10,7"
+    const temaIds = data.id_tema_requisito
+      ? String(data.id_tema_requisito).split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    // requisito_general_tipo comes as "Específico"/"General"
+    const nextFormType = data.type === 'Específico' ? 'specific' : 'general';
+    setFormType(nextFormType);
+    setRequisitoGeneral(String(data.requisito_general ?? '1'));
+
+    setFormInitialValues({
+      numero: data.numero || '',
+      nombre: data.requirement_name || data.nombre || '',
+      descripcion: data.requirement_description || data.descripcion || '',
+      id_tipo_requisito: data.id_tipo_requisito ? String(data.id_tipo_requisito) : '',
+      categoria_norma: data.categoria_norma ? String(data.categoria_norma) : '',
+      emitidopor: authorityOption ? String(authorityOption.value) : (data.emitidopor || ''),
+      fecha_expedicion: data.date_of_issue_notification || data.fecha_expedicion || '',
+      fecha_ejecutoria: data.effective_date || data.fecha_ejecutoria || '',
+      normas_relacionadas: data.normas_relacionadas || '',
+      id_tema_requisito: temaIds,
+      url: data.url || '',
+      estado: data.status || data.estado || 'abierto',
+      id_alert: data.id_alert ? String(data.id_alert) : '',
+      observaciones: data.observaciones || '',
+      gap: data.gap || '',
+      apply_lto: data.apply_lto === 'Apply' || data.apply_lto === true,
+      summary: data.summary || '',
+      concept: data.concept || ''
+    });
+    setWhatFormModel({});
+    setResetKey(prev => prev + 1);
+  }, [initialData, loadingOptions, dropdownOptions]);
+
+  useEffect(() => {
+    if (initialData) return; // edit mode: initialData useEffect owns formInitialValues
     const baseInitialValues = {
       requisito_general_tipo: formType === 'general' ? '1' : '0',
       concept: '',
@@ -504,7 +550,7 @@ export default function LegalMatrizForm() {
       summary: ''
     };
     setFormInitialValues(baseInitialValues);
-  }, [formType, dropdownOptions, resetKey]);
+  }, [formType, dropdownOptions, resetKey, initialData]);
 
   useEffect(() => {
     // Limpiar errores cuando cambien los valores del formulario
@@ -656,15 +702,6 @@ export default function LegalMatrizForm() {
             </Box>
           )}
         </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4, pt: 3, borderTop: '1px solid #e0e0e0', gap: 2 }}>
-        <Button variant="outlined" onClick={handleReset}>
-          Limpiar
-        </Button>
-        <Button variant="contained" color="primary" onClick={handleSubmitForm} disabled={isSaving}>
-          Guardar requisito legal
-        </Button>
       </Box>
 
       <ToastContainer />

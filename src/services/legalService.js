@@ -87,6 +87,13 @@ class LegalService {
     return response.data;
   }
 
+  async getRequisitoDetails(id_requisito) {
+    const formData = new FormData();
+    formData.append('id_requisito', id_requisito);
+    const response = await axiosInstance.post('/message_center_api/legal_api/get_data_requisito_amatia_express', formData);
+    return response.data;
+  }
+
   async getChildRequisito(params) {
     const formData = new FormData();
     formData.append('node', params.node || '');

@@ -28,7 +28,9 @@ export default function OptionsDrawer({
   setActiveTabId = () => {},
   optinDrawerData = [],
   Title = '',
-  onlyShowCreateRequirementTab = false
+  onlyShowCreateRequirementTab = false,
+  onCreateSuccess = () => {},
+  editInitialData = null
 }) {
   // const [activeTab, setActiveTab] = useState(0);
   const [loadingAI, setLoadingAI] = useState('not clicked');
@@ -65,6 +67,8 @@ export default function OptionsDrawer({
               optinDrawerData={optinDrawerData}
               setCompliancedata={setCompliancedata}
               complianceData={complianceData}
+              onSuccess={onCreateSuccess}
+              initialData={editInitialData}
             />
           )
         }

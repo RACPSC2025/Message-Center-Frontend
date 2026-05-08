@@ -71,6 +71,17 @@ const dropdownReviewerList = {
 export const filterConfigs = {
   LegalMatriz: [
     textSearchField,
+    {
+      labelKey: 'type',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_tipo',
+      default_value: '',
+      options: [
+        { value: 'General', label: 'General' },
+        { value: 'Específico', label: 'Específico' }
+      ],
+      api_details: {}
+    },
     /*
     {
       labelKey: 'type_of_rule',
