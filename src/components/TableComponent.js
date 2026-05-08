@@ -37,6 +37,8 @@ import ExcelJS from "exceljs";
 // Register all Community features
 ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
 
+const LoadingOverlay = ({ reactContainer, ...rest }) => <CircularProgress {...rest} />;
+
 export default function TableComponent({
   rowData = [],
   columnDefs = [],
@@ -158,7 +160,7 @@ export default function TableComponent({
 
   const gridOptions = {
     loading: isLoading,
-    loadingOverlayComponent: CircularProgress,
+    loadingOverlayComponent: LoadingOverlay,
     loadingOverlayComponentParams: {},
     defaultColGroupDef: { headerClass: 'group-ag-header' },
     getRowClass: () => 'default-ag-header',
