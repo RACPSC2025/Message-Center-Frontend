@@ -6,6 +6,8 @@ import FormBuilder from '../../components/FormBuilder';
 import { fetchTaskListLevel } from '../../stores/tasks/fetchtaskListLevelSlice';
 import GeovisorTreeView from './GeovisorTreeView';
 
+const SHOW_GEOVISOR_SELECTOR = false;
+
 function TaskWhereStep({ onTaskWhereStepChange, taskWhereFormModel }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -116,7 +118,7 @@ function TaskWhereStep({ onTaskWhereStepChange, taskWhereFormModel }) {
       <Typography variant="body1" margin="20px 0">
         {t('where_step_description')}
       </Typography>
-      <GeovisorTreeView />
+      {SHOW_GEOVISOR_SELECTOR && <GeovisorTreeView />}
       <Box sx={{ margin: '20px 0' }}>
         <FormBuilder
           showActionButton={false}

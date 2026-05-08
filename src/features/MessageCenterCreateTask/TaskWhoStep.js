@@ -126,7 +126,7 @@ function TaskWhoStep({ onTaskWhoStepChange, taskWhoFormModel }) {
           <TagsSelector
             onTagsChange={handleExecutorSelection}
             listOfTags={executor}
-            placeholder="Select Responsibles"
+            placeholder={t('Responsibles')}
           />
         </>
       ) : (
@@ -146,7 +146,7 @@ function TaskWhoStep({ onTaskWhoStepChange, taskWhoFormModel }) {
         <TagsSelector
           onTagsChange={handleReviewerSelection}
           listOfTags={reviewer}
-          placeholder="Select Reviewers"
+          placeholder={t('Reviewers')}
         />
       ) : (
         <FormBuilder
