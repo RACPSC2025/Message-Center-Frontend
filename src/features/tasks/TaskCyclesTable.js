@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { resolveStatusColor, resolveOpportunityColor, STATUS_COLORS } from '../../config/statusColors';
 import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -12,6 +12,46 @@ import { useTranslation } from 'react-i18next';
 import TableComponent from '../../components/TableComponent';
 import FileUploadDialog from '../../components/FileUploadDialog';
 import EditResponsablesDrawer from '../MessageCenterEventsList/EditResponsablesDrawer';
+
+const PAGE_OPTIONS = [10, 20, 50];
+
+const DateCellRenderer = (params) => {
+  const date = params.value;
+  if (!date || date === '-' || date === 'Pendiente') {
+    return (
+      <span style={{ color: '#90a4ae', fontStyle: 'italic', fontSize: '0.8rem', fontWeight: 600 }}>
+        {date === 'Pendiente' ? 'Pendiente' : '-'}
+      </span>
+    );
+  }
+  return (
+    <span style={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
+      {date}
+    </span>
+  );
+};
+
+const OpportunityCellRenderer = (params) => {
+  const days = params.value || 0;
+  const color = resolveOpportunityColor(days);
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Chip
+        label={`${days > 0 ? '+' : ''}${days}`}
+        size="small"
+        sx={{
+          bgcolor: `${color}20`,
+          color: color,
+          border: `1px solid ${color}40`,
+          fontWeight: 700,
+          fontSize: '0.65rem',
+          height: '20px',
+          '& .MuiChip-label': { px: 0.5 }
+        }}
+      />
+    </Box>
+  );
+};
 
 const TaskCyclesTable = ({
   logtasks = [],
@@ -45,8 +85,6 @@ const TaskCyclesTable = ({
     return new Date(dateString);
   };
 
-  const getOpportunityColor = resolveOpportunityColor;
-
   const statusMetaByCode = useMemo(() => {
     const fallback = {
       '1': { label: 'Cerrado',    color: STATUS_COLORS['1'] },
@@ -71,17 +109,19 @@ const TaskCyclesTable = ({
     return { ...fallback, ...mapped };
   }, [taskStatusCatalog]);
 
-  const getCycleStatusColor = (statusValue) =>
-    resolveStatusColor(statusValue, statusMetaByCode[String(statusValue)]?.color || '#90a4ae');
+  const getCycleStatusColor = useCallback((statusValue) =>
+    resolveStatusColor(statusValue, statusMetaByCode[String(statusValue)]?.color || '#90a4ae'),
+  [statusMetaByCode]);
 
-  const getCycleStatusLabel = (statusValue) =>
-    statusMetaByCode[String(statusValue)]?.label || '-';
+  const getCycleStatusLabel = useCallback((statusValue) =>
+    statusMetaByCode[String(statusValue)]?.label || '-',
+  [statusMetaByCode]);
 
   // ✅ MANEJAR CLIC EN ATTACH FILE
-  const handleAttachFileClick = (task) => {
+  const handleAttachFileClick = useCallback((task) => {
     setSelectedTaskForUpload(task);
     setUploadDialogOpen(true);
-  };
+  }, []);
 
   // ✅ MANEJAR SUBIDA DE ARCHIVOS
   const handleFileUpload = (results) => {
@@ -94,10 +134,10 @@ const TaskCyclesTable = ({
   };
 
   // ✅ MANEJAR CLIC EN RESPONSABLES
-  const handleResponsiblesClick = (task) => {
+  const handleResponsiblesClick = useCallback((task) => {
     setSelectedTaskForResponsables(task);
     setResponsablesDrawerOpen(true);
-  };
+  }, []);
 
   // ✅ MANEJAR CIERRE DE DRAWER DE RESPONSABLES
   const handleCloseResponsablesDrawer = () => {
@@ -105,51 +145,8 @@ const TaskCyclesTable = ({
     setSelectedTaskForResponsables(null);
   };
 
-  // ✅ CELL RENDERER PARA FECHAS
-  const DateCellRenderer = (params) => {
-    const date = params.value;
-    if (!date || date === '-' || date === 'Pendiente') {
-      return (
-        <span style={{ color: '#90a4ae', fontStyle: 'italic', fontSize: '0.8rem', fontWeight: 600 }}>
-          {date === 'Pendiente' ? 'Pendiente' : '-'}
-        </span>
-      );
-    }
-    return (
-      <span style={{ fontSize: '0.8rem', color: '#263238', fontWeight: 600 }}>
-        {date}
-      </span>
-    );
-  };
-
-  // ✅ CELL RENDERER PARA OPORTUNIDAD
-  const OpportunityCellRenderer = (params) => {
-    const days = params.value || 0;
-    const color = getOpportunityColor(days);
-    
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <Chip
-          label={`${days > 0 ? '+' : ''}${days}`}
-          size="small"
-          sx={{
-            bgcolor: `${color}20`,
-            color: color,
-            border: `1px solid ${color}40`,
-            fontWeight: 700,
-            fontSize: '0.65rem',
-            height: '20px',
-            '& .MuiChip-label': {
-              px: 0.5
-            }
-          }}
-        />
-      </Box>
-    );
-  };
-
   // ✅ CELL RENDERER PARA ACCIONES
-  const ActionsCellRenderer = (params) => {
+  const ActionsCellRenderer = useCallback((params) => {
     const task = params.data;
     const attachmentCount = parseInt(task?.attachments_logtask_count, 10) || 0;
     const commentCount = parseInt(task?.comments_logtask_count, 10) || 0;
@@ -233,7 +230,7 @@ const TaskCyclesTable = ({
         </Tooltip>
       </Box>
     );
-  };
+  }, [handleAttachFileClick, handleResponsiblesClick, onOpenFollowup, onCloseCycle, t, theme]);
 
   // ✅ COMPARADOR PERSONALIZADO PARA FECHAS
   const dateComparator = (date1, date2) => {
@@ -398,7 +395,7 @@ const TaskCyclesTable = ({
       },
       cellStyle: { textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     }
-  ], [theme, t, statusMetaByCode]);
+  ], [theme, t, statusMetaByCode, ActionsCellRenderer, showStatusLabel]);
 
   // ✅ TRANSFORMAR DATOS PARA AG GRID
   const rowData = useMemo(() => {
@@ -429,23 +426,22 @@ const TaskCyclesTable = ({
   }, [logtasks]);
 
   // ✅ ESTILO DE FILA (borde izquierdo con color de estado)
-  const getRowStyle = (params) => {
+  const getRowStyle = useCallback((params) => {
     const statusColor = getCycleStatusColor(params.data.logtask_status);
     const isSelected = params.data.id === selectedLogtaskId;
-    
     return {
       borderLeft: `4px solid ${statusColor}`,
       backgroundColor: isSelected ? '#f5f9ff' : 'transparent',
       cursor: 'pointer'
     };
-  };
+  }, [getCycleStatusColor, selectedLogtaskId]);
 
   // ✅ MANEJAR CLIC EN FILA
-  const onRowClicked = (event) => {
+  const onRowClicked = useCallback((event) => {
     if (onSelectCycle) {
       onSelectCycle(event.data);
     }
-  };
+  }, [onSelectCycle]);
 
   return (
     <>
@@ -466,7 +462,7 @@ const TaskCyclesTable = ({
           isLoading={isLoading}
           pagination={true}
           perPage={10}
-          pageOption={[10, 20, 50]}
+          pageOption={PAGE_OPTIONS}
           sortable={true}
           filterable={true}
           resizable={true}

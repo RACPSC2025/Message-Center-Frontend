@@ -58,6 +58,7 @@ import { normalizeStatusCode, stripHtmlTags } from '../../utils/others';
 import { STATUS_COLORS } from '../../config/statusColors';
 
 const TASKS_PER_PAGE = 10;
+const EMPTY_ARRAY = [];
 
 const TasksListView = ({ onCreateTask, refreshKey }) => {
   const { t, i18n } = useTranslation();
@@ -188,15 +189,15 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
   const logtaskListLoading = useSelector((state) => state?.fetchLogtaskList?.loading ?? false);
   const selectedStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'selectedStatus'));
 
-  const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || [];
+  const listTaskStatus = useSelector((state) => selectFilterItemValue(state, 'task', 'task_list_status')) || EMPTY_ARRAY;
   const taskStatusCatalog = useSelector(
-    (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.status ?? []
+    (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.status ?? EMPTY_ARRAY
   );
   const taskTypeCatalog = useSelector(
-    (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.task_type ?? []
+    (state) => state?.platformConfig?.data?.modules?.task?.catalogs?.task_type ?? EMPTY_ARRAY
   );
   const selectedLegalTaskIds =
-    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || [];
+    useSelector((state) => selectFilterItemValue(state, 'task', 'selected_legal_task_ids')) || EMPTY_ARRAY;
   const uploadAttachmentFocus = useSelector(
     (state) => state?.uploadCommentAttachments?.lastUpload ?? null
   );
@@ -304,6 +305,11 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     }));
   }, [taskTypeCatalog]);
 
+  const taskTypeCatalogJson = useMemo(
+    () => JSON.stringify(taskTypeCatalog),
+    [taskTypeCatalog]
+  );
+
   const getTaskTypeInfoFromActivityType = (activityType) => {
     const fallbackType =
       normalizedTaskTypeCatalog.find((item) => item.code === 'cyclic' || item.numericCode === 3)
@@ -385,7 +391,7 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
       setIsInitialized(true);
       console.error("❌ Error al cargar tareas:", error);
     });
-  }, [dispatch, refreshKey, taskTypeCatalog, i18n.language]);
+  }, [dispatch, refreshKey, taskTypeCatalogJson, i18n.language]);
 
   useEffect(() => {
     const status = Number(uploadAttachmentFocus?.status);
@@ -528,6 +534,11 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
 
 
   // ✅ LAZY LOADING DE TAREAS
+  const filteredTasksRef = useRef(filteredTasks);
+  useEffect(() => {
+    filteredTasksRef.current = filteredTasks;
+  }, [filteredTasks]);
+
   // 1. Resetear página y scroll SOLO cuando cambian los filtros principales (NO cuando cambia visibleTasks por lazy load)
   const lastMainFilters = useRef({
     keywordsFilter: null,
@@ -557,14 +568,14 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
     );
     if (filtersChanged) {
       setCurrentPage(1);
-      setVisibleTasks(filteredTasks.slice(0, TASKS_PER_PAGE));
+      setVisibleTasks(filteredTasksRef.current.slice(0, TASKS_PER_PAGE));
       setIsLoadingMoreTasks(false);
       if (listRef.current) {
         listRef.current.scrollTop = 0;
       }
     }
     lastMainFilters.current = mainFilters;
-  }, [keywordsFilter, statusFilter, startDateFilter, endDateFilter, executorFilter, reviewerFilter, etiquetasFilter, selectedLegalTaskIds, filteredTasks]);
+  }, [keywordsFilter, statusFilter, startDateFilter, endDateFilter, executorFilter, reviewerFilter, etiquetasFilter, selectedLegalTaskIds]);
 
   // 2. Cuando cambia la página, cargar más tareas (lazy load) solo en frontend
   useEffect(() => {
@@ -1019,6 +1030,8 @@ const TasksListView = ({ onCreateTask, refreshKey }) => {
                       {/* Título de la tarea */}
                       {!isCollapsed && (
                         <ListItemText
+                          primaryTypographyProps={{ component: 'div' }}
+                          secondaryTypographyProps={{ component: 'div' }}
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 1 }}>
                                 {showTaskTitleTooltip ? (

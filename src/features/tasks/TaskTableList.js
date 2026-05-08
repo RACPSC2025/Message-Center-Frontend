@@ -600,11 +600,6 @@ export default function TaskTableList({ refreshTrigger }) {
     if(currentStatus !== null && currentStatus !== "" && currentStatus !== 0  && currentStatus !== -1&& currentStatus !== "-1"){
       tasksFiltersTemp = (tasksFiltersTemp.filter((item) => item.task_status === currentStatus));
       //getTypeFilterTasksByDate(tasksFiltersTemp, actionStartDate, actionEndDate);
-      setTasksFilters(tasksFiltersTemp);
-    }
-    else{
-      //getTypeFilterTasksByDate(tasksFiltersTemp, actionStartDate, actionEndDate);
-      setTasksFilters(tasksFiltersTemp);
     }
     setTasksFilters(tasksFiltersTemp);
   }
