@@ -318,6 +318,7 @@ export function Component() {
         display_in_table,
         order,
         type_edit,
+        type,
         ...rest
       } = config;
 
