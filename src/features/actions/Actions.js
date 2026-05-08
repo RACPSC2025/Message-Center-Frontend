@@ -307,14 +307,18 @@ export function Component() {
 
   const modifyTableColumns = (columnConfig) => {
     return columnConfig.map((config) => {
-      const { 
-        column: field, 
-        title, 
-        title_es, 
-        title_en, 
-        column_width, 
+      const {
+        column: field,
+        title,
+        title_es,
+        title_en,
+        column_width,
         edit,
-        ...rest 
+        column_type,
+        display_in_table,
+        order,
+        type_edit,
+        ...rest
       } = config;
 
       // Determinamos el nombre del encabezado según el idioma

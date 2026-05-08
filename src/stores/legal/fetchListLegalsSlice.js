@@ -496,7 +496,7 @@ export const evalpdfAnalysisStandard = createAsyncThunk(
 //export const obtenerRequisitoData = async (id) => {
   
 export const obtenerRequisitoData = createAsyncThunk(
-  'legal/get_data_requisito_amatia_express',
+  'tasklegal/get_data_requisito_amatia_express',
   async (id, { rejectWithValue }) => {
     console.log("ID");
     console.log(id);
