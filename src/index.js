@@ -64,25 +64,21 @@ loadRuntimeConfig()
     console.log('🏠 Base Name:', config.baseName);
     console.log('🌍 Environment:', config.environment);
 
-    const [{ ApolloProvider }, { Provider }, { HashRouter }, { default: App }, { default: client }, { default: store }] =
+    const [{ Provider }, { HashRouter }, { default: App }, { default: store }] =
       await Promise.all([
-        import('@apollo/client'),
         import('react-redux'),
         import('react-router-dom'),
         import('./App'),
-        import('./apolloClient'),
         import('./store')
       ]);
-    
+
     // Render the actual app after config is loaded
     root.render(
-      <ApolloProvider client={client}>
-        <Provider store={store}>
-          <HashRouter>
-            <App />
-          </HashRouter>
-        </Provider>
-      </ApolloProvider>
+      <Provider store={store}>
+        <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <App />
+        </HashRouter>
+      </Provider>
     );
   })
   .catch((error) => {

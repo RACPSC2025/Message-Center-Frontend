@@ -16,20 +16,22 @@ import { getPrograms } from '../../stores/tasks/getProgramsSlice';
 import { getSubPrograms } from '../../stores/tasks/getSubProgramsSlice';
 import { isValidArray } from '../../utils/others';
 
+const EMPTY_ARRAY = [];
+
 function TaskWhatStep({ onTaskWhatStepChange, taskWhatFormModel }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [whatFormModel, setWhatFormModel] = useState({});
 
-  const tagList = useSelector((state) => state?.fetchTaskTags?.data ?? []);
-  const phase = useSelector((state) => state?.fetchPhase?.data?.data ?? []);
-  const subPhase = useSelector((state) => state?.fetchSubPhases?.data?.data ?? []);
-  const pmasList = useSelector((state) => state?.fetchPMASList?.data?.data ?? []);
-  const programs = useSelector((state) => state?.getPrograms?.data?.data ?? []);
-  const subPrograms = useSelector((state) => state?.getSubPrograms?.data?.data ?? []);
-  const proyectoAmbiental = useSelector((state) => state?.fetchProyectoAmbiental?.data?.data ?? []);
-  const programAmbiental = useSelector((state) => state?.fetchProgramAmbiental?.data?.data ?? []);
-  const convenio = useSelector((state) => state?.fetchConvenioList?.data?.data ?? []);
+  const tagList = useSelector((state) => state?.fetchTaskTags?.data ?? EMPTY_ARRAY);
+  const phase = useSelector((state) => state?.fetchPhase?.data?.data ?? EMPTY_ARRAY);
+  const subPhase = useSelector((state) => state?.fetchSubPhases?.data?.data ?? EMPTY_ARRAY);
+  const pmasList = useSelector((state) => state?.fetchPMASList?.data?.data ?? EMPTY_ARRAY);
+  const programs = useSelector((state) => state?.getPrograms?.data?.data ?? EMPTY_ARRAY);
+  const subPrograms = useSelector((state) => state?.getSubPrograms?.data?.data ?? EMPTY_ARRAY);
+  const proyectoAmbiental = useSelector((state) => state?.fetchProyectoAmbiental?.data?.data ?? EMPTY_ARRAY);
+  const programAmbiental = useSelector((state) => state?.fetchProgramAmbiental?.data?.data ?? EMPTY_ARRAY);
+  const convenio = useSelector((state) => state?.fetchConvenioList?.data?.data ?? EMPTY_ARRAY);
 
   const handleFetchTags = () => {
     dispatch(fetchTaskTags());

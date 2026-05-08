@@ -107,6 +107,8 @@ export default function RoutesFile() {
     legal_comunications: <LegalComunications />
   };
 
+  if (!defaultRoute) return <TheFullPageLoader />;
+
   return (
     <Suspense fallback={<TheFullPageLoader />}>
       <GlobalConfig.Provider value={config}>
