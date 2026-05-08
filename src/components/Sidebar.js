@@ -142,6 +142,8 @@ function CollapsedModuleIcon({ mod, isActive, hideDonut = false, onNavigate, get
   );
 }
 
+const EMPTY_OBJECT = {};
+
 /* ── Main Sidebar ───────────────────────────────────────────────────── */
 export function Sidebar({ onWidthChange, filterPanelExpanded = false }) {
   const { t } = useTranslation();
@@ -152,7 +154,7 @@ export function Sidebar({ onWidthChange, filterPanelExpanded = false }) {
 
   const activeModule = useSelector((state) => state.globalData.activeModule);
   const unreadCount = useSelector((state) => state.unreadMessages?.count ?? 0);
-  const user = useSelector((state) => state.globalData.userDetails ?? {});
+  const user = useSelector((state) => state.globalData.userDetails ?? EMPTY_OBJECT);
 
   const { workareas, modules, getModule, loaded } = useNavConfig();
 

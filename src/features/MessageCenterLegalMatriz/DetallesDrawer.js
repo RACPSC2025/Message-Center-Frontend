@@ -19,13 +19,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getLegalDetails } from '../../stores/legal/getLegalDetailsSlice';
 import TablaDetalles from './TablaDetalles';
 
+const EMPTY_OBJECT = {};
+
 function DetallesDrawer({ openDetallesDrawer, onCloseDetallesDrawer, idRequisito }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [openCollapseNorma, setOpenCollapseNorma] = useState(false);
   const [openCollapseArticulos, setOpenCollapseArticulos] = useState(false);
 
-  const legalDetails = useSelector((state) => state?.getLegalDetails?.data?.data ?? {});
+  const legalDetails = useSelector((state) => state?.getLegalDetails?.data?.data ?? EMPTY_OBJECT);
 
   const handleGetLegalDetails = () => {
     let formData = new FormData();

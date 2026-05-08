@@ -62,8 +62,10 @@ import { clone, isEmpty, isObject } from 'radash';
 const useListOptions = (module, fieldName) =>
   useSelector((state) => selectListOptions(state, module, fieldName));
 
+const EMPTY_ARRAY = [];
+
 const useListOptionsGlobal = (fieldName) =>
-  useSelector((state) => state.globalData?.[fieldName] ?? []);
+  useSelector((state) => state.globalData?.[fieldName] ?? EMPTY_ARRAY);
 
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));

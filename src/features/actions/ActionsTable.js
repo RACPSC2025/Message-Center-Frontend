@@ -292,7 +292,7 @@ export default function ActionTable({
       // Columnas de fecha - EDITABLES con renderer custom y ancho fijo de 200px
       else if (dateColumns.includes(restColumnConfig.field)) {
         finalColumms.push({
-          column_type: column_type,
+          context: { column_type },
           ...restColumnConfig,
           width: 200, // ✅ Ancho fijo
           editable: false, // Usamos renderer custom
@@ -304,7 +304,7 @@ export default function ActionTable({
       // Columna action_status - EDITABLE con renderer custom y ancho fijo de 170px
       else if (restColumnConfig.field === 'action_status') {
         finalColumms.push({
-          column_type: column_type,
+          context: { column_type },
           ...restColumnConfig,
           width: 170, // ✅ Ancho fijo
           editable: false,
@@ -316,7 +316,7 @@ export default function ActionTable({
       // 👉 Todas las demás columnas - NO EDITABLES
       else {
         finalColumms.push({
-          column_type: i === 0 ? COLUMN_TYPES.ID_WITH_STATUS : column_type,
+          context: { column_type: i === 0 ? COLUMN_TYPES.ID_WITH_STATUS : column_type },
           ...restColumnConfig,
           editable: false,
           cellRenderer: (params) => {
@@ -760,11 +760,11 @@ export default function ActionTable({
 
   const getTableDefaultCellRenderer = (params) => {
     const {
-      colDef: { column_type },
       colDef,
       data,
       value
     } = params;
+    const column_type = colDef?.context?.column_type;
     const field = colDef?.field || 'action_status'; // Obtener el field del colDef
 
     switch (column_type) {

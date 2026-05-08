@@ -21,8 +21,11 @@ import { InputAutoComplete, InputDateRangePicker } from './Input';
 const useListOptions = (module, fieldName) =>
   useSelector((state) => selectListOptions(state, module, fieldName));
 
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
+
 const useListOptionsGlobal = (fieldName) =>
-  useSelector((state) => state.globalData?.[fieldName] ?? []);
+  useSelector((state) => state.globalData?.[fieldName] ?? EMPTY_ARRAY);
 
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
@@ -48,7 +51,7 @@ function BaseFilter({ component = '' }) {
   const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const [showModuleStringFilter] = useState(false);
-  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? {});
+  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? EMPTY_OBJECT);
 
   const selectedTaskView = useSelector((state) =>
     selectFilterItemValue(state, 'task', 'selectedTaskView')

@@ -42,8 +42,11 @@ import { useLanguage } from '../providers/languageProvider';
 const useListOptions = (module, fieldName) =>
   useSelector((state) => selectListOptions(state, module, fieldName));
 
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
+
 const useListOptionsGlobal = (fieldName) =>
-  useSelector((state) => state.globalData?.[fieldName] ?? []);
+  useSelector((state) => state.globalData?.[fieldName] ?? EMPTY_ARRAY);
 
 const useFilterItemValue = (module, fieldName) =>
   useSelector((state) => selectFilterItemValue(state, module, fieldName));
@@ -200,7 +203,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
     }
   }, [loadingLegalStatus]);
 
-  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? {});
+  const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? EMPTY_OBJECT);
 
   const getLocalizedModuleTitle = (moduleConfig, fallbackLabel) => {
     const preferredTitle = language === 'en' ? moduleConfig?.title_en : moduleConfig?.title_es;
@@ -231,7 +234,7 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
   }, [moduleData, platformModules, language]);
 
   const activeModule = useSelector((state) => state.globalData.activeModule);
-  const platformConfig = useSelector((state) => state.platformConfig?.data ?? {});
+  const platformConfig = useSelector((state) => state.platformConfig?.data ?? EMPTY_OBJECT);
   const { data: actionCountData = {} } = useSelector(
     (state) => state?.actionData?.actionCount || {}
   );

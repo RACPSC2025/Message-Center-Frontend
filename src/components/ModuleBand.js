@@ -9,6 +9,7 @@ import FilterBar from './FilterBar';
 import { accentColor } from '../config/constants';
 
 export const MODULE_BAND_HEIGHT = 48;
+const EMPTY_OBJECT = {};
 
 // ── View toggle config per module ─────────────────────────────────────────────
 const VIEW_CONFIG = {
@@ -249,7 +250,7 @@ function LegalComunicationsBandContent({ bandColor }) {
 
 // ── NotificationsBandContent ──────────────────────────────────────────────────
 function NotificationsBandContent({ bandColor }) {
-  const stats = useSelector((state) => state.dashboardMessageStatistics?.data ?? {});
+  const stats = useSelector((state) => state.dashboardMessageStatistics?.data ?? EMPTY_OBJECT);
 
   const items = [
     { Icon: Mail,    label: 'Total',       count: stats.total_message_count     ?? 0 },

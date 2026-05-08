@@ -25,6 +25,8 @@ import CyclicFormData from './CyclicFormData';
 import PermanentFormData from './PermanentFormData';
 import UniqueFormData from './UniqueFormData';
 
+const EMPTY_ARRAY = [];
+
 const containerStyle = {
   flexGrow: 1
 };
@@ -43,7 +45,7 @@ function TaskWhenStep({ onTaskWhenStepChange, taskWhenFormModel }) {
   const [openCollapse, setOpenCollapse] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const alertList = useSelector((state) => state?.fetchAlertList?.data?.data ?? []);
+  const alertList = useSelector((state) => state?.fetchAlertList?.data?.data ?? EMPTY_ARRAY);
 
   const handleFetchAlert = () => {
     dispatch(fetchAlertList());

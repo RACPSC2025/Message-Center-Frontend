@@ -11,6 +11,8 @@ import { fetchSubPhases } from '../../stores/tasks/fetchSubPhasesSlice';
 import { fetchTaskTags } from '../../stores/tasks/fetchTaskTagsSlice';
 import { isValidArray } from '../../utils/others';
 
+const EMPTY_ARRAY = [];
+
 function EditActivityDetailsDrawer({
   openActivityDetailsDrawer,
   onCloseActivityDetailsDrawer,
@@ -29,9 +31,9 @@ function EditActivityDetailsDrawer({
     tags: []
   });
 
-  const tagList = useSelector((state) => state?.fetchTaskTags?.data ?? []);
-  const phase = useSelector((state) => state?.fetchPhase?.data?.data ?? []);
-  const subPhase = useSelector((state) => state?.fetchSubPhases?.data?.data ?? []);
+  const tagList = useSelector((state) => state?.fetchTaskTags?.data ?? EMPTY_ARRAY);
+  const phase = useSelector((state) => state?.fetchPhase?.data?.data ?? EMPTY_ARRAY);
+  const subPhase = useSelector((state) => state?.fetchSubPhases?.data?.data ?? EMPTY_ARRAY);
 
   const handleFetchTags = () => {
     dispatch(fetchTaskTags());

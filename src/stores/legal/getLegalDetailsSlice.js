@@ -18,7 +18,7 @@ export const getLegalDetails = createAsyncThunk(
       );
       */
       const response = await axiosInstance.post(
-        '/tasklegal/get_data_requisito_amatia_express',
+        '/legal_api/get_data_requisito_amatia_express',
         data
       );
       //console.log("GetData", response?.data);
