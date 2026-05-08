@@ -218,12 +218,13 @@ function ActionsBandContent({ bandColor }) {
 }
 
 function LegalMatrizBandContent({ bandColor }) {
+  const [showViewToggles, setShowViewToggles] = useState(false);
   return (
     <>
       <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}1A` }}>
         <OrgBandFilters moduleKey="LegalMatriz" />
       </div>
-      <ViewToggles moduleKey="LegalMatriz" bandColor={bandColor} />
+      {showViewToggles && <ViewToggles moduleKey="LegalMatriz" bandColor={bandColor} />}
     </>
   );
 }

@@ -170,6 +170,8 @@ Tab IDs compartidos:
 
 Redirecciones desde la tabla de requerimientos:
 
+- Columna opciones (ojo/VisibilityOutlined): abre OptionsDrawer en tab CREATE_LEGAL_REQUIREMENT con datos del requisito pre-cargados (modo edición). Título: "Editar requisito". Datos vienen del row ya cargado en tabla (no hace llamada extra al API).
+- Columna opciones (AutoAwesome): abre OptionsDrawer en tab ANALYSIS_OF_REGULATION si features.analysis_ia = true
 - Columna comunications -> `/view/legal_comunications`
 - Columna analysis_with_amatia -> analysis_of_regulation
 - Columna articles -> articles
@@ -206,6 +208,8 @@ Reglas de visibilidad en UI (legal_matrix):
 - Tab create_legal_requirement: visible solo si permissions.create_article = true
 - Columna analysis_with_amatia y tab analysis_of_regulation: visibles solo si features.analysis_ia = true
 - Tab compliance: visible solo si features.compliance_view = true
+- Boton opciones (MoreVertOutlined) en columna options: controlado por `showOptionsMenuButton` (useState, default false)
+- Botones de vista Requisitos/Lista en ModuleBand: controlados por `showViewToggles` en LegalMatrizBandContent (useState, default false)
 
 ## Filtros jerarquicos en LegalMatriz, actions y events
 
@@ -261,10 +265,42 @@ Comportamiento de Clear Filters:
 - Antes de aplicar un filtro de redirección desde matriz legal o artículos, se limpian los valores previos en Redux para evitar estados inconsistentes.
 - La lógica de navegación y filtrado es ahora idéntica entre matriz legal y artículos, diferenciando el origen para mostrar el banner correcto en tasks.
 
+### Flujo de creación de requisito (onCreateSuccess)
+
+- Al guardar exitosamente en LegalMatrizForm, se llama `onSuccess(legal_id)`.
+- En MessageCenterLegalMatriz, `handleCreateSuccess` ejecuta:
+  1. `handleCloseOptionsDrawer()` — cierra el drawer
+  2. `setLoadLegals(true)` — recarga datos de la tabla
+  3. `setNewlyCreatedLegalId(legalId)` — almacena ID para resaltar
+- La tabla resalta la fila del nuevo requisito con `getRowStyle` (outline azul + fondo `#e3f2fd`).
+- El highlight persiste hasta que el usuario recargue o navegue.
+
+### Modo edición de requisito (LegalMatrizForm)
+
+- `LegalMatrizForm` acepta prop `initialData` (objeto row de la tabla).
+- Cuando `initialData` es truthy y `loadingOptions = false`, se mapean los campos al formulario:
+  - `emitidopor`: busca match por label en `dropdownOptions.authorities` (API retorna nombre, form necesita ID)
+  - `id_tema_requisito`: split por coma del string `"10,7"` → array `["10","7"]`
+  - `apply_lto`: `"Apply"` o `null` → boolean
+  - `requisito_general_tipo` (`item.type`): `"Específico"` → `"specific"`, `"General"` → `"general"`
+- Al enviar en modo edición, incluye `legal_id: initialData.id` en el payload.
+- `handleFetchLegals` preserva campos raw del API en cada row: `numero`, `categoria_norma`, `emitidopor`, `id_tipo_requisito`, `id_tema_requisito`, `normas_relacionadas`, `observaciones`, `gap`, `url`, `apply_lto`, `requisito_general`.
+
+### Filtro de tipo en LegalMatriz
+
+- `filterConfig.js` incluye filtro `filter_tipo` (tipo: `autocompleteWithoutLevel`) con opciones estáticas `General`/`Específico`.
+- Se aplica en `MessageCenterLegalMatriz.js` filtrando `item.type` antes del filtro de keywords.
+- Se limpia en `handleResetFilters`.
+
 ### Resumen de archivos afectados
 
 - src/features/MessageCenterLegalMatriz.js
 - src/features/MessageCenterLegalMatriz/OptionsDrawer.js
+- src/features/MessageCenterLegalMatriz/LegalMatrizForm.js
+- src/features/details/Details.js
+- src/components/ModuleBand.js
+- src/components/FilterSidebar.js
+- src/config/filterConfig.js
 - src/features/articles/Articles.js
 - src/features/tasks/TasksListView.js
 
