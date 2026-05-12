@@ -65,10 +65,15 @@ Content-Type: application/json
 - data: array de cadenas
 
 Cada elemento de data es una cadena y contiene objetos de solicitud con:
-- metadatos (id_request, request_type, status, order, id_request_parent, fechas)
+- metadatos (id_request, request_type, status, order, id_request_parent, fechas, type_comunication)
 - articulos[]
 - destinatarios[]
 - archivos[]
+
+### Campo type_comunication
+- Tipo: entero (0, 1, 2, 3)
+- Registros históricos: valor 3 por defecto
+- Representa el tipo de comunicación asociado a la solicitud
 
 ### Campos de archivos (cambio importante)
 Cada archivo puede incluir:
@@ -167,6 +172,12 @@ Cuando una IA actualice este modulo, debe:
 5. Documentar cambios de contrato API en este archivo.
 
 ## Historial de cambios
+### 2026-05-12
+- Se agrega campo `type_comunication` (TINYINT 0-3) a `amatia_requisitos_solicitudes`.
+- `get_request_from_legal` retorna `type_comunication` en cada objeto de solicitud (principal y anidada).
+- Registros existentes migrados a valor 3.
+
+
 ### 2026-04-25
 - La navegacion desde la columna `comunications` de LegalMatriz cambia del drawer `regulatory_communications` al modulo dedicado `/view/legal_comunications`.
 - El frontend mantiene el contexto del requisito seleccionado en Redux (`LegalMatriz.id_requisito_actual`) y el ledger nuevo reutiliza ese estado para consultar `get_request_from_legal`.

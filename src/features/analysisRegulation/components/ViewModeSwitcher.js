@@ -3,7 +3,7 @@ import { PictureAsPdfRounded, UploadFileRounded, SettingsRounded } from '@mui/ic
 import { useRef, useState } from 'react';
 import { ingestPDF } from '../../../lib/iaApi';
 
-const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPdf, toolbarVisible, onToggleToolbar }) => {
+const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPdf, toolbarVisible, onToggleToolbar, showUploadButton = true }) => {
   const fileInputRef = useRef(null);
   const [ingestStatus,  setIngestStatus]  = useState('idle'); // idle | loading | done | error
   const [ingestInfo,    setIngestInfo]    = useState(null);
@@ -58,42 +58,46 @@ const ViewModeSwitcher = ({ viewMode, onViewModeChange, pdfAvailable, onUploadPd
       >
         PDF Original
       </Button>
-      <Button
-        variant="outlined"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={ingestStatus === 'loading'}
-        startIcon={
-          ingestStatus === 'loading'
-            ? <CircularProgress size={14} />
-            : <UploadFileRounded />
-        }
-        sx={{
-          textTransform: 'none',
-          minWidth: '120px',
-          marginLeft: 'auto'
-        }}
-      >
-        {ingestStatus === 'loading' ? 'Indexando...' : 'Cargar PDF'}
-      </Button>
-      {ingestStatus === 'done' && (
-        <Chip
-          label={`${ingestInfo?.indexed_chunks} chunks`}
-          color="success"
-          size="small"
-        />
-      )}
-      {ingestStatus === 'error' && (
-        <Chip label="Error al indexar" color="error" size="small" />
-      )}
-      {showIngestTime && ingestSeconds != null && (
-        <Tooltip title="Tiempo de respuesta del endpoint /v1/documents/ingest">
-          <Chip
-            label={`${ingestSeconds.toFixed(2)} s`}
-            color={ingestStatus === 'error' ? 'default' : 'info'}
+      {showUploadButton && (
+        <>
+          <Button
             variant="outlined"
-            size="small"
-          />
-        </Tooltip>
+            onClick={() => fileInputRef.current?.click()}
+            disabled={ingestStatus === 'loading'}
+            startIcon={
+              ingestStatus === 'loading'
+                ? <CircularProgress size={14} />
+                : <UploadFileRounded />
+            }
+            sx={{
+              textTransform: 'none',
+              minWidth: '120px',
+              marginLeft: 'auto'
+            }}
+          >
+            {ingestStatus === 'loading' ? 'Indexando...' : 'Cargar PDF'}
+          </Button>
+          {ingestStatus === 'done' && (
+            <Chip
+              label={`${ingestInfo?.indexed_chunks} chunks`}
+              color="success"
+              size="small"
+            />
+          )}
+          {ingestStatus === 'error' && (
+            <Chip label="Error al indexar" color="error" size="small" />
+          )}
+          {showIngestTime && ingestSeconds != null && (
+            <Tooltip title="Tiempo de respuesta del endpoint /v1/documents/ingest">
+              <Chip
+                label={`${ingestSeconds.toFixed(2)} s`}
+                color={ingestStatus === 'error' ? 'default' : 'info'}
+                variant="outlined"
+                size="small"
+              />
+            </Tooltip>
+          )}
+        </>
       )}
       {viewMode === 'pdf' && pdfAvailable && onToggleToolbar && (
         <Tooltip title={toolbarVisible ? "Ocultar herramientas" : "Mostrar herramientas"}>

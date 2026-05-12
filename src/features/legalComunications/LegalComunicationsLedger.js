@@ -1,5 +1,6 @@
 import {
   Add,
+  AutoAwesome,
   CallMade,
   CallReceived,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
   Refresh,
   Visibility
 } from '@mui/icons-material';
+import AnalysisDocumentoDrawer from '../analysisDocumento/AnalysisDocumentoDrawer';
 import {
   Avatar,
   AvatarGroup,
@@ -43,6 +45,8 @@ export default function LegalComunicationsLedger({
   onFilteredCountChange = () => {},
   onOpenCreateRequest = () => {}
 }) {
+  const SOURCE_MODULE = 'legal_comunications';
+
   const { t } = useTranslation();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,7 @@ export default function LegalComunicationsLedger({
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [autoRefreshingUrls, setAutoRefreshingUrls] = useState(false);
   const [lastSignedUrlRefreshAt, setLastSignedUrlRefreshAt] = useState(0);
+  const [analysisDrawer, setAnalysisDrawer] = useState({ open: false, fileUrl: null, fileName: null });
   const requisitoActual = useSelector((state) =>
     selectFilterItemValue(state, 'LegalMatriz', 'requisito_actual')
   );
@@ -355,6 +360,21 @@ export default function LegalComunicationsLedger({
     setPage(0);
   };
 
+  const getTypeComunicationLabel = (type) => {
+    const n = Number(type);
+    if (n === 1) return 'Informativo';
+    if (n === 2) return 'Requisito';
+    if (n === 3) return 'Acto administrativo';
+    return '-';
+  };
+
+  const getTypeComunicationColor = (type) => {
+    const n = Number(type);
+    if (n === 1) return 'info';
+    if (n === 2) return 'warning';
+    return 'default';
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -402,6 +422,11 @@ export default function LegalComunicationsLedger({
           <TableHead sx={{ bgcolor: 'grey.100' }}>
             <TableRow>
               <TableCell width={50} />
+              <TableCell>
+                <Typography variant="caption" fontWeight="bold">
+                  {t('type')}
+                </Typography>
+              </TableCell>
               <TableCell>
                 <Typography variant="caption" fontWeight="bold">
                   {t('filing_date')}
@@ -457,7 +482,7 @@ export default function LegalComunicationsLedger({
           <TableBody>
             {paginatedRequests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} align="center">
+                <TableCell colSpan={12} align="center">
                   <Typography color="textSecondary" py={4}>
                     {t('no_requests_found')}
                   </Typography>
@@ -490,7 +515,12 @@ export default function LegalComunicationsLedger({
                         )}
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">{formatDate(request.filing_date)}</Typography>
+                        <Chip
+                          label={getTypeComunicationLabel(request.type_comunication)}
+                          size="small"
+                          variant="outlined"
+                          color={getTypeComunicationColor(request.type_comunication)}
+                        />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{formatDate(request.filing_date)}</Typography>
@@ -646,7 +676,7 @@ export default function LegalComunicationsLedger({
                     </TableRow>
 
                     <TableRow>
-                      <TableCell colSpan={11} sx={{ p: 0, bgcolor: 'grey.50' }}>
+                      <TableCell colSpan={12} sx={{ p: 0, bgcolor: 'grey.50' }}>
                         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                           <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
                             <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }} elevation={1}>
@@ -670,6 +700,23 @@ export default function LegalComunicationsLedger({
                               </Box>
 
                               <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                  <Typography
+                                    variant="caption"
+                                    color="textSecondary"
+                                    fontWeight="bold"
+                                  >
+                                    {t('type')}:
+                                  </Typography>
+                                  <Box mt={0.5}>
+                                    <Chip
+                                      label={getTypeComunicationLabel(request.type_comunication)}
+                                      size="small"
+                                      variant="outlined"
+                                      color={getTypeComunicationColor(request.type_comunication)}
+                                    />
+                                  </Box>
+                                </Grid>
                                 <Grid item xs={12}>
                                   <Typography
                                     variant="caption"
@@ -897,6 +944,23 @@ export default function LegalComunicationsLedger({
                                                   <Download fontSize="small" />
                                                 </IconButton>
                                               </Tooltip>
+                                              {isPdf && (
+                                                <Tooltip title="Análisis">
+                                                  <IconButton
+                                                    size="small"
+                                                    color="secondary"
+                                                    onClick={() =>
+                                                      setAnalysisDrawer({
+                                                        open: true,
+                                                        fileUrl: getPreviewUrl(file),
+                                                        fileName: file.file_name
+                                                      })
+                                                    }
+                                                  >
+                                                    <AutoAwesome fontSize="small" />
+                                                  </IconButton>
+                                                </Tooltip>
+                                              )}
                                             </Box>
                                           </Paper>
                                         );
@@ -1458,6 +1522,23 @@ export default function LegalComunicationsLedger({
                                                                     <Download fontSize="small" />
                                                                   </IconButton>
                                                                 </Tooltip>
+                                                                {isPdf && (
+                                                                  <Tooltip title="Análisis">
+                                                                    <IconButton
+                                                                      size="small"
+                                                                      color="secondary"
+                                                                      onClick={() =>
+                                                                        setAnalysisDrawer({
+                                                                          open: true,
+                                                                          fileUrl: getPreviewUrl(file),
+                                                                          fileName: file.file_name
+                                                                        })
+                                                                      }
+                                                                    >
+                                                                      <AutoAwesome fontSize="small" />
+                                                                    </IconButton>
+                                                                  </Tooltip>
+                                                                )}
                                                               </Box>
                                                             </Paper>
                                                           );
@@ -1550,6 +1631,13 @@ export default function LegalComunicationsLedger({
         />
       </TableContainer>
 
+      <AnalysisDocumentoDrawer
+        open={analysisDrawer.open}
+        onClose={() => setAnalysisDrawer({ open: false, fileUrl: null, fileName: null })}
+        sourceModule={SOURCE_MODULE}
+        fileUrl={analysisDrawer.fileUrl}
+        fileName={analysisDrawer.fileName}
+      />
     </Box>
   );
 }

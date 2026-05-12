@@ -59,7 +59,7 @@ import ChatInputBox from '../../components/Input/lexicalWYSWYG/ChatInputBox';
 import PDFViewerComponent from '../../components/Input/lexicalWYSWYG/PDFViewerComponent';
 
 import axios from 'axios';
-import { queryLibrary, getToken } from '../../lib/iaApi';
+import { queryLibrary, getToken, ingestPDF } from '../../lib/iaApi';
 import { 
   evalWithIA, 
   evalWithIAComplete,
@@ -121,24 +121,27 @@ export default function AnalysisRegulation({
   handleMenuOpen = () => {},
   handleAIClick = () => {},
   handleLexicalInput = () => {},
-  loadingAI = 'not clicked'
+  loadingAI = 'not clicked',
+  storeModule = 'LegalMatriz',
+  initialFileUrl = null,
+  initialFileName = null,
 }) {
   
   const { t } = useTranslation();
   const dispatch = useDispatch();
 
   const requisito_actual = useSelector((state) => 
-    selectFilterItemValue(state, 'LegalMatriz', 'requisito_actual')
+    selectFilterItemValue(state, storeModule, 'requisito_actual')
   ) || null;
 
   const id_requisito_actual = useSelector((state) => 
-    selectFilterItemValue(state, 'LegalMatriz', 'id_requisito_actual')
+    selectFilterItemValue(state, storeModule, 'id_requisito_actual')
   ) || null;
   
-  const storedArticles = useFilterItemValue('LegalMatriz', 'dataList');
-  const storedSelectedArticles = useFilterItemValue('LegalMatriz', 'selectedArticles');
-  const storedSelectedFile = useFilterItemValue('LegalMatriz', 'selectedFile');
-  const storedHistoricTextIA = useFilterItemValue('LegalMatriz', 'historicTextIA');
+  const storedArticles = useFilterItemValue(storeModule, 'dataList');
+  const storedSelectedArticles = useFilterItemValue(storeModule, 'selectedArticles');
+  const storedSelectedFile = useFilterItemValue(storeModule, 'selectedFile');
+  const storedHistoricTextIA = useFilterItemValue(storeModule, 'historicTextIA');
 
   const [loadingAIdata, setLoadingAIdata] = useState(false);
   const [aiData, setAiData] = useState();
@@ -154,7 +157,9 @@ export default function AnalysisRegulation({
   const [openList, setOpenList] = useState({});
   const [openTaskList, setOpenTaskList] = useState({});
   
-  const [tabIndexArticle, setTabIndexArticle] = useState(0);
+  const [tabIndexArticle, setTabIndexArticle] = useState(storeModule === 'LegalMatriz' ? 0 : 2);
+  const [showArticleTabs, setShowArticleTabs] = useState(storeModule === 'LegalMatriz');
+  const [showActionButtons, setShowActionButtons] = useState(storeModule === 'LegalMatriz');
   const [tabIndexTaskOptions, setTabIndexTaskOptions] = useState(0);
   const [tabIndexIA, setTabIndexIA] = useState(0);
 
@@ -297,9 +302,9 @@ export default function AnalysisRegulation({
   const [currentPdfName, setCurrentPdfName] = useState(null);
   const [pdfToolbarVisible, setPdfToolbarVisible] = useState(true); // Mostrar/ocultar Herramientas PDF
 
-  const storedPdfUrl = useFilterItemValue('LegalMatriz', 'storedPdfUrl');
-  const storedPdfName = useFilterItemValue('LegalMatriz', 'storedPdfName');
-  const storedNotes = useFilterItemValue('LegalMatriz', `pdf-notes-${id_requisito_actual}`);
+  const storedPdfUrl = useFilterItemValue(storeModule, 'storedPdfUrl');
+  const storedPdfName = useFilterItemValue(storeModule, 'storedPdfName');
+  const storedNotes = useFilterItemValue(storeModule, `pdf-notes-${id_requisito_actual}`);
 
   useEffect(() => {
     if (storedPdfUrl) {
@@ -312,30 +317,69 @@ export default function AnalysisRegulation({
 
   useEffect(() => {
     if (currentPdfUrl) {
-      handleSetFilterItemValue('LegalMatriz', 'storedPdfUrl', currentPdfUrl);
+      handleSetFilterItemValue(storeModule, 'storedPdfUrl', currentPdfUrl);
     }
   }, [currentPdfUrl]);
 
   useEffect(() => {
     if (currentPdfName) {
-      handleSetFilterItemValue('LegalMatriz', 'storedPdfName', currentPdfName);
+      handleSetFilterItemValue(storeModule, 'storedPdfName', currentPdfName);
     }
   }, [currentPdfName]);
 
+  useEffect(() => {
+    if (!initialFileUrl) return;
+
+    let cancelled = false;
+
+    const loadAndIngest = async () => {
+      try {
+        // Usar proxy backend para evitar CORS con URLs firmadas de S3
+        const proxyUrl = `/message_center_api/legal_api/proxy_pdf?url=${encodeURIComponent(initialFileUrl)}`;
+        const response = await fetch(proxyUrl);
+        if (cancelled) return;
+        if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
+        const blob = await response.blob();
+        if (cancelled) return;
+        const name = initialFileName || 'documento.pdf';
+        const file = new File([blob], name, { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        if (!cancelled) {
+          setCurrentPdfUrl(blobUrl);
+          setCurrentPdfName(name);
+          setViewMode('pdf');
+          ingestPDF(file).catch((err) => console.error('Error al indexar PDF:', err));
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Error cargando archivo para análisis:', err);
+        // Fallback: URL directa (puede fallar por CORS en el PDF viewer)
+        setCurrentPdfUrl(initialFileUrl);
+        setCurrentPdfName(initialFileName || 'documento.pdf');
+        setViewMode('pdf');
+      }
+    };
+
+    loadAndIngest();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFileUrl, initialFileName]);
+
   const legacyDataList = useSelector((state) => 
-    selectFilterItemValue(state, 'LegalMatriz', 'article_data_list')
+    selectFilterItemValue(state, storeModule, 'article_data_list')
   ) || [];
 
   const taskList = useSelector((state) => 
-    selectFilterItemValue(state, 'LegalMatriz', 'task_data_list')
+    selectFilterItemValue(state, storeModule, 'task_data_list')
   ) || [];
 
   const dataAnalysis = useSelector((state) => 
-    selectFilterItemValue(state, 'LegalMatriz', 'data_analysis')
+    selectFilterItemValue(state, storeModule, 'data_analysis')
   ) || [];
 
   const resultAnalysis = useSelector((state) => 
-    selectFilterItemValue(state, 'LegalMatriz', 'result_analysis')
+    selectFilterItemValue(state, storeModule, 'result_analysis')
   ) || {};
 
   const handleSetFilterItemValue = (module, id, value) => {
@@ -351,19 +395,19 @@ export default function AnalysisRegulation({
   };
   
   useEffect(() => {
-    handleSetFilterItemValue('LegalMatriz', 'dataList', articles);
+    handleSetFilterItemValue(storeModule, 'dataList', articles);
   }, [articles]);
 
   useEffect(() => {
-    handleSetFilterItemValue('LegalMatriz', 'selectedArticles', selectedArticles);
+    handleSetFilterItemValue(storeModule, 'selectedArticles', selectedArticles);
   }, [selectedArticles]);
 
   useEffect(() => {
-    handleSetFilterItemValue('LegalMatriz', 'selectedFile', selectedFile);
+    handleSetFilterItemValue(storeModule, 'selectedFile', selectedFile);
   }, [selectedFile]);
 
   useEffect(() => {
-    handleSetFilterItemValue('LegalMatriz', 'historicTextIA', historicTextIA);
+    handleSetFilterItemValue(storeModule, 'historicTextIA', historicTextIA);
   }, [historicTextIA]);
 
   const toggleListOpen = (index) => {
@@ -1039,7 +1083,7 @@ export default function AnalysisRegulation({
         console.log("AI TEXT Response");
         console.log(response);
         setResultAnalysisData(response?.data);
-        handleSetFilterItemValue('LegalMatriz', 'resultAnalysis', response?.data);
+        handleSetFilterItemValue(storeModule, 'resultAnalysis', response?.data);
         setLoadingAIdata(true);
       } else {
         console.log("Respuesta inesperada o vacía:", response);
@@ -1063,7 +1107,7 @@ export default function AnalysisRegulation({
         console.log("AI TEXT Response");
         console.log(response);
         setResultAnalysisData(response?.data);
-        handleSetFilterItemValue('LegalMatriz', 'resultAnalysis', response?.data);
+        handleSetFilterItemValue(storeModule, 'resultAnalysis', response?.data);
         setLoadingAIdata(true);
       } else {
         console.log("Respuesta inesperada o vacía:", response);
@@ -1409,7 +1453,7 @@ export default function AnalysisRegulation({
         console.log(response);
       
         const updatedTaskList = [...taskList, ...response.data];
-        handleSetFilterItemValue('LegalMatriz', 'task_data_list', updatedTaskList);
+        handleSetFilterItemValue(storeModule, 'task_data_list', updatedTaskList);
       } else {
         console.log("Respuesta inesperada o vacía:", response);
         if (data?.error?.message === 'Rejected') {
@@ -1736,18 +1780,20 @@ export default function AnalysisRegulation({
     formData.append('file', file);
 
     try {
-      const token = process.env.REACT_APP_TOKEN_ANALYSIS_SERVICES;
-      const response = await fetch('http://localhost:8000/analyze/pdf/stream', { 
-        method: 'POST', 
+      const token = await getToken();
+      if (!token) throw new Error('No autenticado — token no encontrado');
+      const iaBaseUrl = (window.__APP_CONFIG__?.api_url_ia || 'http://localhost:8000/').replace(/\/$/, '');
+      const response = await fetch(`${iaBaseUrl}/analyze/pdf/stream`, {
+        method: 'POST',
         body: formData,
         headers: {
           'Authorization': `Bearer ${token}`
         }
-      }); 
-  
-      if (!response.ok) { 
-        throw new Error(`HTTP error! status: ${response.status}`); 
-      } 
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
   
       const reader = response.body.getReader(); 
       const decoder = new TextDecoder(); 
@@ -2151,7 +2197,7 @@ export default function AnalysisRegulation({
       return;
     }
 
-    if (!id_requisito_actual) {
+    if (!id_requisito_actual && storeModule === 'LegalMatriz') {
       toast.error('No hay un requisito seleccionado.', {
         position: 'top-right',
         containerId: 'analysis-regulation-container'
@@ -2174,7 +2220,9 @@ export default function AnalysisRegulation({
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('id_requisito', id_requisito_actual);
+    if (id_requisito_actual) {
+      formData.append('id_requisito', id_requisito_actual);
+    }
 
     // Inicializar chat con mensaje de usuario
     let updatedHistoric = [...historicTextIA];
@@ -2613,7 +2661,7 @@ export default function AnalysisRegulation({
 
   const handleConfirmDelete = () => {
     const temporalList = legacyDataList.filter((_, i) => i !== deleteIndex);
-    handleSetFilterItemValue('LegalMatriz', 'article_data_list', temporalList);
+    handleSetFilterItemValue(storeModule, 'article_data_list', temporalList);
     setConfirmOpen(false);
     setDeleteIndex(null);
   };
@@ -2816,6 +2864,7 @@ export default function AnalysisRegulation({
                     onUploadPdf={handleSimplePDFUpload}
                     toolbarVisible={pdfToolbarVisible}
                     onToggleToolbar={() => setPdfToolbarVisible(!pdfToolbarVisible)}
+                    showUploadButton={showActionButtons}
                   />
 
                   {/* VISTA PDF */}
@@ -2851,13 +2900,13 @@ export default function AnalysisRegulation({
               >
                 <Box flex={1} pt={2}>
                   {/* TABS */}
-                  <Tabs 
-                    value={tabIndexArticle} 
+                  <Tabs
+                    value={tabIndexArticle}
                     onChange={(e, newValue) => setTabIndexArticle(newValue)}
                     className='mb-4'
                   >
-                    <Tab label={t("list")} />
-                    <Tab label={t("Artículos")} />
+                    <Tab label={t("list")} sx={{ display: showArticleTabs ? undefined : 'none' }} />
+                    <Tab label={t("Artículos")} sx={{ display: showArticleTabs ? undefined : 'none' }} />
                     <Tab label={t("Chat norma")} />
                     <Tab label={t("Análisis ampliado")} />
                   </Tabs>

@@ -69,7 +69,8 @@ export default function CreateRequestDialog({
     current_status: 'RECEIVED',
     due_date: '',
     repeated: 0,
-    id_request_parent: null
+    id_request_parent: null,
+    type_comunication: 3
   });
 
   // Estados adicionales
@@ -217,6 +218,7 @@ export default function CreateRequestDialog({
       formDataToSend.append('filing_date', formData.filing_date);
       formDataToSend.append('expected_response_date', formData.expected_response_date);
       formDataToSend.append('mode', formData.mode);
+      formDataToSend.append('type_comunication', formData.type_comunication);
       formDataToSend.append('created_by', 1);
 
       // Campos opcionales
@@ -289,7 +291,8 @@ export default function CreateRequestDialog({
       current_status: 'RECEIVED',
       due_date: '',
       repeated: 0,
-      id_request_parent: null
+      id_request_parent: null,
+      type_comunication: 3
     });
     setSelectedArticles([]);
     setSelectedRecipients([]);
@@ -313,6 +316,20 @@ export default function CreateRequestDialog({
         gap: 2
       }}
     >
+      <FormControl fullWidth>
+        <InputLabel size="small">{t('type')}</InputLabel>
+        <Select
+          size="small"
+          value={formData.type_comunication}
+          label={t('type')}
+          onChange={(e) => handleFormChange('type_comunication', e.target.value)}
+        >
+          <MenuItem value={1}>Informativo</MenuItem>
+          <MenuItem value={2}>Requisito</MenuItem>
+          <MenuItem value={3}>Acto administrativo</MenuItem>
+        </Select>
+      </FormControl>
+
       <FormControl fullWidth>
         <InputLabel size="small">{t('source_type')}</InputLabel>
         <Select
