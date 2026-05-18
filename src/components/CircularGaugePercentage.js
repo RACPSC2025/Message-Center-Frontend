@@ -5,6 +5,8 @@ import ReactECharts from 'echarts-for-react'
 const INNER_HOLE_PX = 105;
 
 function CircularGaugePercentage({color = "#00C853", percentage = 75}) {
+  const displayValue = percentage < 50 ? (100.0 - percentage) : percentage;
+
   const circularProgressBarOptions = {
     backgroundColor: 'transparent',
     series: [
@@ -13,30 +15,9 @@ function CircularGaugePercentage({color = "#00C853", percentage = 75}) {
         radius: ['70%', '85%'],
         avoidLabelOverlap: false,
         hoverAnimation: true,
-        label: {
-          show: true,
-          position: 'center',
-          fontSize: '25',
-          fontWeight: 'bold',
-          formatter: function (params) {
-            if (percentage < 50) {
-              return `${100.0 - params.value}%`
-            } else {
-              return `${params.value}%`
-            }
-          }
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: '25',
-            fontWeight: 'bold',
-            formatter: '{d}%'
-          }
-        },
-        labelLine: {
-          show: false
-        },
+        label: { show: false },
+        emphasis: { label: { show: false } },
+        labelLine: { show: false },
         data: [
           { value: `${percentage}`, name: 'Completion', itemStyle: { color: `${color}`, borderRadius: 10 } },
           { value: `${100 - percentage}`, name: 'Remaining', itemStyle: { color: '#FFF' } }
@@ -47,7 +28,12 @@ function CircularGaugePercentage({color = "#00C853", percentage = 75}) {
 
   return (
     <div style={{ position: 'relative', height: '150px', width: '100%' }}>
-      {/* Imagen de fondo centrada en el hueco interior del donut */}
+      {/* ECharts canvas — base layer */}
+      <ReactECharts
+        option={circularProgressBarOptions}
+        style={{ position: 'relative', zIndex: 1, height: '150px', width: '100%', background: 'transparent' }}
+      />
+      {/* Imagen en el hueco — encima del canvas para no depender de transparencia ECharts */}
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -57,7 +43,7 @@ function CircularGaugePercentage({color = "#00C853", percentage = 75}) {
         height: INNER_HOLE_PX,
         borderRadius: '50%',
         overflow: 'hidden',
-        zIndex: 0,
+        zIndex: 2,
         pointerEvents: 'none',
       }}>
         <img
@@ -66,10 +52,22 @@ function CircularGaugePercentage({color = "#00C853", percentage = 75}) {
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
-      <ReactECharts
-        option={circularProgressBarOptions}
-        style={{ position: 'relative', zIndex: 1, height: '150px', width: '100%', background: 'transparent' }}
-      />
+      {/* Porcentaje — sobre la imagen */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 3,
+        pointerEvents: 'none',
+        color: '#000',
+        fontSize: '25px',
+        fontWeight: 'bold',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+      }}>
+        {displayValue}%
+      </div>
     </div>
   )
 }

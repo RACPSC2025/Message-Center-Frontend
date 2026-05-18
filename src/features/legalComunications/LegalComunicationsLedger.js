@@ -57,6 +57,7 @@ export default function LegalComunicationsLedger({
   const [autoRefreshingUrls, setAutoRefreshingUrls] = useState(false);
   const [lastSignedUrlRefreshAt, setLastSignedUrlRefreshAt] = useState(0);
   const [analysisDrawer, setAnalysisDrawer] = useState({ open: false, fileUrl: null, fileName: null });
+  const [showFechaLimite, setShowFechaLimite] = useState(false);
   const requisitoActual = useSelector((state) =>
     selectFilterItemValue(state, 'LegalMatriz', 'requisito_actual')
   );
@@ -68,12 +69,6 @@ export default function LegalComunicationsLedger({
   );
 
   useEffect(() => {
-    if (!idRequisitoActual) {
-      setRequests([]);
-      setLoading(false);
-      return;
-    }
-
     fetchRequests();
   }, [idRequisitoActual, refreshKey]);
 
@@ -83,7 +78,7 @@ export default function LegalComunicationsLedger({
       const response = await axiosInstance.post(
         '/message_center_api/legal_api/get_request_from_legal',
         {
-          id_requisito: idRequisitoActual
+          id_requisito: idRequisitoActual || null
         }
       );
 
@@ -383,16 +378,6 @@ export default function LegalComunicationsLedger({
     );
   }
 
-  if (!idRequisitoActual) {
-    return (
-      <Box p={4} textAlign="center">
-        <Typography variant="h6" color="textSecondary">
-          {t('select_legal_requirement_first')}
-        </Typography>
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ width: '100%', p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} gap={2}>
@@ -442,11 +427,13 @@ export default function LegalComunicationsLedger({
                   {t('due_date')}
                 </Typography>
               </TableCell>
-              <TableCell>
-                <Typography variant="caption" fontWeight="bold">
-                  {t('deadline')}
-                </Typography>
-              </TableCell>
+              {showFechaLimite && (
+                <TableCell>
+                  <Typography variant="caption" fontWeight="bold">
+                    {t('deadline')}
+                  </Typography>
+                </TableCell>
+              )}
               <TableCell>
                 <Typography variant="caption" fontWeight="bold">
                   {t('status')}
@@ -482,7 +469,7 @@ export default function LegalComunicationsLedger({
           <TableBody>
             {paginatedRequests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} align="center">
+                <TableCell colSpan={showFechaLimite ? 12 : 11} align="center">
                   <Typography color="textSecondary" py={4}>
                     {t('no_requests_found')}
                   </Typography>
@@ -553,35 +540,37 @@ export default function LegalComunicationsLedger({
                           />
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={t(request.status)}
-                          variant="outlined"
-                          size="small"
-                          sx={{
-                            fontWeight: 'bold',
-                            bgcolor: 'white',
-                            borderColor:
-                              request.status === 'resolved'
-                                ? 'success.main'
-                                : request.status === 'open' ||
-                                    request.status === 'in_progress'
-                                  ? 'warning.main'
-                                  : request.status === 'expired'
-                                    ? 'error.main'
-                                    : 'grey.500',
-                            color:
-                              request.status === 'resolved'
-                                ? 'success.main'
-                                : request.status === 'open' ||
-                                    request.status === 'in_progress'
-                                  ? 'warning.main'
-                                  : request.status === 'expired'
-                                    ? 'error.main'
-                                    : 'text.primary'
-                          }}
-                        />
-                      </TableCell>
+                      {showFechaLimite && (
+                        <TableCell>
+                          <Chip
+                            label={t(request.status)}
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              fontWeight: 'bold',
+                              bgcolor: 'white',
+                              borderColor:
+                                request.status === 'resolved'
+                                  ? 'success.main'
+                                  : request.status === 'open' ||
+                                      request.status === 'in_progress'
+                                    ? 'warning.main'
+                                    : request.status === 'expired'
+                                      ? 'error.main'
+                                      : 'grey.500',
+                              color:
+                                request.status === 'resolved'
+                                  ? 'success.main'
+                                  : request.status === 'open' ||
+                                      request.status === 'in_progress'
+                                    ? 'warning.main'
+                                    : request.status === 'expired'
+                                      ? 'error.main'
+                                      : 'text.primary'
+                            }}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell sx={{ maxWidth: 350 }}>
                         <Typography variant="body2" fontWeight="600" noWrap>
                           {request.description || '-'}
@@ -676,7 +665,7 @@ export default function LegalComunicationsLedger({
                     </TableRow>
 
                     <TableRow>
-                      <TableCell colSpan={12} sx={{ p: 0, bgcolor: 'grey.50' }}>
+                      <TableCell colSpan={showFechaLimite ? 12 : 11} sx={{ p: 0, bgcolor: 'grey.50' }}>
                         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                           <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
                             <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }} elevation={1}>
