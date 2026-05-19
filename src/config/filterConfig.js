@@ -183,6 +183,19 @@ export const filterConfigs = {
       options: PERMIT_STATUS_OPTIONS,
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Semáforo',
+      type: 'color-chips',
+      name: 'filter_semaforo',
+      default_value: null,
+      options: [
+        { value: '1', label: 'Sin desviaciones (Verde)', color: '#4caf50' },
+        { value: '2', label: 'Desviaciones atendibles (Amarillo)', color: '#ffc107' },
+        { value: '3', label: 'Desviaciones críticas (Rojo)', color: '#f44336' }
+      ],
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
     }
   ],
   legal_comunications: [

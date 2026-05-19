@@ -71,6 +71,7 @@ import updateMessageFlagReducer from './stores/messages/updateMessageFlagSlice';
 import fetchModuleNavigationIdsReducer from './stores/messages/fetchModuleNavigationIdsSlice';
 import platformConfigReducer from './stores/platformConfigSlice';
 import fetchSanctioningProcessesTableHeadersReducer from './stores/sanctioningProcesses/fetchSanctioningProcessesTableHeadersSlice';
+import fetchPermitManagerReducer from './stores/permitManager/fetchPermitManagerSlice';
 
 
 export const store = configureStore({
@@ -145,6 +146,7 @@ export const store = configureStore({
     moduleNavigation: fetchModuleNavigationIdsReducer,
     platformConfig: platformConfigReducer,
     sanctioningProcessesTableHeaders: fetchSanctioningProcessesTableHeadersReducer,
+    permitManager: fetchPermitManagerReducer,
   }
 });
 

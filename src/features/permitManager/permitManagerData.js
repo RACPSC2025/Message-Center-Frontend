@@ -209,6 +209,14 @@ export const PERMIT_COLUMN_DEFINITIONS = Object.freeze([
     filterable: false
   },
   {
+    field: 'semaforoColor',
+    headerName: 'SEMÁFORO',
+    visible: true,
+    filterable: false,
+    width: 110,
+    sortable: false
+  },
+  {
     field: 'estadoTramite',
     headerName: 'ESTADO DEL TRÁMITE',
     visible: true,

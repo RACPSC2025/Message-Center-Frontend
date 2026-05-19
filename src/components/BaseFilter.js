@@ -1,6 +1,6 @@
 ﻿import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, IconButton, InputAdornment, Typography } from '@mui/material';
+import { Box, Button, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material';
 import { isEmpty } from 'radash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +52,7 @@ function BaseFilter({ component = '' }) {
   const dispatch = useDispatch();
   const [showModuleStringFilter] = useState(false);
   const platformModules = useSelector((state) => state.platformConfig?.data?.modules ?? EMPTY_OBJECT);
+  const permitManagerFilterOptions = useSelector((state) => state.permitManager?.filterOptions ?? null);
 
   const selectedTaskView = useSelector((state) =>
     selectFilterItemValue(state, 'task', 'selectedTaskView')
@@ -94,6 +95,19 @@ function BaseFilter({ component = '' }) {
   const config = useMemo(() => {
     const baseConfig = filterConfigs[component] ?? [];
 
+    if (component === 'permit_manager' && permitManagerFilterOptions) {
+      const PERMIT_OPTION_MAP = {
+        filter_unit: permitManagerFilterOptions.unidad,
+        filter_permit_type: permitManagerFilterOptions.tipoPermiso,
+        filter_authority: permitManagerFilterOptions.autoridad,
+        filter_status: permitManagerFilterOptions.estadoTramite
+      };
+      return baseConfig.map((item) => {
+        const dynamicOptions = PERMIT_OPTION_MAP[item.name];
+        return dynamicOptions?.length ? { ...item, options: dynamicOptions } : item;
+      });
+    }
+
     if (component !== 'notifications') {
       return baseConfig;
     }
@@ -114,7 +128,7 @@ function BaseFilter({ component = '' }) {
     }
 
     return notificationsConfig;
-  }, [component, notificationModuleOptions, showModuleStringFilter]);
+  }, [component, notificationModuleOptions, showModuleStringFilter, permitManagerFilterOptions]);
 
   const groupedFilterItems = useMemo(() => {
     if (!config) return {};
@@ -504,6 +518,43 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
           {...fieldAttrs}
           onChange={(_, value) => handleSetFilterItemValue(value)}
         />
+      );
+      break;
+    case 'color-chips':
+      filterItem = (
+        <Box sx={updatedStyle}>
+          {label && (
+            <Typography
+              variant="caption"
+              sx={{ display: 'block', mb: 0.75, color: 'rgba(255,255,255,0.72)' }}
+            >
+              {label}
+            </Typography>
+          )}
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {options.map((opt) => {
+              const selected = value === opt.value;
+              return (
+                <Tooltip key={opt.value} title={opt.label} placement="top">
+                  <Box
+                    onClick={() => handleSetFilterItemValue(selected ? null : opt.value)}
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      bgcolor: opt.color,
+                      cursor: 'pointer',
+                      border: selected ? '2px solid #fff' : '2px solid transparent',
+                      boxShadow: selected ? `0 0 0 2px ${opt.color}` : 'none',
+                      transition: 'box-shadow 0.15s, border 0.15s',
+                      '&:hover': { opacity: 0.85 }
+                    }}
+                  />
+                </Tooltip>
+              );
+            })}
+          </Box>
+        </Box>
       );
       break;
     default:

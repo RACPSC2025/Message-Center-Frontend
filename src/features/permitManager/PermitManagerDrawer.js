@@ -19,6 +19,7 @@ import {
   List,
   ListItem,
   Paper,
+  Stack,
   TextField,
   Tooltip,
   Toolbar,
@@ -178,10 +179,45 @@ function DetailField({ label, value, chip }) {
   );
 }
 
+function SectionTitle({ children }) {
+  return (
+    <Typography
+      sx={{
+        fontSize: '0.68rem',
+        fontWeight: 800,
+        color: '#00BCD4',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        mb: 1
+      }}
+    >
+      {children}
+    </Typography>
+  );
+}
+
+function UserChips({ users }) {
+  if (!users?.length) return null;
+  return (
+    <Stack direction="row" flexWrap="wrap" gap={0.5}>
+      {users.map((user) => (
+        <Chip
+          key={user.id}
+          label={user.fullname}
+          size="small"
+          sx={{ fontSize: '0.68rem', height: 20, bgcolor: '#E3F2FD', color: '#1565C0' }}
+        />
+      ))}
+    </Stack>
+  );
+}
+
 function TabDetalles({ item }) {
   const statusMeta = STATUS_META[item.statusKey] || STATUS_META.in_process;
   const semaforoKey = normalizeText(item.semaforoAmbiental || 'sin dato');
   const semaforoMeta = SEMAPHORE_META[semaforoKey] || SEMAPHORE_META['sin dato'];
+  const semaforoColor = item.semaforoColor || semaforoMeta.color;
+  const semaforoLabel = item.semaforoDescription || semaforoMeta.label;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -208,14 +244,14 @@ function TabDetalles({ item }) {
               height: 24
             }}
           />
-          <Tooltip title={semaforoMeta.label}>
+          <Tooltip title={semaforoLabel}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Box
                 sx={{
                   width: 10,
                   height: 10,
                   borderRadius: '50%',
-                  bgcolor: semaforoMeta.color
+                  bgcolor: semaforoColor
                 }}
               />
               <Typography sx={{ fontSize: '0.68rem', color: '#78909C' }}>Semáforo</Typography>
@@ -223,14 +259,7 @@ function TabDetalles({ item }) {
           </Tooltip>
         </Box>
 
-        <Typography
-          sx={{
-            fontSize: '1rem',
-            fontWeight: 800,
-            color: '#263238',
-            lineHeight: 1.3
-          }}
-        >
+        <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: '#263238', lineHeight: 1.3 }}>
           {item.tipoPermiso}
         </Typography>
         <Typography sx={{ fontSize: '0.78rem', color: '#78909C', mt: 0.3 }}>
@@ -238,60 +267,51 @@ function TabDetalles({ item }) {
         </Typography>
       </Paper>
 
-      <Typography
-        sx={{
-          fontSize: '0.68rem',
-          fontWeight: 800,
-          color: '#00BCD4',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          mb: 1
-        }}
-      >
-        Identificación
-      </Typography>
+      <SectionTitle>Identificación</SectionTitle>
       <DetailField label="Unidad" value={item.unidad} />
       <DetailField label="Sede" value={item.sede} />
       <DetailField label="Autoridad ambiental" value={item.autoridad} />
+      {item.responsablesList?.length > 0 && (
+        <DetailField label="Responsables" chip={<UserChips users={item.responsablesList} />} />
+      )}
+      {item.revisoresList?.length > 0 && (
+        <DetailField label="Revisores" chip={<UserChips users={item.revisoresList} />} />
+      )}
       <Divider sx={{ my: 1.5 }} />
 
-      <Typography
-        sx={{
-          fontSize: '0.68rem',
-          fontWeight: 800,
-          color: '#00BCD4',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          mb: 1
-        }}
-      >
-        Documentos
-      </Typography>
+      {item.justificacionSolicitud && (
+        <>
+          <SectionTitle>Solicitud</SectionTitle>
+          <DetailField label="Justificación" value={item.justificacionSolicitud} />
+          <Divider sx={{ my: 1.5 }} />
+        </>
+      )}
+
+      <SectionTitle>Documentos</SectionTitle>
       <DetailField label="Acto administrativo inicial" value={item.actoAdministrativoInicial || '—'} />
       <DetailField label="Expediente" value={item.expediente || '—'} />
       <Divider sx={{ my: 1.5 }} />
 
-      <Typography
-        sx={{
-          fontSize: '0.68rem',
-          fontWeight: 800,
-          color: '#00BCD4',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          mb: 1
-        }}
-      >
-        Radicación y tiempos
-      </Typography>
+      <SectionTitle>Radicación y tiempos</SectionTitle>
       <DetailField label="Fecha de radicación del permiso" value={item.fechaRadicacionPermiso || '—'} />
       <DetailField
-        label="N.° radicado solicitud a la autoridad ambiental"
+        label="N.° radicado solicitud a la autoridad"
         value={item.numeroRadicadoSolicitudAutoridad || '—'}
       />
       <DetailField
-        label="Fecha proyectada para el otorgamiento del permiso"
+        label="Fecha proyectada para el otorgamiento"
         value={item.fechaProyectadaOtorgamiento || '—'}
       />
+      <DetailField
+        label="Fecha real de otorgamiento"
+        value={item.fechaRealOtorgamiento || '—'}
+      />
+      {item.duracionTramiteMeses && (
+        <DetailField
+          label="Duración del trámite (meses)"
+          value={String(item.duracionTramiteMeses)}
+        />
+      )}
     </Box>
   );
 }
