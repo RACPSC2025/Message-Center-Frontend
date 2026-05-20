@@ -97,6 +97,36 @@ const initialState = {
   }
 };
 
+export const createTramiteAmbiental = createAsyncThunk(
+  'permitManager/create_tramite_ambiental',
+  async (data = {}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        '/message_center_api/Ambiental_Permit_api/create_tramite_ambiental',
+        data
+      );
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const updateTramiteAmbiental = createAsyncThunk(
+  'permitManager/update_tramite_ambiental',
+  async (data = {}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        '/message_center_api/Ambiental_Permit_api/update_tramite_ambiental',
+        data
+      );
+      return response?.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const fetchTramitesAmbientales = createAsyncThunk(
   'permitManager/list_tramites_ambientales',
   async (params = {}, { rejectWithValue }) => {

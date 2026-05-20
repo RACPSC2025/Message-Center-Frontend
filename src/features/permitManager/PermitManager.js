@@ -20,7 +20,11 @@ import {
   PERMIT_TABLE_COLUMNS,
   STATUS_META
 } from './permitManagerData';
-import { fetchTramitesAmbientales } from '../../stores/permitManager/fetchPermitManagerSlice';
+import {
+  createTramiteAmbiental,
+  fetchTramitesAmbientales,
+  updateTramiteAmbiental
+} from '../../stores/permitManager/fetchPermitManagerSlice';
 import PermitManagerDrawer from './PermitManagerDrawer';
 import PermitManagerFormDrawer from './PermitManagerFormDrawer';
 import PermitManagerKanban from './PermitManagerKanban';
@@ -260,29 +264,13 @@ function PermitManager() {
     setEditingPermit(null);
   };
 
-  const handleSubmitPermit = (formValues) => {
-    setPermits((previous) => {
-      if (formMode === 'edit' && editingPermit?.recordId) {
-        return previous.map((record) =>
-          record.recordId === editingPermit.recordId
-            ? {
-                ...record,
-                ...formValues,
-                recordId: editingPermit.recordId
-              }
-            : record
-        );
-      }
-
-      return [
-        {
-          ...formValues,
-          recordId: buildNextRecordId(previous)
-        },
-        ...previous
-      ];
-    });
-
+  const handleSubmitPermit = async (apiPayload) => {
+    if (formMode === 'edit' && editingPermit?.id) {
+      await dispatch(updateTramiteAmbiental({ id: editingPermit.id, ...apiPayload }));
+    } else {
+      await dispatch(createTramiteAmbiental(apiPayload));
+    }
+    dispatch(fetchTramitesAmbientales(apiParams));
     handleCloseFormDrawer();
   };
 
