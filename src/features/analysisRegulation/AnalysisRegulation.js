@@ -87,7 +87,9 @@ import {
   ChatNormaTab,
   KnowledgeBaseTab,
   ArticlesList,
-  SelectedArticlesList
+  SelectedArticlesList,
+  TaxonomyTab,
+  ObligacionesTab,
 } from './components';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -2909,6 +2911,8 @@ export default function AnalysisRegulation({
                     <Tab label={t("Artículos")} sx={{ display: showArticleTabs ? undefined : 'none' }} />
                     <Tab label={t("Chat norma")} />
                     <Tab label={t("Análisis ampliado")} />
+                    <Tab label="Taxonomía" />
+                    <Tab label="Obligaciones" />
                   </Tabs>
 
                   {/* ========== TAB 0: Articles list ========== */}
@@ -2973,6 +2977,16 @@ export default function AnalysisRegulation({
                         loading={loadingKnowledgeBase}
                       />
                     </>
+                  )}
+
+                  {/* ========== TAB 4: Taxonomía ========== */}
+                  {tabIndexArticle === 4 && (
+                    <TaxonomyTab source={currentPdfName} />
+                  )}
+
+                  {/* ========== TAB 5: Obligaciones ========== */}
+                  {tabIndexArticle === 5 && (
+                    <ObligacionesTab source={currentPdfName} />
                   )}
                 </Box>
               </Box>
