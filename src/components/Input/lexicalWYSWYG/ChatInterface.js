@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   List, 
   ListItem, 
@@ -591,24 +593,32 @@ function ChatInterface({
                           : 'bg-gray-200 text-gray-800'
                       }`}
                     >
-                      {/* Texto del mensaje (editable) */}
-                      <div
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={(e) => handleContentChange(index, e)}
-                        onKeyDown={handleKeyDown}
-                        className="text-sm focus:outline-none"
-                        style={{ 
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word',
-                          fontSize: '0.875rem',
-                          lineHeight: '1.5',
-                          minHeight: '20px'
-                        }}
-                      >
-                        {message.text}
-                      </div>
+                      {/* Texto del mensaje */}
+                      {message.role === 'assistant' ? (
+                        <div className="text-sm markdown-body" style={{ fontSize: '0.875rem', lineHeight: '1.6', wordBreak: 'break-word' }}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.text}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleContentChange(index, e)}
+                          onKeyDown={handleKeyDown}
+                          className="text-sm focus:outline-none"
+                          style={{
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            fontSize: '0.875rem',
+                            lineHeight: '1.5',
+                            minHeight: '20px'
+                          }}
+                        >
+                          {message.text}
+                        </div>
+                      )}
                       
                       {/* 🆕 Renderizar tablas si existen */}
                       {message.tables && message.tables.length > 0 && (

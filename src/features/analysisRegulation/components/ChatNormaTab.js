@@ -1,6 +1,8 @@
 import { Box, IconButton, Tooltip, CircularProgress, Typography, Paper, Chip, TextField } from '@mui/material';
 import { SendRounded, SourceRounded, DeleteSweepRounded } from '@mui/icons-material';
 import { useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const ChatNormaTab = ({
   userText,
@@ -72,12 +74,20 @@ const ChatNormaTab = ({
                   border: msg.role === 'user' ? 'none' : '1px solid #e0e0e0',
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6 }}
-                >
-                  {msg.text}
-                </Typography>
+                {msg.role === 'assistant' ? (
+                  <div className="markdown-body" style={{ fontSize: '0.875rem', lineHeight: 1.6, wordBreak: 'break-word' }}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6 }}
+                  >
+                    {msg.text}
+                  </Typography>
+                )}
 
                 {/* Fuentes */}
                 {msg.sources && msg.sources.filter(s => s !== 'unknown').length > 0 && (
