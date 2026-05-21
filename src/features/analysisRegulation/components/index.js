@@ -6,3 +6,5 @@ export { default as ChatNormaTab } from './ChatNormaTab';
 export { default as KnowledgeBaseTab } from './KnowledgeBaseTab';
 export { default as ArticlesList } from './ArticlesList';
 export { default as SelectedArticlesList } from './SelectedArticlesList';
+export { default as TaxonomyTab } from './TaxonomyTab';
+export { default as ObligacionesTab } from './ObligacionesTab';
