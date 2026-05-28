@@ -47,10 +47,11 @@ async function _parseResponse(res) {
   return res.json();
 }
 
-export async function ingestPDF(file) {
+export async function ingestPDF(file, docType = null) {
   const form = new FormData();
   form.append('files', file);
-  form.append('force_reconvert', 'false');
+  form.append('force_reconvert', 'true');
+  if (docType) form.append('doc_type', docType);
   const res = await _authFetch('/v1/documents/ingest', { method: 'POST', body: form });
   const data = await _parseResponse(res);
   // Backend retorna flat: { status: "success" | "partial", processed_files, indexed_chunks, errors }

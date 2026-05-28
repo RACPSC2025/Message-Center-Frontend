@@ -11,10 +11,12 @@ import {
   ListAlt,
   Tune,
   MoreVertOutlined,
-  VisibilityOutlined
+  VisibilityOutlined,
+  SmartToyRounded,
 } from '@mui/icons-material';
 import {
   Box,
+  Fab,
   FormControl,
   Button,
   IconButton,
@@ -28,6 +30,8 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import RobotPartnerLegalMatrix from './robotPartnerLegalMatrix';
+import legalService from '../services/legalService';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 import { useTranslation } from 'react-i18next';
@@ -97,6 +101,9 @@ export function Component() {
   const [showOptionsMenuButton, setShowOptionsMenuButton] = useState(false);
   const [newlyCreatedLegalId, setNewlyCreatedLegalId] = useState(null);
   const [editInitialData, setEditInitialData] = useState(null);
+  const [openRobotPartner, setOpenRobotPartner] = useState(false);
+  const [pendingArticles, setPendingArticles] = useState([]);
+  const pendingArticlesCreatingRef = useRef(false);
 
   const actionStatusItem = useFilterItemValue('LegalMatriz', 'filter_business');
   const actionKeyWords = useFilterItemValue('LegalMatriz', 'filter_keywords');
@@ -194,12 +201,34 @@ export function Component() {
     setOpenSpeedDial(false);
     setOpenOptionsDrawer(false);
     setEditInitialData(null);
+    setPendingArticles([]);
   };
 
-  const handleCreateSuccess = (legalId) => {
+  const handleCreateSuccess = async (legalId) => {
     handleCloseOptionsDrawer();
     setLoadLegals(true);
     setNewlyCreatedLegalId(legalId);
+
+    if (pendingArticles.length > 0 && legalId && !pendingArticlesCreatingRef.current) {
+      pendingArticlesCreatingRef.current = true;
+      const articles = pendingArticles;
+      setPendingArticles([]);
+      await Promise.allSettled(
+        articles.map((a) => {
+          const raw = a.editedContent ?? '';
+          // Strip leading article identifier (e.g. "Artículo 5. " / "Art. 5 - ") from description
+          const descripcion = raw.replace(/^(Art[ií]culo\.?\s*[\d\w]+\.?\s*[-–.]?\s*)/i, '').trim();
+          return legalService.createArticle({
+            id_requisito: legalId,
+            numeracion: a.articleId,
+            nombre: a.articleId,
+            descripcion,
+            estado: 'Abierto',
+          });
+        })
+      );
+      pendingArticlesCreatingRef.current = false;
+    }
   };
 
   const handleOpenLegalFormDrawer = () => {
@@ -1430,6 +1459,53 @@ export function Component() {
         <LegalMatrizDrawer
           openCreateTask={openCreateTask}
           setOpenCreateTask={handleCloseLegalFormDrawer}
+        />
+
+        <Tooltip title="Partner Business — Análisis Documental" placement="left">
+          <Fab
+            color="primary"
+            size="medium"
+            onClick={() => setOpenRobotPartner(true)}
+            sx={{ position: 'fixed', bottom: 32, right: 96, zIndex: 1200 }}
+          >
+            <SmartToyRounded />
+          </Fab>
+        </Tooltip>
+
+        <RobotPartnerLegalMatrix
+          open={openRobotPartner}
+          onClose={() => setOpenRobotPartner(false)}
+          onGenerateRequirement={(articles, pdfName, requisitoGeneral, normativeMeta) => {
+            setPendingArticles(articles);
+
+            const parseSpanishDate = (str) => {
+              if (!str) return '';
+              const MONTHS = { enero:'01', febrero:'02', marzo:'03', abril:'04', mayo:'05', junio:'06', julio:'07', agosto:'08', septiembre:'09', octubre:'10', noviembre:'11', diciembre:'12' };
+              const m = str.match(/(\d+)\s+de\s+(\w+)\s+de\s+(\d{4})/i);
+              if (!m) return '';
+              return `${m[3]}-${MONTHS[m[2].toLowerCase()] ?? '01'}-${m[1].padStart(2, '0')}`;
+            };
+
+            const metaType = normativeMeta?.tipo_requisito;
+            const resolvedType = metaType === 'general' ? 'General'
+              : metaType === 'especifico' || metaType === 'especifica' ? 'Específico'
+              : requisitoGeneral === '0' ? 'Específico' : 'General';
+
+            setEditInitialData({
+              numero: normativeMeta?.numero ?? '',
+              nombre: normativeMeta?.titulo ?? pdfName ?? '',
+              descripcion: normativeMeta?.descripcion ?? '',
+              emitidopor: normativeMeta?.entidad_emisora ?? '',
+              fecha_expedicion: parseSpanishDate(normativeMeta?.fecha_expedicion),
+              fecha_ejecutoria: parseSpanishDate(normativeMeta?.fecha_vigencia),
+              type: resolvedType,
+            });
+
+            setOpenRobotPartner(false);
+            handleOpenOptionsDrawer();
+            setActiveTabId(LEGAL_MATRIX_TAB_IDS.CREATE_LEGAL_REQUIREMENT);
+            setOptinDrawerTitle(t('create_legal_requirement'));
+          }}
         />
       </Box>
     </BaseFeaturePageLayout>
