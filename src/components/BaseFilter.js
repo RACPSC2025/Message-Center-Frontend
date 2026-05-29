@@ -266,6 +266,7 @@ function BaseFilterItem({ module, type, label, id, gutterBottom = false, ...rest
       api_url: api_details.api_url,
       module, // This is your module name e.g., 'notifications'
       fieldName: id, // This is the specific field name e.g., 'filter_status',
+      responseKey: api_details.responseKey,
       ...apiParams
     };
 

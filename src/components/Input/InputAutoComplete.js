@@ -52,18 +52,19 @@ const InputAutoComplete = ({
   const getOptionsList = async (apiDetails) => {
     try {
       setLoading(true);
-      const { api_url, param_key, param_value } = apiDetails;
+      const { api_url, param_key, param_value, responseKey } = apiDetails;
 
       const formData = new FormData();
       if (param_key && param_value) formData.append(param_key, param_value);
 
       const response = await axiosInstance.post(api_url, formData);
-      if (!(isEmpty(options) && isEmpty(response.data.data))) {
-        setOptions(response.data.data);
+      const data = responseKey ? (response.data.data[responseKey] ?? []) : response.data.data;
+      if (!(isEmpty(options) && isEmpty(data))) {
+        setOptions(data);
         
         // Guardar labels en cache global de Redux
         const newCachedLabels = {};
-        response.data.data.forEach(option => {
+        data.forEach(option => {
           newCachedLabels[option.value] = option.label;
         });
         dispatch(updateLabelsCache({ labels: newCachedLabels }));

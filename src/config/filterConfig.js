@@ -95,7 +95,7 @@ export const filterConfigs = {
       
     },
     */
-   /*
+    /*
     {
       labelKey: 'Category',
       type: 'autocompleteWithoutLevel',
@@ -279,7 +279,7 @@ export const filterConfigs = {
       ...dropdownReviewerList,
       labelKey: 'Reviewer'
     },
-    
+
     {
       labelKey: 'Etiquetas',
       type: 'autocompleteWithoutLevel',
@@ -309,7 +309,7 @@ export const filterConfigs = {
       group_by_key: 'sort_by',
       group_by_label: 'sort'
     },
-    
+
     dateRangeField
   ],
   events_table: [
@@ -412,93 +412,102 @@ export const filterConfigs = {
     textSearchField,
     {
       labelKey: 'country',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_country',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'area_options'
       }
     },
     {
       labelKey: 'company',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_company',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'area_options'
       }
     },
     {
       labelKey: 'department',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_department',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'area_options'
       }
     },
     {
       labelKey: 'city',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_city',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'area_options'
       }
     },
     {
       labelKey: 'management',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_management',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'managements'
       }
     },
     {
       labelKey: 'Contractor',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_Contractor',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'contractors'
       }
     },
     {
       labelKey: 'person_registering',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_person_registering',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'reporting_persons'
       }
     },
     dateRangeField,
     {
       labelKey: 'Status',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_Status',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'status'
       }
     },
     {
       labelKey: 'source_of_the_finding',
-      type: 'autocomplete',
+      type: 'autocompleteWithoutLevel',
       name: 'filter_source_of_the_finding',
       default_value: '',
       options: [],
       api_details: {
-        api_url: '/message_center_api/tasklist_api/list_location'
+        api_url: '/message_center_api/inspecciones_api/get_dropdown_options',
+        responseKey: 'finding_sources'
       }
     }
   ],
@@ -536,6 +545,5 @@ export const filterConfigs = {
       ...dropdownReviewerList,
       labelKey: 'Reviewer'
     }
-  ],
-
+  ]
 };
