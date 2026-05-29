@@ -8,7 +8,7 @@ import { ArticleRounded, RestoreRounded, SaveRounded } from '@mui/icons-material
 import { fetchArticle } from '../../api';
 import { loadEdit, clearEdit } from '../../lib/editsDb';
 
-const ArticleEditorDialog = ({ open, articleId, source, onClose, onSave }) => {
+const ArticleEditorDialog = ({ open, articleId, source, onClose, onSave, onRestore }) => {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -54,6 +54,7 @@ const ArticleEditorDialog = ({ open, articleId, source, onClose, onSave }) => {
     await clearEdit(source, articleId);
     setEditedContent(originalContent);
     setHasSavedEdit(false);
+    onRestore?.(articleId);
   };
 
   const isDirty = editedContent !== originalContent;

@@ -17,9 +17,36 @@ async function authGet(path) {
   return res;
 }
 
-export async function fetchTaxonomy(source) {
+export async function fetchTaxonomy(source, { allowPartial = false } = {}) {
   const params = new URLSearchParams({ source, include_articles: 'true' });
+  if (allowPartial) params.set('allow_partial', 'true');
   const res = await authGet(`/v1/documents/taxonomy?${params}`);
+  const data = await res.json();
+  return data.api_response ?? data;
+}
+
+export async function ingestPDFAsync(file, docType = null) {
+  const token = await getToken();
+  if (!token) throw new Error('No autenticado');
+  const form = new FormData();
+  form.append('files', file);
+  form.append('force_reconvert', 'true');
+  if (docType) form.append('doc_type', docType);
+  const res = await fetch(`${getBaseUrl()}/v1/documents/ingest?async_mode=true`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Error ${res.status}`);
+  }
+  const data = await res.json();
+  return data.api_response ?? data;
+}
+
+export async function pollIngestStatus(jobId) {
+  const res = await authGet(`/v1/documents/ingest/status/${jobId}`);
   const data = await res.json();
   return data.api_response ?? data;
 }

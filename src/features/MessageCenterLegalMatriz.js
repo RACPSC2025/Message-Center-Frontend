@@ -211,22 +211,74 @@ export function Component() {
 
     if (pendingArticles.length > 0 && legalId && !pendingArticlesCreatingRef.current) {
       pendingArticlesCreatingRef.current = true;
-      const articles = pendingArticles;
+      const allItems     = pendingArticles;
+      const articleItems = allItems.filter((a) => !a.paragraphId);
+      const paraItems    = allItems.filter((a) =>  a.paragraphId);
       setPendingArticles([]);
+
+      const cleanDesc = (raw = '') =>
+        raw.replace(/^(Art[ií]culo\.?\s*[\d\w]+\.?\s*[-–.]?\s*)/i, '').trim();
+
+      // Extrae etiqueta corta del identifier del parágrafo ("PARÁGRAFO 1", "PARÁGRAFO ÚNICO")
+      const paraLabel = (identifier = '') => {
+        const m = identifier.match(/^(PARÁGRAFO[.\s]*(ÚNICO|\d+)?\.?)\s*/i);
+        return m ? m[0].trim().replace(/\.$/, '') : 'PARÁGRAFO';
+      };
+
+      // ── Paso 1: crear artículos, capturar id_articulo por articleId ──────────
+      const createdIdMap = {}; // { articleId → id_articulo }
       await Promise.allSettled(
-        articles.map((a) => {
-          const raw = a.editedContent ?? '';
-          // Strip leading article identifier (e.g. "Artículo 5. " / "Art. 5 - ") from description
-          const descripcion = raw.replace(/^(Art[ií]culo\.?\s*[\d\w]+\.?\s*[-–.]?\s*)/i, '').trim();
-          return legalService.createArticle({
+        articleItems.map(async (a) => {
+          const res = await legalService.createArticle({
             id_requisito: legalId,
-            numeracion: a.articleId,
-            nombre: a.articleId,
-            descripcion,
-            estado: 'Abierto',
+            numeracion:   a.articleId,
+            nombre:       a.articleId,
+            descripcion:  cleanDesc(a.editedContent),
+            estado:       'Abierto',
+            item_type:    'Artículo',
+          });
+          // El backend puede devolver id_articulo directamente o dentro de payload
+          const createdId = res?.id_articulo ?? res?.payload?.id_articulo ?? null;
+          if (createdId) createdIdMap[a.articleId] = String(createdId);
+        })
+      );
+
+      // ── Paso 2: stubs para padres no seleccionados explícitamente ────────────
+      const orphanParentIds = [
+        ...new Set(paraItems.map((p) => p.articleId).filter((id) => !createdIdMap[id])),
+      ];
+      await Promise.allSettled(
+        orphanParentIds.map(async (articleId) => {
+          const res = await legalService.createArticle({
+            id_requisito: legalId,
+            numeracion:   articleId,
+            nombre:       articleId,
+            descripcion:  '',
+            estado:       'Abierto',
+            item_type:    'Artículo',
+          });
+          const createdId = res?.id_articulo ?? res?.payload?.id_articulo ?? null;
+          if (createdId) createdIdMap[articleId] = String(createdId);
+        })
+      );
+
+      // ── Paso 3: crear parágrafos con parent_article_id ───────────────────────
+      await Promise.allSettled(
+        paraItems.map((p) => {
+          const label    = paraLabel(p.paragraphId);
+          const parentId = createdIdMap[p.articleId] ?? '';
+          return legalService.createArticle({
+            id_requisito:      legalId,
+            numeracion:        `${p.articleId} - ${label}`,
+            nombre:            label,
+            descripcion:       p.editedContent || p.paragraphId || '',
+            estado:            'Abierto',
+            item_type:         'Parágrafo',
+            parent_article_id: parentId,
           });
         })
       );
+
       pendingArticlesCreatingRef.current = false;
     }
   };
@@ -1493,8 +1545,11 @@ export function Component() {
 
             setEditInitialData({
               numero: normativeMeta?.numero ?? '',
+              // titulo = nombre descriptivo corto ≤80 chars (★ campo principal según spec)
               nombre: normativeMeta?.titulo ?? pdfName ?? '',
-              descripcion: normativeMeta?.descripcion ?? '',
+              // titulo_formal = "Por la cual…" texto legal ≤300 chars — más preciso que descripcion
+              // para el campo descripcion del formulario; descripcion queda como fallback
+              descripcion: normativeMeta?.titulo_formal || normativeMeta?.descripcion || '',
               emitidopor: normativeMeta?.entidad_emisora ?? '',
               fecha_expedicion: parseSpanishDate(normativeMeta?.fecha_expedicion),
               fecha_ejecutoria: parseSpanishDate(normativeMeta?.fecha_vigencia),

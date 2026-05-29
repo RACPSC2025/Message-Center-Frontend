@@ -489,9 +489,39 @@ export default function LegalMatrizForm({ onSuccess = () => {}, initialData = nu
     const data = initialData;
 
     // emitidopor from API is a label string — find matching option value
-    const authorityOption = dropdownOptions.authorities?.find(
-      a => a.label === data.emitidopor || String(a.value) === String(data.emitidopor)
-    );
+    // Normaliza: minúsculas, sin tildes, sin puntuación, espacios colapsados
+    const norm = (s) =>
+      String(s ?? '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const needle = norm(data.emitidopor);
+
+    const authorityOption = !needle ? null : (
+      // 1. Exact match (original)
+      dropdownOptions.authorities?.find(
+        a => a.label === data.emitidopor || String(a.value) === String(data.emitidopor)
+      ) ||
+      // 2. Case-insensitive + accent-normalized exact
+      dropdownOptions.authorities?.find(a => norm(a.label) === needle) ||
+      // 3. Option label contains needle substring
+      dropdownOptions.authorities?.find(a => norm(a.label).includes(needle)) ||
+      // 4. Needle contains option label (needle is more verbose)
+      dropdownOptions.authorities?.find(a => needle.includes(norm(a.label))) ||
+      // 5. Token overlap: at least half the needle tokens match the option label
+      (() => {
+        const needleTokens = needle.split(' ').filter(t => t.length > 3);
+        if (!needleTokens.length) return undefined;
+        return dropdownOptions.authorities?.find(a => {
+          const haystack = norm(a.label);
+          const hits = needleTokens.filter(t => haystack.includes(t)).length;
+          return hits >= Math.ceil(needleTokens.length / 2);
+        });
+      })()
+    ) || null;
 
     // id_tema_requisito comes as comma-separated string "10,7"
     const temaIds = data.id_tema_requisito

@@ -12,17 +12,17 @@ import { saveEdit, loadAllEdits } from './lib/editsDb';
 import { fetchArticle } from './api';
 
 const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
-  const [drawerState, setDrawerState] = useState(DRAWER_STATES.UPLOAD);
-  const [pdfFile, setPdfFile] = useState(null);
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [pdfName, setPdfName] = useState(null);
-  const [docTypeHint, setDocTypeHint] = useState(null);
+  const [drawerState, setDrawerState]       = useState(DRAWER_STATES.UPLOAD);
+  const [pdfFile, setPdfFile]               = useState(null);
+  const [pdfUrl, setPdfUrl]                 = useState(null);
+  const [pdfName, setPdfName]               = useState(null);
+  const [docTypeHint, setDocTypeHint]       = useState(null);
   const [requisitoGeneral, setRequisitoGeneral] = useState(null);
-  const [normativeMeta, setNormativeMeta] = useState(null);
+  const [normativeMeta, setNormativeMeta]   = useState(null);
   const [selectedArticles, setSelectedArticles] = useState([]);
   const [editedArticles, setEditedArticles] = useState({});
-  const [snackbar, setSnackbar] = useState(null);
-  const [generating, setGenerating] = useState(false);
+  const [snackbar, setSnackbar]             = useState(null);
+  const [generating, setGenerating]         = useState(false);
   const generatingRef = useRef(false);
 
   // Step 1: file selected → show PDF + type selector
@@ -66,22 +66,50 @@ const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
     onClose();
   }, [handleBack, onClose]);
 
+  // Toggle article-level selection (no paragraphId)
   const handleToggleArticle = useCallback((articleId) => {
     setSelectedArticles((prev) => {
-      const exists = prev.some((a) => a.articleId === articleId);
-      if (exists) return prev.filter((a) => a.articleId !== articleId);
+      const exists = prev.some((a) => a.articleId === articleId && !a.paragraphId);
+      if (exists) return prev.filter((a) => !(a.articleId === articleId && !a.paragraphId));
       return [...prev, { articleId, editedContent: editedArticles[articleId] ?? null }];
     });
   }, [editedArticles]);
+
+  // Toggle individual PARÁGRAFO selection
+  const handleToggleParagraph = useCallback((articleId, paragraphId, content) => {
+    setSelectedArticles((prev) => {
+      const exists = prev.some((a) => a.articleId === articleId && a.paragraphId === paragraphId);
+      if (exists) {
+        return prev.filter((a) => !(a.articleId === articleId && a.paragraphId === paragraphId));
+      }
+      return [...prev, { articleId, paragraphId, editedContent: content ?? null }];
+    });
+  }, []);
 
   const handleSaveArticle = useCallback(async ({ article, editedContent }) => {
     if (pdfName) await saveEdit(pdfName, article, editedContent);
     setEditedArticles((prev) => ({ ...prev, [article]: editedContent }));
     setSelectedArticles((prev) =>
-      prev.map((a) => a.articleId === article ? { ...a, editedContent } : a)
+      prev.map((a) =>
+        a.articleId === article && !a.paragraphId ? { ...a, editedContent } : a,
+      )
     );
     setSnackbar('Edición guardada localmente');
   }, [pdfName]);
+
+  const handleRestoreArticle = useCallback((articleId) => {
+    setEditedArticles((prev) => {
+      const next = { ...prev };
+      delete next[articleId];
+      return next;
+    });
+    setSelectedArticles((prev) =>
+      prev.map((a) =>
+        a.articleId === articleId && !a.paragraphId ? { ...a, editedContent: null } : a,
+      )
+    );
+    setSnackbar('Edición descartada — restaurado original');
+  }, []);
 
   const handleGenerate = async () => {
     if (!onGenerateRequirement || generatingRef.current) return;
@@ -90,7 +118,11 @@ const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
     try {
       const enriched = await Promise.all(
         selectedArticles.map(async (a) => {
+          // PARÁGRAFO: content already available from tree
+          if (a.paragraphId) return a;
+          // Article with local edit
           if (a.editedContent !== null) return a;
+          // Article without content: fetch from API
           try {
             const data = await fetchArticle(a.articleId, pdfName);
             return { ...a, editedContent: data?.content ?? '' };
@@ -106,8 +138,16 @@ const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
     }
   };
 
-  const isReady = drawerState === DRAWER_STATES.READY;
+  const isReady       = drawerState === DRAWER_STATES.READY;
   const showLoadAnother = drawerState !== DRAWER_STATES.UPLOAD;
+
+  // Count distinct article IDs + standalone PARÁGRAFOS for tooltip
+  const selCount = selectedArticles.length;
+  const artCount = new Set(selectedArticles.filter((a) => !a.paragraphId).map((a) => a.articleId)).size;
+  const parCount = selectedArticles.filter((a) => a.paragraphId).length;
+  const selLabel = selCount === 0 ? '' :
+    [artCount > 0 && `${artCount} art.`, parCount > 0 && `${parCount} par.`]
+      .filter(Boolean).join(' + ');
 
   return (
     <>
@@ -147,9 +187,9 @@ const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
             {isReady && (
               <Tooltip
                 title={
-                  selectedArticles.length === 0
-                    ? 'Selecciona artículos con el checkbox para habilitar'
-                    : `Generar requisito con ${selectedArticles.length} artículo(s)`
+                  selCount === 0
+                    ? 'Selecciona artículos o PARÁGRAFOS con el checkbox para habilitar'
+                    : `Generar requisito con ${selLabel}`
                 }
               >
                 <span>
@@ -157,11 +197,11 @@ const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
                     variant="contained"
                     size="small"
                     startIcon={<AssignmentRounded />}
-                    disabled={selectedArticles.length === 0 || generating}
+                    disabled={selCount === 0 || generating}
                     onClick={handleGenerate}
                     sx={{ fontSize: 12 }}
                   >
-                    {generating ? 'Preparando...' : 'Generar requisito'}
+                    {generating ? 'Preparando...' : `Generar requisito${selCount > 0 ? ` (${selLabel})` : ''}`}
                   </Button>
                 </span>
               </Tooltip>
@@ -211,7 +251,9 @@ const RobotPartnerLegalMatrix = ({ open, onClose, onGenerateRequirement }) => {
               editedArticles={editedArticles}
               docTypeHint={docTypeHint}
               onToggleArticle={handleToggleArticle}
+              onToggleParagraph={handleToggleParagraph}
               onSaveArticle={handleSaveArticle}
+              onRestoreArticle={handleRestoreArticle}
               onEditsImported={(updated) => setEditedArticles(updated)}
               onMetadataReady={setNormativeMeta}
             />

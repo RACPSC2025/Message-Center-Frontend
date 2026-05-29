@@ -1,14 +1,15 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import {
   Box, Typography, CircularProgress, Alert, IconButton,
   Chip, Divider, Tooltip, Collapse, Button,
-  ToggleButtonGroup, ToggleButton,
+  ToggleButtonGroup, ToggleButton, Select, MenuItem,
 } from '@mui/material';
 import {
   RefreshRounded, AccountTreeRounded,
   FileDownloadRounded, FileUploadRounded,
   VerifiedRounded, ExpandMore, ExpandLess,
-  AccountTree, SubjectRounded,
+  AccountTree, SubjectRounded, FormatListBulleted,
+  NavigateBefore, NavigateNext,
 } from '@mui/icons-material';
 import { useTaxonomy } from '../../hooks/useTaxonomy';
 import { useIntegrity } from '../../hooks/useIntegrity';
@@ -17,33 +18,64 @@ import ChapterNode from './ChapterNode';
 import TitleNode from './TitleNode';
 import ArticleRow from './ArticleRow';
 
-// ── Normative tree ─────────────────────────────────────────────────────────────
-function NormativeTree({ tree, selectedArticles, editedArticles, onToggleArticle, onOpenArticle }) {
-  const majorSections = tree?.major_sections ?? [];
+// ── Flatten tree → [ { number, paragraphs, path[] } ] ─────────────────────────
+function flattenArticles(tree) {
+  const result = [];
+  if (!tree) return result;
 
+  const pushArts = (arts) => {
+    for (const art of arts ?? []) result.push(art);
+  };
+
+  for (const ms of (tree.major_sections ?? []).filter(ms => ms.name !== 'CONSIDERANDO')) {
+    pushArts(ms.orphan_articles);
+
+    for (const title of ms.titles ?? []) {
+      pushArts(title.orphan_articles);
+      for (const ch of title.chapters ?? []) {
+        pushArts(ch.orphan_articles);
+        for (const sec of ch.sections ?? []) {
+          pushArts(sec.articles);
+        }
+      }
+    }
+
+    for (const ch of ms.chapters ?? []) {
+      pushArts(ch.orphan_articles);
+      for (const sec of ch.sections ?? []) {
+        pushArts(sec.articles);
+      }
+    }
+  }
+  return result;
+}
+
+// ── Normative tree ─────────────────────────────────────────────────────────────
+function NormativeTree({
+  tree, selectedArticles, editedArticles, onToggleArticle, onToggleParagraph, onOpenArticle, readOnly,
+}) {
+  const majorSections = (tree?.major_sections ?? []).filter(ms => ms.name !== 'CONSIDERANDO');
   return (
     <>
       {majorSections.map((ms) => {
-        const titles = ms.titles ?? [];
+        const titles   = ms.titles   ?? [];
         const chapters = ms.chapters ?? [];
         const msOrphans = ms.orphan_articles ?? [];
-
         return (
           <Box key={ms.name} sx={{ mb: 1 }}>
             <Typography
               variant="caption"
               fontWeight={700}
               sx={{
-                display: 'block', px: 1, py: 0.5,
-                backgroundColor: '#e8eaf6', borderRadius: 1,
-                color: '#283593', textTransform: 'uppercase',
-                letterSpacing: 0.5, mb: 0.5,
+                display: 'block', px: 1.5, py: 0.6,
+                backgroundColor: '#285064', borderRadius: 1,
+                color: '#EFF7F9', textTransform: 'uppercase',
+                letterSpacing: 0.8, mb: 0.5,
               }}
             >
               {ms.name}
             </Typography>
 
-            {/* ms-level orphan articles */}
             {msOrphans.map((art) => (
               <ArticleRow
                 key={art.number}
@@ -51,11 +83,12 @@ function NormativeTree({ tree, selectedArticles, editedArticles, onToggleArticle
                 selectedArticles={selectedArticles}
                 editedArticles={editedArticles}
                 onToggleArticle={onToggleArticle}
+                onToggleParagraph={onToggleParagraph}
                 onOpenArticle={onOpenArticle}
+                readOnly={readOnly}
               />
             ))}
 
-            {/* TÍTULO level (Ley 99, Código Civil, etc.) */}
             {titles.map((titulo, ti) => (
               <TitleNode
                 key={titulo.title ?? ti}
@@ -63,11 +96,12 @@ function NormativeTree({ tree, selectedArticles, editedArticles, onToggleArticle
                 selectedArticles={selectedArticles}
                 editedArticles={editedArticles}
                 onToggleArticle={onToggleArticle}
+                onToggleParagraph={onToggleParagraph}
                 onOpenArticle={onOpenArticle}
+                readOnly={readOnly}
               />
             ))}
 
-            {/* Direct chapters (Decretos, Resoluciones) */}
             {chapters.map((ch, ci) => (
               <ChapterNode
                 key={ch.title ?? ci}
@@ -75,7 +109,9 @@ function NormativeTree({ tree, selectedArticles, editedArticles, onToggleArticle
                 selectedArticles={selectedArticles}
                 editedArticles={editedArticles}
                 onToggleArticle={onToggleArticle}
+                onToggleParagraph={onToggleParagraph}
                 onOpenArticle={onOpenArticle}
+                readOnly={readOnly}
               />
             ))}
 
@@ -93,6 +129,82 @@ function NormativeTree({ tree, selectedArticles, editedArticles, onToggleArticle
         </Box>
       )}
     </>
+  );
+}
+
+// ── Paginated flat list ────────────────────────────────────────────────────────
+const PAGE_SIZES = [10, 30, 50];
+
+function PaginatedList({
+  tree, selectedArticles, editedArticles, onToggleArticle, onToggleParagraph, onOpenArticle,
+  pageSize, setPageSize, page, setPage,
+}) {
+  const allArticles = useMemo(() => flattenArticles(tree), [tree]);
+  const totalPages  = Math.max(1, Math.ceil(allArticles.length / pageSize));
+  const safePage    = Math.min(page, totalPages - 1);
+  const paged       = allArticles.slice(safePage * pageSize, (safePage + 1) * pageSize);
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [safePage, page, setPage]);
+
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Pagination controls */}
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ px: 1, py: 0.5, borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}
+      >
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="caption" color="text.disabled">Por página:</Typography>
+          <Select
+            value={pageSize}
+            onChange={(e) => { setPageSize(e.target.value); setPage(0); }}
+            size="small"
+            variant="standard"
+            sx={{ fontSize: '0.72rem', minWidth: 40 }}
+          >
+            {PAGE_SIZES.map((s) => (
+              <MenuItem key={s} value={s} sx={{ fontSize: '0.72rem' }}>{s}</MenuItem>
+            ))}
+          </Select>
+        </Box>
+
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="caption" color="text.disabled">
+            {safePage + 1} / {totalPages}
+          </Typography>
+          <IconButton size="small" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>
+            <NavigateBefore sx={{ fontSize: 16 }} />
+          </IconButton>
+          <IconButton size="small" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>
+            <NavigateNext sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Box>
+      </Box>
+
+      {/* Article list */}
+      <Box sx={{ flex: 1, overflowY: 'auto', px: 1, py: 0.5 }}>
+        {paged.map((art) => (
+          <ArticleRow
+            key={art.number}
+            art={art}
+            selectedArticles={selectedArticles}
+            editedArticles={editedArticles}
+            onToggleArticle={onToggleArticle}
+            onToggleParagraph={onToggleParagraph}
+            onOpenArticle={onOpenArticle}
+          />
+        ))}
+        {paged.length === 0 && (
+          <Box display="flex" justifyContent="center" py={4}>
+            <Typography variant="body2" color="text.disabled">Sin artículos en esta página</Typography>
+          </Box>
+        )}
+      </Box>
+    </Box>
   );
 }
 
@@ -171,10 +283,24 @@ function IntegrityPanel({ source }) {
 }
 
 // ── Main panel ─────────────────────────────────────────────────────────────────
-const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggleArticle, onOpenArticle, onEditsImported, onMetadataReady }) => {
-  const { taxonomy, loading, error, reload } = useTaxonomy(source);
+const TaxonomyPanel = ({
+  source,
+  selectedArticles,
+  editedArticles = {},
+  onToggleArticle,
+  onToggleParagraph,
+  onOpenArticle,
+  onEditsImported,
+  onMetadataReady,
+  readOnly = false,
+  pollInterval = 0,
+  allowPartial = false,
+}) => {
+  const { taxonomy, loading, error, reload } = useTaxonomy(source, { allowPartial, pollInterval });
   const importInputRef = useRef(null);
-  const [viewMode, setViewMode] = useState('tree');
+  const [viewMode, setViewMode]   = useState('tree');
+  const [pageSize, setPageSize]   = useState(30);
+  const [page, setPage]           = useState(0);
 
   useEffect(() => {
     if (taxonomy?.normative_metadata && onMetadataReady) {
@@ -182,13 +308,14 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
     }
   }, [taxonomy?.normative_metadata, onMetadataReady]);
 
-  const tree = taxonomy?.tree ?? null;
-  const totalArticles = taxonomy?.total_articles ?? 0;
-  const editCount = Object.keys(editedArticles).length;
-  const isNormativo = true;
+  // Reset page when source or pageSize changes
+  useEffect(() => { setPage(0); }, [source, pageSize]);
 
-  // Reset override when source changes
-  const totalLabel = `${totalArticles} arts.`;
+  const tree          = taxonomy?.tree ?? null;
+  const totalArticles = taxonomy?.total_articles ?? 0;
+  const editCount     = Object.keys(editedArticles).length;
+  const isNormativo   = true;
+  const totalLabel    = `${totalArticles} arts.`;
 
   const handleExport = () => { if (source) exportEditsAsJson(source); };
 
@@ -214,30 +341,33 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
       {/* Header */}
       <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ px: 1.5, py: 1, borderBottom: '1px solid #e0e0e0', flexShrink: 0 }}>
         <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-          <AccountTreeRounded sx={{ fontSize: 16, color: '#1565c0' }} />
+          <AccountTreeRounded sx={{ fontSize: 16, color: '#19AABB' }} />
           <Typography variant="caption" fontWeight={700} color="text.secondary">
             Taxonomía
           </Typography>
           {totalArticles > 0 && (
-            <Chip label={totalLabel} size="small" sx={{ height: 18, fontSize: 10, backgroundColor: '#e3f2fd', color: '#1565c0' }} />
+            <Chip label={totalLabel} size="small" sx={{ height: 18, fontSize: 10, backgroundColor: '#EDF4F5', color: '#285064', fontWeight: 600 }} />
           )}
-          {selectedArticles.length > 0 && (
+          {!readOnly && selectedArticles.length > 0 && (
             <Chip label={`${selectedArticles.length} sel.`} size="small" color="primary" sx={{ height: 18, fontSize: 10 }} />
           )}
-          {editCount > 0 && (
+          {!readOnly && editCount > 0 && (
             <Chip label={`${editCount} edit.`} size="small" color="warning" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+          )}
+          {readOnly && (
+            <Chip label="vista previa" size="small" variant="outlined" sx={{ height: 18, fontSize: 10, color: '#9e9e9e' }} />
           )}
         </Box>
 
         <Box display="flex" alignItems="center">
-          {isNormativo && editCount > 0 && (
+          {!readOnly && isNormativo && editCount > 0 && (
             <Tooltip title="Exportar ediciones como JSON">
               <IconButton size="small" onClick={handleExport}>
                 <FileDownloadRounded sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
           )}
-          {isNormativo && (
+          {!readOnly && isNormativo && (
             <Tooltip title="Importar ediciones desde JSON">
               <IconButton size="small" onClick={() => importInputRef.current?.click()}>
                 <FileUploadRounded sx={{ fontSize: 16 }} />
@@ -247,7 +377,9 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
           <IconButton size="small" onClick={reload} disabled={loading}>
             <RefreshRounded sx={{ fontSize: 16 }} />
           </IconButton>
-          <input ref={importInputRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={handleImport} />
+          {!readOnly && (
+            <input ref={importInputRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={handleImport} />
+          )}
         </Box>
       </Box>
 
@@ -255,7 +387,6 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
         <Box display="flex" alignItems="center" gap={1} sx={{ px: 1.5, py: 0.5, flexShrink: 0, flexWrap: 'wrap' }}>
           <Chip label={source} size="small" variant="outlined" sx={{ fontSize: 10, height: 18, maxWidth: 260 }} />
 
-          {/* Vista árbol / texto */}
           {tree && (
             <ToggleButtonGroup
               value={viewMode}
@@ -270,6 +401,9 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
               <ToggleButton value="text" sx={{ px: 0.75, py: 0 }}>
                 <Tooltip title="Vista texto"><SubjectRounded sx={{ fontSize: 12 }} /></Tooltip>
               </ToggleButton>
+              <ToggleButton value="list" sx={{ px: 0.75, py: 0 }}>
+                <Tooltip title="Lista paginada"><FormatListBulleted sx={{ fontSize: 12 }} /></Tooltip>
+              </ToggleButton>
             </ToggleButtonGroup>
           )}
         </Box>
@@ -278,15 +412,16 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
       <Divider />
 
       {/* Tree body */}
-      <Box sx={{ flex: 1, overflowY: 'auto', px: 1, py: 0.5 }}>
+      <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {loading && (
           <Box display="flex" justifyContent="center" py={4}><CircularProgress size={24} /></Box>
         )}
         {error && !loading && (
-          <Alert severity="error" sx={{ fontSize: '0.78rem' }}>{error}</Alert>
+          <Alert severity="error" sx={{ fontSize: '0.78rem', m: 1 }}>{error}</Alert>
         )}
+
         {!loading && !error && tree && viewMode === 'text' && (
-          <Box sx={{ px: 1, py: 0.5 }}>
+          <Box sx={{ flex: 1, overflowY: 'auto', px: 1, py: 0.5 }}>
             <Typography
               component="pre"
               sx={{ fontFamily: 'monospace', fontSize: '0.72rem', whiteSpace: 'pre-wrap', lineHeight: 1.6, color: '#424242' }}
@@ -295,15 +430,36 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
             </Typography>
           </Box>
         )}
+
         {!loading && !error && tree && viewMode === 'tree' && (
-          <NormativeTree
+          <Box sx={{ flex: 1, overflowY: 'auto', px: 1, py: 0.5 }}>
+            <NormativeTree
+              tree={tree}
+              selectedArticles={selectedArticles}
+              editedArticles={editedArticles}
+              onToggleArticle={onToggleArticle}
+              onToggleParagraph={onToggleParagraph}
+              onOpenArticle={onOpenArticle}
+              readOnly={readOnly}
+            />
+          </Box>
+        )}
+
+        {!loading && !error && tree && viewMode === 'list' && (
+          <PaginatedList
             tree={tree}
             selectedArticles={selectedArticles}
             editedArticles={editedArticles}
             onToggleArticle={onToggleArticle}
+            onToggleParagraph={onToggleParagraph}
             onOpenArticle={onOpenArticle}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            page={page}
+            setPage={setPage}
           />
         )}
+
         {!loading && !error && !tree && (
           <Box display="flex" justifyContent="center" py={4}>
             <Typography variant="body2" color="text.disabled">Sin datos de taxonomía</Typography>
@@ -311,8 +467,7 @@ const TaxonomyPanel = ({ source, selectedArticles, editedArticles = {}, onToggle
         )}
       </Box>
 
-      {/* Integrity panel — only normativo */}
-      {isNormativo && source && <IntegrityPanel source={source} />}
+      {!readOnly && isNormativo && source && <IntegrityPanel source={source} />}
     </Box>
   );
 };

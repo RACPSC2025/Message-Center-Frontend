@@ -7,9 +7,21 @@ import ArticleEditorDialog from '../ArticleEditorDialog';
 const MIN_RATIO = 20;
 const MAX_RATIO = 80;
 
-const ReadyState = ({ pdfUrl, source, selectedArticles, editedArticles = {}, docTypeHint, onToggleArticle, onSaveArticle, onEditsImported, onMetadataReady }) => {
+const ReadyState = ({
+  pdfUrl,
+  source,
+  selectedArticles,
+  editedArticles = {},
+  docTypeHint,
+  onToggleArticle,
+  onToggleParagraph,
+  onSaveArticle,
+  onRestoreArticle,
+  onEditsImported,
+  onMetadataReady,
+}) => {
   const [splitRatio, setSplitRatio] = useState(50);
-  const [dragging, setDragging] = useState(false);
+  const [dragging, setDragging]     = useState(false);
   const [dialogArticle, setDialogArticle] = useState(null);
 
   const handleMouseDown = useCallback((e) => {
@@ -65,6 +77,7 @@ const ReadyState = ({ pdfUrl, source, selectedArticles, editedArticles = {}, doc
           selectedArticles={selectedArticles}
           editedArticles={editedArticles}
           onToggleArticle={onToggleArticle}
+          onToggleParagraph={onToggleParagraph}
           onOpenArticle={(artId) => setDialogArticle(artId)}
           onEditsImported={onEditsImported}
           onMetadataReady={onMetadataReady}
@@ -78,6 +91,10 @@ const ReadyState = ({ pdfUrl, source, selectedArticles, editedArticles = {}, doc
         onClose={() => setDialogArticle(null)}
         onSave={(payload) => {
           onSaveArticle(payload);
+          setDialogArticle(null);
+        }}
+        onRestore={(articleId) => {
+          onRestoreArticle?.(articleId);
           setDialogArticle(null);
         }}
       />
