@@ -200,7 +200,7 @@ const ObligacionesTab = ({ source }) => {
       {!data && !loading && !error && (
         <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={6} gap={1}>
           <Typography variant="body2" color="text.disabled">
-            Presiona "Analizar" para identificar obligaciones legales en el documento
+            Presiona &quot;Analizar&quot; para identificar obligaciones legales en el documento
           </Typography>
         </Box>
       )}
