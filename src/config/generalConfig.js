@@ -48,6 +48,7 @@ const MODULE_DEFINITIONS = [
     fallbackLabel: 'Permit Manager',
     icon: <AssignmentTurnedIn fontSize="small" />
   },
+  /*
   {
     configKey: 'ambiental_permit',
     moduleName: 'ambiental_permit',
@@ -55,6 +56,7 @@ const MODULE_DEFINITIONS = [
     fallbackLabel: 'Ambiental Permit',
     icon: <NatureIcon fontSize="small" />
   },
+  */
   {
     configKey: 'sanctioning_processes',
     moduleName: 'sanctioning_processes',

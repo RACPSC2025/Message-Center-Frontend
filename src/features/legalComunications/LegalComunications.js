@@ -7,8 +7,8 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
-import { useHasPermission } from '../../hooks/usePlatformConfig';
 import { selectFilterItemValue } from '../../stores/filterSlice';
+
 import CreateRequestDialog from './CreateRequestDialog';
 import LegalComunicationsLedger from './LegalComunicationsLedger';
 
@@ -18,10 +18,7 @@ export default function LegalComunications() {
   const [openCreateDrawer, setOpenCreateDrawer] = useState(false);
   const [createDrawerContext, setCreateDrawerContext] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const canCreateRequirement = useHasPermission('legal_matrix', 'create_requirement');
-  const idRequisitoActual = useSelector((state) =>
-    selectFilterItemValue(state, 'LegalMatriz', 'id_requisito_actual')
-  );
+  const [canCreateRequirement] = useState(true);
   const selectedView = useSelector(
     (state) =>
       selectFilterItemValue(state, 'legal_comunications', 'selectedLegalComunicationsView') ?? 'list'
@@ -63,7 +60,7 @@ export default function LegalComunications() {
           )}
         </Box>
 
-        {canCreateRequirement && idRequisitoActual && (
+        {canCreateRequirement && (
           <SpeedDialComponent
             openSpeedDial={openSpeedDial}
             handleCloseSpeedDial={() => setOpenSpeedDial(false)}

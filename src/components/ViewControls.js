@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { TableChart, Insights, CalendarMonth, ListAlt, Tune, Dashboard } from '@mui/icons-material';
+import { TableChart, Insights, CalendarMonth, ListAlt, Tune, Dashboard, HelpOutline } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
 const ViewControls = ({ 
@@ -19,7 +19,8 @@ const ViewControls = ({
       calendar:    <CalendarMonth color={color} fontSize="medium" />,
       list:        <ListAlt color={color} fontSize="medium" />,
       adjustments: <Tune color={color} fontSize="medium" />,
-      dashboard:   <Dashboard color={color} fontSize="medium" />
+      dashboard:   <Dashboard color={color} fontSize="medium" />,
+      howto:       <HelpOutline color={color} fontSize="medium" />
     };
 
     return icons[viewTab] || null;

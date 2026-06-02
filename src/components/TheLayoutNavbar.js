@@ -17,7 +17,7 @@ import RequirementsArticlesDoughnutChart from './RequirementsArticlesDoughnutCha
 import StatusDoughnutChart from './StatusDoughnutChart';
 import TheLayoutNavbarActionItem from './TheLayoutNavbarActionItem';
 
-import { Apps, CalendarToday, CheckCircleOutline, MailOutline, Search } from '@mui/icons-material';
+import { Apps, CalendarToday, CheckCircleOutline, MailOutline, NotificationsNone, Search } from '@mui/icons-material';
 //import AppsIcon from '@mui/icons-material/Apps';
 //import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 //import { CalendarIcon } from '@mui/x-date-pickers';
@@ -330,13 +330,26 @@ function TheLayoutNavbar({ expanded = false, onToggle }) {
             </IconButton>
           </Tooltip>
 
+          <Tooltip title={t('Notificaciones')} placement="right">
+            <IconButton
+              onClick={() => navigate('/view/notifications')}
+              sx={{
+                color: activeModule === 'notifications' ? '#fff' : 'icon.main',
+                p: 0.5,
+                mb: 1
+              }}
+            >
+              <NotificationsNone />
+            </IconButton>
+          </Tooltip>
+
           {modules.map((module, index) => (
             <TheLayoutNavbarActionItem
               key={module.id}
               icon={module.icon}
               label={t(module.label)}
               isActive={activeModule === module.routeKey}
-              sx={{ px: 0.5, mt: index > 0 ? 1 : 0 }}
+              sx={{ px: 0.5, mt: 1 }}
               dataSet={module.statusData}
               showChartInfoOnHover={showChartInfoOnHover}
               onClick={() => navigate(`/view/${module.routeKey}`)}

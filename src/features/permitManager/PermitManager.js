@@ -8,19 +8,23 @@ import {
   Typography
 } from '@mui/material';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import BaseFeaturePageLayout from '../../components/BaseFeaturePageLayout';
 import SpeedDialComponent from '../../components/SpeedDialComponent';
 import TableComponent from '../../components/TableComponent';
 import { selectAppliedFilterModel, selectFilterItemValue } from '../../stores/filterSlice';
 import {
   PERMIT_INITIAL_VISIBLE_COLUMNS,
-  PERMIT_ROWS,
   PERMIT_TABLE_COLUMNS,
   STATUS_META
 } from './permitManagerData';
+import {
+  createTramiteAmbiental,
+  fetchTramitesAmbientales,
+  updateTramiteAmbiental
+} from '../../stores/permitManager/fetchPermitManagerSlice';
 import PermitManagerDrawer from './PermitManagerDrawer';
 import PermitManagerFormDrawer from './PermitManagerFormDrawer';
 import PermitManagerKanban from './PermitManagerKanban';
@@ -59,7 +63,9 @@ function buildNextRecordId(records) {
 
 function PermitManager() {
   const { t } = useTranslation();
-  const [permits, setPermits] = useState(() => PERMIT_ROWS.map((row) => ({ ...row })));
+  const dispatch = useDispatch();
+  const { data: apiPermits } = useSelector((state) => state.permitManager.tramitesList);
+  const [permits, setPermits] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedPermitId, setSelectedPermitId] = useState(null);
   const [formDrawerOpen, setFormDrawerOpen] = useState(false);
@@ -70,6 +76,32 @@ function PermitManager() {
   const selectedView = useSelector(
     (state) => selectFilterItemValue(state, 'permit_manager', 'selectedPermitView') ?? 'kanban'
   );
+
+  const apiParams = useMemo(() => {
+    const params = { limit: 500 };
+    if (filterData?.filter_unit) params.unidad = filterData.filter_unit;
+    if (filterData?.filter_sede) params.sede = filterData.filter_sede;
+    if (filterData?.filter_permit_type) params.tipo_permiso = filterData.filter_permit_type;
+    if (filterData?.filter_authority) params.autoridad = filterData.filter_authority;
+    if (filterData?.filter_status) params.estado_tramite = filterData.filter_status;
+    if (filterData?.filter_semaforo) params.semaforo_status = filterData.filter_semaforo;
+    return params;
+  }, [
+    filterData?.filter_unit,
+    filterData?.filter_sede,
+    filterData?.filter_permit_type,
+    filterData?.filter_authority,
+    filterData?.filter_status,
+    filterData?.filter_semaforo
+  ]);
+
+  useEffect(() => {
+    dispatch(fetchTramitesAmbientales(apiParams));
+  }, [dispatch, apiParams]);
+
+  useEffect(() => {
+    setPermits(apiPermits);
+  }, [apiPermits]);
 
   const filteredPermits = useMemo(() => {
     let result = permits;
@@ -150,6 +182,28 @@ function PermitManager() {
                 <span style={{ color: '#0F172A', fontWeight: 700 }}>{params.value || 'N/A'}</span>
               )
             };
+          case 'semaforoColor':
+            return {
+              ...column,
+              cellRenderer: (params) => {
+                const hexColor = params.value || null;
+                return (
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', height: '100%' }}>
+                    <Tooltip title={params.data.semaforoDescription || ''} placement="top">
+                      <Box
+                        sx={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: '50%',
+                          bgcolor: hexColor || '#ffffff',
+                          border: '1px solid #cfd8dc'
+                        }}
+                      />
+                    </Tooltip>
+                  </Box>
+                );
+              }
+            };
           case 'estadoTramite':
             return {
               ...column,
@@ -210,29 +264,13 @@ function PermitManager() {
     setEditingPermit(null);
   };
 
-  const handleSubmitPermit = (formValues) => {
-    setPermits((previous) => {
-      if (formMode === 'edit' && editingPermit?.recordId) {
-        return previous.map((record) =>
-          record.recordId === editingPermit.recordId
-            ? {
-                ...record,
-                ...formValues,
-                recordId: editingPermit.recordId
-              }
-            : record
-        );
-      }
-
-      return [
-        {
-          ...formValues,
-          recordId: buildNextRecordId(previous)
-        },
-        ...previous
-      ];
-    });
-
+  const handleSubmitPermit = async (apiPayload) => {
+    if (formMode === 'edit' && editingPermit?.id) {
+      await dispatch(updateTramiteAmbiental({ id: editingPermit.id, ...apiPayload }));
+    } else {
+      await dispatch(createTramiteAmbiental(apiPayload));
+    }
+    dispatch(fetchTramitesAmbientales(apiParams));
     handleCloseFormDrawer();
   };
 

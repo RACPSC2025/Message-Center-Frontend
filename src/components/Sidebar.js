@@ -305,6 +305,20 @@ export function Sidebar({ onWidthChange, filterPanelExpanded = false }) {
           /* Expanded — accordion by workarea */
           <div className="flex flex-col flex-1 w-full overflow-hidden px-1 py-1">
             <nav className="flex flex-col flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#1e3a52 transparent' }}>
+              {/* Notificaciones — static, hidden when already on notifications */}
+              {activeModule !== 'notifications' && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/view/notifications')}
+                  className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 mb-1 transition-colors duration-100 text-slate-400"
+                >
+                  <Bell size={14} className="shrink-0" />
+                  <span className="text-[11px] truncate">
+                    {language === 'en' ? 'Notifications' : 'Notificaciones'}
+                  </span>
+                </button>
+              )}
+
               {workareas.map((wa) => {
                 const WaIcon = getLucideIcon(wa.icon);
                 const isWaOpen = expandedWa === wa.slug;
@@ -360,6 +374,20 @@ export function Sidebar({ onWidthChange, filterPanelExpanded = false }) {
           <div className="flex flex-col items-center flex-1 w-full overflow-hidden pb-2">
             <nav className="flex flex-col items-center flex-1 w-full overflow-y-auto gap-2.5 mt-3"
               style={{ scrollbarWidth: 'none' }}>
+              {/* Notificaciones — static bell, hidden when already on notifications */}
+              {activeModule !== 'notifications' && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/view/notifications')}
+                  className="flex flex-col items-center gap-0.5"
+                  title={language === 'en' ? 'Notifications' : 'Notificaciones'}
+                >
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-[#00bcd422]">
+                    <Bell size={18} className="text-slate-500" />
+                  </div>
+                </button>
+              )}
+
               {(activeWorkarea?.modules ?? [])
                 .map((slug) => modules.find((m) => m.slug === slug))
                 .filter(Boolean)

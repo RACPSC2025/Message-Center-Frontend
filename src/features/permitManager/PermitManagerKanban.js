@@ -147,8 +147,8 @@ function PermitKanbanCard({
   onToggleDetail = () => {}
 }) {
   const semaforoKey = normalizeText(item.semaforoAmbiental || 'sin dato');
-  const semColor = SEMAFORO_COLOR[semaforoKey] || '#90a4ae';
-  const semLabel = SEMAFORO_LABEL[semaforoKey] || '';
+  const semColor = item.semaforoColor || SEMAFORO_COLOR[semaforoKey] || '#90a4ae';
+  const semLabel = SEMAFORO_LABEL[semaforoKey] || item.semaforoDescription || '';
 
   return (
     <Paper

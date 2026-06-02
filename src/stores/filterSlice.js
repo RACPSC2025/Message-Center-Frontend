@@ -154,10 +154,13 @@ export const selectAppliedFilterModel = createSelector(
 // Async thunk for fetching autocomplete options
 export const fetchAutocompleteOptions = createAsyncThunk(
   'filter/fetchAutocompleteOptions',
-  async ({ api_url, module, fieldName, modifierFn, formData }) => {
+  async ({ api_url, module, fieldName, modifierFn, formData, responseKey }) => {
     const response = await axiosInstance.post(api_url, formData);
 
     let data = response.data.data;
+    if (responseKey) {
+      data = data[responseKey] ?? [];
+    }
     if (Function.prototype.isPrototypeOf(modifierFn)) {
       data = modifierFn(data);
     }
@@ -223,15 +226,24 @@ const filterSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(fetchAutocompleteOptions.fulfilled, (state, action) => {
       const { module, fieldName, data } = action.payload;
-      if (!state.modules[module].listData[fieldName]) {
-        state.modules[module].listData[fieldName] = [];
+      if (!state.modules[module]) {
+        state.modules[module] = { filterData: {}, listData: {} };
+      }
+      if (!state.modules[module].listData) {
+        state.modules[module].listData = {};
       }
       state.modules[module].listData[fieldName] = data;
     });
   }
 });
 
-export const { setFilter, removeFilter, removeAllFilters, setListData, addFilter, updateLabelsCache } =
-  filterSlice.actions;
+export const {
+  setFilter,
+  removeFilter,
+  removeAllFilters,
+  setListData,
+  addFilter,
+  updateLabelsCache
+} = filterSlice.actions;
 
 export default filterSlice.reducer;

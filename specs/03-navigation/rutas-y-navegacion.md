@@ -75,6 +75,7 @@ Funcion que los genera: `getModuleGroupsFromPlatformConfig` en `src/config/gener
 - Header usa polling corto para no leidos y escucha evento custom dashboard-message-created.
 - BaseTab recibe items desde modulePermissions.
 - Los DoughnutChart del sidebar izquierdo solo se muestran si el modulo esta habilitado en platformConfig (modules.*.enabled = true).
+- Sidebar izquierdo: primer elemento siempre visible es "Notificaciones" (icono `Bell` de lucide-react), navega a `/view/notifications`, activo cuando `activeModule === 'notifications'`. Hardcoded en `Sidebar.js` — no depende de platformConfig ni de `nav-config.json`. Aparece antes del primer workarea en modo expandido y colapsado.
 - Sidebar izquierdo: para `permit_manager` y `sanctioning_processes` se muestra boton navegable sin depender de estadisticas cargadas.
 - Al hacer click en un DoughnutChart del sidebar, la app navega al modulo correspondiente:
   - legals -> /view/LegalMatriz

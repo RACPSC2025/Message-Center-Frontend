@@ -9,7 +9,7 @@ import { fetchSanctioningProcessesTableHeaders } from '../../stores/sanctioningP
 import SpeedDialComponent from '../../components/SpeedDialComponent';
 import ViewControls from '../../components/ViewControls';
 
-import OrganizationFilter from "./components/OrganizationFilter";
+import OrganizationFilter from './components/OrganizationFilter';
 import SanctioningProcessesTable from './components/SanctioningProcessesTable';
 import SanctioningProcessesDrawer from './components/SanctioningProcessesDrawer';
 import SanctioningProcessesReport from './components/SanctioningProcessesReport';
@@ -19,13 +19,13 @@ import sanctioningProcessesTableData from './temp/sanctioningProcessesTableData.
 
 const tableHandlers = {
   handleRowClick: (row) => console.log('[DEBUG] Fila clickeada:', row),
-  
+
   handleView: (row, setOpenDrawer, setSelectedProcess) => {
     console.log('[DEBUG] Ver:', row);
     setSelectedProcess(row);
     setOpenDrawer(true);
   },
-  
+
   handleEdit: (row) => console.log('[DEBUG] Editar:', row),
   handleAttach: (row) => console.log('[DEBUG] Adjuntar:', row),
   handleRefresh: () => console.log('[DEBUG] Refrescando datos...')
@@ -53,11 +53,11 @@ const speedDialActions = [
 // Handler del SpeedDial
 const handleActionClick = (actionData, setOpenSpeedDial) => {
   console.log('[DEBUG] Iniciando nuevo proceso:', actionData);
-  
+
   // Extraer solo el action del objeto
   const action = actionData.action || actionData;
-  
-  switch(action) {
+
+  switch (action) {
     case 'ambiental':
       console.log('[DEBUG] Abriendo formulario para proceso ambiental...');
       break;
@@ -78,15 +78,17 @@ function SanctioningProcesses() {
 
   const dispatch = useDispatch();
 
-  const headersResponse = useSelector((state) => state?.sanctioningProcessesTableHeaders?.data || {});
+  const headersResponse = useSelector(
+    (state) => state?.sanctioningProcessesTableHeaders?.data || {}
+  );
 
   const [openSpeedDial, setOpenSpeedDial] = useState(false);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState(null);
-  
+
   const [selectedView, setSelectedView] = useState('table'); // ['table', 'report']
   const viewTabArray = ['table', 'report'];
-  
+
   const [tableColumnConfig, setTableColumnConfig] = useState([]);
   const [initialVisibleFields, setInitialVisibleFields] = useState([]);
 
@@ -119,7 +121,7 @@ function SanctioningProcesses() {
         ...rest
       } = config;
 
-      const headerName = i18n.language === 'en' ? (title_en || title) : (title_es || title);
+      const headerName = i18n.language === 'en' ? title_en || title : title_es || title;
       const width = column_width && column_width !== '' ? parseInt(column_width, 10) : undefined;
 
       const columnProps = {
@@ -148,14 +150,15 @@ function SanctioningProcesses() {
   useEffect(() => {
     dispatch(fetchSanctioningProcessesTableHeaders(i18n.language || 'es'));
   }, [dispatch, i18n.language]);
-  
+
   // Transformar los datos crudos de la API en la configuración utilizada
   useEffect(() => {
     const tableData = headersResponse?.data ?? {};
     const headers = tableData?.headers ?? headersResponse?.headers ?? {};
 
     const hasSuccessMessage = headersResponse?.messages === 'Success';
-    const hasUsableHeaders = headers && typeof headers === 'object' && Object.keys(headers).length > 0;
+    const hasUsableHeaders =
+      headers && typeof headers === 'object' && Object.keys(headers).length > 0;
 
     if (hasSuccessMessage || hasUsableHeaders) {
       const config = Object.keys(headers)
@@ -177,20 +180,21 @@ function SanctioningProcesses() {
   }, [headersResponse, i18n.language]);
 
   return (
-    <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa'}}>
-      
+    <Box sx={{ width: '100%', minHeight: 'calc(100vh - 120px)', bgcolor: '#f8f9fa' }}>
       {/* Header con filtros y controles de vista */}
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 2, 
-        alignItems: 'center', 
-        p: 1, 
-        bgcolor: 'background.paper',
-        borderRadius: 1
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          alignItems: 'center',
+          p: 1,
+          bgcolor: 'background.paper',
+          borderRadius: 1
+        }}
+      >
         {/* Filtros: negocio, compañía, región, ubicación */}
         <OrganizationFilter />
-        
+
         {/* Controles de vista: Table / reports */}
         <ViewControls
           viewTabArray={viewTabArray}
@@ -213,12 +217,9 @@ function SanctioningProcesses() {
           onRefresh={tableHandlers.handleRefresh}
         />
       )}
-      
+
       {selectedView === 'report' && (
-        <SanctioningProcessesReport
-          data={sanctioningRows}
-          columnDefs={tableColumnConfig}
-        />
+        <SanctioningProcessesReport data={sanctioningRows} columnDefs={tableColumnConfig} />
       )}
 
       {/* (+) para iniciar nuevos procesos */}

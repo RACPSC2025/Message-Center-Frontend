@@ -394,11 +394,13 @@ export default function LegalComunicationsLedger({
           >
             {t('high_stakes_compliance_tracking')}
           </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-            {`${t('number')}: ${idRequisitoActual} • ${
-              requisitoActual?.requirement_name || requisitoActual?.title || '-'
-            }`}
-          </Typography>
+          {idRequisitoActual != null && (
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              {`${t('number')}: ${idRequisitoActual} • ${
+                requisitoActual?.requirement_name || requisitoActual?.title || '-'
+              }`}
+            </Typography>
+          )}
         </Box>
       </Box>
 
