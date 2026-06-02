@@ -223,7 +223,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
       >
         {/* Titulo */}
         <Typography variant="h6" fontWeight={600}>
-          {showForm ? 'Nueva acción' : 'Acciones del hallazgo'}
+          {showForm ? t('CreateAction') : t('FindingsActions')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -236,7 +236,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
       {/* Fuente y ID */}
       <Box sx={{ px: 2.5, py: 1.5, bgcolor: '#f9fafb' }}>
         <Typography variant="body2" fontWeight={500} color="text.secondary">
-          {finding?.finding_source_name || 'Sin fuente'} - ID: {finding?.id}
+          {finding?.finding_source_name || t('Nosource')} - ID: {finding?.id}
         </Typography>
       </Box>
 
@@ -253,7 +253,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
                 onClick={handleBackFromForm}
                 sx={{ textTransform: 'none' }}
               >
-                Volver a la lista
+                {t('returnList')}
               </Button>
             </Box>
 
@@ -278,7 +278,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
               sx={{ alignSelf: 'flex-end', mb: 2 }}
               onClick={() => setShowForm(true)}
             >
-              Crear acción
+              {t('CreateAction')}
             </Button>
 
             {/* Tabla de acciones */}

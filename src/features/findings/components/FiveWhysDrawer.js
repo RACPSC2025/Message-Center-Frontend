@@ -77,7 +77,7 @@ const FiveWhysDrawer = ({ open, finding, onClose }) => {
       {/* Fuente */}
       <Box sx={{ px: 2.5, py: 1.5, bgcolor: '#f9fafb' }}>
         <Typography variant="body2" fontWeight={500} color="text.secondary">
-          {finding?.finding_source_name || 'Sin fuente'} - ID: {finding?.id}
+          {finding?.finding_source_name || t('Nosource')} - ID: {finding?.id}
         </Typography>
       </Box>
 
