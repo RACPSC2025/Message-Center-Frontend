@@ -41,6 +41,8 @@ const useUnsavedChangesDrawer = ({ initialValues, onClose }) => {
   return {
     formValues,
     showConfirm,
+    setShowConfirm,
+    hasUnsavedChanges,
     handleChange,
     handleClose,
     confirmClose,

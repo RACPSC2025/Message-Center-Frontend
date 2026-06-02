@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Drawer, Box, IconButton, Typography, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -6,14 +6,61 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
 import TableComponent from '../../../components/TableComponent';
 import FormBuilder from '../../../components/FormBuilder';
+import UnsavedChangesDialog from '../../../components/UnsavedChangesDialog';
+import useUnsavedChangesDrawer from '../hooks/useUnsavedChangesDrawer';
 
 const ActionsDrawer = ({ open, finding, onClose }) => {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [closeIntent, setCloseIntent] = useState(null);
 
-  const handleFormChange = (id, value) => {
-    setFormData((prev) => ({ ...prev, [id]: value }));
+  const {
+    formValues: formData,
+    showConfirm,
+    setShowConfirm,
+    hasUnsavedChanges,
+    handleChange: handleFormChange,
+    resetForm
+  } = useUnsavedChangesDrawer({ initialValues: {}, onClose });
+
+  const handleDrawerClose = useCallback(() => {
+    if (hasUnsavedChanges()) {
+      setCloseIntent('drawer');
+      setShowConfirm(true);
+    } else {
+      resetForm();
+      onClose();
+    }
+  }, [hasUnsavedChanges, resetForm, onClose]);
+
+  const handleBackFromForm = useCallback(() => {
+    if (hasUnsavedChanges()) {
+      setCloseIntent('form');
+      setShowConfirm(true);
+    } else {
+      resetForm();
+      setShowForm(false);
+    }
+  }, [hasUnsavedChanges, resetForm]);
+
+  const confirmUnsavedClose = useCallback(() => {
+    setShowConfirm(false);
+    resetForm();
+    if (closeIntent === 'drawer') {
+      onClose();
+    } else {
+      setShowForm(false);
+    }
+  }, [closeIntent, resetForm, onClose]);
+
+  const cancelUnsavedClose = useCallback(() => {
+    setShowConfirm(false);
+  }, []);
+
+  const handleSaveAction = () => {
+    console.log('[DEBUG] Crear acción:', { ...formData, findingId: finding?.id });
+    resetForm();
+    setShowForm(false);
   };
 
   const columnDefs = useMemo(
@@ -83,7 +130,6 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
       label: 'Categoría de la acción',
       type: 'dropdown',
       options: [],
-      required: true,
       gridSize: 4
     },
     {
@@ -149,23 +195,11 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
     { id: 'responsable_revision', label: 'Responsable de revisión', type: 'text', gridSize: 4 }
   ];
 
-  /* Handlers */
-  const handleSaveAction = () => {
-    console.log('[DEBUG] Crear acción:', { ...formData, findingId: finding?.id });
-    setFormData({});
-    setShowForm(false);
-  };
-
-  const handleCancelForm = () => {
-    setFormData({});
-    setShowForm(false);
-  };
-
   return (
     <Drawer
       anchor="right"
       open={open}
-      onClose={onClose}
+      onClose={handleDrawerClose}
       sx={{
         '& .MuiDrawer-paper': {
           width: 900,
@@ -193,7 +227,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={handleDrawerClose} size="small">
             <CloseIcon />
           </IconButton>
         </Box>
@@ -216,7 +250,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
                 variant="text"
                 size="small"
                 startIcon={<ArrowBackIcon />}
-                onClick={handleCancelForm}
+                onClick={handleBackFromForm}
                 sx={{ textTransform: 'none' }}
               >
                 Volver a la lista
@@ -230,7 +264,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
               controlled={true}
               onChange={handleFormChange}
               successCallback={handleSaveAction}
-              cancelCallback={handleCancelForm}
+              cancelCallback={handleBackFromForm}
               formFieldSize="small"
             />
           </>
@@ -260,6 +294,14 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
           </>
         )}
       </Box>
+
+      {/* Dialogo de Salir sin guardar */}
+      <UnsavedChangesDialog
+        open={showConfirm}
+        onClose={cancelUnsavedClose}
+        onConfirm={confirmUnsavedClose}
+        onCancel={cancelUnsavedClose}
+      />
     </Drawer>
   );
 };
