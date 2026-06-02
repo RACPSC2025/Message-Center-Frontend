@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { Drawer, Box, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import FormBuilder from '../../../components/FormBuilder';
+import UnsavedChangesDialog from '../../../components/UnsavedChangesDialog';
+import useUnsavedChangesDrawer from '../hooks/useUnsavedChangesDrawer';
 
 const initialFormValues = {
   why1: '',
@@ -13,22 +14,13 @@ const initialFormValues = {
 };
 
 const FiveWhysDrawer = ({ open, finding, onClose }) => {
-  const [formValues, setFormValues] = useState(initialFormValues);
-
-  const handleChange = (id, value) => {
-    setFormValues((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const resetForm = () => setFormValues(initialFormValues);
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+  const { formValues, showConfirm, handleChange, handleClose, confirmClose, cancelClose, resetForm } =
+    useUnsavedChangesDrawer({ initialValues: initialFormValues, onClose });
 
   const handleSubmit = () => {
-    console.log('Five Whys submitted:', formValues);
-    handleClose();
+    console.log('[DEBUG] Enviando 5 porqués:', formValues);
+    resetForm();
+    onClose();
   };
 
   const formFields = [
@@ -91,6 +83,14 @@ const FiveWhysDrawer = ({ open, finding, onClose }) => {
           formFieldSize="small"
         />
       </Box>
+
+      {/* Dialogo de Guardar Cambios */}
+      <UnsavedChangesDialog
+        open={showConfirm}
+        onClose={cancelClose}
+        onConfirm={confirmClose}
+        onCancel={cancelClose}
+      />
     </Drawer>
   );
 };
