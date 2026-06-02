@@ -1007,6 +1007,8 @@ const es = {
   why5: 'Porqué 5',
   attachment: 'Adjunto',
 
+  cause_analysis_title: 'Análisis de Causas',
+
   returnList: 'Volver a la lista',
 
   FindingsActions: 'Acciones del Hallazgo'

@@ -974,6 +974,8 @@ const en = {
   why5: 'Why 5',
   attachment: 'Attachment',
 
+  cause_analysis_title: 'Cause Analysis',
+
   returnList: 'Back to List',
 
   FindingsActions: 'Findings Actions'
