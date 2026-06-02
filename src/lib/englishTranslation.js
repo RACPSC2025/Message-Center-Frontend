@@ -975,6 +975,11 @@ const en = {
   attachment: 'Attachment',
 
   cause_analysis_title: 'Cause Analysis',
+  change_history_title: 'Change History of Finding No. {{id}}',
+  modification_date: 'Modification date',
+  Action: 'Action',
+  previous_data: 'Previous data',
+  new_value: 'New value',
 
   returnList: 'Back to List',
 

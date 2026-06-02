@@ -1008,6 +1008,11 @@ const es = {
   attachment: 'Adjunto',
 
   cause_analysis_title: 'Análisis de Causas',
+  change_history_title: 'Historial de Cambios de Hallazgo No. {{id}}',
+  modification_date: 'Fecha de modificación',
+  Action: 'Acción',
+  previous_data: 'Data anterior',
+  new_value: 'Nuevo valor',
 
   returnList: 'Volver a la lista',
 
