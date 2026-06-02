@@ -958,6 +958,14 @@ const en = {
   structure_company: 'Company',
   structure_region: 'Region',
   structure_plant: 'Plant',
+
+  five_whys_title: '5 Whys Analysis',
+  why1: 'Why 1',
+  why2: 'Why 2',
+  why3: 'Why 3',
+  why4: 'Why 4',
+  why5: 'Why 5',
+  attachment: 'Attachment',
 };
 
 export default en;

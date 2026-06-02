@@ -989,6 +989,14 @@ const es = {
   structure_company: 'Compañía',
   structure_region: 'Región',
   structure_plant: 'Planta',
+
+  five_whys_title: 'Análisis de 5 porqués',
+  why1: 'Porqué 1',
+  why2: 'Porqué 2',
+  why3: 'Porqué 3',
+  why4: 'Porqué 4',
+  why5: 'Porqué 5',
+  attachment: 'Adjunto',
 };
 
 export default es;

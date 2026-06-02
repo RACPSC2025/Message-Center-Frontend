@@ -1,5 +1,6 @@
 import { Drawer, Box, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useTranslation } from 'react-i18next';
 import FormBuilder from '../../../components/FormBuilder';
 import UnsavedChangesDialog from '../../../components/UnsavedChangesDialog';
 import useUnsavedChangesDrawer from '../hooks/useUnsavedChangesDrawer';
@@ -14,8 +15,16 @@ const initialFormValues = {
 };
 
 const FiveWhysDrawer = ({ open, finding, onClose }) => {
-  const { formValues, showConfirm, handleChange, handleClose, confirmClose, cancelClose, resetForm } =
-    useUnsavedChangesDrawer({ initialValues: initialFormValues, onClose });
+  const { t } = useTranslation();
+  const {
+    formValues,
+    showConfirm,
+    handleChange,
+    handleClose,
+    confirmClose,
+    cancelClose,
+    resetForm
+  } = useUnsavedChangesDrawer({ initialValues: initialFormValues, onClose });
 
   const handleSubmit = () => {
     console.log('[DEBUG] Enviando 5 porqués:', formValues);
@@ -24,12 +33,12 @@ const FiveWhysDrawer = ({ open, finding, onClose }) => {
   };
 
   const formFields = [
-    { id: 'why1', label: 'Porqué 1', type: 'text', required: true, gridSize: 12 },
-    { id: 'why2', label: 'Porqué 2', type: 'text', required: true, gridSize: 12 },
-    { id: 'why3', label: 'Porqué 3', type: 'text', required: true, gridSize: 12 },
-    { id: 'why4', label: 'Porqué 4', type: 'text', required: true, gridSize: 12 },
-    { id: 'why5', label: 'Porqué 5', type: 'text', required: true, gridSize: 12 },
-    { id: 'attachment', label: 'Adjunto', type: 'file', gridSize: 12 }
+    { id: 'why1', label: t('why1'), type: 'text', required: true, gridSize: 12 },
+    { id: 'why2', label: t('why2'), type: 'text', required: true, gridSize: 12 },
+    { id: 'why3', label: t('why3'), type: 'text', required: true, gridSize: 12 },
+    { id: 'why4', label: t('why4'), type: 'text', required: true, gridSize: 12 },
+    { id: 'why5', label: t('why5'), type: 'text', required: true, gridSize: 12 },
+    { id: 'attachment', label: t('attachment'), type: 'file', gridSize: 12 }
   ];
 
   return (
@@ -55,8 +64,9 @@ const FiveWhysDrawer = ({ open, finding, onClose }) => {
           borderBottom: '1px solid #e0e0e0'
         }}
       >
+        {/* Análisis de 5 porqués */}
         <Typography variant="h6" fontWeight={600}>
-          Análisis de 5 porqués
+          {t('five_whys_title')}
         </Typography>
 
         <IconButton onClick={handleClose} size="small">
