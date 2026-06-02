@@ -1,14 +1,20 @@
-import { useMemo, useRef } from 'react';
-import { Drawer, Box, IconButton, Typography } from '@mui/material';
-import { AllCommunityModule, ClientSideRowModelModule, ModuleRegistry } from 'ag-grid-community';
-import { AgGridReact } from 'ag-grid-react';
+import { useMemo, useState } from 'react';
+import { Drawer, Box, IconButton, Typography, Button } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
-
-// Register AG Grid modules
-ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
+import { useTranslation } from 'react-i18next';
+import TableComponent from '../../../components/TableComponent';
+import FormBuilder from '../../../components/FormBuilder';
 
 const ActionsDrawer = ({ open, finding, onClose }) => {
-  const gridRef = useRef();
+  const { t } = useTranslation();
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({});
+
+  const handleFormChange = (id, value) => {
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
 
   const columnDefs = useMemo(
     () => [
@@ -31,14 +37,129 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
     []
   );
 
-  const defaultColDef = useMemo(
-    () => ({
-      resizable: true,
-      sortable: true,
-      filter: true
-    }),
-    []
-  );
+  const formFields = [
+    { id: 'fecha_creacion', label: 'Fecha de creación', type: 'date', gridSize: 6 },
+    { id: 'fecha_cierre_real', label: 'Fecha real de cierre', type: 'date', gridSize: 6 },
+
+    { id: 'pais', label: 'País', type: 'dropdown', options: [], gridSize: 4 },
+    { id: 'empresa', label: 'Empresa', type: 'dropdown', options: [], gridSize: 4 },
+    {
+      id: 'departamento_provincia',
+      label: 'Departamento/Provincia',
+      type: 'dropdown',
+      options: [],
+      gridSize: 4
+    },
+    {
+      id: 'ciudad_municipio',
+      label: 'Ciudad/Municipio',
+      type: 'dropdown',
+      options: [],
+      gridSize: 4
+    },
+    {
+      id: 'distrito_sede_estacion',
+      label: 'Distrito/Sede/Estación',
+      type: 'dropdown',
+      options: [],
+      gridSize: 4
+    },
+    { id: 'gerencia', label: 'Gerencia', type: 'dropdown', options: [], gridSize: 4 },
+    {
+      id: 'area_dependencia',
+      label: 'Área/Dependencia',
+      type: 'dropdown',
+      options: [],
+      gridSize: 6
+    },
+
+    { id: 'proceso', label: 'Proceso', type: 'dropdown', options: [], gridSize: 6 },
+
+    { id: 'contratistas', label: 'Contratistas', type: 'dropdown', options: [], gridSize: 6 },
+    { id: 'contrato', label: 'Contrato', type: 'dropdown', options: [], gridSize: 6 },
+
+    {
+      id: 'categoria',
+      label: 'Categoría de la acción',
+      type: 'dropdown',
+      options: [],
+      required: true,
+      gridSize: 4
+    },
+    {
+      id: 'estado',
+      label: 'Estado',
+      type: 'dropdown',
+      options: [],
+      defaultValue: 'abierta',
+      gridSize: 4
+    },
+    { id: 'tipo_analisis', label: 'Tipo de Análisis', type: 'dropdown', options: [], gridSize: 4 },
+
+    {
+      id: 'que_accion',
+      label: 'Qué Acción a tomar',
+      type: 'textarea',
+      required: true,
+      gridSize: 12
+    },
+    {
+      id: 'como_sugerencia',
+      label: 'Cómo Sugerencia de ejecución',
+      type: 'textarea',
+      required: true,
+      gridSize: 12
+    },
+
+    {
+      id: 'fecha_prevista_inicio',
+      label: 'Fecha prevista de inicio',
+      type: 'date',
+      required: true,
+      gridSize: 4
+    },
+    {
+      id: 'empresa_ejecucion',
+      label: 'Empresa Grupo Promigas (Ejecución)',
+      type: 'dropdown',
+      options: [],
+      gridSize: 4
+    },
+    {
+      id: 'responsable_ejecucion',
+      label: 'Responsable de ejecución',
+      type: 'text',
+      gridSize: 4
+    },
+
+    {
+      id: 'fecha_propuesta_cierre',
+      label: 'Fecha propuesta de cierre',
+      type: 'date',
+      required: true,
+      gridSize: 4
+    },
+    {
+      id: 'empresa_revision',
+      label: 'Empresa Grupo Promigas (Revisión)',
+      type: 'dropdown',
+      options: [],
+      gridSize: 4
+    },
+    { id: 'responsable_revision', label: 'Responsable de revisión', type: 'text', gridSize: 4 }
+  ];
+
+  /* Handlers */
+  const handleSaveAction = () => {
+    console.log('[DEBUG] Crear acción:', { ...formData, findingId: finding?.id });
+    setFormData({});
+    setShowForm(false);
+  };
+
+  const handleCancelForm = () => {
+    setFormData({});
+    setShowForm(false);
+  };
 
   return (
     <Drawer
@@ -66,38 +187,78 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
           borderBottom: '1px solid #e0e0e0'
         }}
       >
+        {/* Titulo */}
         <Typography variant="h6" fontWeight={600}>
-          Acciones del hallazgo
+          {showForm ? 'Nueva acción' : 'Acciones del hallazgo'}
         </Typography>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
+
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </Box>
 
+      {/* Fuente y ID */}
       <Box sx={{ px: 2.5, py: 1.5, bgcolor: '#f9fafb' }}>
         <Typography variant="body2" fontWeight={500} color="text.secondary">
           {finding?.finding_source_name || 'Sin fuente'} - ID: {finding?.id}
         </Typography>
       </Box>
 
+      {/* Contenido */}
       <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column', p: 2.5 }}>
-        <Box
-          className="ag-theme-alpine"
-          sx={{
-            width: '100%',
-            height: '100%',
-            minHeight: 400
-          }}
-        >
-          <AgGridReact
-            ref={gridRef}
-            rowData={[]}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            domLayout="normal"
-            animateRows
-          />
-        </Box>
+        {showForm ? (
+          <>
+            {/* Botón volver */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Button
+                variant="text"
+                size="small"
+                startIcon={<ArrowBackIcon />}
+                onClick={handleCancelForm}
+                sx={{ textTransform: 'none' }}
+              >
+                Volver a la lista
+              </Button>
+            </Box>
+
+            {/* Formulario */}
+            <FormBuilder
+              inputFields={formFields}
+              initialValues={formData}
+              controlled={true}
+              onChange={handleFormChange}
+              successCallback={handleSaveAction}
+              cancelCallback={handleCancelForm}
+              formFieldSize="small"
+            />
+          </>
+        ) : (
+          <>
+            {/* Botón crear acción */}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              sx={{ alignSelf: 'flex-end', mb: 2 }}
+              onClick={() => setShowForm(true)}
+            >
+              Crear acción
+            </Button>
+
+            {/* Tabla de acciones */}
+            <TableComponent
+              rowData={[]}
+              columnDefs={columnDefs}
+              sortable
+              filterable
+              resizable
+              pagination
+              perPage={10}
+            />
+          </>
+        )}
       </Box>
     </Drawer>
   );
