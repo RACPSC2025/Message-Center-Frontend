@@ -9,7 +9,8 @@
       "enable": true,
       "modules": {
         "legal_matrix": true,
-        "legal_comunications": true
+        "legal_comunications": true,
+        "environmental_monitoring": true
       }
     },
     "task_group": {
@@ -166,6 +167,16 @@
       "title_en": "Legal Communications",
       "description": "Módulo de comunicaciones legales",
       "order": "5",
+      "permissions": {},
+      "features": {},
+      "catalogs": {}
+    },
+    "environmental_monitoring": {
+      "enabled": true,
+      "title_es": "Monitoreo Ambiental",
+      "title_en": "Environmental Monitoring",
+      "description": "Módulo de monitoreo de puntos ambientales",
+      "order": "6",
       "permissions": {},
       "features": {},
       "catalogs": {}

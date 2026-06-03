@@ -43,6 +43,12 @@ const VIEW_CONFIG = {
     reduxKey: 'selectedLegalComunicationsView',
     defaultView: 'list',
   },
+  environmental_monitoring: {
+    views: ['table', 'report'],
+    reduxModule: 'environmental_monitoring',
+    reduxKey: 'selectedEnvironmentalMonitoringView',
+    defaultView: 'table',
+  },
 };
 
 const VIEW_META = {
@@ -60,6 +66,7 @@ const ORG_FILTER_CONFIG = {
   actions:     { module: 'actions',     keyPrefix: 'id_' },
   LegalMatriz: { module: 'LegalMatriz', keyPrefix: ''    },
   permit_manager: { module: 'permit_manager', keyPrefix: '' },
+  environmental_monitoring: { module: 'environmental_monitoring', keyPrefix: '' },
 };
 
 // ── ViewToggles ───────────────────────────────────────────────────────────────
@@ -249,6 +256,17 @@ function LegalComunicationsBandContent({ bandColor }) {
   );
 }
 
+function EnvironmentalMonitoringBandContent({ bandColor }) {
+  return (
+    <>
+      <div className="flex items-center gap-3 flex-1 h-full px-4" style={{ backgroundColor: `${bandColor}40` }}>
+        <OrgBandFilters moduleKey="environmental_monitoring" />
+      </div>
+      <ViewToggles moduleKey="environmental_monitoring" bandColor={bandColor} />
+    </>
+  );
+}
+
 // ── NotificationsBandContent ──────────────────────────────────────────────────
 function NotificationsBandContent({ bandColor }) {
   const stats = useSelector((state) => state.dashboardMessageStatistics?.data ?? EMPTY_OBJECT);
@@ -279,6 +297,7 @@ const MODULE_CONTENT = {
   LegalMatriz:   LegalMatrizBandContent,
   permit_manager: PermitManagerBandContent,
   legal_comunications: LegalComunicationsBandContent,
+  environmental_monitoring: EnvironmentalMonitoringBandContent,
   notifications: NotificationsBandContent,
   sanctioning_processes: null, // No band content for sanctioning processes
 };

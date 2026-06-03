@@ -3,6 +3,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import GavelIcon from '@mui/icons-material/Gavel';
+import NatureIcon from '@mui/icons-material/Nature';
 import { Box, IconButton, SvgIcon, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -113,6 +114,16 @@ const MODULE_CONFIG = [
     fallbackLabel: 'Permit Manager',
     icon: AssignmentTurnedInIcon,
     activeModuleKey: 'permit_manager',
+    requiresStats: false,
+    chartComponent: StatusDoughnutChart,
+    getStatusData: () => []
+  },
+  {
+    id: 'environmental_monitoring',
+    configKey: 'environmental_monitoring',
+    fallbackLabel: 'Environmental Monitoring',
+    icon: NatureIcon,
+    activeModuleKey: 'environmental_monitoring',
     requiresStats: false,
     chartComponent: StatusDoughnutChart,
     getStatusData: () => []
