@@ -7,6 +7,14 @@ import {
   PERMIT_TYPE_OPTIONS,
   PERMIT_UNIT_OPTIONS
 } from '../features/permitManager/permitManagerData';
+import {
+  MONITORING_ANALYSIS_TYPE_OPTIONS,
+  MONITORING_CATEGORY_OPTIONS,
+  MONITORING_SITE_OPTIONS,
+  MONITORING_STATUS_OPTIONS,
+  MONITORING_STRUCTURE_OPTIONS,
+  MONITORING_YEAR_OPTIONS
+} from '../features/environmentalMonitoring/environmentalMonitoringData';
 
 const textSearchField = {
   labelKey: 'Keywords',
@@ -194,6 +202,63 @@ export const filterConfigs = {
         { value: '2', label: 'Desviaciones atendibles (Amarillo)', color: '#ffc107' },
         { value: '3', label: 'Desviaciones críticas (Rojo)', color: '#f44336' }
       ],
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    }
+  ],
+  environmental_monitoring: [
+    textSearchField,
+    {
+      labelKey: 'Categoría',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_category',
+      default_value: '',
+      options: MONITORING_CATEGORY_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Año',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_year',
+      default_value: '',
+      options: MONITORING_YEAR_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Estructura / UES',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_structure',
+      default_value: '',
+      options: MONITORING_STRUCTURE_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Sede',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_sede',
+      default_value: '',
+      options: MONITORING_SITE_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Tipo de análisis',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_analysis_type',
+      default_value: '',
+      options: MONITORING_ANALYSIS_TYPE_OPTIONS,
+      group_by_key: 'filter_by',
+      group_by_label: 'FilterBy'
+    },
+    {
+      labelKey: 'Estado',
+      type: 'autocompleteWithoutLevel',
+      name: 'filter_status',
+      default_value: '',
+      options: MONITORING_STATUS_OPTIONS,
       group_by_key: 'filter_by',
       group_by_label: 'FilterBy'
     }

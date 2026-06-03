@@ -48,6 +48,13 @@ const MODULE_DEFINITIONS = [
     fallbackLabel: 'Permit Manager',
     icon: <AssignmentTurnedIn fontSize="small" />
   },
+  {
+    configKey: 'environmental_monitoring',
+    moduleName: 'environmental_monitoring',
+    key: 'environmental_monitoring',
+    fallbackLabel: 'Environmental Monitoring',
+    icon: <NatureIcon fontSize="small" />
+  },
   /*
   {
     configKey: 'ambiental_permit',

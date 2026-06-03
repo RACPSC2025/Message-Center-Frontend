@@ -73,6 +73,16 @@
       "color": "#00bcd4"
     },
     {
+      "platformKey": "environmental_monitoring",
+      "slug": "environmental_monitoring",
+      "routeKey": "environmental_monitoring",
+      "dataId": null,
+      "name": { "es": "Monitoreo Ambiental", "en": "Environmental Monitoring" },
+      "icon": "Leaf",
+      "route": "/view/environmental_monitoring",
+      "color": "#00bcd4"
+    },
+    {
       "platformKey": "sanctioning_processes",
       "slug": "sanctioning_processes",
       "routeKey": "sanctioning_processes",
