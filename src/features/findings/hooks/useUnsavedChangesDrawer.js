@@ -7,7 +7,7 @@ const useUnsavedChangesDrawer = ({ initialValues, onClose }) => {
 
   const hasUnsavedChanges = useCallback(
     () =>
-      Object.values(formValues).some((v) => v !== '' && v !== null),
+      Object.keys(formValues).some((key) => formValues[key] !== initialRef.current[key]),
     [formValues]
   );
 

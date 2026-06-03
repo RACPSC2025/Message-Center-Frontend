@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Button, Box, Grid, CircularProgress } from '@mui/material';
+import { Button, Box, Grid, CircularProgress, Tabs, Tab } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
@@ -45,10 +45,12 @@ const FormBuilder = ({
   // Nuevos props para campos mejorados
   enhancedFields = [], // Array o Set de IDs que deben usar componente mejorado
   EnhancedFieldComponent = null, // Componente personalizado para campos mejorados
-  externalErrors = {} // Errores de validación externos
+  externalErrors = {}, // Errores de validación externos
+  tabItems = [] // Array de { label, fields: [fieldId, ...] } para dividir el formulario en tabs
 }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
+  const [activeTab, setActiveTab] = useState(0);
 
   const { t } = useTranslation();
 
@@ -98,14 +100,19 @@ const FormBuilder = ({
 
   const handleSubmit = () => {
     let isValid = true;
+    let firstInvalidField = null;
     inputFields.forEach((field) => {
       const value = getFieldValue(field);
       if (!validateField(field, value)) {
         isValid = false;
+        if (!firstInvalidField) firstInvalidField = field;
       }
     });
     if (isValid) {
       successCallback(formValues, resetFormFields);
+    } else if (hasTabs && firstInvalidField) {
+      const tabIndex = tabItems.findIndex((t) => t.fields?.includes(firstInvalidField.id));
+      if (tabIndex >= 0) setActiveTab(tabIndex);
     }
   };
 
@@ -206,11 +213,30 @@ const FormBuilder = ({
     );
   };
 
+  const hasTabs = tabItems.length > 0;
+
+  const visibleFields = hasTabs
+    ? inputFields.filter((f) => tabItems[activeTab]?.fields?.includes(f.id))
+    : inputFields;
+
+  const isLastTab = hasTabs && activeTab === tabItems.length - 1;
+
   return (
     <Box component="form">
+      {hasTabs && (
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        >
+          {tabItems.map((tab, i) => (
+            <Tab key={i} label={tab.label} />
+          ))}
+        </Tabs>
+      )}
       {formDisplay === 'grid' ? (
         <Grid container spacing={3}>
-          {inputFields.map((field) => (
+          {visibleFields.map((field) => (
             <Grid item xs={parseInt(field.gridSize) || 12} key={field.id}>
               {renderField(field)}
             </Grid>
@@ -218,7 +244,7 @@ const FormBuilder = ({
         </Grid>
       ) : (
         <Box display="flex" gap={2} flexGrow={1} justifyContent="start">
-          {inputFields.map((field) => (
+          {visibleFields.map((field) => (
             <Grid item xs={parseInt(field.gridSize) || 12} key={field.id}>
               {renderField(field)}
             </Grid>
@@ -230,10 +256,12 @@ const FormBuilder = ({
           <Button variant="contained" color="inherit" sx={{ mr: 1 }} onClick={handleCancel}>
             {t('Cancel')}
           </Button>
-          <Button variant="contained" color="primary" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
-            {t('Save')}
-          </Button>
+          {(!hasTabs || isLastTab) && (
+            <Button variant="contained" color="primary" onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
+              {t('Save')}
+            </Button>
+          )}
         </Box>
       )}
     </Box>

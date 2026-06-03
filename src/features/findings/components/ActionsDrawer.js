@@ -14,6 +14,9 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
   const [showForm, setShowForm] = useState(false);
   const [closeIntent, setCloseIntent] = useState(null);
 
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
   const {
     formValues: formData,
     showConfirm,
@@ -21,7 +24,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
     hasUnsavedChanges,
     handleChange: handleFormChange,
     resetForm
-  } = useUnsavedChangesDrawer({ initialValues: {}, onClose });
+  } = useUnsavedChangesDrawer({ initialValues: { fecha_creacion: today }, onClose });
 
   const handleDrawerClose = useCallback(() => {
     if (hasUnsavedChanges()) {
@@ -120,7 +123,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
       gridSize: 6
     },
 
-    { id: 'proceso', label: 'Proceso', type: 'dropdown', options: [], gridSize: 6 },
+    { id: 'proceso', label: 'Proceso', type: 'dropdown', options: [], gridSize: 12 },
 
     { id: 'contratistas', label: 'Contratistas', type: 'dropdown', options: [], gridSize: 6 },
     { id: 'contrato', label: 'Contrato', type: 'dropdown', options: [], gridSize: 6 },
@@ -195,6 +198,40 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
     { id: 'responsable_revision', label: 'Responsable de revisión', type: 'text', gridSize: 4 }
   ];
 
+  const tabItems = [
+    {
+      label: 'Información general',
+      fields: [
+        'fecha_creacion',
+        'fecha_cierre_real',
+        'pais',
+        'empresa',
+        'departamento_provincia',
+        'ciudad_municipio',
+        'distrito_sede_estacion',
+        'gerencia',
+        'area_dependencia'
+      ]
+    },
+    {
+      label: 'Clasificación',
+      fields: ['proceso', 'contratistas', 'contrato', 'categoria', 'estado', 'tipo_analisis']
+    },
+    {
+      label: 'Acción Propuesta',
+      fields: [
+        'que_accion',
+        'como_sugerencia',
+        'fecha_prevista_inicio',
+        'empresa_ejecucion',
+        'responsable_ejecucion',
+        'empresa_revision',
+        'responsable_revision',
+        'fecha_propuesta_cierre'
+      ]
+    }
+  ];
+
   return (
     <Drawer
       anchor="right"
@@ -260,6 +297,7 @@ const ActionsDrawer = ({ open, finding, onClose }) => {
             {/* Formulario */}
             <FormBuilder
               inputFields={formFields}
+              tabItems={tabItems}
               initialValues={formData}
               controlled={true}
               onChange={handleFormChange}
